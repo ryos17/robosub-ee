@@ -5,3 +5,14 @@
 
 # VSCode
 */.vscode
+
+
+# KiCad autosave / locks
+*~
+*.lck
+\#auto_saved_files#/
+*-backups/
+*.kicad_prl
+
+# macOS
+.DS_Store
