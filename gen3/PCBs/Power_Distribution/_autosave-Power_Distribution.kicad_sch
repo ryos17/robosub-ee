@@ -4424,7 +4424,7 @@
 	)
 	(text "Interconnect to MLU"
 		(exclude_from_sim no)
-		(at 300.736 190.5 0)
+		(at 300.736 192.278 0)
 		(effects
 			(font
 				(size 2.54 2.54)
@@ -16892,28 +16892,6 @@
 			)
 		)
 	)
-	(global_label "GND"
-		(shape input)
-		(at 288.29 214.63 180)
-		(fields_autoplaced yes)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify right)
-		)
-		(uuid "f27f5695-a417-45c4-8831-c445c7faeaa9")
-		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 281.4343 214.63 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify right)
-				(hide yes)
-			)
-		)
-	)
 	(global_label "PWR5"
 		(shape input)
 		(at 293.37 90.17 270)
@@ -17292,6 +17270,71 @@
 			(project "Power_Distribution"
 				(path "/1c59de6a-87fe-4223-8898-4b0383164a31"
 					(reference "J99")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "power:GND")
+		(at 288.29 214.63 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "06a1db67-f022-4e6d-818d-85d8afcc0cf0")
+		(property "Reference" "#PWR039"
+			(at 288.29 220.98 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Value" "GND"
+			(at 288.29 218.948 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 288.29 214.63 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at 288.29 214.63 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
+			(at 288.29 214.63 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "fbcac1bd-6e62-473f-aee6-2bd798ea9ede")
+		)
+		(instances
+			(project ""
+				(path "/1c59de6a-87fe-4223-8898-4b0383164a31"
+					(reference "#PWR039")
 					(unit 1)
 				)
 			)
