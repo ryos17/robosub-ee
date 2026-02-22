@@ -1,4 +1,4 @@
-(module "TO-252-2_L6.5-W6.1-P4.58-LS10.0-TL" (layer F.Cu) (tedit 699A32C0)
+(module "TO-252-2_L6.5-W6.1-P4.58-LS10.0-TL" (layer F.Cu) (tedit 699A4180)
   (descr "TO-252-2_L6.5-W6.1-P4.58-LS10.0-TL footprint")
   (tags "TO-252-2_L6.5-W6.1-P4.58-LS10.0-TL footprint C58069")
   (attr smd)
