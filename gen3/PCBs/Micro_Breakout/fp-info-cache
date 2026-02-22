@@ -1,4 +1,4 @@
-27259766824511677
+27261538893811259
 Audio_Module
 Reverb_BTDR-1H
 Digital Reverberation Unit, http://www.belton.co.kr/inc/downfile.php?seq=17&file=pdf (footprint from http://www.uk-electronic.de/PDF/BTDR-1.pdf)
@@ -63518,47 +63518,26 @@ BME280
 8
 8
 Imported_Footprints
-CONN_SD-43045-001_02_MOL
+CONN_SD-43045-005_02_MOL
 
-430450201 
+430450212 
 0
 2
 2
 Imported_Footprints
-CONN_SD-43045-008_04_MOL
+CONN_SD-43045-005_04_MOL
 
-430450422 
+430450412 
+0
+4
+4
+Imported_Footprints
+CONN_SD-43045-005_06_MOL
+
+430450612 
 0
 6
 6
-Imported_Footprints
-CONN_SD-43045-008_08_MOL
-
-430450821 
-0
-10
-10
-Imported_Footprints
-CONN_SD-43045-009_04_MOL
-
-430450426 
-0
-6
-6
-Imported_Footprints
-CONN_SD-43045-010_02_MOL
-
-430450228 
-0
-2
-2
-Imported_Footprints
-CONN_SD-43045-010_10_MOL
-
-430451027 
-0
-10
-10
 Imported_Footprints
 J1B1211CCD
 J1B1211CCD
@@ -63650,6 +63629,13 @@ BA033CC0FP-E2
 0
 3
 3
+Imported_Footprints
+Teensy41
+
+
+0
+67
+67
 Inductor_SMD
 L_6.3x6.3_H3
 Choke, SMD, 6.3x6.3mm 3mm height
@@ -108065,3 +108051,24 @@ Varistor VF
 0
 2
 2
+robosub_footprints
+SOIC-16_L9.9-W3.9-P1.27-LS6.0-BL
+SOIC-16_L9.9-W3.9-P1.27-LS6.0-BL footprint
+SOIC-16_L9.9-W3.9-P1.27-LS6.0-BL footprint C5947
+0
+16
+16
+robosub_footprints
+SOT-223_L6.5-W3.5-P2.30-LS7.0-BR
+SOT-223_L6.5-W3.5-P2.30-LS7.0-BR footprint
+SOT-223_L6.5-W3.5-P2.30-LS7.0-BR footprint C6187
+0
+4
+4
+robosub_footprints
+TO-252-2_L6.5-W6.1-P4.58-LS10.0-TL
+TO-252-2_L6.5-W6.1-P4.58-LS10.0-TL footprint
+TO-252-2_L6.5-W6.1-P4.58-LS10.0-TL footprint C58069
+0
+3
+3
