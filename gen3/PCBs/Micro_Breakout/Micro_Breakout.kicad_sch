@@ -7894,6 +7894,12 @@
 		(uuid "60094333-4661-4fd8-af51-b26050a618b4")
 	)
 	(junction
+		(at 367.03 44.45)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "6326f413-0b3e-4c9a-9153-e67e01927e2a")
+	)
+	(junction
 		(at 330.2 77.47)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -8032,6 +8038,12 @@
 		(uuid "f59131bc-8c61-4041-91ec-8542ab6fbf70")
 	)
 	(junction
+		(at 373.38 44.45)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "f88e8ac1-9c4a-475c-a295-5d5597283f7b")
+	)
+	(junction
 		(at 339.09 236.22)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -8070,6 +8082,10 @@
 		(uuid "5accde04-ee3a-4f98-80f4-3e2b4a6d4fc2")
 	)
 	(no_connect
+		(at 243.84 46.99)
+		(uuid "5b1428eb-8bd8-4d25-9f1c-39cad8c4b178")
+	)
+	(no_connect
 		(at 41.91 85.09)
 		(uuid "5efec45d-7cb2-49bb-83f6-9a54b116e1e7")
 	)
@@ -8084,10 +8100,6 @@
 	(no_connect
 		(at 41.91 87.63)
 		(uuid "72ec5f87-c5ba-425a-a6dc-311a04666df6")
-	)
-	(no_connect
-		(at 256.54 46.99)
-		(uuid "76eed200-41bd-48ae-b9c2-8cb0ae6f10d2")
 	)
 	(no_connect
 		(at 97.79 91.44)
@@ -8250,6 +8262,16 @@
 			(type default)
 		)
 		(uuid "1246099b-bd2f-4c09-8049-6ed52e6210f4")
+	)
+	(wire
+		(pts
+			(xy 373.38 53.34) (xy 373.38 52.07)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "14b02e2d-9d12-4cbf-8405-4550e97dd147")
 	)
 	(wire
 		(pts
@@ -8513,7 +8535,7 @@
 	)
 	(wire
 		(pts
-			(xy 256.54 46.99) (xy 256.794 46.99)
+			(xy 251.46 46.99) (xy 256.794 46.99)
 		)
 		(stroke
 			(width 0)
@@ -9390,6 +9412,16 @@
 			(type default)
 		)
 		(uuid "ec0dfee1-6817-472f-a0d1-37699c273d23")
+	)
+	(wire
+		(pts
+			(xy 367.03 52.07) (xy 367.03 53.34)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "ed253b23-448d-4508-9dcc-9d9701ffc66c")
 	)
 	(wire
 		(pts
@@ -12519,6 +12551,129 @@
 		)
 	)
 	(symbol
+		(lib_id "Device:C")
+		(at 373.38 48.26 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "02ad5f63-84f8-4a8b-87de-194757d6d7e6")
+		(property "Reference" "C2"
+			(at 373.634 52.832 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "1uF"
+			(at 373.634 51.054 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "Capacitor_SMD:C_0805_2012Metric_Pad1.18x1.45mm_HandSolder"
+			(at 374.3452 52.07 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "~"
+			(at 373.38 48.26 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Unpolarized capacitor"
+			(at 373.38 48.26 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "MFR" ""
+			(at 373.38 48.26 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "MFR S/N" ""
+			(at 373.38 48.26 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Supplier 1" "https://www.digikey.com/en/products/detail/murata-electronics/GRM21BR61C106KE15K/2546903"
+			(at 373.38 48.26 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Supplier 1 S/N" "490-6473-1-ND"
+			(at 373.38 48.26 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Supplier 2" ""
+			(at 373.38 48.26 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Supplier 2 S/N" ""
+			(at 373.38 48.26 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "2"
+			(uuid "da67ecda-a6b8-430f-b192-62a59353f320")
+		)
+		(pin "1"
+			(uuid "e349540c-61d8-4ad3-82a2-6ee4da0485af")
+		)
+		(instances
+			(project "Micro_Breakout"
+				(path "/55121ba7-5d22-4fe3-93aa-7f76d75b410c"
+					(reference "C2")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "teensy:Teensy4.1")
 		(at 69.85 76.2 0)
 		(unit 1)
@@ -13648,6 +13803,72 @@
 			(project "Micro_Breakout"
 				(path "/55121ba7-5d22-4fe3-93aa-7f76d75b410c"
 					(reference "J21")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "power:GND")
+		(at 367.03 53.34 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "1cf539e4-c675-40ae-8015-caa7e80ef5c2")
+		(property "Reference" "#PWR063"
+			(at 367.03 59.69 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Value" "GND"
+			(at 367.03 58.42 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 367.03 53.34 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at 367.03 53.34 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
+			(at 367.03 53.34 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "dbb369b9-5c53-48fc-8fca-d4a5cade8a46")
+		)
+		(instances
+			(project "Micro_Breakout"
+				(path "/55121ba7-5d22-4fe3-93aa-7f76d75b410c"
+					(reference "#PWR063")
 					(unit 1)
 				)
 			)
@@ -16646,6 +16867,129 @@
 		)
 	)
 	(symbol
+		(lib_id "Device:C")
+		(at 367.03 48.26 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "662ef84b-82a5-41f0-b72e-62abc379d496")
+		(property "Reference" "C1"
+			(at 367.284 52.832 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "10uF"
+			(at 367.284 51.054 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "Capacitor_SMD:C_0805_2012Metric_Pad1.18x1.45mm_HandSolder"
+			(at 367.9952 52.07 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "~"
+			(at 367.03 48.26 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Unpolarized capacitor"
+			(at 367.03 48.26 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "MFR" ""
+			(at 367.03 48.26 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "MFR S/N" ""
+			(at 367.03 48.26 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Supplier 1" "https://www.digikey.com/en/products/detail/murata-electronics/GRM21BR61C106KE15K/2546903"
+			(at 367.03 48.26 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Supplier 1 S/N" "490-6473-1-ND"
+			(at 367.03 48.26 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Supplier 2" ""
+			(at 367.03 48.26 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Supplier 2 S/N" ""
+			(at 367.03 48.26 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "2"
+			(uuid "3955d65a-8bfc-457f-9527-636672d00092")
+		)
+		(pin "1"
+			(uuid "23f5530a-52be-4e4c-841c-4379a86f123b")
+		)
+		(instances
+			(project "Micro_Breakout"
+				(path "/55121ba7-5d22-4fe3-93aa-7f76d75b410c"
+					(reference "C1")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "Imported:430450422")
 		(at 306.07 180.34 0)
 		(unit 1)
@@ -18198,6 +18542,72 @@
 			(project "Micro_Breakout"
 				(path "/55121ba7-5d22-4fe3-93aa-7f76d75b410c"
 					(reference "#PWR033")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "power:GND")
+		(at 373.38 53.34 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "97f7bb32-c71f-4745-ac81-994a4c0cfb50")
+		(property "Reference" "#PWR064"
+			(at 373.38 59.69 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Value" "GND"
+			(at 373.38 58.42 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 373.38 53.34 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at 373.38 53.34 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
+			(at 373.38 53.34 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "9560a635-ccf5-4d43-b0c6-3ef6bce691bc")
+		)
+		(instances
+			(project "Micro_Breakout"
+				(path "/55121ba7-5d22-4fe3-93aa-7f76d75b410c"
+					(reference "#PWR064")
 					(unit 1)
 				)
 			)
@@ -20303,6 +20713,129 @@
 			(project "Micro_Breakout"
 				(path "/55121ba7-5d22-4fe3-93aa-7f76d75b410c"
 					(reference "#PWR052")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Device:R_US")
+		(at 247.65 46.99 90)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "d239f15e-f8b3-4c02-b06d-605eb8cae44e")
+		(property "Reference" "R1"
+			(at 246.3799 48.768 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
+			)
+		)
+		(property "Value" "0R"
+			(at 246.38 44.704 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
+			)
+		)
+		(property "Footprint" "Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder"
+			(at 247.904 45.974 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "~"
+			(at 247.65 46.99 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Resistor, US symbol"
+			(at 247.65 46.99 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "MFR" ""
+			(at 247.65 46.99 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "MFR S/N" ""
+			(at 247.65 46.99 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Supplier 1" "https://www.digikey.com/en/products/detail/panasonic-electronic-components/ERJ-6GEYJ103V/83062"
+			(at 247.65 46.99 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Supplier 1 S/N" "P10KACT-ND"
+			(at 247.65 46.99 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Supplier 2" ""
+			(at 247.65 46.99 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Supplier 2 S/N" ""
+			(at 247.65 46.99 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "af4adcbb-5583-4188-8256-7a5e69553141")
+		)
+		(pin "2"
+			(uuid "70101c87-4710-44e4-9b66-f2a05cb641fd")
+		)
+		(instances
+			(project "Micro_Breakout"
+				(path "/55121ba7-5d22-4fe3-93aa-7f76d75b410c"
+					(reference "R1")
 					(unit 1)
 				)
 			)
