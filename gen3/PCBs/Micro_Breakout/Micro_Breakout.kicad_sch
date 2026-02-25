@@ -8145,6 +8145,10 @@
 		(uuid "0b3fb811-032e-4bef-9422-149ce52d20bb")
 	)
 	(no_connect
+		(at 345.44 176.53)
+		(uuid "21ddf04a-6b01-4c3c-881c-f48dfcb4149c")
+	)
+	(no_connect
 		(at 73.66 109.22)
 		(uuid "2702b9db-d7ed-45e6-b291-9c13df5fdea4")
 	)
@@ -8211,10 +8215,6 @@
 	(no_connect
 		(at 41.91 96.52)
 		(uuid "ad5a7e7b-1669-446e-b688-aee1a3a347d2")
-	)
-	(no_connect
-		(at 370.84 186.69)
-		(uuid "c5a6eee8-e303-4e8b-bb6b-db6e8e5c38d0")
 	)
 	(no_connect
 		(at 69.85 109.22)
@@ -9664,7 +9664,7 @@
 	)
 	(global_label "PWM1"
 		(shape input)
-		(at 345.44 179.07 180)
+		(at 345.44 186.69 180)
 		(fields_autoplaced yes)
 		(effects
 			(font
@@ -9674,7 +9674,7 @@
 		)
 		(uuid "096c471e-15ea-4da0-be4d-5dedcb8887f9")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 337.0725 179.07 0)
+			(at 337.0725 186.69 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -10192,22 +10192,22 @@
 	)
 	(global_label "PWM2"
 		(shape input)
-		(at 345.44 181.61 180)
+		(at 370.84 184.15 0)
 		(fields_autoplaced yes)
 		(effects
 			(font
 				(size 1.27 1.27)
 			)
-			(justify right)
+			(justify left)
 		)
 		(uuid "2f2cce5f-9bcd-40f2-a7e0-03c70ae510cb")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 337.0725 181.61 0)
+			(at 379.2075 184.15 0)
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
-				(justify right)
+				(justify left)
 				(hide yes)
 			)
 		)
@@ -10522,22 +10522,22 @@
 	)
 	(global_label "PWM5"
 		(shape input)
-		(at 370.84 179.07 0)
+		(at 345.44 181.61 180)
 		(fields_autoplaced yes)
 		(effects
 			(font
 				(size 1.27 1.27)
 			)
-			(justify left)
+			(justify right)
 		)
 		(uuid "49edbc70-6fd5-471a-8750-87e0a5b40621")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 379.2075 179.07 0)
+			(at 337.0725 181.61 0)
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
-				(justify left)
+				(justify right)
 				(hide yes)
 			)
 		)
@@ -10698,22 +10698,22 @@
 	)
 	(global_label "PWM0"
 		(shape input)
-		(at 345.44 176.53 180)
+		(at 370.84 186.69 0)
 		(fields_autoplaced yes)
 		(effects
 			(font
 				(size 1.27 1.27)
 			)
-			(justify right)
+			(justify left)
 		)
 		(uuid "5f670dde-2c84-4663-9ea9-cb547c73b5fd")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 337.0725 176.53 0)
+			(at 379.2075 186.69 0)
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
-				(justify right)
+				(justify left)
 				(hide yes)
 			)
 		)
@@ -10984,22 +10984,22 @@
 	)
 	(global_label "PWM7"
 		(shape input)
-		(at 370.84 184.15 0)
+		(at 345.44 179.07 180)
 		(fields_autoplaced yes)
 		(effects
 			(font
 				(size 1.27 1.27)
 			)
-			(justify left)
+			(justify right)
 		)
 		(uuid "727f2f5d-9bb4-4051-950e-d4fec537907f")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 379.2075 184.15 0)
+			(at 337.0725 179.07 0)
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
-				(justify left)
+				(justify right)
 				(hide yes)
 			)
 		)
@@ -12062,7 +12062,7 @@
 	)
 	(global_label "PWM6"
 		(shape input)
-		(at 370.84 181.61 0)
+		(at 370.84 179.07 0)
 		(fields_autoplaced yes)
 		(effects
 			(font
@@ -12072,7 +12072,7 @@
 		)
 		(uuid "c190df2e-3870-423b-88e3-93809101e5d9")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 379.2075 181.61 0)
+			(at 379.2075 179.07 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -12370,7 +12370,7 @@
 	)
 	(global_label "PWM4"
 		(shape input)
-		(at 370.84 176.53 0)
+		(at 370.84 181.61 0)
 		(fields_autoplaced yes)
 		(effects
 			(font
@@ -12380,7 +12380,7 @@
 		)
 		(uuid "eb7f73cb-1095-4249-9415-1a4841b1ddc7")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 379.2075 176.53 0)
+			(at 379.2075 181.61 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -15299,72 +15299,6 @@
 			(project "Micro_Breakout"
 				(path "/55121ba7-5d22-4fe3-93aa-7f76d75b410c"
 					(reference "#PWR03")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "power:GND")
-		(at 345.44 186.69 0)
-		(unit 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(dnp no)
-		(fields_autoplaced yes)
-		(uuid "2a1af3ef-a365-458b-9a1c-7e536bd84206")
-		(property "Reference" "#PWR02"
-			(at 345.44 193.04 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Value" "GND"
-			(at 345.44 191.77 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Footprint" ""
-			(at 345.44 186.69 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Datasheet" ""
-			(at 345.44 186.69 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
-			(at 345.44 186.69 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(pin "1"
-			(uuid "2e4f616d-57d9-4d75-b854-09ae0881de3f")
-		)
-		(instances
-			(project "Micro_Breakout"
-				(path "/55121ba7-5d22-4fe3-93aa-7f76d75b410c"
-					(reference "#PWR02")
 					(unit 1)
 				)
 			)
@@ -21659,6 +21593,71 @@
 			(project "Micro_Breakout"
 				(path "/55121ba7-5d22-4fe3-93aa-7f76d75b410c"
 					(reference "#PWR035")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "power:GND")
+		(at 370.84 176.53 90)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "d90906ee-4117-4f99-bd6c-258c0a8d7c7c")
+		(property "Reference" "#PWR02"
+			(at 377.19 176.53 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Value" "GND"
+			(at 375.666 176.53 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 370.84 176.53 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at 370.84 176.53 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
+			(at 370.84 176.53 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "41882e0a-c31a-4b5e-8e2d-319c3bc14e62")
+		)
+		(instances
+			(project "Micro_Breakout"
+				(path "/55121ba7-5d22-4fe3-93aa-7f76d75b410c"
+					(reference "#PWR02")
 					(unit 1)
 				)
 			)
