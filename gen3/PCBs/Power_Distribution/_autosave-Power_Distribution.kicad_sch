@@ -17902,7 +17902,6 @@
 		(in_bom yes)
 		(on_board yes)
 		(dnp no)
-		(fields_autoplaced yes)
 		(uuid "0a32ad1f-e59c-4c43-a7fe-d1b8f7870910")
 		(property "Reference" "J6"
 			(at 92.71 28.7019 90)
@@ -17913,8 +17912,8 @@
 				(justify right)
 			)
 		)
-		(property "Value" "1098169"
-			(at 92.71 31.2419 90)
+		(property "Value" "CUI_TBL008V-1000-04BE"
+			(at 78.486 22.098 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -18480,7 +18479,6 @@
 		(in_bom yes)
 		(on_board yes)
 		(dnp no)
-		(fields_autoplaced yes)
 		(uuid "147556ab-1036-4c97-9703-1d585308bc09")
 		(property "Reference" "J5"
 			(at 66.04 28.9559 90)
@@ -18491,8 +18489,8 @@
 				(justify right)
 			)
 		)
-		(property "Value" "1098169"
-			(at 66.04 31.4959 90)
+		(property "Value" "CUI_TBL008V-1000-04BE"
+			(at 51.816 22.352 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -18830,7 +18828,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "430450228"
+		(property "Value" "0430450212"
 			(at 67.818 179.3239 0)
 			(effects
 				(font
@@ -19458,7 +19456,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "430450228"
+		(property "Value" "430450212"
 			(at 40.386 163.8299 0)
 			(effects
 				(font
@@ -20812,7 +20810,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "430450228"
+		(property "Value" "430450212"
 			(at 40.386 156.2099 0)
 			(effects
 				(font
@@ -21395,7 +21393,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "430450228"
+		(property "Value" "0430450212"
 			(at 67.818 164.0839 0)
 			(effects
 				(font
@@ -21586,7 +21584,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "430450228"
+		(property "Value" "0430450212"
 			(at 67.818 171.7039 0)
 			(effects
 				(font
@@ -24881,7 +24879,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "430450228"
+		(property "Value" "0430450212"
 			(at 40.386 179.0699 0)
 			(effects
 				(font
@@ -27758,7 +27756,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "430450228"
+		(property "Value" "0430450212"
 			(at 40.386 171.4499 0)
 			(effects
 				(font
@@ -29655,7 +29653,6 @@
 		(in_bom yes)
 		(on_board yes)
 		(dnp no)
-		(fields_autoplaced yes)
 		(uuid "e9288f12-3bf7-4bcc-8ef1-0604c38e5d5e")
 		(property "Reference" "J4"
 			(at 39.37 28.7019 90)
@@ -29666,8 +29663,8 @@
 				(justify right)
 			)
 		)
-		(property "Value" "1098169"
-			(at 39.37 31.2419 90)
+		(property "Value" "CUI_TBL008V-1000-04BE"
+			(at 25.146 22.098 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -29675,7 +29672,7 @@
 				(justify right)
 			)
 		)
-		(property "Footprint" "Imported_Footprints:CUI_TBL008V-1000-04BE"
+		(property "Footprint" "Connector_AMASS:AMASS_XT60PW-F_1x02_P7.20mm_Horizontal"
 			(at 32.766 29.972 0)
 			(effects
 				(font
@@ -30103,7 +30100,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "430450228"
+		(property "Value" "0430450212"
 			(at 67.818 156.4639 0)
 			(effects
 				(font
@@ -30608,8 +30605,8 @@
 				(justify right)
 			)
 		)
-		(property "Value" "1098169"
-			(at 118.364 30.9879 90)
+		(property "Value" "CUI_TBL008V-1000-04BE"
+			(at 104.14 21.844 90)
 			(effects
 				(font
 					(size 1.27 1.27)
