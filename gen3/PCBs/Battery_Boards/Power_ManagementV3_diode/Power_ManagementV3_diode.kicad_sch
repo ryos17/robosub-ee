@@ -8376,7 +8376,7 @@
 	)
 	(text "50A, 0.55Vf\nMinimal Pw at high current"
 		(exclude_from_sim no)
-		(at -318.135 200.914 0)
+		(at -318.135 103.124 0)
 		(effects
 			(font
 				(size 0.889 0.889)
@@ -8469,7 +8469,7 @@
 	)
 	(text "High Current Diode"
 		(exclude_from_sim no)
-		(at -309.118 181.102 0)
+		(at -309.118 83.312 0)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -8749,6 +8749,16 @@
 		)
 		(uuid "9fab92bc-1540-45e8-9eb4-931646055abe")
 	)
+	(text "High Current Diode"
+		(exclude_from_sim no)
+		(at -298.958 179.832 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+		(uuid "a4effaf2-9be2-47a1-91a0-7a5aa208b48a")
+	)
 	(text "slap a heat sink on it"
 		(exclude_from_sim no)
 		(at -233.934 210.058 0)
@@ -8791,6 +8801,17 @@
 			)
 		)
 		(uuid "af1f5532-803e-428c-bf8b-57320070830c")
+	)
+	(text "50A, 0.55Vf\nMinimal Pw at high current"
+		(exclude_from_sim no)
+		(at -307.975 199.644 0)
+		(effects
+			(font
+				(size 0.889 0.889)
+			)
+			(justify left)
+		)
+		(uuid "affac869-039e-4e8e-b9e8-c3fbe20c6763")
 	)
 	(text "To fix as of 6/23/25:\n--Neo pixel pads\n--Neo caps to ground\n--Batt1<Batt2 logic (specifically on the OP-amp/inversion circuit)\n"
 		(exclude_from_sim no)
@@ -9405,7 +9426,7 @@
 		(uuid "9ce1d7d2-8bf7-41a9-856e-1160e8ee4a51")
 	)
 	(junction
-		(at -328.93 190.5)
+		(at -328.93 92.71)
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "9f3c6ef5-e1b6-4023-ab83-6f024128ae96")
@@ -9421,6 +9442,12 @@
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "a10cfb51-2f19-4d38-96fa-8339a9ba49df")
+	)
+	(junction
+		(at -318.77 189.23)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "a3ee310d-1bc8-4c37-9c45-019bd8c585ed")
 	)
 	(junction
 		(at 366.014 117.983)
@@ -9781,6 +9808,16 @@
 			(type default)
 		)
 		(uuid "0406b617-e247-49f7-baee-43fdf42c95fc")
+	)
+	(wire
+		(pts
+			(xy -278.13 189.23) (xy -271.78 189.23)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "0451f202-62b2-4c9f-84ba-dca926937d1d")
 	)
 	(wire
 		(pts
@@ -12794,6 +12831,16 @@
 	)
 	(wire
 		(pts
+			(xy -318.77 189.23) (xy -318.77 191.77)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "d3def400-cb9e-40a0-b060-40c46915e6a7")
+	)
+	(wire
+		(pts
 			(xy 213.868 229.235) (xy 213.868 226.695)
 		)
 		(stroke
@@ -12904,7 +12951,7 @@
 	)
 	(wire
 		(pts
-			(xy -288.29 190.5) (xy -281.94 190.5)
+			(xy -288.29 92.71) (xy -281.94 92.71)
 		)
 		(stroke
 			(width 0)
@@ -13374,7 +13421,7 @@
 	)
 	(wire
 		(pts
-			(xy -328.93 190.5) (xy -328.93 193.04)
+			(xy -328.93 92.71) (xy -328.93 95.25)
 		)
 		(stroke
 			(width 0)
@@ -43719,6 +43766,126 @@
 		)
 	)
 	(symbol
+		(lib_id "power:VPP")
+		(at -271.78 189.23 0)
+		(mirror y)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "0421d92a-7730-4db9-b64a-887b23bf7d9b")
+		(property "Reference" "#PWR0205"
+			(at -271.78 193.04 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Value" "+BATT"
+			(at -271.78 185.42 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at -271.78 189.23 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at -271.78 189.23 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"VPP\""
+			(at -271.78 189.23 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "MFR" ""
+			(at -271.78 189.23 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "MFR S/N" ""
+			(at -271.78 189.23 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Supplier 1" ""
+			(at -271.78 189.23 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Supplier 1 S/N" ""
+			(at -271.78 189.23 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Supplier 2" ""
+			(at -271.78 189.23 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Supplier 2 S/N" ""
+			(at -271.78 189.23 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "773b5d4d-f418-41ec-b77a-5fcdc74cb253")
+		)
+		(instances
+			(project "Power_ManagementV3_diode"
+				(path "/1c59de6a-87fe-4223-8898-4b0383164a31"
+					(reference "#PWR0205")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "power:GND")
 		(at 102.362 121.2215 0)
 		(unit 1)
@@ -48733,7 +48900,7 @@
 	)
 	(symbol
 		(lib_id "power:VPP")
-		(at -281.94 190.5 0)
+		(at -281.94 92.71 0)
 		(mirror y)
 		(unit 1)
 		(exclude_from_sim no)
@@ -48742,7 +48909,7 @@
 		(dnp no)
 		(uuid "3db0a0b9-cf76-4c71-8547-757f5f0cc6e1")
 		(property "Reference" "#PWR078"
-			(at -281.94 194.31 0)
+			(at -281.94 96.52 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -48751,7 +48918,7 @@
 			)
 		)
 		(property "Value" "+BATT"
-			(at -281.94 186.69 0)
+			(at -281.94 88.9 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -48759,7 +48926,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at -281.94 190.5 0)
+			(at -281.94 92.71 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -48768,7 +48935,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at -281.94 190.5 0)
+			(at -281.94 92.71 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -48777,7 +48944,7 @@
 			)
 		)
 		(property "Description" "Power symbol creates a global label with name \"VPP\""
-			(at -281.94 190.5 0)
+			(at -281.94 92.71 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -48786,7 +48953,7 @@
 			)
 		)
 		(property "MFR" ""
-			(at -281.94 190.5 0)
+			(at -281.94 92.71 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -48795,7 +48962,7 @@
 			)
 		)
 		(property "MFR S/N" ""
-			(at -281.94 190.5 0)
+			(at -281.94 92.71 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -48804,7 +48971,7 @@
 			)
 		)
 		(property "Supplier 1" ""
-			(at -281.94 190.5 0)
+			(at -281.94 92.71 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -48813,7 +48980,7 @@
 			)
 		)
 		(property "Supplier 1 S/N" ""
-			(at -281.94 190.5 0)
+			(at -281.94 92.71 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -48822,7 +48989,7 @@
 			)
 		)
 		(property "Supplier 2" ""
-			(at -281.94 190.5 0)
+			(at -281.94 92.71 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -48831,7 +48998,7 @@
 			)
 		)
 		(property "Supplier 2 S/N" ""
-			(at -281.94 190.5 0)
+			(at -281.94 92.71 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -52242,6 +52409,126 @@
 		)
 	)
 	(symbol
+		(lib_id "power:VPP")
+		(at -318.77 189.23 0)
+		(mirror y)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "6551a8ae-cb1c-4846-aa3d-a2d5b7220b9d")
+		(property "Reference" "#PWR0204"
+			(at -318.77 193.04 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Value" "+EXT_LV_SUPPLY"
+			(at -318.77 185.42 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at -318.77 189.23 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at -318.77 189.23 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"VPP\""
+			(at -318.77 189.23 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "MFR" ""
+			(at -318.77 189.23 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "MFR S/N" ""
+			(at -318.77 189.23 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Supplier 1" ""
+			(at -318.77 189.23 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Supplier 1 S/N" ""
+			(at -318.77 189.23 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Supplier 2" ""
+			(at -318.77 189.23 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Supplier 2 S/N" ""
+			(at -318.77 189.23 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "0a06ce39-e8a6-44d4-8b14-26d6fa15cc2a")
+		)
+		(instances
+			(project "Power_ManagementV3_diode"
+				(path "/1c59de6a-87fe-4223-8898-4b0383164a31"
+					(reference "#PWR0204")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "Device:R_US")
 		(at -330.2 245.11 0)
 		(mirror y)
@@ -54807,7 +55094,7 @@
 	)
 	(symbol
 		(lib_id "power:VPP")
-		(at -328.93 190.5 0)
+		(at -328.93 92.71 0)
 		(mirror y)
 		(unit 1)
 		(exclude_from_sim no)
@@ -54816,7 +55103,7 @@
 		(dnp no)
 		(uuid "795105ea-a2af-4282-9f14-36e117704114")
 		(property "Reference" "#PWR084"
-			(at -328.93 194.31 0)
+			(at -328.93 96.52 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -54825,7 +55112,7 @@
 			)
 		)
 		(property "Value" "+EXT_LV_SUPPLY"
-			(at -328.93 186.69 0)
+			(at -328.93 88.9 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -54833,7 +55120,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at -328.93 190.5 0)
+			(at -328.93 92.71 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -54842,7 +55129,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at -328.93 190.5 0)
+			(at -328.93 92.71 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -54851,7 +55138,7 @@
 			)
 		)
 		(property "Description" "Power symbol creates a global label with name \"VPP\""
-			(at -328.93 190.5 0)
+			(at -328.93 92.71 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -54860,7 +55147,7 @@
 			)
 		)
 		(property "MFR" ""
-			(at -328.93 190.5 0)
+			(at -328.93 92.71 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -54869,7 +55156,7 @@
 			)
 		)
 		(property "MFR S/N" ""
-			(at -328.93 190.5 0)
+			(at -328.93 92.71 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -54878,7 +55165,7 @@
 			)
 		)
 		(property "Supplier 1" ""
-			(at -328.93 190.5 0)
+			(at -328.93 92.71 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -54887,7 +55174,7 @@
 			)
 		)
 		(property "Supplier 1 S/N" ""
-			(at -328.93 190.5 0)
+			(at -328.93 92.71 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -54896,7 +55183,7 @@
 			)
 		)
 		(property "Supplier 2" ""
-			(at -328.93 190.5 0)
+			(at -328.93 92.71 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -54905,7 +55192,7 @@
 			)
 		)
 		(property "Supplier 2 S/N" ""
-			(at -328.93 190.5 0)
+			(at -328.93 92.71 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -55237,6 +55524,134 @@
 		)
 	)
 	(symbol
+		(lib_id "Imported_Symbols:STPS5045SG-TR")
+		(at -278.13 189.23 0)
+		(mirror y)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "7a3a6e59-f408-430a-9e7d-d9803e0e84c9")
+		(property "Reference" "U18"
+			(at -298.45 182.372 0)
+			(effects
+				(font
+					(size 1.524 1.524)
+				)
+			)
+		)
+		(property "Value" "SRT60L100DC-R"
+			(at -298.45 181.61 0)
+			(effects
+				(font
+					(size 1.524 1.524)
+				)
+				(hide yes)
+			)
+		)
+		(property "Footprint" "Package_TO_SOT_SMD:TO-263-2"
+			(at -281.178 205.994 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+					(italic yes)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "https://www.st.com/content/ccc/resource/technical/document/datasheet/65/29/29/69/d0/df/47/9c/DM00049255.pdf/files/DM00049255.pdf/jcr:content/translations/en.DM00049255.pdf"
+			(at -277.622 202.438 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+					(italic yes)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "C5292066"
+			(at -278.13 189.23 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Supplier 1" "https://www.digikey.com/en/products/detail/stmicroelectronics/STPS5045SG-TR/3661704"
+			(at -290.068 199.898 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Supplier 1 S/N" "497-13279-1-ND"
+			(at -308.61 206.756 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "MFR" ""
+			(at -278.13 189.23 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "MFR S/N" ""
+			(at -278.13 189.23 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Supplier 2" ""
+			(at -278.13 189.23 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Supplier 2 S/N" ""
+			(at -278.13 189.23 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "2"
+			(uuid "52d257a0-23c5-4af1-b5fb-a66026a8e822")
+		)
+		(pin "3"
+			(uuid "be9e8fce-368b-4981-83a5-2e1f223177f4")
+		)
+		(pin "1"
+			(uuid "b77d782f-e532-47c7-a5ee-2271985814a4")
+		)
+		(instances
+			(project "Power_ManagementV3_diode"
+				(path "/1c59de6a-87fe-4223-8898-4b0383164a31"
+					(reference "U18")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "power:GND")
 		(at 29.2735 251.206 0)
 		(unit 1)
@@ -55436,7 +55851,7 @@
 	)
 	(symbol
 		(lib_id "Imported_Symbols:STPS5045SG-TR")
-		(at -288.29 190.5 0)
+		(at -288.29 92.71 0)
 		(mirror y)
 		(unit 1)
 		(exclude_from_sim no)
@@ -55445,7 +55860,7 @@
 		(dnp no)
 		(uuid "7d0bca89-efaf-4c47-a8c9-0e559ec53df8")
 		(property "Reference" "U13"
-			(at -308.61 183.642 0)
+			(at -308.61 85.852 0)
 			(effects
 				(font
 					(size 1.524 1.524)
@@ -55453,7 +55868,7 @@
 			)
 		)
 		(property "Value" "STPS5045SG-TR"
-			(at -308.61 182.88 0)
+			(at -308.61 85.09 0)
 			(effects
 				(font
 					(size 1.524 1.524)
@@ -55462,7 +55877,7 @@
 			)
 		)
 		(property "Footprint" "Imported_Footprints:D2PAK_STM"
-			(at -291.338 207.264 0)
+			(at -291.338 109.474 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -55472,7 +55887,7 @@
 			)
 		)
 		(property "Datasheet" "https://www.st.com/content/ccc/resource/technical/document/datasheet/65/29/29/69/d0/df/47/9c/DM00049255.pdf/files/DM00049255.pdf/jcr:content/translations/en.DM00049255.pdf"
-			(at -287.782 203.708 0)
+			(at -287.782 105.918 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -55482,7 +55897,7 @@
 			)
 		)
 		(property "Description" ""
-			(at -288.29 190.5 0)
+			(at -288.29 92.71 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -55491,7 +55906,7 @@
 			)
 		)
 		(property "Supplier 1" "https://www.digikey.com/en/products/detail/stmicroelectronics/STPS5045SG-TR/3661704"
-			(at -300.228 201.168 0)
+			(at -300.228 103.378 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -55500,7 +55915,7 @@
 			)
 		)
 		(property "Supplier 1 S/N" "497-13279-1-ND"
-			(at -318.77 208.026 0)
+			(at -318.77 110.236 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -55509,7 +55924,7 @@
 			)
 		)
 		(property "MFR" ""
-			(at -288.29 190.5 0)
+			(at -288.29 92.71 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -55518,7 +55933,7 @@
 			)
 		)
 		(property "MFR S/N" ""
-			(at -288.29 190.5 0)
+			(at -288.29 92.71 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -55527,7 +55942,7 @@
 			)
 		)
 		(property "Supplier 2" ""
-			(at -288.29 190.5 0)
+			(at -288.29 92.71 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -55536,7 +55951,7 @@
 			)
 		)
 		(property "Supplier 2 S/N" ""
-			(at -288.29 190.5 0)
+			(at -288.29 92.71 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -60401,7 +60816,7 @@
 				(justify right)
 			)
 		)
-		(property "Value" "0.1u"
+		(property "Value" "0.1uF"
 			(at -224.79 231.1399 0)
 			(effects
 				(font
