@@ -6,8 +6,8 @@
 	(paper "A3")
 	(title_block
 		(title "Main Microcontroller Breakout Board")
-		(date "2026/2/21")
-		(rev "2.0")
+		(date "2026-04-07")
+		(rev "3.0")
 		(company "Stanford Robosub")
 		(comment 1 "Ryota Sato - ryos17@stanford.edu")
 	)
@@ -7905,16 +7905,16 @@
 		(uuid "23fb4885-b965-468b-941e-83365d281e3b")
 	)
 	(junction
+		(at 189.23 57.15)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "272dd67c-12d1-4455-a791-eaf53f87cebe")
+	)
+	(junction
 		(at 346.456 209.55)
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "2fe6c6e4-3f45-4d7f-be3c-5c8649c74b75")
-	)
-	(junction
-		(at 189.484 59.69)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "31d732dd-6163-4ba1-b5a6-6e307daaeb5e")
 	)
 	(junction
 		(at 299.72 236.22)
@@ -8013,12 +8013,6 @@
 		(uuid "8defb411-b96a-49fb-b78e-9c2ca0bf1235")
 	)
 	(junction
-		(at 189.484 57.15)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "8ef05764-f00d-4544-aa2b-6e3ee36f082e")
-	)
-	(junction
 		(at 270.51 236.22)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -8097,6 +8091,12 @@
 		(uuid "e0f7533d-7f81-4989-9000-f831710ded33")
 	)
 	(junction
+		(at 189.23 59.69)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "e25170ef-6a33-4da6-8bb7-0ad02957fc80")
+	)
+	(junction
 		(at 373.126 77.47)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -8141,7 +8141,7 @@
 		(uuid "01cd81bf-f911-4552-8021-811264e57c21")
 	)
 	(no_connect
-		(at 209.804 52.07)
+		(at 209.55 52.07)
 		(uuid "0b3fb811-032e-4bef-9422-149ce52d20bb")
 	)
 	(no_connect
@@ -8248,7 +8248,7 @@
 	)
 	(wire
 		(pts
-			(xy 189.484 54.61) (xy 189.484 57.15)
+			(xy 189.23 54.61) (xy 189.23 57.15)
 		)
 		(stroke
 			(width 0)
@@ -8738,6 +8738,16 @@
 	)
 	(wire
 		(pts
+			(xy 189.23 57.15) (xy 189.23 59.69)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "6831f5be-cf8b-4e03-b759-d857c6c2538e")
+	)
+	(wire
+		(pts
 			(xy 104.14 180.34) (xy 100.33 180.34)
 		)
 		(stroke
@@ -9075,16 +9085,6 @@
 			(type default)
 		)
 		(uuid "a32b5509-37ce-4e34-b1d0-91482b8d85ed")
-	)
-	(wire
-		(pts
-			(xy 189.484 57.15) (xy 189.484 59.69)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "a376bfae-c8c5-4744-ab4a-504cb4b295cd")
 	)
 	(wire
 		(pts
@@ -9428,16 +9428,6 @@
 	)
 	(wire
 		(pts
-			(xy 185.42 59.69) (xy 189.484 59.69)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "dd5da574-6b4f-4bf4-88cb-38c7d118bc00")
-	)
-	(wire
-		(pts
 			(xy 143.51 190.5) (xy 140.97 190.5)
 		)
 		(stroke
@@ -9545,6 +9535,16 @@
 			(type default)
 		)
 		(uuid "f2cef5ed-bccd-4f69-a7b0-fa839527cb72")
+	)
+	(wire
+		(pts
+			(xy 189.23 59.69) (xy 189.23 60.96)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "f3c60668-54da-4da3-bf54-47b64b6cbddd")
 	)
 	(wire
 		(pts
@@ -14864,7 +14864,7 @@
 	)
 	(symbol
 		(lib_id "power:+3.3V")
-		(at 199.644 39.37 0)
+		(at 199.39 39.37 0)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -14872,7 +14872,7 @@
 		(dnp no)
 		(uuid "268bfc31-299d-4349-883d-864dba9221bf")
 		(property "Reference" "#PWR012"
-			(at 199.644 43.18 0)
+			(at 199.39 43.18 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -14881,7 +14881,7 @@
 			)
 		)
 		(property "Value" "+3.3V"
-			(at 199.644 35.56 0)
+			(at 199.39 35.56 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -14889,7 +14889,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 199.644 39.37 0)
+			(at 199.39 39.37 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -14898,7 +14898,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 199.644 39.37 0)
+			(at 199.39 39.37 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -14907,7 +14907,7 @@
 			)
 		)
 		(property "Description" "Power symbol creates a global label with name \"+3.3V\""
-			(at 199.644 39.37 0)
+			(at 199.39 39.37 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -15504,7 +15504,7 @@
 	)
 	(symbol
 		(lib_id "power:GND")
-		(at 185.42 59.69 0)
+		(at 189.23 60.96 0)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -15513,7 +15513,7 @@
 		(fields_autoplaced yes)
 		(uuid "32ac0e64-76d6-4f87-ba79-44ee1c5eb229")
 		(property "Reference" "#PWR018"
-			(at 185.42 66.04 0)
+			(at 189.23 67.31 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -15522,7 +15522,7 @@
 			)
 		)
 		(property "Value" "GND"
-			(at 185.42 64.262 0)
+			(at 189.23 65.532 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -15530,7 +15530,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 185.42 59.69 0)
+			(at 189.23 60.96 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -15539,7 +15539,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 185.42 59.69 0)
+			(at 189.23 60.96 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -15548,7 +15548,7 @@
 			)
 		)
 		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
-			(at 185.42 59.69 0)
+			(at 189.23 60.96 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -16335,7 +16335,7 @@
 	)
 	(symbol
 		(lib_id "Sensor_Temperature:MCP9808_MSOP")
-		(at 199.644 52.07 0)
+		(at 199.39 52.07 0)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -16344,7 +16344,7 @@
 		(fields_autoplaced yes)
 		(uuid "4ca1591a-5b0e-45db-a082-1afada20108c")
 		(property "Reference" "U2"
-			(at 216.408 45.7514 0)
+			(at 216.154 45.7514 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -16352,7 +16352,7 @@
 			)
 		)
 		(property "Value" "MCP9808_MSOP"
-			(at 216.408 48.2914 0)
+			(at 216.154 48.2914 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -16360,7 +16360,7 @@
 			)
 		)
 		(property "Footprint" "Package_SO:MSOP-8_3x3mm_P0.65mm"
-			(at 199.644 52.07 0)
+			(at 199.39 52.07 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -16369,7 +16369,7 @@
 			)
 		)
 		(property "Datasheet" "http://ww1.microchip.com/downloads/en/DeviceDoc/22203b.pdf"
-			(at 193.294 40.64 0)
+			(at 193.04 40.64 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -16378,7 +16378,7 @@
 			)
 		)
 		(property "Description" "±0.25°C (±0.5°C) Typical (Maximum), Digital Temperature Sensor, MSOP-8"
-			(at 199.644 52.07 0)
+			(at 199.39 52.07 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -16387,7 +16387,7 @@
 			)
 		)
 		(property "MFR" ""
-			(at 199.644 52.07 0)
+			(at 199.39 52.07 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -16396,7 +16396,7 @@
 			)
 		)
 		(property "MFR S/N" ""
-			(at 199.644 52.07 0)
+			(at 199.39 52.07 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -16405,7 +16405,7 @@
 			)
 		)
 		(property "Supplier 1" "https://www.digikey.com/en/products/detail/microchip-technology/MCP9808T-E-MS/2803667"
-			(at 199.644 52.07 0)
+			(at 199.39 52.07 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -16414,7 +16414,7 @@
 			)
 		)
 		(property "Supplier 1 S/N" "MCP9808T-E/MSCT-ND"
-			(at 199.644 52.07 0)
+			(at 199.39 52.07 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -16423,7 +16423,7 @@
 			)
 		)
 		(property "Supplier 2" ""
-			(at 199.644 52.07 0)
+			(at 199.39 52.07 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -16432,7 +16432,7 @@
 			)
 		)
 		(property "Supplier 2 S/N" ""
-			(at 199.644 52.07 0)
+			(at 199.39 52.07 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -22166,7 +22166,7 @@
 	)
 	(symbol
 		(lib_id "power:GND")
-		(at 199.644 64.77 0)
+		(at 199.39 64.77 0)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -22175,7 +22175,7 @@
 		(fields_autoplaced yes)
 		(uuid "eb971d69-6764-41e2-bcbe-cf12f33828ad")
 		(property "Reference" "#PWR020"
-			(at 199.644 71.12 0)
+			(at 199.39 71.12 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -22184,7 +22184,7 @@
 			)
 		)
 		(property "Value" "GND"
-			(at 199.644 69.342 0)
+			(at 199.39 69.342 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -22192,7 +22192,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 199.644 64.77 0)
+			(at 199.39 64.77 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -22201,7 +22201,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 199.644 64.77 0)
+			(at 199.39 64.77 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -22210,7 +22210,7 @@
 			)
 		)
 		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
-			(at 199.644 64.77 0)
+			(at 199.39 64.77 0)
 			(effects
 				(font
 					(size 1.27 1.27)
