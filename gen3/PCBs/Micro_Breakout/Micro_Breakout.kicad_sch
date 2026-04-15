@@ -4124,7 +4124,7 @@
 					(hide yes)
 				)
 			)
-			(property "Datasheet" "https://item.szlcsc.com/421845.html"
+			(property "Datasheet" "https://jlcpcb.com/partdetail/MSKSEMI-AMS1117_33V/C5120796"
 				(at -2.286 0.127 0)
 				(effects
 					(font
@@ -4271,7 +4271,7 @@
 					(hide yes)
 				)
 			)
-			(property "Datasheet" "https://item.szlcsc.com/82618.html"
+			(property "Datasheet" "https://jlcpcb.com/partdetail/STMicroelectronics-L78M05ABDTTR/C58069"
 				(at -2.286 0.127 0)
 				(effects
 					(font
@@ -4653,7 +4653,7 @@
 					(hide yes)
 				)
 			)
-			(property "Datasheet" "https://item.szlcsc.com/98835.html"
+			(property "Datasheet" "https://jlcpcb.com/partdetail/TEConnectivity-MS560702BA0350/C97627"
 				(at -2.286 0.127 0)
 				(effects
 					(font
@@ -5298,7 +5298,7 @@
 					(hide yes)
 				)
 			)
-			(property "Datasheet" "https://list.szlcsc.com/catalog/922.html"
+			(property "Datasheet" "https://jlcpcb.com/partdetail/Sensirion-SHT31_DIS_B25kS/C80862"
 				(at -2.286 0.127 0)
 				(effects
 					(font
@@ -5575,7 +5575,7 @@
 					(hide yes)
 				)
 			)
-			(property "Description" ""
+			(property "Description" "Symbol for Teensy4.1"
 				(at 0 0 0)
 				(effects
 					(font
@@ -13095,7 +13095,7 @@
 				(hide yes)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Symbol for Teensy4.1"
 			(at 69.85 76.2 0)
 			(effects
 				(font

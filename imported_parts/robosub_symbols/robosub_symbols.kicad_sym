@@ -1876,7 +1876,7 @@
 					(hide yes)
 				)
 			)
-			(property "Datasheet" "https://item.szlcsc.com/82618.html"
+			(property "Datasheet" "https://jlcpcb.com/partdetail/STMicroelectronics-L78M05ABDTTR/C58069"
 				(at -2.286 0.127 0)
 				(effects
 					(font
@@ -2024,7 +2024,7 @@
 					(hide yes)
 				)
 			)
-			(property "Datasheet" "https://item.szlcsc.com/98835.html"
+			(property "Datasheet" "https://jlcpcb.com/partdetail/TEConnectivity-MS560702BA0350/C97627"
 				(at -2.286 0.127 0)
 				(effects
 					(font
@@ -2675,7 +2675,7 @@
 					(hide yes)
 				)
 			)
-			(property "Datasheet" "https://list.szlcsc.com/catalog/922.html"
+			(property "Datasheet" "https://jlcpcb.com/partdetail/Sensirion-SHT31_DIS_B25kS/C80862"
 				(at -2.286 0.127 0)
 				(effects
 					(font
@@ -4317,7 +4317,7 @@
     (property "Footprint" "robosub_footprints:SOT-89-3_L4.5-W2.5-P1.50-LS4.2-BR" (id 2) (at 0 -10.16 0)
       (effects (font (size 1.27 1.27) italic) hide)
     )
-    (property "Datasheet" "https://item.szlcsc.com/421845.html" (id 3) (at -2.286 0.127 0)
+    (property "Datasheet" "https://jlcpcb.com/partdetail/MSKSEMI-AMS1117_33V/C5120796" (id 3) (at -2.286 0.127 0)
       (effects (font (size 1.27 1.27)) (justify left) hide)
     )
     (property "ki_keywords" "C5120796" (id 4) (at 0 0 0)
