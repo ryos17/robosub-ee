@@ -1,6 +1,6 @@
 JLC_Part,Symbol_Name,Footprint,Description
-C97627,MS560702BA03-50,robosub_footprints:C97627,
-C80862,SHT31-DIS-B,robosub_footprints:C80862,
-C58069,L78M05ABDT-TR,robosub_footprints:C58069,
-C5120796,AMS1117-3_3V_C5120796,robosub_footprints:C5120796,
-C94847,MCP9808-E{slash}MS,robosub_footprints:C94847,
+C97627,MS560702BA03-50,robosub_footprints:MS560702BA03-50,
+C80862,SHT31-DIS-B,robosub_footprints:SHT31-DIS-B,
+C58069,L78M05ABDT-TR,robosub_footprints:L78M05ABDT-TR,
+C5120796,AMS1117-3_3V_C5120796,robosub_footprints:AMS1117-3_3V_C5120796,
+C94847,MCP9808-E_MS,robosub_footprints:MCP9808-E_MS,

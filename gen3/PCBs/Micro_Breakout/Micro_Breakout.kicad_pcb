@@ -210,7 +210,7 @@
 	(net 86 "unconnected-(U3-CSB-Pad4)")
 	(net 87 "unconnected-(U3-SDI{slash}SDA-Pad7)")
 	(net 88 "unconnected-(U3-VDD-Pad1)")
-	(footprint "robosub_footprints:CONN_SD-43045-005_04_MOL"
+	(footprint "robosub_footprints:430450412"
 		(layer "F.Cu")
 		(uuid "00122b14-bcf9-4edb-8142-912d12c3fcd6")
 		(at 98 88.5 90)
@@ -822,7 +822,7 @@
 			)
 		)
 	)
-	(footprint "robosub_footprints:CONN_SD-43045-005_06_MOL"
+	(footprint "robosub_footprints:430450612"
 		(layer "F.Cu")
 		(uuid "06ec7fbf-06d2-4c20-8718-87762008a5ac")
 		(at 119.500399 91.581498)
@@ -1405,7 +1405,7 @@
 			)
 		)
 	)
-	(footprint "robosub_footprints:CONN_SD-43045-005_04_MOL"
+	(footprint "robosub_footprints:430450412"
 		(layer "F.Cu")
 		(uuid "145cc652-2eed-4ce9-a52b-81411826f382")
 		(at 134.839999 91.499999)
@@ -1798,7 +1798,7 @@
 			)
 		)
 	)
-	(footprint "robosub_footprints:CONN_SD-43045-005_04_MOL"
+	(footprint "robosub_footprints:430450412"
 		(layer "F.Cu")
 		(uuid "15d9a6c6-c3d9-4714-bf17-309e38fe29c6")
 		(at 98 66.5 90)
@@ -2370,7 +2370,7 @@
 		)
 		(embedded_fonts no)
 	)
-	(footprint "robosub_footprints:CONN_SD-43045-005_02_MOL"
+	(footprint "robosub_footprints:430450212"
 		(layer "F.Cu")
 		(uuid "194c4fca-72ec-47f1-b7ba-f1d687a79590")
 		(at 160.339598 73.999999)
@@ -2741,7 +2741,7 @@
 			)
 		)
 	)
-	(footprint "robosub_footprints:CONN_SD-43045-005_04_MOL"
+	(footprint "robosub_footprints:430450412"
 		(layer "F.Cu")
 		(uuid "1b6333cb-b71f-4fc2-96f6-04c46c350167")
 		(at 98 110.5 90)
@@ -3667,7 +3667,7 @@
 			)
 		)
 	)
-	(footprint "robosub_footprints:CONN_SD-43045-005_02_MOL"
+	(footprint "robosub_footprints:430450212"
 		(layer "F.Cu")
 		(uuid "39757a86-185e-48ea-a0a6-914949c60ffa")
 		(at 141.3396 73.94)
@@ -4257,7 +4257,7 @@
 			)
 		)
 	)
-	(footprint "robosub_footprints:CONN_SD-43045-005_02_MOL"
+	(footprint "robosub_footprints:430450212"
 		(layer "F.Cu")
 		(uuid "4b51c772-c69a-4b9a-8f5c-1d8d2a9609d2")
 		(at 150.8396 73.999999)
@@ -4628,7 +4628,7 @@
 			)
 		)
 	)
-	(footprint "robosub_footprints:CONN_SD-43045-005_04_MOL"
+	(footprint "robosub_footprints:430450412"
 		(layer "F.Cu")
 		(uuid "585fbba5-8da4-4ba1-bd19-3133c4a52e10")
 		(at 147.499999 57.059998)
@@ -5021,7 +5021,7 @@
 			)
 		)
 	)
-	(footprint "robosub_footprints:Teensy41"
+	(footprint "robosub_footprints:Teensy4_1"
 		(layer "F.Cu")
 		(uuid "728acf59-7641-425f-bf09-d57f08e2ec85")
 		(at 138.818238 114.92 180)
@@ -7087,7 +7087,7 @@
 			)
 		)
 	)
-	(footprint "robosub_footprints:C58069"
+	(footprint "robosub_footprints:L78M05ABDT-TR"
 		(layer "F.Cu")
 		(uuid "83d2eda5-8845-4bd6-8475-1738b63081e0")
 		(at 76 74 90)
@@ -7424,7 +7424,7 @@
 			)
 		)
 	)
-	(footprint "robosub_footprints:CONN_SD-43045-005_06_MOL"
+	(footprint "robosub_footprints:430450612"
 		(layer "F.Cu")
 		(uuid "849acc53-b5fd-4d89-903b-49d8d824222d")
 		(at 119.499999 56.999999)
@@ -8653,7 +8653,7 @@
 			)
 		)
 	)
-	(footprint "robosub_footprints:C97627"
+	(footprint "robosub_footprints:MS560702BA03-50"
 		(layer "F.Cu")
 		(uuid "8928547d-380c-4b81-98c6-e87edc4cec10")
 		(at 42.900051 79.124968)
@@ -9129,7 +9129,7 @@
 			)
 		)
 	)
-	(footprint "robosub_footprints:CONN_SD-43045-005_04_MOL"
+	(footprint "robosub_footprints:430450412"
 		(layer "F.Cu")
 		(uuid "8a3cbee2-3c0c-4b17-a617-8fcab37bc35b")
 		(at 98 99.500001 90)
@@ -9522,7 +9522,7 @@
 			)
 		)
 	)
-	(footprint "robosub_footprints:C80862"
+	(footprint "robosub_footprints:SHT31-DIS-B"
 		(layer "F.Cu")
 		(uuid "8e2cb134-bd9e-496a-bd5f-18e891c21cab")
 		(at 52.340274 78.137968)
@@ -11020,7 +11020,7 @@
 			)
 		)
 	)
-	(footprint "robosub_footprints:CONN_SD-43045-005_04_MOL"
+	(footprint "robosub_footprints:430450412"
 		(layer "F.Cu")
 		(uuid "a6efdcf9-7d93-464d-9c40-f4532b4ab529")
 		(at 98 77.5 90)
@@ -11871,7 +11871,7 @@
 			)
 		)
 	)
-	(footprint "robosub_footprints:CONN_SD-43045-005_02_MOL"
+	(footprint "robosub_footprints:430450212"
 		(layer "F.Cu")
 		(uuid "b2873cd1-63e8-4bfa-bc2b-cd6c7501a3e1")
 		(at 131.839598 73.94)
@@ -12242,7 +12242,7 @@
 			)
 		)
 	)
-	(footprint "robosub_footprints:C5120796"
+	(footprint "robosub_footprints:AMS1117-3_3V_C5120796"
 		(layer "F.Cu")
 		(uuid "c32caaa6-252c-4526-8fc7-22e778b3b09f")
 		(at 42.985993 73.097918)
@@ -13009,7 +13009,7 @@
 			)
 		)
 	)
-	(footprint "robosub_footprints:C94847"
+	(footprint "robosub_footprints:MCP9808-E_MS"
 		(layer "F.Cu")
 		(uuid "ca0c503d-5b68-4c62-baa3-ef2c36fcabb2")
 		(at 53.131117 72.596419)
@@ -13850,7 +13850,7 @@
 			)
 		)
 	)
-	(footprint "robosub_footprints:CONN_SD-43045-005_04_MOL"
+	(footprint "robosub_footprints:430450412"
 		(layer "F.Cu")
 		(uuid "cd7b4440-b6a8-47ce-a782-5678302e7046")
 		(at 134.499999 57.059998)
@@ -15243,7 +15243,7 @@
 			)
 		)
 	)
-	(footprint "robosub_footprints:CONN_SD-43045-005_04_MOL"
+	(footprint "robosub_footprints:430450412"
 		(layer "F.Cu")
 		(uuid "dee13c14-b062-4409-b7b5-3c3399791a17")
 		(at 98 121.5 90)
@@ -16076,7 +16076,7 @@
 			)
 		)
 	)
-	(footprint "robosub_footprints:CONN_SD-43045-005_06_MOL"
+	(footprint "robosub_footprints:430450612"
 		(layer "F.Cu")
 		(uuid "f64b5762-6a65-41d0-9ea5-502c5930de0a")
 		(at 119.5 74.021499)
@@ -16439,7 +16439,7 @@
 			)
 		)
 	)
-	(footprint "robosub_footprints:SULLINS_SBH11-PBPC-D05-ST-BK"
+	(footprint "robosub_footprints:SBH11-PBPC-D05-ST-BK"
 		(layer "B.Cu")
 		(uuid "0ed18c00-6064-44fe-859a-74184cd9d271")
 		(at 153.92 89.27 180)

@@ -24,7 +24,7 @@
 					)
 				)
 			)
-			(property "Footprint" "robosub_footprints:CONN_SD-43045-005_02_MOL"
+			(property "Footprint" "robosub_footprints:430450212"
 				(at 0 0 0)
 				(effects
 					(font
@@ -423,7 +423,7 @@
 					)
 				)
 			)
-			(property "Footprint" "robosub_footprints:CONN_SD-43045-005_04_MOL"
+			(property "Footprint" "robosub_footprints:430450412"
 				(at 0 0 0)
 				(effects
 					(font
@@ -1038,7 +1038,7 @@
 					)
 				)
 			)
-			(property "Footprint" "robosub_footprints:CONN_SD-43045-005_06_MOL"
+			(property "Footprint" "robosub_footprints:430450612"
 				(at 0 0 0)
 				(effects
 					(font
@@ -1058,7 +1058,7 @@
 					(hide yes)
 				)
 			)
-			(property "Description" "430450612 (see datasheet)"
+			(property "Description" "Symbol for 430450612"
 				(at 0 0 0)
 				(effects
 					(font
@@ -1093,7 +1093,7 @@
 					(hide yes)
 				)
 			)
-  (property "ki_description" "430450612 (see datasheet)" (id 97) (at 0 0 0)
+  (property "ki_description" "Symbol for 430450612" (id 97) (at 0 0 0)
     (effects (font (size 1.27 1.27)) hide)
   )
 			(symbol "430450612_1_1"
@@ -1866,7 +1866,7 @@
 					)
 				)
 			)
-			(property "Footprint" "robosub_footprints:C58069"
+			(property "Footprint" "robosub_footprints:L78M05ABDT-TR"
 				(at 0 -10.16 0)
 				(effects
 					(font
@@ -2014,7 +2014,7 @@
 					)
 				)
 			)
-			(property "Footprint" "robosub_footprints:C97627"
+			(property "Footprint" "robosub_footprints:MS560702BA03-50"
 				(at 0 -10.16 0)
 				(effects
 					(font
@@ -2259,7 +2259,7 @@
 					(justify left bottom)
 				)
 			)
-			(property "Footprint" "robosub_footprints:SULLINS_SBH11-PBPC-D05-ST-BK"
+			(property "Footprint" "robosub_footprints:SBH11-PBPC-D05-ST-BK"
 				(at 0 0 0)
 				(effects
 					(font
@@ -2665,7 +2665,7 @@
 					)
 				)
 			)
-			(property "Footprint" "robosub_footprints:C80862"
+			(property "Footprint" "robosub_footprints:SHT31-DIS-B"
 				(at 0 -10.16 0)
 				(effects
 					(font
@@ -2914,7 +2914,7 @@
 			)
 			(embedded_fonts no)
 		)
-(symbol "Teensy4.1"
+(symbol "Teensy4_1"
 			(pin_names
 				(offset 1.016)
 			)
@@ -2929,7 +2929,7 @@
 					)
 				)
 			)
-			(property "Value" "Teensy4.1"
+			(property "Value" "Teensy4_1"
 				(at 0 62.23 0)
 				(effects
 					(font
@@ -2937,7 +2937,7 @@
 					)
 				)
 			)
-			(property "Footprint" "robosub_footprints:Teensy41"
+			(property "Footprint" "robosub_footprints:Teensy4_1"
 				(at -10.16 10.16 0)
 				(effects
 					(font
@@ -2964,10 +2964,10 @@
 					(hide yes)
 				)
 			)
-  (property "ki_description" "Symbol for Teensy4.1" (id 97) (at 0 0 0)
+  (property "ki_description" "Symbol for Teensy4_1" (id 97) (at 0 0 0)
     (effects (font (size 1.27 1.27)) hide)
   )
-			(symbol "Teensy4.1_0_0"
+			(symbol "Teensy4_1_0_0"
 				(polyline
 					(pts
 						(xy -22.86 -6.35) (xy 22.86 -6.35)
@@ -4189,7 +4189,7 @@
 					)
 				)
 			)
-			(symbol "Teensy4.1_0_1"
+			(symbol "Teensy4_1_0_1"
 				(rectangle
 					(start -22.86 60.96)
 					(end 22.86 -27.94)
@@ -4213,7 +4213,7 @@
 					)
 				)
 			)
-			(symbol "Teensy4.1_1_1"
+			(symbol "Teensy4_1_1_1"
 				(pin power_in line
 					(at -27.94 54.61 0)
 					(length 5.08)
@@ -4314,7 +4314,7 @@
     (property "Value" "AMS1117-3_3V_C5120796" (id 1) (at 0 -2.54 0)
       (effects (font (size 1.27 1.27)))
     )
-    (property "Footprint" "robosub_footprints:C5120796" (id 2) (at 0 -10.16 0)
+    (property "Footprint" "robosub_footprints:AMS1117-3_3V_C5120796" (id 2) (at 0 -10.16 0)
       (effects (font (size 1.27 1.27) italic) hide)
     )
     (property "Datasheet" "https://jlcpcb.com/partdetail/MSKSEMI-AMS1117_33V/C5120796" (id 3) (at -2.286 0.127 0)
@@ -4363,14 +4363,14 @@
       )
     )
   )
-  (symbol "MCP9808-E/MS"   (in_bom yes) (on_board yes)
+  (symbol "MCP9808-E_MS"   (in_bom yes) (on_board yes)
     (property "Reference" "U" (id 0) (at 0 1.27 0)
       (effects (font (size 1.27 1.27)))
     )
-    (property "Value" "MCP9808-E/MS" (id 1) (at 0 -2.54 0)
+    (property "Value" "MCP9808-E_MS" (id 1) (at 0 -2.54 0)
       (effects (font (size 1.27 1.27)))
     )
-    (property "Footprint" "robosub_footprints:C94847" (id 2) (at 0 -10.16 0)
+    (property "Footprint" "robosub_footprints:MCP9808-E_MS" (id 2) (at 0 -10.16 0)
       (effects (font (size 1.27 1.27) italic) hide)
     )
     (property "Datasheet" "https://jlcpcb.com/partdetail/C94847" (id 3) (at -2.286 0.127 0)
@@ -4383,10 +4383,10 @@
       (effects (font (size 1.27 1.27)) hide)
     )
     
-    (property "ki_description" "MCP9808-E/MS (LCSC C94847)" (id 97) (at 0 0 0)
+    (property "ki_description" "MCP9808-E_MS (LCSC C94847)" (id 97) (at 0 0 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (symbol "MCP9808-E/MS_0_1"
+    (symbol "MCP9808-E_MS_0_1"
       (rectangle
         (start -12.700025400050801 6.350012700025401)
         (end 12.700025400050801 -6.350012700025401)

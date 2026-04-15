@@ -209,6 +209,67 @@ def find_generated_files(work_dir: Path):
     return symbol_src, fp_src_file, model_files
 
 
+def coherent_basename_from_symbol(symbol_name: str) -> str:
+    """
+    Derive a filesystem-safe basename from the symbol name.
+    Symbol name remains the source of truth; we only normalize characters
+    that are invalid in filenames/paths.
+    """
+    name = symbol_name.strip()
+    name = name.replace("{slash}", "_").replace("/", "_").replace("\\", "_").replace(".", "_")
+    name = re.sub(r'[<>:"|?*]', "_", name)
+    name = re.sub(r"\s+", "_", name)
+    name = name.strip("._")
+    return name or "part"
+
+
+def rewrite_footprint_file_identity(fp_path: Path, new_base: str) -> Tuple[Optional[str], Optional[str]]:
+    """
+    Rewrite a footprint file so its internal identity matches new_base.
+    Also updates its model basename to new_base while preserving extension.
+    Returns (old_model_basename, new_model_basename).
+    """
+    text = fp_path.read_text(encoding="utf-8")
+
+    # Header name: (module "NAME"... or (footprint "NAME"...)
+    text = re.sub(
+        r'^(\(\s*(?:module|footprint)\s+")([^"]+)(")',
+        r"\1" + new_base + r"\3",
+        text,
+        count=1,
+        flags=re.M,
+    )
+    text = re.sub(r'(\(descr\s+")([^"]*)(\s+footprint"\))', r"\1" + new_base + r"\3", text, count=1)
+    text = re.sub(r'(\(tags\s+")([^"]*)(\s+footprint[^"]*")', r"\1" + new_base + r"\3", text, count=1)
+    text = re.sub(r'(\(fp_text\s+value\s+)([^\s\)]+)', r"\1" + new_base, text, count=1)
+
+    old_model = None
+    new_model = None
+    m = re.search(r'(\(model\s+"[^"/\\]+[/\\])([^"/\\]+)(")', text)
+    if m:
+        old_model = m.group(2)
+        ext = Path(old_model).suffix or ".step"
+        new_model = "{}{}".format(new_base, ext)
+        text = text.replace(old_model, new_model, 1)
+
+    fp_path.write_text(text, encoding="utf-8")
+    return old_model, new_model
+
+
+def patch_symbol_source_footprint(symbol_src: Path, fp_basename_noext: str) -> None:
+    """
+    Ensure generated source symbol footprint points to the coherent footprint basename.
+    """
+    text = symbol_src.read_text(encoding="utf-8")
+    text_new = re.sub(
+        r'(\(property\s+"Footprint"\s+")([^"]+)(")',
+        r"\1{}:{}\3".format(FP_LIB_NICKNAME, fp_basename_noext),
+        text,
+    )
+    if text_new != text:
+        symbol_src.write_text(text_new, encoding="utf-8")
+
+
 def merge_symbol_into_master(symbol_src: Path) -> None:
     """
     Merge symbol(s) from symbol_src into SYMBOL_LIB.
@@ -537,21 +598,35 @@ def main(argv) -> int:
             print_err("ERROR: No .kicad_sym file produced by JLC2KiCadLib for {}".format(part))
             return 1
 
-        # Copy footprint (if any)
+        # Read symbol name early so we can enforce coherent footprint/model basenames.
+        symbol_name, _, description = extract_symbol_info(symbol_src, None)
+        coherent_base = coherent_basename_from_symbol(symbol_name) if symbol_name else part
+
+        # Copy footprint (if any), renamed to coherent symbol-based basename.
         fp_basename = None
+        old_model_name = None
+        new_model_name = None
         if fp_src_file is not None:
             FP_LIB_DIR.mkdir(parents=True, exist_ok=True)
-            fp_dest = FP_LIB_DIR / fp_src_file.name
+            fp_dest = FP_LIB_DIR / "{}.kicad_mod".format(coherent_base)
             shutil.copy2(fp_src_file, fp_dest)
-            fp_basename = fp_src_file.name
+            old_model_name, new_model_name = rewrite_footprint_file_identity(fp_dest, coherent_base)
+            fp_basename = fp_dest.name
         else:
             print("WARNING: No .kicad_mod footprint file found for this part.")
 
         # Copy 3D models (if any)
         for model_path in model_files:
             MODELS_DIR.mkdir(parents=True, exist_ok=True)
-            dest = MODELS_DIR / model_path.name
+            out_name = model_path.name
+            if old_model_name and new_model_name and model_path.name == old_model_name:
+                out_name = new_model_name
+            dest = MODELS_DIR / out_name
             shutil.copy2(model_path, dest)
+
+        # Ensure symbol footprint property follows the coherent basename.
+        if fp_basename is not None:
+            patch_symbol_source_footprint(symbol_src, os.path.splitext(fp_basename)[0])
 
         # Extract info for logging BEFORE temp dir is deleted
         symbol_name, footprint_str, description = extract_symbol_info(symbol_src, fp_basename)

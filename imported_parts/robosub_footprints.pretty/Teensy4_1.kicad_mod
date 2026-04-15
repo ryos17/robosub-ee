@@ -1,4 +1,4 @@
-(footprint "Teensy41"
+(footprint "Teensy4_1"
 	(version 20241229)
 	(generator "pcbnew")
 	(generator_version "9.0")
@@ -1110,7 +1110,7 @@
 		(uuid "bd193312-333b-4524-9a5f-61023dcdd804")
 	)
 	(embedded_fonts no)
-	(model "${ROBOSUB_3D_MODELS}/Teensy_4.1.step"
+	(model "${ROBOSUB_3D_MODELS}/Teensy4_1.step"
 		(offset
 			(xyz 0 0 3.762)
 		)

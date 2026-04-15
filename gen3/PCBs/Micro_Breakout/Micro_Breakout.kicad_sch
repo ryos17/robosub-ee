@@ -2281,7 +2281,7 @@
 					)
 				)
 			)
-			(property "Footprint" "robosub_footprints:CONN_SD-43045-005_02_MOL"
+			(property "Footprint" "robosub_footprints:430450212"
 				(at 0 0 0)
 				(effects
 					(font
@@ -2677,7 +2677,7 @@
 					)
 				)
 			)
-			(property "Footprint" "robosub_footprints:CONN_SD-43045-005_04_MOL"
+			(property "Footprint" "robosub_footprints:430450412"
 				(at 0 0 0)
 				(effects
 					(font
@@ -3289,7 +3289,7 @@
 					)
 				)
 			)
-			(property "Footprint" "robosub_footprints:CONN_SD-43045-005_06_MOL"
+			(property "Footprint" "robosub_footprints:430450612"
 				(at 0 0 0)
 				(effects
 					(font
@@ -4114,7 +4114,7 @@
 					)
 				)
 			)
-			(property "Footprint" "robosub_footprints:C5120796"
+			(property "Footprint" "robosub_footprints:AMS1117-3_3V_C5120796"
 				(at 0 -10.16 0)
 				(effects
 					(font
@@ -4261,7 +4261,7 @@
 					)
 				)
 			)
-			(property "Footprint" "robosub_footprints:C58069"
+			(property "Footprint" "robosub_footprints:L78M05ABDT-TR"
 				(at 0 -10.16 0)
 				(effects
 					(font
@@ -4386,7 +4386,7 @@
 			)
 			(embedded_fonts no)
 		)
-		(symbol "robosub_symbols:MCP9808-E/MS"
+		(symbol "robosub_symbols:MCP9808-E_MS"
 			(exclude_from_sim no)
 			(in_bom yes)
 			(on_board yes)
@@ -4398,7 +4398,7 @@
 					)
 				)
 			)
-			(property "Value" "MCP9808-E/MS"
+			(property "Value" "MCP9808-E_MS"
 				(at 0 -2.54 0)
 				(effects
 					(font
@@ -4406,7 +4406,7 @@
 					)
 				)
 			)
-			(property "Footprint" "robosub_footprints:C94847"
+			(property "Footprint" "robosub_footprints:MCP9808-E_MS"
 				(at 0 -10.16 0)
 				(effects
 					(font
@@ -4426,7 +4426,7 @@
 					(hide yes)
 				)
 			)
-			(property "Description" "MCP9808-E/MS (LCSC C94847)"
+			(property "Description" "MCP9808-E_MS (LCSC C94847)"
 				(at 0 0 0)
 				(effects
 					(font
@@ -4453,7 +4453,7 @@
 					(hide yes)
 				)
 			)
-			(symbol "MCP9808-E/MS_0_1"
+			(symbol "MCP9808-E_MS_0_1"
 				(rectangle
 					(start -12.7 6.35)
 					(end 12.7 -6.35)
@@ -4643,7 +4643,7 @@
 					)
 				)
 			)
-			(property "Footprint" "robosub_footprints:C97627"
+			(property "Footprint" "robosub_footprints:MS560702BA03-50"
 				(at 0 -10.16 0)
 				(effects
 					(font
@@ -4885,7 +4885,7 @@
 					(justify left bottom)
 				)
 			)
-			(property "Footprint" "robosub_footprints:SULLINS_SBH11-PBPC-D05-ST-BK"
+			(property "Footprint" "robosub_footprints:SBH11-PBPC-D05-ST-BK"
 				(at 0 0 0)
 				(effects
 					(font
@@ -5288,7 +5288,7 @@
 					)
 				)
 			)
-			(property "Footprint" "robosub_footprints:C80862"
+			(property "Footprint" "robosub_footprints:SHT31-DIS-B"
 				(at 0 -10.16 0)
 				(effects
 					(font
@@ -5534,7 +5534,7 @@
 			)
 			(embedded_fonts no)
 		)
-		(symbol "robosub_symbols:Teensy4.1"
+		(symbol "robosub_symbols:Teensy4_1"
 			(pin_names
 				(offset 1.016)
 			)
@@ -5549,7 +5549,7 @@
 					)
 				)
 			)
-			(property "Value" "Teensy4.1"
+			(property "Value" "Teensy4_1"
 				(at 0 62.23 0)
 				(effects
 					(font
@@ -5557,7 +5557,7 @@
 					)
 				)
 			)
-			(property "Footprint" "robosub_footprints:Teensy41"
+			(property "Footprint" "robosub_footprints:Teensy4_1"
 				(at -10.16 10.16 0)
 				(effects
 					(font
@@ -5575,7 +5575,7 @@
 					(hide yes)
 				)
 			)
-			(property "Description" "Symbol for Teensy4.1"
+			(property "Description" "Symbol for Teensy4_1"
 				(at 0 0 0)
 				(effects
 					(font
@@ -5584,7 +5584,7 @@
 					(hide yes)
 				)
 			)
-			(symbol "Teensy4.1_0_0"
+			(symbol "Teensy4_1_0_0"
 				(polyline
 					(pts
 						(xy -22.86 -6.35) (xy 22.86 -6.35)
@@ -6806,7 +6806,7 @@
 					)
 				)
 			)
-			(symbol "Teensy4.1_0_1"
+			(symbol "Teensy4_1_0_1"
 				(rectangle
 					(start -22.86 60.96)
 					(end 22.86 -27.94)
@@ -6830,7 +6830,7 @@
 					)
 				)
 			)
-			(symbol "Teensy4.1_1_1"
+			(symbol "Teensy4_1_1_1"
 				(pin power_in line
 					(at -27.94 54.61 0)
 					(length 5.08)
@@ -13053,7 +13053,7 @@
 		)
 	)
 	(symbol
-		(lib_id "robosub_symbols:Teensy4.1")
+		(lib_id "robosub_symbols:Teensy4_1")
 		(at 69.85 76.2 0)
 		(unit 1)
 		(exclude_from_sim no)
@@ -13069,7 +13069,7 @@
 				)
 			)
 		)
-		(property "Value" "Teensy4.1"
+		(property "Value" "Teensy4_1"
 			(at 69.85 19.812 0)
 			(effects
 				(font
@@ -13077,7 +13077,7 @@
 				)
 			)
 		)
-		(property "Footprint" "robosub_footprints:Teensy41"
+		(property "Footprint" "robosub_footprints:Teensy4_1"
 			(at 59.69 66.04 0)
 			(effects
 				(font
@@ -13095,7 +13095,7 @@
 				(hide yes)
 			)
 		)
-		(property "Description" "Symbol for Teensy4.1"
+		(property "Description" "Symbol for Teensy4_1"
 			(at 69.85 76.2 0)
 			(effects
 				(font
@@ -13782,7 +13782,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "robosub_footprints:C5120796"
+		(property "Footprint" "robosub_footprints:AMS1117-3_3V_C5120796"
 			(at 351.79 140.97 0)
 			(effects
 				(font
@@ -14055,7 +14055,7 @@
 				(hide yes)
 			)
 		)
-		(property "Footprint" "robosub_footprints:CONN_SD-43045-005_06_MOL"
+		(property "Footprint" "robosub_footprints:430450612"
 			(at 191.77 172.72 0)
 			(effects
 				(font
@@ -14157,7 +14157,7 @@
 				(hide yes)
 			)
 		)
-		(property "Footprint" "robosub_footprints:CONN_SD-43045-005_02_MOL"
+		(property "Footprint" "robosub_footprints:430450212"
 			(at 221.742 115.57 0)
 			(effects
 				(font
@@ -14639,7 +14639,7 @@
 				(hide yes)
 			)
 		)
-		(property "Footprint" "robosub_footprints:CONN_SD-43045-005_02_MOL"
+		(property "Footprint" "robosub_footprints:430450212"
 			(at 189.738 115.062 0)
 			(effects
 				(font
@@ -15018,7 +15018,7 @@
 				(hide yes)
 			)
 		)
-		(property "Footprint" "robosub_footprints:CONN_SD-43045-005_02_MOL"
+		(property "Footprint" "robosub_footprints:430450212"
 			(at 251.968 115.57 0)
 			(effects
 				(font
@@ -15212,7 +15212,7 @@
 				(hide yes)
 			)
 		)
-		(property "Footprint" "robosub_footprints:CONN_SD-43045-005_06_MOL"
+		(property "Footprint" "robosub_footprints:430450612"
 			(at 227.33 172.72 0)
 			(effects
 				(font
@@ -15439,7 +15439,7 @@
 				(hide yes)
 			)
 		)
-		(property "Footprint" "robosub_footprints:CONN_SD-43045-005_02_MOL"
+		(property "Footprint" "robosub_footprints:430450212"
 			(at 255.016 127 0)
 			(effects
 				(font
@@ -15882,7 +15882,7 @@
 				(hide yes)
 			)
 		)
-		(property "Footprint" "robosub_footprints:CONN_SD-43045-005_04_MOL"
+		(property "Footprint" "robosub_footprints:430450412"
 			(at 275.59 220.98 0)
 			(effects
 				(font
@@ -16237,7 +16237,7 @@
 		)
 	)
 	(symbol
-		(lib_id "robosub_symbols:MCP9808-E/MS")
+		(lib_id "robosub_symbols:MCP9808-E_MS")
 		(at 201.93 45.72 0)
 		(unit 1)
 		(exclude_from_sim no)
@@ -16254,7 +16254,7 @@
 				)
 			)
 		)
-		(property "Value" "MCP9808-E/MS"
+		(property "Value" "MCP9808-E_MS"
 			(at 201.93 38.1 0)
 			(effects
 				(font
@@ -16262,7 +16262,7 @@
 				)
 			)
 		)
-		(property "Footprint" "robosub_footprints:C94847"
+		(property "Footprint" "robosub_footprints:MCP9808-E_MS"
 			(at 201.93 55.88 0)
 			(effects
 				(font
@@ -16282,7 +16282,7 @@
 				(hide yes)
 			)
 		)
-		(property "Description" "MCP9808-E/MS (LCSC C94847)"
+		(property "Description" "MCP9808-E_MS (LCSC C94847)"
 			(at 201.93 45.72 0)
 			(effects
 				(font
@@ -16362,7 +16362,7 @@
 				(hide yes)
 			)
 		)
-		(property "Footprint" "robosub_footprints:CONN_SD-43045-005_04_MOL"
+		(property "Footprint" "robosub_footprints:430450412"
 			(at 275.59 201.93 0)
 			(effects
 				(font
@@ -17323,7 +17323,7 @@
 				(hide yes)
 			)
 		)
-		(property "Footprint" "robosub_footprints:CONN_SD-43045-005_04_MOL"
+		(property "Footprint" "robosub_footprints:430450412"
 			(at 306.07 182.88 0)
 			(effects
 				(font
@@ -17695,7 +17695,7 @@
 				)
 			)
 		)
-		(property "Footprint" "robosub_footprints:C58069"
+		(property "Footprint" "robosub_footprints:L78M05ABDT-TR"
 			(at 353.06 113.03 0)
 			(effects
 				(font
@@ -18099,7 +18099,7 @@
 				(hide yes)
 			)
 		)
-		(property "Footprint" "robosub_footprints:CONN_SD-43045-005_06_MOL"
+		(property "Footprint" "robosub_footprints:430450612"
 			(at 191.77 205.74 0)
 			(effects
 				(font
@@ -18620,7 +18620,7 @@
 				(hide yes)
 			)
 		)
-		(property "Footprint" "robosub_footprints:CONN_SD-43045-005_04_MOL"
+		(property "Footprint" "robosub_footprints:430450412"
 			(at 239.776 92.71 0)
 			(effects
 				(font
@@ -18753,7 +18753,7 @@
 				(hide yes)
 			)
 		)
-		(property "Footprint" "robosub_footprints:CONN_SD-43045-005_04_MOL"
+		(property "Footprint" "robosub_footprints:430450412"
 			(at 275.59 182.88 0)
 			(effects
 				(font
@@ -19016,7 +19016,7 @@
 				(hide yes)
 			)
 		)
-		(property "Footprint" "robosub_footprints:CONN_SD-43045-005_04_MOL"
+		(property "Footprint" "robosub_footprints:430450412"
 			(at 360.68 207.01 0)
 			(effects
 				(font
@@ -19408,7 +19408,7 @@
 				)
 			)
 		)
-		(property "Footprint" "robosub_footprints:C97627"
+		(property "Footprint" "robosub_footprints:MS560702BA03-50"
 			(at 354.33 57.15 0)
 			(effects
 				(font
@@ -19505,7 +19505,7 @@
 				)
 			)
 		)
-		(property "Footprint" "robosub_footprints:C80862"
+		(property "Footprint" "robosub_footprints:SHT31-DIS-B"
 			(at 275.59 58.42 0)
 			(effects
 				(font
@@ -20507,7 +20507,7 @@
 				(hide yes)
 			)
 		)
-		(property "Footprint" "robosub_footprints:CONN_SD-43045-005_04_MOL"
+		(property "Footprint" "robosub_footprints:430450412"
 			(at 306.07 201.93 0)
 			(effects
 				(font
@@ -20986,7 +20986,7 @@
 				(hide yes)
 			)
 		)
-		(property "Footprint" "robosub_footprints:CONN_SD-43045-005_04_MOL"
+		(property "Footprint" "robosub_footprints:430450412"
 			(at 306.07 220.98 0)
 			(effects
 				(font
@@ -22134,7 +22134,7 @@
 				(hide yes)
 			)
 		)
-		(property "Footprint" "robosub_footprints:CONN_SD-43045-005_04_MOL"
+		(property "Footprint" "robosub_footprints:430450412"
 			(at 187.96 92.456 0)
 			(effects
 				(font
@@ -22330,7 +22330,7 @@
 				(hide yes)
 			)
 		)
-		(property "Footprint" "robosub_footprints:SULLINS_SBH11-PBPC-D05-ST-BK"
+		(property "Footprint" "robosub_footprints:SBH11-PBPC-D05-ST-BK"
 			(at 358.14 184.15 0)
 			(effects
 				(font
