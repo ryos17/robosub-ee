@@ -3309,7 +3309,7 @@
 					(hide yes)
 				)
 			)
-			(property "Description" "430450612 (see datasheet)"
+			(property "Description" "Symbol for 430450612"
 				(at 0 0 0)
 				(effects
 					(font
@@ -14075,7 +14075,7 @@
 				(hide yes)
 			)
 		)
-		(property "Description" "430450612 (see datasheet)"
+		(property "Description" "Symbol for 430450612"
 			(at 191.77 172.72 0)
 			(effects
 				(font
@@ -15232,7 +15232,7 @@
 				(hide yes)
 			)
 		)
-		(property "Description" "430450612 (see datasheet)"
+		(property "Description" "Symbol for 430450612"
 			(at 227.33 172.72 0)
 			(effects
 				(font
@@ -18119,7 +18119,7 @@
 				(hide yes)
 			)
 		)
-		(property "Description" "430450612 (see datasheet)"
+		(property "Description" "Symbol for 430450612"
 			(at 191.77 205.74 0)
 			(effects
 				(font

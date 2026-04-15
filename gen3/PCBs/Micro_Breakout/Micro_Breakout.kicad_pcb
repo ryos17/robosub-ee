@@ -591,7 +591,7 @@
 			(uuid "26a43493-c469-4bbe-8a16-cde061c7902b")
 		)
 		(embedded_fonts no)
-		(model "${KIPRJMOD}/3D Models/430450412.stp"
+		(model "${ROBOSUB_3D_MODELS}/430450412.stp"
 			(offset
 				(xyz -1.5 1.5 5)
 			)
@@ -864,7 +864,7 @@
 				)
 			)
 		)
-		(property "Description" "430450612 (see datasheet)"
+		(property "Description" "Symbol for 430450612"
 			(at 0 0 0)
 			(layer "F.Fab")
 			(hide yes)
@@ -1173,7 +1173,7 @@
 			(uuid "c05945cd-93c5-4ec8-ac48-fce8c9366794")
 		)
 		(embedded_fonts no)
-		(model "${KIPRJMOD}/3D Models/430450612.stp"
+		(model "${ROBOSUB_3D_MODELS}/430450612.stp"
 			(offset
 				(xyz -3 1.5 5)
 			)
@@ -1786,7 +1786,7 @@
 			(uuid "4d693626-cf1f-405e-bd49-58867e249a1d")
 		)
 		(embedded_fonts no)
-		(model "${KIPRJMOD}/3D Models/430450412.stp"
+		(model "${ROBOSUB_3D_MODELS}/430450412.stp"
 			(offset
 				(xyz -1.5 1.5 5)
 			)
@@ -2179,7 +2179,7 @@
 			(uuid "e83c39db-4c18-45c9-b674-ad02d5be4e86")
 		)
 		(embedded_fonts no)
-		(model "${KIPRJMOD}/3D Models/430450412.stp"
+		(model "${ROBOSUB_3D_MODELS}/430450412.stp"
 			(offset
 				(xyz -1.5 1.5 5)
 			)
@@ -2729,7 +2729,7 @@
 			(uuid "967f704e-5940-4f00-9eaa-5a0c11e08316")
 		)
 		(embedded_fonts no)
-		(model "${KIPRJMOD}/3D Models/430450212.stp"
+		(model "${ROBOSUB_3D_MODELS}/430450212.stp"
 			(offset
 				(xyz 0 1.5 5)
 			)
@@ -3122,7 +3122,7 @@
 			(uuid "5d9fdc58-64c3-4bbb-bd58-04bb15d405b3")
 		)
 		(embedded_fonts no)
-		(model "${KIPRJMOD}/3D Models/430450412.stp"
+		(model "${ROBOSUB_3D_MODELS}/430450412.stp"
 			(offset
 				(xyz -1.5 1.5 5)
 			)
@@ -4026,7 +4026,7 @@
 			(uuid "ca4c2192-1354-41a2-bdde-2954b1e24cf8")
 		)
 		(embedded_fonts no)
-		(model "${KIPRJMOD}/3D Models/430450212.stp"
+		(model "${ROBOSUB_3D_MODELS}/430450212.stp"
 			(offset
 				(xyz 0 1.5 5)
 			)
@@ -4616,7 +4616,7 @@
 			(uuid "72dc54a7-0c53-45fb-bbf7-7177f610cf7f")
 		)
 		(embedded_fonts no)
-		(model "${KIPRJMOD}/3D Models/430450212.stp"
+		(model "${ROBOSUB_3D_MODELS}/430450212.stp"
 			(offset
 				(xyz 0 1.5 5)
 			)
@@ -5009,7 +5009,7 @@
 			(uuid "6ac8e0d8-5b76-4887-9b65-94e3bd2ef816")
 		)
 		(embedded_fonts no)
-		(model "${KIPRJMOD}/3D Models/430450412.stp"
+		(model "${ROBOSUB_3D_MODELS}/430450412.stp"
 			(offset
 				(xyz -1.5 1.5 5)
 			)
@@ -5037,7 +5037,7 @@
 				)
 			)
 		)
-		(property "Value" "Teensy4.1"
+		(property "Value" "Teensy4_1"
 			(at 0 10.16 0)
 			(layer "F.Fab")
 			(uuid "c0a3b423-024a-4443-b5df-56eb005503d5")
@@ -5060,7 +5060,7 @@
 				)
 			)
 		)
-		(property "Description" "Symbol for Teensy4.1"
+		(property "Description" "Symbol for Teensy4_1"
 			(at 0 0 0)
 			(layer "F.Fab")
 			(hide yes)
@@ -6415,7 +6415,7 @@
 			(uuid "68dcb5cb-0829-4ed2-9bbb-b5d5852af267")
 		)
 		(embedded_fonts no)
-		(model "${KIPRJMOD}/3D Models/Teensy_4.1.step"
+		(model "${ROBOSUB_3D_MODELS}/Teensy4_1.step"
 			(offset
 				(xyz 0 0 3.762)
 			)
@@ -7412,7 +7412,7 @@
 			(uuid "881d06db-94b1-4cf5-9f9a-9fd92af80b7c")
 		)
 		(embedded_fonts no)
-		(model "C:/Users/ryota/Desktop/robosub-ee/imported_parts/robosub_3d_models/TO-252-2_L6.5-W6.1-P4.58-LS10.0-TL.step"
+		(model "${ROBOSUB_3D_MODELS}/L78M05ABDT-TR.step"
 			(offset
 				(xyz -4.030152 2.010973 0)
 			)
@@ -7466,7 +7466,7 @@
 				)
 			)
 		)
-		(property "Description" "430450612 (see datasheet)"
+		(property "Description" "Symbol for 430450612"
 			(at 0 0 0)
 			(layer "F.Fab")
 			(hide yes)
@@ -7775,7 +7775,7 @@
 			(uuid "f6d101f3-ae2a-4593-9f0d-f10a1ec985f3")
 		)
 		(embedded_fonts no)
-		(model "${KIPRJMOD}/3D Models/430450612.stp"
+		(model "${ROBOSUB_3D_MODELS}/430450612.stp"
 			(offset
 				(xyz -3 1.5 5)
 			)
@@ -9117,7 +9117,7 @@
 			(uuid "b46bb6af-a3ae-4a38-b192-d5d998e7a80c")
 		)
 		(embedded_fonts no)
-		(model "packages3d/SENSOR-SMD_MS560702BA03-50.step"
+		(model "${ROBOSUB_3D_MODELS}/MS560702BA03-50.step"
 			(offset
 				(xyz 0 0 0)
 			)
@@ -9510,7 +9510,7 @@
 			(uuid "2534165a-14a2-42a7-984e-8fb6f785a0fc")
 		)
 		(embedded_fonts no)
-		(model "${KIPRJMOD}/3D Models/430450412.stp"
+		(model "${ROBOSUB_3D_MODELS}/430450412.stp"
 			(offset
 				(xyz -1.5 1.5 5)
 			)
@@ -9857,7 +9857,7 @@
 			(uuid "2457cda1-f393-4434-912f-a9be7feba1af")
 		)
 		(embedded_fonts no)
-		(model "packages3d/DFN-8_L2.5-W2.5-P0.50-BL-EP.step"
+		(model "${ROBOSUB_3D_MODELS}/SHT31-DIS-B.step"
 			(offset
 				(xyz -0.0000761999988556 -0.0000761999988556 0)
 			)
@@ -11401,7 +11401,7 @@
 			(uuid "956aba83-d9c0-4d81-9515-7631723f11cf")
 		)
 		(embedded_fonts no)
-		(model "${KIPRJMOD}/3D Models/430450412.stp"
+		(model "${ROBOSUB_3D_MODELS}/430450412.stp"
 			(offset
 				(xyz -1.5 1.5 5)
 			)
@@ -12230,7 +12230,7 @@
 			(uuid "eb6a2c59-5a0d-486f-8ac4-ab31bb4e7193")
 		)
 		(embedded_fonts no)
-		(model "${KIPRJMOD}/3D Models/430450212.stp"
+		(model "${ROBOSUB_3D_MODELS}/430450212.stp"
 			(offset
 				(xyz 0 1.5 5)
 			)
@@ -12504,7 +12504,7 @@
 			(uuid "1e07ab80-b003-4eff-9b12-5f87f7b7d539")
 		)
 		(embedded_fonts no)
-		(model "packages3d/SOT-89-3_L4.5-W2.5-P1.50-LS4.2-BR.step"
+		(model "${ROBOSUB_3D_MODELS}/AMS1117-3_3V_C5120796.step"
 			(offset
 				(xyz -0.2999231955 0 0)
 			)
@@ -13026,7 +13026,7 @@
 				)
 			)
 		)
-		(property "Value" "MCP9808-E/MS"
+		(property "Value" "MCP9808-E_MS"
 			(at 0.010795 4.299975 0)
 			(layer "F.Fab")
 			(uuid "ac058918-d56f-4a4e-8e81-f6f1217c80ac")
@@ -13049,7 +13049,7 @@
 				)
 			)
 		)
-		(property "Description" "MCP9808-E/MS (LCSC C94847)"
+		(property "Description" "MCP9808-E_MS (LCSC C94847)"
 			(at 0 0 0)
 			(layer "F.Fab")
 			(hide yes)
@@ -13460,7 +13460,7 @@
 			(uuid "9aefcdbb-1c54-433e-adc4-943b6575da8b")
 		)
 		(embedded_fonts no)
-		(model "packages3d/MSOP-8_L3.0-W3.0-P0.65-LS4.9-BL.step"
+		(model "${ROBOSUB_3D_MODELS}/MCP9808-E_MS.step"
 			(offset
 				(xyz 0 0 0)
 			)
@@ -14231,7 +14231,7 @@
 			(uuid "b5f5926f-d1b5-4641-bd66-38dc86ddb298")
 		)
 		(embedded_fonts no)
-		(model "${KIPRJMOD}/3D Models/430450412.stp"
+		(model "${ROBOSUB_3D_MODELS}/430450412.stp"
 			(offset
 				(xyz -1.5 1.5 5)
 			)
@@ -15624,7 +15624,7 @@
 			(uuid "e21c4d6d-5477-467e-8ae8-e8b0aff77668")
 		)
 		(embedded_fonts no)
-		(model "${KIPRJMOD}/3D Models/430450412.stp"
+		(model "${ROBOSUB_3D_MODELS}/430450412.stp"
 			(offset
 				(xyz -1.5 1.5 5)
 			)
@@ -16118,7 +16118,7 @@
 				)
 			)
 		)
-		(property "Description" "430450612 (see datasheet)"
+		(property "Description" "Symbol for 430450612"
 			(at 0 0 0)
 			(layer "F.Fab")
 			(hide yes)
@@ -16427,7 +16427,7 @@
 			(uuid "a0ef17bc-5bdc-4327-9470-6d120ad450f0")
 		)
 		(embedded_fonts no)
-		(model "${KIPRJMOD}/3D Models/430450612.stp"
+		(model "${ROBOSUB_3D_MODELS}/430450612.stp"
 			(offset
 				(xyz -3 1.5 5)
 			)
@@ -16831,7 +16831,7 @@
 			(uuid "d2cf885f-6c36-4841-84c7-2b52784b1945")
 		)
 		(embedded_fonts no)
-		(model "${KIPRJMOD}/3D Models/SBH11-PBPC-D05-ST-BK.step"
+		(model "${ROBOSUB_3D_MODELS}/SBH11-PBPC-D05-ST-BK.step"
 			(offset
 				(xyz 0 0 0)
 			)
