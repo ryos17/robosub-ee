@@ -35,7 +35,7 @@
   (fp_text user ${REFERENCE} (at 0.714084 0.017221) (layer F.Fab)
     (effects (font (size 1 1) (thickness 0.15)))
   )
-  (model packages3d/L78M05ABDT-TR.step
+  (model "${ROBOSUB_3D_MODELS}/L78M05ABDT-TR.step"
     (at (xyz 0.038183 0.000432 0))
     (scale (xyz 1 1 1))
     (rotate (xyz 0 0 -270))

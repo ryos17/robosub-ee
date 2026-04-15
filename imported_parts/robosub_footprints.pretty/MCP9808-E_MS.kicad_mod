@@ -45,7 +45,7 @@
   (fp_text user ${REFERENCE} (at 0.010795 0) (layer F.Fab)
     (effects (font (size 1 1) (thickness 0.15)))
   )
-  (model packages3d/MCP9808-E_MS.step
+  (model "${ROBOSUB_3D_MODELS}/MCP9808-E_MS.step"
     (at (xyz 0 0 0))
     (scale (xyz 1 1 1))
     (rotate (xyz 0 0 0))

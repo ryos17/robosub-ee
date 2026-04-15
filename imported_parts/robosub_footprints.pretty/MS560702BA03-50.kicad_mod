@@ -51,7 +51,7 @@
   (fp_text user ${REFERENCE} (at 0.000025 -0.000025) (layer F.Fab)
     (effects (font (size 1 1) (thickness 0.15)))
   )
-  (model packages3d/MS560702BA03-50.step
+  (model "${ROBOSUB_3D_MODELS}/MS560702BA03-50.step"
     (at (xyz 0 0 0))
     (scale (xyz 1 1 1))
     (rotate (xyz 0 0 0))

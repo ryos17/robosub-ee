@@ -36,7 +36,7 @@
   (fp_text user ${REFERENCE} (at -0.000089 -0.000038) (layer F.Fab)
     (effects (font (size 1 1) (thickness 0.15)))
   )
-  (model packages3d/SHT31-DIS-B.step
+  (model "${ROBOSUB_3D_MODELS}/SHT31-DIS-B.step"
     (at (xyz -0.000003 -0.000003 0))
     (scale (xyz 1 1 1))
     (rotate (xyz 0 0 -90))

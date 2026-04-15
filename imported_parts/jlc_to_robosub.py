@@ -216,7 +216,13 @@ def coherent_basename_from_symbol(symbol_name: str) -> str:
     that are invalid in filenames/paths.
     """
     name = symbol_name.strip()
-    name = name.replace("{slash}", "_").replace("/", "_").replace("\\", "_").replace(".", "_")
+    name = (
+        name.replace("{slash}", "_")
+        .replace("/", "_")
+        .replace("\\", "_")
+        .replace(".", "_")
+        .replace(",", "_")
+    )
     name = re.sub(r'[<>:"|?*]', "_", name)
     name = re.sub(r"\s+", "_", name)
     name = name.strip("._")
@@ -245,12 +251,24 @@ def rewrite_footprint_file_identity(fp_path: Path, new_base: str) -> Tuple[Optio
 
     old_model = None
     new_model = None
-    m = re.search(r'(\(model\s+"[^"/\\]+[/\\])([^"/\\]+)(")', text)
+
+    # Match quoted model path: (model "path/to/file.step"
+    m = re.search(r'(\(model\s+"[^"]*[/\\])([^"/\\]+)(")', text)
     if m:
         old_model = m.group(2)
         ext = Path(old_model).suffix or ".step"
         new_model = "{}{}".format(new_base, ext)
-        text = text.replace(old_model, new_model, 1)
+        text = text[: m.start(2)] + new_model + text[m.end(2) :]
+    else:
+        # Match unquoted model path: (model packages3d/file.step
+        m2 = re.search(r'(\(model\s+)([^\s\)]+)', text)
+        if m2:
+            model_path = m2.group(2)
+            old_model = os.path.basename(model_path)
+            ext = Path(old_model).suffix or ".step"
+            new_model = "{}{}".format(new_base, ext)
+            new_model_path = "{}/{}".format(os.path.dirname(model_path).replace("\\", "/"), new_model)
+            text = text[: m2.start(2)] + new_model_path + text[m2.end(2) :]
 
     fp_path.write_text(text, encoding="utf-8")
     return old_model, new_model
@@ -524,12 +542,20 @@ def patch_3d_model_paths() -> None:
     for mod_path in FP_LIB_DIR.glob("*.kicad_mod"):
         mtext = mod_path.read_text(encoding="utf-8")
 
-        def repl(match):
+        def repl_quoted(match):
             orig_path = match.group(2)
             filename = os.path.basename(orig_path)
             return '{}${{{}}}/{}"'.format(match.group(1), MODELS_ENV, filename)
 
-        new_mtext = re.sub(r'(\(model\s+")([^"]+)"', repl, mtext)
+        def repl_unquoted(match):
+            orig_path = match.group(1)
+            filename = os.path.basename(orig_path)
+            return '(model "${{{}}}/{}"'.format(MODELS_ENV, filename)
+
+        # Quoted style: (model "path")
+        new_mtext = re.sub(r'(\(model\s+")([^"]+)"', repl_quoted, mtext)
+        # Unquoted legacy style: (model path)
+        new_mtext = re.sub(r'\(model\s+(?!")([^\s\)]+)', repl_unquoted, new_mtext)
 
         if new_mtext != mtext:
             mod_path.write_text(new_mtext, encoding="utf-8")
