@@ -1,4 +1,4 @@
-(module "SOT-89-3_L4.5-W2.5-P1.50-LS4.2-BR" (layer F.Cu) (tedit 69DF3F7A)
+(module "SOT-89-3_L4.5-W2.5-P1.50-LS4.2-BR" (layer F.Cu) (tedit 69DF4371)
   (descr "SOT-89-3_L4.5-W2.5-P1.50-LS4.2-BR footprint")
   (tags "SOT-89-3_L4.5-W2.5-P1.50-LS4.2-BR footprint C5120796")
   (attr smd)

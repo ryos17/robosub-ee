@@ -257,6 +257,79 @@ def patch_footprint_properties() -> None:
         SYMBOL_LIB.write_text(text_new, encoding="utf-8")
 
 
+def _jlc_part_url(part: str) -> str:
+    """
+    Build a JLCPCB part-detail URL from a JLC/LCSC code.
+    Example: C5120796 -> https://jlcpcb.com/partdetail/C5120796
+    """
+    return "https://jlcpcb.com/partdetail/{}".format(part.strip())
+
+
+def patch_datasheet_for_symbol(symbol_name: str, part: str) -> None:
+    """
+    Point the parent symbol Datasheet property to the JLCPCB part page.
+    Only patches the just-imported parent symbol block.
+    """
+    if not symbol_name:
+        return
+
+    lines = SYMBOL_LIB.read_text(encoding="utf-8").splitlines()
+    target_url = _jlc_part_url(part)
+
+    # Find parent symbol block by exact symbol name.
+    start_idx = None
+    end_idx = None
+    depth = 0
+    for i, line in enumerate(lines):
+        stripped = line.lstrip()
+        if depth == 1 and stripped.startswith('(symbol "{}"'.format(symbol_name)):
+            start_idx = i
+        depth += line.count("(") - line.count(")")
+        if start_idx is not None and end_idx is None and depth == 1 and i > start_idx:
+            end_idx = i
+            break
+
+    if start_idx is None or end_idx is None:
+        return
+
+    block = lines[start_idx : end_idx + 1]
+    changed = False
+
+    # Try to replace existing Datasheet property value.
+    for i, line in enumerate(block):
+        if '(property "Datasheet"' in line:
+            new_line = re.sub(
+                r'(\(property\s+"Datasheet"\s+")([^"]*)(")',
+                lambda m: m.group(1) + target_url + m.group(3),
+                line,
+            )
+            if new_line != line:
+                block[i] = new_line
+                changed = True
+            break
+    else:
+        # Datasheet property not present: inject it before first child symbol.
+        indent_match = re.match(r"^(\s*)", block[0])
+        indent = (indent_match.group(1) if indent_match else "") + "  "
+        insert_at = len(block) - 1
+        for i, line in enumerate(block[1:], start=1):
+            if line.lstrip().startswith('(symbol "'):
+                insert_at = i
+                break
+
+        ds_lines = [
+            '{}(property "Datasheet" "{}" (id 3) (at 0 0 0)'.format(indent, target_url),
+            "{}  (effects (font (size 1.27 1.27) (italic yes)) hide)".format(indent),
+            "{})".format(indent),
+        ]
+        block = block[:insert_at] + ds_lines + block[insert_at:]
+        changed = True
+
+    if changed:
+        new_lines = lines[:start_idx] + block + lines[end_idx + 1 :]
+        SYMBOL_LIB.write_text("\n".join(new_lines) + "\n", encoding="utf-8")
+
+
 def _top_level_symbol_ranges(lines):
     """Return [(start_idx, end_idx)] for top-level symbol blocks."""
     ranges = []
@@ -487,6 +560,7 @@ def main(argv) -> int:
         merge_symbol_into_master(symbol_src)
 
     # Patch properties and model paths in final libs
+    patch_datasheet_for_symbol(symbol_name, part)
     patch_footprint_properties()
     patch_ki_descriptions()
     patch_3d_model_paths()

@@ -79,6 +79,9 @@
 					(hide yes)
 				)
 			)
+  (property "ki_description" "Symbol for 430450212" (id 97) (at 0 0 0)
+    (effects (font (size 1.27 1.27)) hide)
+  )
 			(symbol "430450212_1_1"
 				(polyline
 					(pts
@@ -475,6 +478,9 @@
 					(hide yes)
 				)
 			)
+  (property "ki_description" "Symbol for 430450412" (id 97) (at 0 0 0)
+    (effects (font (size 1.27 1.27)) hide)
+  )
 			(symbol "430450412_1_1"
 				(polyline
 					(pts
@@ -1087,6 +1093,9 @@
 					(hide yes)
 				)
 			)
+  (property "ki_description" "430450612 (see datasheet)" (id 97) (at 0 0 0)
+    (effects (font (size 1.27 1.27)) hide)
+  )
 			(symbol "430450612_1_1"
 				(polyline
 					(pts
@@ -1904,6 +1913,9 @@
 					(hide yes)
 				)
 			)
+  (property "ki_description" "L78M05ABDT-TR (LCSC C58069)" (id 97) (at 0 0 0)
+    (effects (font (size 1.27 1.27)) hide)
+  )
 			(symbol "L78M05ABDT-TR_0_1"
 				(rectangle
 					(start -7.62 6.35)
@@ -2049,6 +2061,9 @@
 					(hide yes)
 				)
 			)
+  (property "ki_description" "MS560702BA03-50 (LCSC C97627)" (id 97) (at 0 0 0)
+    (effects (font (size 1.27 1.27)) hide)
+  )
 			(symbol "MS560702BA03-50_0_1"
 				(rectangle
 					(start -10.16 6.35)
@@ -2322,6 +2337,9 @@
 					(hide yes)
 				)
 			)
+  (property "ki_description" "Symbol for SBH11-PBPC-D05-ST-BK" (id 97) (at 0 0 0)
+    (effects (font (size 1.27 1.27)) hide)
+  )
 			(symbol "SBH11-PBPC-D05-ST-BK_0_0"
 				(rectangle
 					(start -8.89 -7.62)
@@ -2694,6 +2712,9 @@
 					(hide yes)
 				)
 			)
+  (property "ki_description" "SHT31-DIS-B (LCSC C80862)" (id 97) (at 0 0 0)
+    (effects (font (size 1.27 1.27)) hide)
+  )
 			(symbol "SHT31-DIS-B_0_1"
 				(rectangle
 					(start -12.7 8.128)
@@ -2943,6 +2964,9 @@
 					(hide yes)
 				)
 			)
+  (property "ki_description" "Symbol for Teensy4.1" (id 97) (at 0 0 0)
+    (effects (font (size 1.27 1.27)) hide)
+  )
 			(symbol "Teensy4.1_0_0"
 				(polyline
 					(pts
@@ -4283,4 +4307,146 @@
 			)
 			(embedded_fonts no)
 		)
+  (symbol "AMS1117-3_3V_C5120796"   (in_bom yes) (on_board yes)
+    (property "Reference" "U" (id 0) (at 0 1.27 0)
+      (effects (font (size 1.27 1.27)))
+    )
+    (property "Value" "AMS1117-3_3V_C5120796" (id 1) (at 0 -2.54 0)
+      (effects (font (size 1.27 1.27)))
+    )
+    (property "Footprint" "robosub_footprints:SOT-89-3_L4.5-W2.5-P1.50-LS4.2-BR" (id 2) (at 0 -10.16 0)
+      (effects (font (size 1.27 1.27) italic) hide)
+    )
+    (property "Datasheet" "https://item.szlcsc.com/421845.html" (id 3) (at -2.286 0.127 0)
+      (effects (font (size 1.27 1.27)) (justify left) hide)
+    )
+    (property "ki_keywords" "C5120796" (id 4) (at 0 0 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (property "LCSC" "C5120796" (id 5) (at 0 0 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    
+    (property "ki_description" "AMS1117-3_3V_C5120796 (LCSC C5120796)" (id 97) (at 0 0 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (symbol "AMS1117-3_3V_C5120796_0_1"
+      (pin unspecified line
+        (at -7.62 -2.54 0)
+        (length 2.54)
+        (name "VIN" (effects (font (size 1 1))))
+        (number "3" (effects (font (size 1 1))))
+      )
+      (pin unspecified line
+        (at -7.62 -0.0 0)
+        (length 2.54)
+        (name "VOUT" (effects (font (size 1 1))))
+        (number "2" (effects (font (size 1 1))))
+      )
+      (pin unspecified line
+        (at -7.62 2.54 0)
+        (length 2.54)
+        (name "ADJ/GND" (effects (font (size 1 1))))
+        (number "1" (effects (font (size 1 1))))
+      )
+      (circle
+        (center -3.81000762001524 3.81000762001524)
+        (radius 0.381000762001524)
+        (stroke (width 0) (type default) (color 0 0 0 0))
+        (fill (type background))
+      )
+      (rectangle
+        (start -5.08001016002032 5.08001016002032)
+        (end 10.16002032004064 -5.08001016002032)
+        (stroke (width 0) (type default) (color 0 0 0 0))
+        (fill (type background))
+      )
+    )
+  )
+  (symbol "MCP9808-E{slash}MS"   (in_bom yes) (on_board yes)
+    (property "Reference" "U" (id 0) (at 0 1.27 0)
+      (effects (font (size 1.27 1.27)))
+    )
+    (property "Value" "MCP9808-E{slash}MS" (id 1) (at 0 -2.54 0)
+      (effects (font (size 1.27 1.27)))
+    )
+    (property "Footprint" "robosub_footprints:MSOP-8_L3.0-W3.0-P0.65-LS4.9-BL" (id 2) (at 0 -10.16 0)
+      (effects (font (size 1.27 1.27) italic) hide)
+    )
+    (property "Datasheet" "https://jlcpcb.com/partdetail/C94847" (id 3) (at -2.286 0.127 0)
+      (effects (font (size 1.27 1.27)) (justify left) hide)
+    )
+    (property "ki_keywords" "C94847" (id 4) (at 0 0 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (property "LCSC" "C94847" (id 5) (at 0 0 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    
+    (property "ki_description" "MCP9808-E{slash}MS (LCSC C94847)" (id 97) (at 0 0 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (symbol "MCP9808-E{slash}MS_0_1"
+      (rectangle
+        (start -12.700025400050801 6.350012700025401)
+        (end 12.700025400050801 -6.350012700025401)
+        (stroke (width 0) (type default) (color 0 0 0 0))
+        (fill (type background))
+      )
+      (circle
+        (center -11.430022860045721 5.08001016002032)
+        (radius 0.381000762001524)
+        (stroke (width 0) (type default) (color 0 0 0 0))
+        (fill (type background))
+      )
+      (pin unspecified line
+        (at -15.24 3.81 0)
+        (length 2.54)
+        (name "SDA" (effects (font (size 1 1))))
+        (number "1" (effects (font (size 1 1))))
+      )
+      (pin unspecified line
+        (at -15.24 1.27 0)
+        (length 2.54)
+        (name "SCL" (effects (font (size 1 1))))
+        (number "2" (effects (font (size 1 1))))
+      )
+      (pin unspecified line
+        (at -15.24 -1.27 0)
+        (length 2.54)
+        (name "Alert" (effects (font (size 1 1))))
+        (number "3" (effects (font (size 1 1))))
+      )
+      (pin unspecified line
+        (at -15.24 -3.81 0)
+        (length 2.54)
+        (name "GND" (effects (font (size 1 1))))
+        (number "4" (effects (font (size 1 1))))
+      )
+      (pin unspecified line
+        (at 15.24 -3.81 180)
+        (length 2.54)
+        (name "A2" (effects (font (size 1 1))))
+        (number "5" (effects (font (size 1 1))))
+      )
+      (pin unspecified line
+        (at 15.24 -1.27 180)
+        (length 2.54)
+        (name "A1" (effects (font (size 1 1))))
+        (number "6" (effects (font (size 1 1))))
+      )
+      (pin unspecified line
+        (at 15.24 1.27 180)
+        (length 2.54)
+        (name "A0" (effects (font (size 1 1))))
+        (number "7" (effects (font (size 1 1))))
+      )
+      (pin unspecified line
+        (at 15.24 3.81 180)
+        (length 2.54)
+        (name "VDD" (effects (font (size 1 1))))
+        (number "8" (effects (font (size 1 1))))
+      )
+    )
+  )
 )
