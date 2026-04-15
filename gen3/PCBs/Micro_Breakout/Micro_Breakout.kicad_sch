@@ -2621,7 +2621,7 @@
 			)
 			(embedded_fonts no)
 		)
-		(symbol "robosub_symbols:430450228"
+		(symbol "robosub_symbols:430450212"
 			(pin_names
 				(offset 0.254)
 			)
@@ -2636,7 +2636,7 @@
 					)
 				)
 			)
-			(property "Value" "430450228"
+			(property "Value" "430450212"
 				(at 0 0 0)
 				(effects
 					(font
@@ -2644,7 +2644,7 @@
 					)
 				)
 			)
-			(property "Footprint" "robosub_footprints:CONN_SD-43045-010_02_MOL"
+			(property "Footprint" "robosub_footprints:CONN_SD-43045-005_02_MOL"
 				(at 0 0 0)
 				(effects
 					(font
@@ -2654,7 +2654,7 @@
 					(hide yes)
 				)
 			)
-			(property "Datasheet" "430450228"
+			(property "Datasheet" "430450212"
 				(at 0 0 0)
 				(effects
 					(font
@@ -2664,7 +2664,7 @@
 					(hide yes)
 				)
 			)
-			(property "Description" "Symbol for 430450228"
+			(property "Description" "Symbol for 430450212"
 				(at 0 0 0)
 				(effects
 					(font
@@ -2681,7 +2681,7 @@
 					)
 				)
 			)
-			(property "ki_keywords" "430450228"
+			(property "ki_keywords" "430450212"
 				(at 0 0 0)
 				(effects
 					(font
@@ -2690,7 +2690,7 @@
 					(hide yes)
 				)
 			)
-			(property "ki_fp_filters" "CONN_SD-43045-010_02_MOL"
+			(property "ki_fp_filters" "CONN_SD-43045-005_02_MOL"
 				(at 0 0 0)
 				(effects
 					(font
@@ -2699,7 +2699,7 @@
 					(hide yes)
 				)
 			)
-			(symbol "430450228_1_1"
+			(symbol "430450212_1_1"
 				(polyline
 					(pts
 						(xy 5.08 2.54) (xy 5.08 -5.08)
@@ -2857,7 +2857,7 @@
 					)
 				)
 			)
-			(symbol "430450228_1_2"
+			(symbol "430450212_1_2"
 				(polyline
 					(pts
 						(xy 5.08 2.54) (xy 5.08 -5.08)
@@ -3017,7 +3017,7 @@
 			)
 			(embedded_fonts no)
 		)
-		(symbol "robosub_symbols:430450422"
+		(symbol "robosub_symbols:430450412"
 			(pin_names
 				(offset 0.254)
 			)
@@ -3032,7 +3032,7 @@
 					)
 				)
 			)
-			(property "Value" "430450422"
+			(property "Value" "430450412"
 				(at 0 0 0)
 				(effects
 					(font
@@ -3040,7 +3040,7 @@
 					)
 				)
 			)
-			(property "Footprint" "robosub_footprints:CONN_SD-43045-008_04_MOL"
+			(property "Footprint" "robosub_footprints:CONN_SD-43045-005_04_MOL"
 				(at 0 0 0)
 				(effects
 					(font
@@ -3050,7 +3050,7 @@
 					(hide yes)
 				)
 			)
-			(property "Datasheet" "430450422"
+			(property "Datasheet" "430450412"
 				(at 0 0 0)
 				(effects
 					(font
@@ -3060,7 +3060,7 @@
 					(hide yes)
 				)
 			)
-			(property "Description" "Symbol for 430450422"
+			(property "Description" "Symbol for 430450412"
 				(at 0 0 0)
 				(effects
 					(font
@@ -3077,7 +3077,7 @@
 					)
 				)
 			)
-			(property "ki_keywords" "430450422"
+			(property "ki_keywords" "430450412"
 				(at 0 0 0)
 				(effects
 					(font
@@ -3086,7 +3086,7 @@
 					(hide yes)
 				)
 			)
-			(property "ki_fp_filters" "CONN_SD-43045-008_04_MOL"
+			(property "ki_fp_filters" "CONN_SD-43045-005_04_MOL"
 				(at 0 0 0)
 				(effects
 					(font
@@ -3095,7 +3095,7 @@
 					(hide yes)
 				)
 			)
-			(symbol "430450422_1_1"
+			(symbol "430450412_1_1"
 				(polyline
 					(pts
 						(xy 5.08 2.54) (xy 5.08 -10.16)
@@ -3361,7 +3361,7 @@
 					)
 				)
 			)
-			(symbol "430450422_1_2"
+			(symbol "430450412_1_2"
 				(polyline
 					(pts
 						(xy 5.08 2.54) (xy 5.08 -10.16)
@@ -12948,7 +12948,7 @@
 				)
 			)
 		)
-		(property "Footprint" "Imported_Footprints:Teensy41"
+		(property "Footprint" "robosub_footprints:Teensy41"
 			(at 59.69 66.04 0)
 			(effects
 				(font
@@ -13680,6 +13680,24 @@
 				(hide yes)
 			)
 		)
+		(property "Supplier 1" "https://www.digikey.com/en/products/detail/molex/0430450612/252504"
+			(at 0 0 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Supplier 1 S/N" "WM1791-ND"
+			(at 0 0 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
 		(pin "5"
 			(uuid "c2b43e74-a7d2-424a-95ff-582009656a3a")
 		)
@@ -13708,7 +13726,7 @@
 		)
 	)
 	(symbol
-		(lib_id "robosub_symbols:430450228")
+		(lib_id "robosub_symbols:430450212")
 		(at 221.742 115.57 0)
 		(unit 1)
 		(exclude_from_sim no)
@@ -13735,7 +13753,7 @@
 				(hide yes)
 			)
 		)
-		(property "Footprint" "robosub_footprints:CONN_SD-43045-010_02_MOL"
+		(property "Footprint" "robosub_footprints:CONN_SD-43045-005_02_MOL"
 			(at 221.742 115.57 0)
 			(effects
 				(font
@@ -13745,7 +13763,7 @@
 				(hide yes)
 			)
 		)
-		(property "Datasheet" "430450228"
+		(property "Datasheet" "430450212"
 			(at 221.742 115.57 0)
 			(effects
 				(font
@@ -13755,7 +13773,7 @@
 				(hide yes)
 			)
 		)
-		(property "Description" "Symbol for 430450228"
+		(property "Description" "Symbol for 430450212"
 			(at 221.742 115.57 0)
 			(effects
 				(font
@@ -13782,7 +13800,7 @@
 				(hide yes)
 			)
 		)
-		(property "Supplier 1" "https://www.digikey.com/en/products/detail/molex/0430450201/3310171"
+		(property "Supplier 1" "https://www.digikey.com/en/products/detail/molex/0430450212/252502"
 			(at 221.742 115.57 0)
 			(effects
 				(font
@@ -13791,7 +13809,7 @@
 				(hide yes)
 			)
 		)
-		(property "Supplier 1 S/N" "WM9815-ND"
+		(property "Supplier 1 S/N" "WM1789-ND"
 			(at 221.742 115.57 0)
 			(effects
 				(font
@@ -14125,7 +14143,7 @@
 		)
 	)
 	(symbol
-		(lib_id "robosub_symbols:430450228")
+		(lib_id "robosub_symbols:430450212")
 		(at 189.738 115.062 0)
 		(unit 1)
 		(exclude_from_sim no)
@@ -14152,7 +14170,7 @@
 				(hide yes)
 			)
 		)
-		(property "Footprint" "robosub_footprints:CONN_SD-43045-010_02_MOL"
+		(property "Footprint" "robosub_footprints:CONN_SD-43045-005_02_MOL"
 			(at 189.738 115.062 0)
 			(effects
 				(font
@@ -14162,7 +14180,7 @@
 				(hide yes)
 			)
 		)
-		(property "Datasheet" "430450228"
+		(property "Datasheet" "430450212"
 			(at 189.738 115.062 0)
 			(effects
 				(font
@@ -14172,7 +14190,7 @@
 				(hide yes)
 			)
 		)
-		(property "Description" "Symbol for 430450228"
+		(property "Description" "Symbol for 430450212"
 			(at 189.738 115.062 0)
 			(effects
 				(font
@@ -14199,7 +14217,7 @@
 				(hide yes)
 			)
 		)
-		(property "Supplier 1" "https://www.digikey.com/en/products/detail/molex/0430450201/3310171"
+		(property "Supplier 1" "https://www.digikey.com/en/products/detail/molex/0430450212/252502"
 			(at 189.738 115.062 0)
 			(effects
 				(font
@@ -14208,7 +14226,7 @@
 				(hide yes)
 			)
 		)
-		(property "Supplier 1 S/N" "WM9815-ND"
+		(property "Supplier 1 S/N" "WM1789-ND"
 			(at 189.738 115.062 0)
 			(effects
 				(font
@@ -14504,7 +14522,7 @@
 		)
 	)
 	(symbol
-		(lib_id "robosub_symbols:430450228")
+		(lib_id "robosub_symbols:430450212")
 		(at 251.968 115.57 0)
 		(unit 1)
 		(exclude_from_sim no)
@@ -14531,7 +14549,7 @@
 				(hide yes)
 			)
 		)
-		(property "Footprint" "robosub_footprints:CONN_SD-43045-010_02_MOL"
+		(property "Footprint" "robosub_footprints:CONN_SD-43045-005_02_MOL"
 			(at 251.968 115.57 0)
 			(effects
 				(font
@@ -14541,7 +14559,7 @@
 				(hide yes)
 			)
 		)
-		(property "Datasheet" "430450228"
+		(property "Datasheet" "430450212"
 			(at 251.968 115.57 0)
 			(effects
 				(font
@@ -14551,7 +14569,7 @@
 				(hide yes)
 			)
 		)
-		(property "Description" "Symbol for 430450228"
+		(property "Description" "Symbol for 430450212"
 			(at 251.968 115.57 0)
 			(effects
 				(font
@@ -14578,7 +14596,7 @@
 				(hide yes)
 			)
 		)
-		(property "Supplier 1" "https://www.digikey.com/en/products/detail/molex/0430450201/3310171"
+		(property "Supplier 1" "https://www.digikey.com/en/products/detail/molex/0430450212/252502"
 			(at 251.968 115.57 0)
 			(effects
 				(font
@@ -14587,7 +14605,7 @@
 				(hide yes)
 			)
 		)
-		(property "Supplier 1 S/N" "WM9815-ND"
+		(property "Supplier 1 S/N" "WM1789-ND"
 			(at 251.968 115.57 0)
 			(effects
 				(font
@@ -14747,6 +14765,24 @@
 		)
 		(property "Description" "430450612 (see datasheet)"
 			(at 227.33 172.72 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Supplier 1" "https://www.digikey.com/en/products/detail/molex/0430450612/252504"
+			(at 0 0 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Supplier 1 S/N" "WM1791-ND"
+			(at 0 0 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -14972,7 +15008,7 @@
 		)
 	)
 	(symbol
-		(lib_id "robosub_symbols:430450228")
+		(lib_id "robosub_symbols:430450212")
 		(at 255.016 127 0)
 		(unit 1)
 		(exclude_from_sim no)
@@ -14999,7 +15035,7 @@
 				(hide yes)
 			)
 		)
-		(property "Footprint" "robosub_footprints:CONN_SD-43045-010_02_MOL"
+		(property "Footprint" "robosub_footprints:CONN_SD-43045-005_02_MOL"
 			(at 255.016 127 0)
 			(effects
 				(font
@@ -15009,7 +15045,7 @@
 				(hide yes)
 			)
 		)
-		(property "Datasheet" "430450228"
+		(property "Datasheet" "430450212"
 			(at 255.016 127 0)
 			(effects
 				(font
@@ -15019,7 +15055,7 @@
 				(hide yes)
 			)
 		)
-		(property "Description" "Symbol for 430450228"
+		(property "Description" "Symbol for 430450212"
 			(at 255.016 127 0)
 			(effects
 				(font
@@ -15046,7 +15082,7 @@
 				(hide yes)
 			)
 		)
-		(property "Supplier 1" "https://www.digikey.com/en/products/detail/molex/0430450201/3310171"
+		(property "Supplier 1" "https://www.digikey.com/en/products/detail/molex/0430450212/252502"
 			(at 255.016 127 0)
 			(effects
 				(font
@@ -15055,7 +15091,7 @@
 				(hide yes)
 			)
 		)
-		(property "Supplier 1 S/N" "WM9815-ND"
+		(property "Supplier 1 S/N" "WM1789-ND"
 			(at 255.016 127 0)
 			(effects
 				(font
@@ -15414,7 +15450,7 @@
 		)
 	)
 	(symbol
-		(lib_id "robosub_symbols:430450422")
+		(lib_id "robosub_symbols:430450412")
 		(at 275.59 220.98 0)
 		(unit 1)
 		(exclude_from_sim no)
@@ -15442,7 +15478,7 @@
 				(hide yes)
 			)
 		)
-		(property "Footprint" "robosub_footprints:CONN_SD-43045-008_04_MOL"
+		(property "Footprint" "robosub_footprints:CONN_SD-43045-005_04_MOL"
 			(at 275.59 220.98 0)
 			(effects
 				(font
@@ -15452,7 +15488,7 @@
 				(hide yes)
 			)
 		)
-		(property "Datasheet" "430450422"
+		(property "Datasheet" "430450412"
 			(at 275.59 220.98 0)
 			(effects
 				(font
@@ -15462,7 +15498,7 @@
 				(hide yes)
 			)
 		)
-		(property "Description" "Symbol for 430450422"
+		(property "Description" "Symbol for 430450412"
 			(at 275.59 220.98 0)
 			(effects
 				(font
@@ -15489,7 +15525,7 @@
 				(hide yes)
 			)
 		)
-		(property "Supplier 1" "https://www.digikey.com/en/products/detail/molex/0430450422/1635030"
+		(property "Supplier 1" "https://www.digikey.com/en/products/detail/molex/0430450412/252503"
 			(at 275.59 220.98 0)
 			(effects
 				(font
@@ -15498,7 +15534,7 @@
 				(hide yes)
 			)
 		)
-		(property "Supplier 1 S/N" "WM2679-ND"
+		(property "Supplier 1 S/N" "WM1790-ND"
 			(at 275.59 220.98 0)
 			(effects
 				(font
@@ -16057,7 +16093,7 @@
 		)
 	)
 	(symbol
-		(lib_id "robosub_symbols:430450422")
+		(lib_id "robosub_symbols:430450412")
 		(at 275.59 201.93 0)
 		(unit 1)
 		(exclude_from_sim no)
@@ -16085,7 +16121,7 @@
 				(hide yes)
 			)
 		)
-		(property "Footprint" "robosub_footprints:CONN_SD-43045-008_04_MOL"
+		(property "Footprint" "robosub_footprints:CONN_SD-43045-005_04_MOL"
 			(at 275.59 201.93 0)
 			(effects
 				(font
@@ -16095,7 +16131,7 @@
 				(hide yes)
 			)
 		)
-		(property "Datasheet" "430450422"
+		(property "Datasheet" "430450412"
 			(at 275.59 201.93 0)
 			(effects
 				(font
@@ -16105,7 +16141,7 @@
 				(hide yes)
 			)
 		)
-		(property "Description" "Symbol for 430450422"
+		(property "Description" "Symbol for 430450412"
 			(at 275.59 201.93 0)
 			(effects
 				(font
@@ -16132,7 +16168,7 @@
 				(hide yes)
 			)
 		)
-		(property "Supplier 1" "https://www.digikey.com/en/products/detail/molex/0430450422/1635030"
+		(property "Supplier 1" "https://www.digikey.com/en/products/detail/molex/0430450412/252503"
 			(at 275.59 201.93 0)
 			(effects
 				(font
@@ -16141,7 +16177,7 @@
 				(hide yes)
 			)
 		)
-		(property "Supplier 1 S/N" "WM2679-ND"
+		(property "Supplier 1 S/N" "WM1790-ND"
 			(at 275.59 201.93 0)
 			(effects
 				(font
@@ -17027,7 +17063,7 @@
 		)
 	)
 	(symbol
-		(lib_id "robosub_symbols:430450422")
+		(lib_id "robosub_symbols:430450412")
 		(at 306.07 182.88 0)
 		(unit 1)
 		(exclude_from_sim no)
@@ -17055,7 +17091,7 @@
 				(hide yes)
 			)
 		)
-		(property "Footprint" "robosub_footprints:CONN_SD-43045-008_04_MOL"
+		(property "Footprint" "robosub_footprints:CONN_SD-43045-005_04_MOL"
 			(at 306.07 182.88 0)
 			(effects
 				(font
@@ -17065,7 +17101,7 @@
 				(hide yes)
 			)
 		)
-		(property "Datasheet" "430450422"
+		(property "Datasheet" "430450412"
 			(at 306.07 182.88 0)
 			(effects
 				(font
@@ -17075,7 +17111,7 @@
 				(hide yes)
 			)
 		)
-		(property "Description" "Symbol for 430450422"
+		(property "Description" "Symbol for 430450412"
 			(at 306.07 182.88 0)
 			(effects
 				(font
@@ -17102,7 +17138,7 @@
 				(hide yes)
 			)
 		)
-		(property "Supplier 1" "https://www.digikey.com/en/products/detail/molex/0430450422/1635030"
+		(property "Supplier 1" "https://www.digikey.com/en/products/detail/molex/0430450412/252503"
 			(at 306.07 182.88 0)
 			(effects
 				(font
@@ -17111,7 +17147,7 @@
 				(hide yes)
 			)
 		)
-		(property "Supplier 1 S/N" "WM2679-ND"
+		(property "Supplier 1 S/N" "WM1790-ND"
 			(at 306.07 182.88 0)
 			(effects
 				(font
@@ -17437,7 +17473,7 @@
 				(hide yes)
 			)
 		)
-		(property "Datasheet" "https://item.szlcsc.com/82618.html"
+		(property "Datasheet" "https://jlcpcb.com/partdetail/STMicroelectronics-L78M05ABDTTR/C58069"
 			(at 350.774 102.743 0)
 			(effects
 				(font
@@ -17853,6 +17889,24 @@
 		)
 		(property "Description" "430450612 (see datasheet)"
 			(at 191.77 205.74 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Supplier 1" "https://www.digikey.com/en/products/detail/molex/0430450612/252504"
+			(at 0 0 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Supplier 1 S/N" "WM1791-ND"
+			(at 0 0 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -18306,7 +18360,7 @@
 		)
 	)
 	(symbol
-		(lib_id "robosub_symbols:430450422")
+		(lib_id "robosub_symbols:430450412")
 		(at 239.776 92.71 0)
 		(unit 1)
 		(exclude_from_sim no)
@@ -18334,7 +18388,7 @@
 				(hide yes)
 			)
 		)
-		(property "Footprint" "robosub_footprints:CONN_SD-43045-008_04_MOL"
+		(property "Footprint" "robosub_footprints:CONN_SD-43045-005_04_MOL"
 			(at 239.776 92.71 0)
 			(effects
 				(font
@@ -18344,7 +18398,7 @@
 				(hide yes)
 			)
 		)
-		(property "Datasheet" "430450422"
+		(property "Datasheet" "430450412"
 			(at 239.776 92.71 0)
 			(effects
 				(font
@@ -18354,7 +18408,7 @@
 				(hide yes)
 			)
 		)
-		(property "Description" "Symbol for 430450422"
+		(property "Description" "Symbol for 430450412"
 			(at 239.776 92.71 0)
 			(effects
 				(font
@@ -18381,7 +18435,7 @@
 				(hide yes)
 			)
 		)
-		(property "Supplier 1" "https://www.digikey.com/en/products/detail/molex/0430450422/1635030"
+		(property "Supplier 1" "https://www.digikey.com/en/products/detail/molex/0430450412/252503"
 			(at 239.776 92.71 0)
 			(effects
 				(font
@@ -18390,7 +18444,7 @@
 				(hide yes)
 			)
 		)
-		(property "Supplier 1 S/N" "WM2679-ND"
+		(property "Supplier 1 S/N" "WM1790-ND"
 			(at 239.776 92.71 0)
 			(effects
 				(font
@@ -18439,7 +18493,7 @@
 		)
 	)
 	(symbol
-		(lib_id "robosub_symbols:430450422")
+		(lib_id "robosub_symbols:430450412")
 		(at 275.59 182.88 0)
 		(unit 1)
 		(exclude_from_sim no)
@@ -18467,7 +18521,7 @@
 				(hide yes)
 			)
 		)
-		(property "Footprint" "robosub_footprints:CONN_SD-43045-008_04_MOL"
+		(property "Footprint" "robosub_footprints:CONN_SD-43045-005_04_MOL"
 			(at 275.59 182.88 0)
 			(effects
 				(font
@@ -18477,7 +18531,7 @@
 				(hide yes)
 			)
 		)
-		(property "Datasheet" "430450422"
+		(property "Datasheet" "430450412"
 			(at 275.59 182.88 0)
 			(effects
 				(font
@@ -18487,7 +18541,7 @@
 				(hide yes)
 			)
 		)
-		(property "Description" "Symbol for 430450422"
+		(property "Description" "Symbol for 430450412"
 			(at 275.59 182.88 0)
 			(effects
 				(font
@@ -18514,7 +18568,7 @@
 				(hide yes)
 			)
 		)
-		(property "Supplier 1" "https://www.digikey.com/en/products/detail/molex/0430450422/1635030"
+		(property "Supplier 1" "https://www.digikey.com/en/products/detail/molex/0430450412/252503"
 			(at 275.59 182.88 0)
 			(effects
 				(font
@@ -18523,7 +18577,7 @@
 				(hide yes)
 			)
 		)
-		(property "Supplier 1 S/N" "WM2679-ND"
+		(property "Supplier 1 S/N" "WM1790-ND"
 			(at 275.59 182.88 0)
 			(effects
 				(font
@@ -18703,7 +18757,7 @@
 		)
 	)
 	(symbol
-		(lib_id "robosub_symbols:430450422")
+		(lib_id "robosub_symbols:430450412")
 		(at 360.68 207.01 0)
 		(unit 1)
 		(exclude_from_sim no)
@@ -18730,7 +18784,7 @@
 				(hide yes)
 			)
 		)
-		(property "Footprint" "robosub_footprints:CONN_SD-43045-008_04_MOL"
+		(property "Footprint" "robosub_footprints:CONN_SD-43045-005_04_MOL"
 			(at 360.68 207.01 0)
 			(effects
 				(font
@@ -18740,7 +18794,7 @@
 				(hide yes)
 			)
 		)
-		(property "Datasheet" "430450422"
+		(property "Datasheet" "430450412"
 			(at 360.68 207.01 0)
 			(effects
 				(font
@@ -18750,7 +18804,7 @@
 				(hide yes)
 			)
 		)
-		(property "Description" "Symbol for 430450422"
+		(property "Description" "Symbol for 430450412"
 			(at 360.68 207.01 0)
 			(effects
 				(font
@@ -18777,7 +18831,7 @@
 				(hide yes)
 			)
 		)
-		(property "Supplier 1" "https://www.digikey.com/en/products/detail/molex/0430450422/1635030"
+		(property "Supplier 1" "https://www.digikey.com/en/products/detail/molex/0430450412/252503"
 			(at 360.68 207.01 0)
 			(effects
 				(font
@@ -18786,7 +18840,7 @@
 				(hide yes)
 			)
 		)
-		(property "Supplier 1 S/N" "WM2679-ND"
+		(property "Supplier 1 S/N" "WM1790-ND"
 			(at 360.68 207.01 0)
 			(effects
 				(font
@@ -19386,7 +19440,7 @@
 				(hide yes)
 			)
 		)
-		(property "Datasheet" "https://item.szlcsc.com/98835.html"
+		(property "Datasheet" "https://jlcpcb.com/partdetail/TEConnectivity-MS560702BA0350/C97627"
 			(at 352.044 46.863 0)
 			(effects
 				(font
@@ -19483,7 +19537,7 @@
 				(hide yes)
 			)
 		)
-		(property "Datasheet" "https://list.szlcsc.com/catalog/922.html"
+		(property "Datasheet" "https://jlcpcb.com/partdetail/Sensirion-SHT31_DIS_B25kS/C80862"
 			(at 273.304 48.133 0)
 			(effects
 				(font
@@ -20570,7 +20624,7 @@
 		)
 	)
 	(symbol
-		(lib_id "robosub_symbols:430450422")
+		(lib_id "robosub_symbols:430450412")
 		(at 306.07 201.93 0)
 		(unit 1)
 		(exclude_from_sim no)
@@ -20598,7 +20652,7 @@
 				(hide yes)
 			)
 		)
-		(property "Footprint" "robosub_footprints:CONN_SD-43045-008_04_MOL"
+		(property "Footprint" "robosub_footprints:CONN_SD-43045-005_04_MOL"
 			(at 306.07 201.93 0)
 			(effects
 				(font
@@ -20608,7 +20662,7 @@
 				(hide yes)
 			)
 		)
-		(property "Datasheet" "430450422"
+		(property "Datasheet" "430450412"
 			(at 306.07 201.93 0)
 			(effects
 				(font
@@ -20618,7 +20672,7 @@
 				(hide yes)
 			)
 		)
-		(property "Description" "Symbol for 430450422"
+		(property "Description" "Symbol for 430450412"
 			(at 306.07 201.93 0)
 			(effects
 				(font
@@ -20645,7 +20699,7 @@
 				(hide yes)
 			)
 		)
-		(property "Supplier 1" "https://www.digikey.com/en/products/detail/molex/0430450422/1635030"
+		(property "Supplier 1" "https://www.digikey.com/en/products/detail/molex/0430450412/252503"
 			(at 306.07 201.93 0)
 			(effects
 				(font
@@ -20654,7 +20708,7 @@
 				(hide yes)
 			)
 		)
-		(property "Supplier 1 S/N" "WM2679-ND"
+		(property "Supplier 1 S/N" "WM1790-ND"
 			(at 306.07 201.93 0)
 			(effects
 				(font
@@ -21115,7 +21169,7 @@
 		)
 	)
 	(symbol
-		(lib_id "robosub_symbols:430450422")
+		(lib_id "robosub_symbols:430450412")
 		(at 306.07 220.98 0)
 		(unit 1)
 		(exclude_from_sim no)
@@ -21143,7 +21197,7 @@
 				(hide yes)
 			)
 		)
-		(property "Footprint" "robosub_footprints:CONN_SD-43045-008_04_MOL"
+		(property "Footprint" "robosub_footprints:CONN_SD-43045-005_04_MOL"
 			(at 306.07 220.98 0)
 			(effects
 				(font
@@ -21153,7 +21207,7 @@
 				(hide yes)
 			)
 		)
-		(property "Datasheet" "430450422"
+		(property "Datasheet" "430450412"
 			(at 306.07 220.98 0)
 			(effects
 				(font
@@ -21163,7 +21217,7 @@
 				(hide yes)
 			)
 		)
-		(property "Description" "Symbol for 430450422"
+		(property "Description" "Symbol for 430450412"
 			(at 306.07 220.98 0)
 			(effects
 				(font
@@ -21190,7 +21244,7 @@
 				(hide yes)
 			)
 		)
-		(property "Supplier 1" "https://www.digikey.com/en/products/detail/molex/0430450422/1635030"
+		(property "Supplier 1" "https://www.digikey.com/en/products/detail/molex/0430450412/252503"
 			(at 306.07 220.98 0)
 			(effects
 				(font
@@ -21199,7 +21253,7 @@
 				(hide yes)
 			)
 		)
-		(property "Supplier 1 S/N" "WM2679-ND"
+		(property "Supplier 1 S/N" "WM1790-ND"
 			(at 306.07 220.98 0)
 			(effects
 				(font
@@ -22271,7 +22325,7 @@
 		)
 	)
 	(symbol
-		(lib_id "robosub_symbols:430450422")
+		(lib_id "robosub_symbols:430450412")
 		(at 187.96 92.456 0)
 		(unit 1)
 		(exclude_from_sim no)
@@ -22299,7 +22353,7 @@
 				(hide yes)
 			)
 		)
-		(property "Footprint" "robosub_footprints:CONN_SD-43045-008_04_MOL"
+		(property "Footprint" "robosub_footprints:CONN_SD-43045-005_04_MOL"
 			(at 187.96 92.456 0)
 			(effects
 				(font
@@ -22309,7 +22363,7 @@
 				(hide yes)
 			)
 		)
-		(property "Datasheet" "430450422"
+		(property "Datasheet" "430450412"
 			(at 187.96 92.456 0)
 			(effects
 				(font
@@ -22319,7 +22373,7 @@
 				(hide yes)
 			)
 		)
-		(property "Description" "Symbol for 430450422"
+		(property "Description" "Symbol for 430450412"
 			(at 187.96 92.456 0)
 			(effects
 				(font
@@ -22346,7 +22400,7 @@
 				(hide yes)
 			)
 		)
-		(property "Supplier 1" "https://www.digikey.com/en/products/detail/molex/0430450422/1635030"
+		(property "Supplier 1" "https://www.digikey.com/en/products/detail/molex/0430450412/252503"
 			(at 187.96 92.456 0)
 			(effects
 				(font
@@ -22355,7 +22409,7 @@
 				(hide yes)
 			)
 		)
-		(property "Supplier 1 S/N" "WM2679-ND"
+		(property "Supplier 1 S/N" "WM1790-ND"
 			(at 187.96 92.456 0)
 			(effects
 				(font
