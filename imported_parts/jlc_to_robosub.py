@@ -219,35 +219,170 @@ def merge_symbol_into_master(symbol_src: Path) -> None:
       - Append the inner symbol definitions.
       - Close with a final ')'.
     """
-    master_text = SYMBOL_LIB.read_text(encoding="utf-8").splitlines()
-    src_text = symbol_src.read_text(encoding="utf-8").splitlines()
+    master_lines = SYMBOL_LIB.read_text(encoding="utf-8").splitlines()
+    src_lines = symbol_src.read_text(encoding="utf-8").splitlines()
 
-    if not master_text:
+    if not master_lines:
         raise RuntimeError("{} is empty or invalid.".format(SYMBOL_LIB))
 
-    # Remove last line of master (closing ')')
-    master_body = master_text[:-1]
-
-    # Drop first and last line of source
-    if len(src_text) < 2:
+    src_blocks = _extract_parent_symbol_blocks(src_lines)
+    if not src_blocks:
         raise RuntimeError(
-            "{} does not have enough lines to contain symbols.".format(symbol_src)
+            "{} does not contain parent symbol blocks.".format(symbol_src)
         )
-    src_body = src_text[1:-1]
 
-    merged_lines = master_body + src_body + [")"]
+    if master_lines[-1].strip() != ")":
+        raise RuntimeError("{} is malformed (missing final ')').".format(SYMBOL_LIB))
+
+    merged_lines = master_lines[:-1]
+    for block in src_blocks:
+        merged_lines.extend(block)
+    merged_lines.append(")")
     SYMBOL_LIB.write_text("\n".join(merged_lines) + "\n", encoding="utf-8")
 
 
 def patch_footprint_properties() -> None:
     """Patch all 'Footprint' properties in SYMBOL_LIB to use FP_LIB_NICKNAME."""
     text = SYMBOL_LIB.read_text(encoding="utf-8")
+    pattern = re.compile(r'(property\s+"Footprint"\s+")([^"]+)(")')
 
-    pattern = re.compile(r'(property\s+"Footprint"\s+")([^:"]*)(:[^"]*")')
-    text_new = pattern.sub(r'\1' + FP_LIB_NICKNAME + r'\3', text)
+    def repl(match):
+        current = match.group(2)
+        fp_name = current.split(":", 1)[1] if ":" in current else current
+        return '{}{}:{}{}'.format(match.group(1), FP_LIB_NICKNAME, fp_name, match.group(3))
+
+    text_new = pattern.sub(repl, text)
 
     if text_new != text:
         SYMBOL_LIB.write_text(text_new, encoding="utf-8")
+
+
+def _top_level_symbol_ranges(lines):
+    """Return [(start_idx, end_idx)] for top-level symbol blocks."""
+    ranges = []
+    depth = 0
+    start = None
+    for idx, line in enumerate(lines):
+        stripped = line.lstrip()
+        if start is None and depth == 1 and stripped.startswith('(symbol "'):
+            start = idx
+        depth += line.count("(") - line.count(")")
+        if start is not None and depth == 1:
+            ranges.append((start, idx))
+            start = None
+    return ranges
+
+
+def _extract_parent_symbol_blocks(lines):
+    """
+    Extract parent symbol blocks by scanning '(symbol "...")' entries.
+    Child unit symbols matching *_<n>_<m> are skipped.
+    """
+    blocks = []
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+        if not line.lstrip().startswith('(symbol "'):
+            i += 1
+            continue
+
+        m = re.search(r'\(symbol\s+"([^"]+)"', line)
+        if not m:
+            i += 1
+            continue
+        name = m.group(1)
+
+        if re.search(r"_[0-9]+_[0-9]+$", name):
+            i += 1
+            continue
+
+        start = i
+        bal = 0
+        while i < len(lines):
+            bal += lines[i].count("(") - lines[i].count(")")
+            i += 1
+            if bal == 0:
+                break
+        blocks.append(lines[start:i])
+    return blocks
+
+
+def _extract_property_value(block_text: str, prop_name: str) -> str:
+    m = re.search(r'\(property\s+"{}"\s+"([^"]*)"'.format(re.escape(prop_name)), block_text)
+    return m.group(1).strip() if m else ""
+
+
+def _make_meaningful_description(block_text: str) -> str:
+    value = _extract_property_value(block_text, "Value")
+    desc = _extract_property_value(block_text, "Description")
+    datasheet = _extract_property_value(block_text, "Datasheet")
+    lcsc = _extract_property_value(block_text, "LCSC")
+    keywords = _extract_property_value(block_text, "ki_keywords")
+
+    if desc:
+        return desc
+    if lcsc and value:
+        return "{} (LCSC {})".format(value, lcsc)
+    if keywords.startswith("C") and keywords[1:].isdigit() and value:
+        return "{} (LCSC {})".format(value, keywords)
+    if datasheet and value and datasheet != value:
+        return "{} (see datasheet)".format(value)
+    if value:
+        return "Symbol for {}".format(value)
+    return "Custom symbol"
+
+
+def patch_ki_descriptions() -> None:
+    """Ensure all parent symbols include a meaningful ki_description property."""
+    lines = SYMBOL_LIB.read_text(encoding="utf-8").splitlines()
+    first_symbol_idx = None
+    for idx, line in enumerate(lines):
+        if line.lstrip().startswith('(symbol "'):
+            first_symbol_idx = idx
+            break
+
+    if first_symbol_idx is None:
+        return
+
+    header = lines[:first_symbol_idx]
+    parent_blocks = _extract_parent_symbol_blocks(lines)
+    rebuilt = header[:]
+
+    for block in parent_blocks:
+        block_text = "\n".join(block)
+        new_desc = _make_meaningful_description(block_text).replace('"', "'")
+        found = False
+
+        for i, line in enumerate(block):
+            if '(property "ki_description"' in line:
+                block[i] = re.sub(
+                    r'(\(property\s+"ki_description"\s+")([^"]*)(")',
+                    lambda m: m.group(1) + new_desc + m.group(3),
+                    line,
+                )
+                found = True
+                break
+
+        if not found:
+            indent_match = re.match(r"^(\s*)", block[0])
+            indent = (indent_match.group(1) if indent_match else "") + "  "
+            insert_at = len(block) - 1
+            for i, line in enumerate(block[1:], start=1):
+                if line.lstrip().startswith('(symbol "'):
+                    insert_at = i
+                    break
+
+            desc_lines = [
+                '{}(property "ki_description" "{}" (id 97) (at 0 0 0)'.format(indent, new_desc),
+                "{}  (effects (font (size 1.27 1.27)) hide)".format(indent),
+                "{})".format(indent),
+            ]
+            block = block[:insert_at] + desc_lines + block[insert_at:]
+
+        rebuilt.extend(block)
+
+    rebuilt.append(")")
+    SYMBOL_LIB.write_text("\n".join(rebuilt) + "\n", encoding="utf-8")
 
 
 def patch_3d_model_paths() -> None:
@@ -353,12 +488,13 @@ def main(argv) -> int:
 
     # Patch properties and model paths in final libs
     patch_footprint_properties()
+    patch_ki_descriptions()
     patch_3d_model_paths()
 
     # Log entry
     append_log(part, symbol_name, footprint_str, description)
 
-    print("✓ Merged JLC part {} into project-local KiCad libraries:".format(part))
+    print("Merged JLC part {} into project-local KiCad libraries:".format(part))
     print("  Symbols   :", SYMBOL_LIB)
     print("  Footprints:", FP_LIB_DIR)
     print("  3D models :", MODELS_DIR)

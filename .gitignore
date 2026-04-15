@@ -4,7 +4,7 @@
 .LSOverride
 
 # VSCode
-*/.vscode
+.vscode/
 
 
 # KiCad autosave / locks
@@ -14,5 +14,5 @@
 *-backups/
 *.kicad_prl
 
-# macOS
-.DS_Store
+# python
+__pycache__/
