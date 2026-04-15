@@ -7087,7 +7087,7 @@
 			)
 		)
 	)
-	(footprint "robosub_footprints:TO-252-2_L6.5-W6.1-P4.58-LS10.0-TL"
+	(footprint "robosub_footprints:C58069"
 		(layer "F.Cu")
 		(uuid "83d2eda5-8845-4bd6-8475-1738b63081e0")
 		(at 76 74 90)
@@ -7116,7 +7116,7 @@
 				)
 			)
 		)
-		(property "Datasheet" "https://item.szlcsc.com/82618.html"
+		(property "Datasheet" "https://jlcpcb.com/partdetail/STMicroelectronics-L78M05ABDTTR/C58069"
 			(at 0 0 90)
 			(layer "F.Fab")
 			(hide yes)
@@ -8653,7 +8653,7 @@
 			)
 		)
 	)
-	(footprint "robosub_footprints:SENSOR-SMD_MS560702BA03-50"
+	(footprint "robosub_footprints:C97627"
 		(layer "F.Cu")
 		(uuid "8928547d-380c-4b81-98c6-e87edc4cec10")
 		(at 42.900051 79.124968)
@@ -8681,7 +8681,7 @@
 				)
 			)
 		)
-		(property "Datasheet" "https://item.szlcsc.com/98835.html"
+		(property "Datasheet" "https://jlcpcb.com/partdetail/TEConnectivity-MS560702BA0350/C97627"
 			(at 0 0 0)
 			(layer "F.Fab")
 			(hide yes)
@@ -9522,7 +9522,7 @@
 			)
 		)
 	)
-	(footprint "robosub_footprints:DFN-8_L2.5-W2.5-P0.50-BL-EP"
+	(footprint "robosub_footprints:C80862"
 		(layer "F.Cu")
 		(uuid "8e2cb134-bd9e-496a-bd5f-18e891c21cab")
 		(at 52.340274 78.137968)
@@ -9550,7 +9550,7 @@
 				)
 			)
 		)
-		(property "Datasheet" "https://list.szlcsc.com/catalog/922.html"
+		(property "Datasheet" "https://jlcpcb.com/partdetail/Sensirion-SHT31_DIS_B25kS/C80862"
 			(at 0 0 0)
 			(layer "F.Fab")
 			(hide yes)
@@ -12242,7 +12242,7 @@
 			)
 		)
 	)
-	(footprint "robosub_footprints:SOT-89-3_L4.5-W2.5-P1.50-LS4.2-BR"
+	(footprint "robosub_footprints:C5120796"
 		(layer "F.Cu")
 		(uuid "c32caaa6-252c-4526-8fc7-22e778b3b09f")
 		(at 42.985993 73.097918)
@@ -12270,7 +12270,7 @@
 				)
 			)
 		)
-		(property "Datasheet" "https://item.szlcsc.com/421845.html"
+		(property "Datasheet" "https://jlcpcb.com/partdetail/MSKSEMI-AMS1117_33V/C5120796"
 			(at 0 0 0)
 			(layer "F.Fab")
 			(hide yes)
@@ -13009,7 +13009,7 @@
 			)
 		)
 	)
-	(footprint "robosub_footprints:MSOP-8_L3.0-W3.0-P0.65-LS4.9-BL"
+	(footprint "robosub_footprints:C94847"
 		(layer "F.Cu")
 		(uuid "ca0c503d-5b68-4c62-baa3-ef2c36fcabb2")
 		(at 53.131117 72.596419)

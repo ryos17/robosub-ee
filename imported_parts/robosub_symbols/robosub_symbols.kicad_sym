@@ -1866,7 +1866,7 @@
 					)
 				)
 			)
-			(property "Footprint" "robosub_footprints:TO-252-2_L6.5-W6.1-P4.58-LS10.0-TL"
+			(property "Footprint" "robosub_footprints:C58069"
 				(at 0 -10.16 0)
 				(effects
 					(font
@@ -2014,7 +2014,7 @@
 					)
 				)
 			)
-			(property "Footprint" "robosub_footprints:SENSOR-SMD_MS560702BA03-50"
+			(property "Footprint" "robosub_footprints:C97627"
 				(at 0 -10.16 0)
 				(effects
 					(font
@@ -2665,7 +2665,7 @@
 					)
 				)
 			)
-			(property "Footprint" "robosub_footprints:DFN-8_L2.5-W2.5-P0.50-BL-EP"
+			(property "Footprint" "robosub_footprints:C80862"
 				(at 0 -10.16 0)
 				(effects
 					(font
@@ -2937,7 +2937,7 @@
 					)
 				)
 			)
-			(property "Footprint" ""
+			(property "Footprint" "robosub_footprints:Teensy41"
 				(at -10.16 10.16 0)
 				(effects
 					(font
@@ -4314,7 +4314,7 @@
     (property "Value" "AMS1117-3_3V_C5120796" (id 1) (at 0 -2.54 0)
       (effects (font (size 1.27 1.27)))
     )
-    (property "Footprint" "robosub_footprints:SOT-89-3_L4.5-W2.5-P1.50-LS4.2-BR" (id 2) (at 0 -10.16 0)
+    (property "Footprint" "robosub_footprints:C5120796" (id 2) (at 0 -10.16 0)
       (effects (font (size 1.27 1.27) italic) hide)
     )
     (property "Datasheet" "https://jlcpcb.com/partdetail/MSKSEMI-AMS1117_33V/C5120796" (id 3) (at -2.286 0.127 0)
@@ -4363,14 +4363,14 @@
       )
     )
   )
-  (symbol "MCP9808-E{slash}MS"   (in_bom yes) (on_board yes)
+  (symbol "MCP9808-E/MS"   (in_bom yes) (on_board yes)
     (property "Reference" "U" (id 0) (at 0 1.27 0)
       (effects (font (size 1.27 1.27)))
     )
-    (property "Value" "MCP9808-E{slash}MS" (id 1) (at 0 -2.54 0)
+    (property "Value" "MCP9808-E/MS" (id 1) (at 0 -2.54 0)
       (effects (font (size 1.27 1.27)))
     )
-    (property "Footprint" "robosub_footprints:MSOP-8_L3.0-W3.0-P0.65-LS4.9-BL" (id 2) (at 0 -10.16 0)
+    (property "Footprint" "robosub_footprints:C94847" (id 2) (at 0 -10.16 0)
       (effects (font (size 1.27 1.27) italic) hide)
     )
     (property "Datasheet" "https://jlcpcb.com/partdetail/C94847" (id 3) (at -2.286 0.127 0)
@@ -4383,10 +4383,10 @@
       (effects (font (size 1.27 1.27)) hide)
     )
     
-    (property "ki_description" "MCP9808-E{slash}MS (LCSC C94847)" (id 97) (at 0 0 0)
+    (property "ki_description" "MCP9808-E/MS (LCSC C94847)" (id 97) (at 0 0 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (symbol "MCP9808-E{slash}MS_0_1"
+    (symbol "MCP9808-E/MS_0_1"
       (rectangle
         (start -12.700025400050801 6.350012700025401)
         (end 12.700025400050801 -6.350012700025401)

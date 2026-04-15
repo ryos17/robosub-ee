@@ -4114,7 +4114,7 @@
 					)
 				)
 			)
-			(property "Footprint" "robosub_footprints:SOT-89-3_L4.5-W2.5-P1.50-LS4.2-BR"
+			(property "Footprint" "robosub_footprints:C5120796"
 				(at 0 -10.16 0)
 				(effects
 					(font
@@ -4261,7 +4261,7 @@
 					)
 				)
 			)
-			(property "Footprint" "robosub_footprints:TO-252-2_L6.5-W6.1-P4.58-LS10.0-TL"
+			(property "Footprint" "robosub_footprints:C58069"
 				(at 0 -10.16 0)
 				(effects
 					(font
@@ -4398,7 +4398,7 @@
 					)
 				)
 			)
-			(property "Value" "MCP9808-E{slash}MS"
+			(property "Value" "MCP9808-E/MS"
 				(at 0 -2.54 0)
 				(effects
 					(font
@@ -4406,7 +4406,7 @@
 					)
 				)
 			)
-			(property "Footprint" "robosub_footprints:MSOP-8_L3.0-W3.0-P0.65-LS4.9-BL"
+			(property "Footprint" "robosub_footprints:C94847"
 				(at 0 -10.16 0)
 				(effects
 					(font
@@ -4426,7 +4426,7 @@
 					(hide yes)
 				)
 			)
-			(property "Description" "MCP9808-E{slash}MS (LCSC C94847)"
+			(property "Description" "MCP9808-E/MS (LCSC C94847)"
 				(at 0 0 0)
 				(effects
 					(font
@@ -4643,7 +4643,7 @@
 					)
 				)
 			)
-			(property "Footprint" "robosub_footprints:SENSOR-SMD_MS560702BA03-50"
+			(property "Footprint" "robosub_footprints:C97627"
 				(at 0 -10.16 0)
 				(effects
 					(font
@@ -5288,7 +5288,7 @@
 					)
 				)
 			)
-			(property "Footprint" "robosub_footprints:DFN-8_L2.5-W2.5-P0.50-BL-EP"
+			(property "Footprint" "robosub_footprints:C80862"
 				(at 0 -10.16 0)
 				(effects
 					(font
@@ -5557,7 +5557,7 @@
 					)
 				)
 			)
-			(property "Footprint" ""
+			(property "Footprint" "robosub_footprints:Teensy41"
 				(at -10.16 10.16 0)
 				(effects
 					(font
@@ -13782,7 +13782,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "robosub_footprints:SOT-89-3_L4.5-W2.5-P1.50-LS4.2-BR"
+		(property "Footprint" "robosub_footprints:C5120796"
 			(at 351.79 140.97 0)
 			(effects
 				(font
@@ -16262,7 +16262,7 @@
 				)
 			)
 		)
-		(property "Footprint" "robosub_footprints:MSOP-8_L3.0-W3.0-P0.65-LS4.9-BL"
+		(property "Footprint" "robosub_footprints:C94847"
 			(at 201.93 55.88 0)
 			(effects
 				(font
@@ -16282,7 +16282,7 @@
 				(hide yes)
 			)
 		)
-		(property "Description" "MCP9808-E{slash}MS (LCSC C94847)"
+		(property "Description" "MCP9808-E/MS (LCSC C94847)"
 			(at 201.93 45.72 0)
 			(effects
 				(font
@@ -17695,7 +17695,7 @@
 				)
 			)
 		)
-		(property "Footprint" "robosub_footprints:TO-252-2_L6.5-W6.1-P4.58-LS10.0-TL"
+		(property "Footprint" "robosub_footprints:C58069"
 			(at 353.06 113.03 0)
 			(effects
 				(font
@@ -19408,7 +19408,7 @@
 				)
 			)
 		)
-		(property "Footprint" "robosub_footprints:SENSOR-SMD_MS560702BA03-50"
+		(property "Footprint" "robosub_footprints:C97627"
 			(at 354.33 57.15 0)
 			(effects
 				(font
@@ -19505,7 +19505,7 @@
 				)
 			)
 		)
-		(property "Footprint" "robosub_footprints:DFN-8_L2.5-W2.5-P0.50-BL-EP"
+		(property "Footprint" "robosub_footprints:C80862"
 			(at 275.59 58.42 0)
 			(effects
 				(font
