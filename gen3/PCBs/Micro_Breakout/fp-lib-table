@@ -1,4 +1,4 @@
 (fp_lib_table
   (version 7)
-  (lib (name "Imported_Footprints")(type "KiCad")(uri "${KIPRJMOD}/Imported_Footprints.pretty")(options "")(descr ""))
+  (lib (name "robosub_footprints")(type "KiCad")(uri "${KIPRJMOD}/../../../imported_parts/robosub_footprints.pretty")(options "")(descr "Consolidated custom footprints"))
 )

@@ -209,6 +209,85 @@ def find_generated_files(work_dir: Path):
     return symbol_src, fp_src_file, model_files
 
 
+def coherent_basename_from_symbol(symbol_name: str) -> str:
+    """
+    Derive a filesystem-safe basename from the symbol name.
+    Symbol name remains the source of truth; we only normalize characters
+    that are invalid in filenames/paths.
+    """
+    name = symbol_name.strip()
+    name = (
+        name.replace("{slash}", "_")
+        .replace("/", "_")
+        .replace("\\", "_")
+        .replace(".", "_")
+        .replace(",", "_")
+    )
+    name = re.sub(r'[<>:"|?*]', "_", name)
+    name = re.sub(r"\s+", "_", name)
+    name = name.strip("._")
+    return name or "part"
+
+
+def rewrite_footprint_file_identity(fp_path: Path, new_base: str) -> Tuple[Optional[str], Optional[str]]:
+    """
+    Rewrite a footprint file so its internal identity matches new_base.
+    Also updates its model basename to new_base while preserving extension.
+    Returns (old_model_basename, new_model_basename).
+    """
+    text = fp_path.read_text(encoding="utf-8")
+
+    # Header name: (module "NAME"... or (footprint "NAME"...)
+    text = re.sub(
+        r'^(\(\s*(?:module|footprint)\s+")([^"]+)(")',
+        r"\1" + new_base + r"\3",
+        text,
+        count=1,
+        flags=re.M,
+    )
+    text = re.sub(r'(\(descr\s+")([^"]*)(\s+footprint"\))', r"\1" + new_base + r"\3", text, count=1)
+    text = re.sub(r'(\(tags\s+")([^"]*)(\s+footprint[^"]*")', r"\1" + new_base + r"\3", text, count=1)
+    text = re.sub(r'(\(fp_text\s+value\s+)([^\s\)]+)', r"\1" + new_base, text, count=1)
+
+    old_model = None
+    new_model = None
+
+    # Match quoted model path: (model "path/to/file.step"
+    m = re.search(r'(\(model\s+"[^"]*[/\\])([^"/\\]+)(")', text)
+    if m:
+        old_model = m.group(2)
+        ext = Path(old_model).suffix or ".step"
+        new_model = "{}{}".format(new_base, ext)
+        text = text[: m.start(2)] + new_model + text[m.end(2) :]
+    else:
+        # Match unquoted model path: (model packages3d/file.step
+        m2 = re.search(r'(\(model\s+)([^\s\)]+)', text)
+        if m2:
+            model_path = m2.group(2)
+            old_model = os.path.basename(model_path)
+            ext = Path(old_model).suffix or ".step"
+            new_model = "{}{}".format(new_base, ext)
+            new_model_path = "{}/{}".format(os.path.dirname(model_path).replace("\\", "/"), new_model)
+            text = text[: m2.start(2)] + new_model_path + text[m2.end(2) :]
+
+    fp_path.write_text(text, encoding="utf-8")
+    return old_model, new_model
+
+
+def patch_symbol_source_footprint(symbol_src: Path, fp_basename_noext: str) -> None:
+    """
+    Ensure generated source symbol footprint points to the coherent footprint basename.
+    """
+    text = symbol_src.read_text(encoding="utf-8")
+    text_new = re.sub(
+        r'(\(property\s+"Footprint"\s+")([^"]+)(")',
+        r"\1{}:{}\3".format(FP_LIB_NICKNAME, fp_basename_noext),
+        text,
+    )
+    if text_new != text:
+        symbol_src.write_text(text_new, encoding="utf-8")
+
+
 def merge_symbol_into_master(symbol_src: Path) -> None:
     """
     Merge symbol(s) from symbol_src into SYMBOL_LIB.
@@ -219,35 +298,243 @@ def merge_symbol_into_master(symbol_src: Path) -> None:
       - Append the inner symbol definitions.
       - Close with a final ')'.
     """
-    master_text = SYMBOL_LIB.read_text(encoding="utf-8").splitlines()
-    src_text = symbol_src.read_text(encoding="utf-8").splitlines()
+    master_lines = SYMBOL_LIB.read_text(encoding="utf-8").splitlines()
+    src_lines = symbol_src.read_text(encoding="utf-8").splitlines()
 
-    if not master_text:
+    if not master_lines:
         raise RuntimeError("{} is empty or invalid.".format(SYMBOL_LIB))
 
-    # Remove last line of master (closing ')')
-    master_body = master_text[:-1]
-
-    # Drop first and last line of source
-    if len(src_text) < 2:
+    src_blocks = _extract_parent_symbol_blocks(src_lines)
+    if not src_blocks:
         raise RuntimeError(
-            "{} does not have enough lines to contain symbols.".format(symbol_src)
+            "{} does not contain parent symbol blocks.".format(symbol_src)
         )
-    src_body = src_text[1:-1]
 
-    merged_lines = master_body + src_body + [")"]
+    if master_lines[-1].strip() != ")":
+        raise RuntimeError("{} is malformed (missing final ')').".format(SYMBOL_LIB))
+
+    merged_lines = master_lines[:-1]
+    for block in src_blocks:
+        merged_lines.extend(block)
+    merged_lines.append(")")
     SYMBOL_LIB.write_text("\n".join(merged_lines) + "\n", encoding="utf-8")
 
 
 def patch_footprint_properties() -> None:
     """Patch all 'Footprint' properties in SYMBOL_LIB to use FP_LIB_NICKNAME."""
     text = SYMBOL_LIB.read_text(encoding="utf-8")
+    pattern = re.compile(r'(property\s+"Footprint"\s+")([^"]+)(")')
 
-    pattern = re.compile(r'(property\s+"Footprint"\s+")([^:"]*)(:[^"]*")')
-    text_new = pattern.sub(r'\1' + FP_LIB_NICKNAME + r'\3', text)
+    def repl(match):
+        current = match.group(2)
+        fp_name = current.split(":", 1)[1] if ":" in current else current
+        return '{}{}:{}{}'.format(match.group(1), FP_LIB_NICKNAME, fp_name, match.group(3))
+
+    text_new = pattern.sub(repl, text)
 
     if text_new != text:
         SYMBOL_LIB.write_text(text_new, encoding="utf-8")
+
+
+def _jlc_part_url(part: str) -> str:
+    """
+    Build a JLCPCB part-detail URL from a JLC/LCSC code.
+    Example: C5120796 -> https://jlcpcb.com/partdetail/C5120796
+    """
+    return "https://jlcpcb.com/partdetail/{}".format(part.strip())
+
+
+def patch_datasheet_for_symbol(symbol_name: str, part: str) -> None:
+    """
+    Point the parent symbol Datasheet property to the JLCPCB part page.
+    Only patches the just-imported parent symbol block.
+    """
+    if not symbol_name:
+        return
+
+    lines = SYMBOL_LIB.read_text(encoding="utf-8").splitlines()
+    target_url = _jlc_part_url(part)
+
+    # Find parent symbol block by exact symbol name.
+    start_idx = None
+    end_idx = None
+    depth = 0
+    for i, line in enumerate(lines):
+        stripped = line.lstrip()
+        if depth == 1 and stripped.startswith('(symbol "{}"'.format(symbol_name)):
+            start_idx = i
+        depth += line.count("(") - line.count(")")
+        if start_idx is not None and end_idx is None and depth == 1 and i > start_idx:
+            end_idx = i
+            break
+
+    if start_idx is None or end_idx is None:
+        return
+
+    block = lines[start_idx : end_idx + 1]
+    changed = False
+
+    # Try to replace existing Datasheet property value.
+    for i, line in enumerate(block):
+        if '(property "Datasheet"' in line:
+            new_line = re.sub(
+                r'(\(property\s+"Datasheet"\s+")([^"]*)(")',
+                lambda m: m.group(1) + target_url + m.group(3),
+                line,
+            )
+            if new_line != line:
+                block[i] = new_line
+                changed = True
+            break
+    else:
+        # Datasheet property not present: inject it before first child symbol.
+        indent_match = re.match(r"^(\s*)", block[0])
+        indent = (indent_match.group(1) if indent_match else "") + "  "
+        insert_at = len(block) - 1
+        for i, line in enumerate(block[1:], start=1):
+            if line.lstrip().startswith('(symbol "'):
+                insert_at = i
+                break
+
+        ds_lines = [
+            '{}(property "Datasheet" "{}" (id 3) (at 0 0 0)'.format(indent, target_url),
+            "{}  (effects (font (size 1.27 1.27) (italic yes)) hide)".format(indent),
+            "{})".format(indent),
+        ]
+        block = block[:insert_at] + ds_lines + block[insert_at:]
+        changed = True
+
+    if changed:
+        new_lines = lines[:start_idx] + block + lines[end_idx + 1 :]
+        SYMBOL_LIB.write_text("\n".join(new_lines) + "\n", encoding="utf-8")
+
+
+def _top_level_symbol_ranges(lines):
+    """Return [(start_idx, end_idx)] for top-level symbol blocks."""
+    ranges = []
+    depth = 0
+    start = None
+    for idx, line in enumerate(lines):
+        stripped = line.lstrip()
+        if start is None and depth == 1 and stripped.startswith('(symbol "'):
+            start = idx
+        depth += line.count("(") - line.count(")")
+        if start is not None and depth == 1:
+            ranges.append((start, idx))
+            start = None
+    return ranges
+
+
+def _extract_parent_symbol_blocks(lines):
+    """
+    Extract parent symbol blocks by scanning '(symbol "...")' entries.
+    Child unit symbols matching *_<n>_<m> are skipped.
+    """
+    blocks = []
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+        if not line.lstrip().startswith('(symbol "'):
+            i += 1
+            continue
+
+        m = re.search(r'\(symbol\s+"([^"]+)"', line)
+        if not m:
+            i += 1
+            continue
+        name = m.group(1)
+
+        if re.search(r"_[0-9]+_[0-9]+$", name):
+            i += 1
+            continue
+
+        start = i
+        bal = 0
+        while i < len(lines):
+            bal += lines[i].count("(") - lines[i].count(")")
+            i += 1
+            if bal == 0:
+                break
+        blocks.append(lines[start:i])
+    return blocks
+
+
+def _extract_property_value(block_text: str, prop_name: str) -> str:
+    m = re.search(r'\(property\s+"{}"\s+"([^"]*)"'.format(re.escape(prop_name)), block_text)
+    return m.group(1).strip() if m else ""
+
+
+def _make_meaningful_description(block_text: str) -> str:
+    value = _extract_property_value(block_text, "Value")
+    desc = _extract_property_value(block_text, "Description")
+    datasheet = _extract_property_value(block_text, "Datasheet")
+    lcsc = _extract_property_value(block_text, "LCSC")
+    keywords = _extract_property_value(block_text, "ki_keywords")
+
+    if desc:
+        return desc
+    if lcsc and value:
+        return "{} (LCSC {})".format(value, lcsc)
+    if keywords.startswith("C") and keywords[1:].isdigit() and value:
+        return "{} (LCSC {})".format(value, keywords)
+    if datasheet and value and datasheet != value:
+        return "{} (see datasheet)".format(value)
+    if value:
+        return "Symbol for {}".format(value)
+    return "Custom symbol"
+
+
+def patch_ki_descriptions() -> None:
+    """Ensure all parent symbols include a meaningful ki_description property."""
+    lines = SYMBOL_LIB.read_text(encoding="utf-8").splitlines()
+    first_symbol_idx = None
+    for idx, line in enumerate(lines):
+        if line.lstrip().startswith('(symbol "'):
+            first_symbol_idx = idx
+            break
+
+    if first_symbol_idx is None:
+        return
+
+    header = lines[:first_symbol_idx]
+    parent_blocks = _extract_parent_symbol_blocks(lines)
+    rebuilt = header[:]
+
+    for block in parent_blocks:
+        block_text = "\n".join(block)
+        new_desc = _make_meaningful_description(block_text).replace('"', "'")
+        found = False
+
+        for i, line in enumerate(block):
+            if '(property "ki_description"' in line:
+                block[i] = re.sub(
+                    r'(\(property\s+"ki_description"\s+")([^"]*)(")',
+                    lambda m: m.group(1) + new_desc + m.group(3),
+                    line,
+                )
+                found = True
+                break
+
+        if not found:
+            indent_match = re.match(r"^(\s*)", block[0])
+            indent = (indent_match.group(1) if indent_match else "") + "  "
+            insert_at = len(block) - 1
+            for i, line in enumerate(block[1:], start=1):
+                if line.lstrip().startswith('(symbol "'):
+                    insert_at = i
+                    break
+
+            desc_lines = [
+                '{}(property "ki_description" "{}" (id 97) (at 0 0 0)'.format(indent, new_desc),
+                "{}  (effects (font (size 1.27 1.27)) hide)".format(indent),
+                "{})".format(indent),
+            ]
+            block = block[:insert_at] + desc_lines + block[insert_at:]
+
+        rebuilt.extend(block)
+
+    rebuilt.append(")")
+    SYMBOL_LIB.write_text("\n".join(rebuilt) + "\n", encoding="utf-8")
 
 
 def patch_3d_model_paths() -> None:
@@ -255,12 +542,20 @@ def patch_3d_model_paths() -> None:
     for mod_path in FP_LIB_DIR.glob("*.kicad_mod"):
         mtext = mod_path.read_text(encoding="utf-8")
 
-        def repl(match):
+        def repl_quoted(match):
             orig_path = match.group(2)
             filename = os.path.basename(orig_path)
             return '{}${{{}}}/{}"'.format(match.group(1), MODELS_ENV, filename)
 
-        new_mtext = re.sub(r'(\(model\s+")([^"]+)"', repl, mtext)
+        def repl_unquoted(match):
+            orig_path = match.group(1)
+            filename = os.path.basename(orig_path)
+            return '(model "${{{}}}/{}"'.format(MODELS_ENV, filename)
+
+        # Quoted style: (model "path")
+        new_mtext = re.sub(r'(\(model\s+")([^"]+)"', repl_quoted, mtext)
+        # Unquoted legacy style: (model path)
+        new_mtext = re.sub(r'\(model\s+(?!")([^\s\)]+)', repl_unquoted, new_mtext)
 
         if new_mtext != mtext:
             mod_path.write_text(new_mtext, encoding="utf-8")
@@ -329,21 +624,35 @@ def main(argv) -> int:
             print_err("ERROR: No .kicad_sym file produced by JLC2KiCadLib for {}".format(part))
             return 1
 
-        # Copy footprint (if any)
+        # Read symbol name early so we can enforce coherent footprint/model basenames.
+        symbol_name, _, description = extract_symbol_info(symbol_src, None)
+        coherent_base = coherent_basename_from_symbol(symbol_name) if symbol_name else part
+
+        # Copy footprint (if any), renamed to coherent symbol-based basename.
         fp_basename = None
+        old_model_name = None
+        new_model_name = None
         if fp_src_file is not None:
             FP_LIB_DIR.mkdir(parents=True, exist_ok=True)
-            fp_dest = FP_LIB_DIR / fp_src_file.name
+            fp_dest = FP_LIB_DIR / "{}.kicad_mod".format(coherent_base)
             shutil.copy2(fp_src_file, fp_dest)
-            fp_basename = fp_src_file.name
+            old_model_name, new_model_name = rewrite_footprint_file_identity(fp_dest, coherent_base)
+            fp_basename = fp_dest.name
         else:
             print("WARNING: No .kicad_mod footprint file found for this part.")
 
         # Copy 3D models (if any)
         for model_path in model_files:
             MODELS_DIR.mkdir(parents=True, exist_ok=True)
-            dest = MODELS_DIR / model_path.name
+            out_name = model_path.name
+            if old_model_name and new_model_name and model_path.name == old_model_name:
+                out_name = new_model_name
+            dest = MODELS_DIR / out_name
             shutil.copy2(model_path, dest)
+
+        # Ensure symbol footprint property follows the coherent basename.
+        if fp_basename is not None:
+            patch_symbol_source_footprint(symbol_src, os.path.splitext(fp_basename)[0])
 
         # Extract info for logging BEFORE temp dir is deleted
         symbol_name, footprint_str, description = extract_symbol_info(symbol_src, fp_basename)
@@ -352,13 +661,15 @@ def main(argv) -> int:
         merge_symbol_into_master(symbol_src)
 
     # Patch properties and model paths in final libs
+    patch_datasheet_for_symbol(symbol_name, part)
     patch_footprint_properties()
+    patch_ki_descriptions()
     patch_3d_model_paths()
 
     # Log entry
     append_log(part, symbol_name, footprint_str, description)
 
-    print("✓ Merged JLC part {} into project-local KiCad libraries:".format(part))
+    print("Merged JLC part {} into project-local KiCad libraries:".format(part))
     print("  Symbols   :", SYMBOL_LIB)
     print("  Footprints:", FP_LIB_DIR)
     print("  3D models :", MODELS_DIR)
