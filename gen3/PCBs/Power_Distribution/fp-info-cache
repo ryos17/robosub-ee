@@ -1,4 +1,4 @@
-26752595363879292
+26754367369000476
 Audio_Module
 Reverb_BTDR-1H
 Digital Reverberation Unit, http://www.belton.co.kr/inc/downfile.php?seq=17&file=pdf (footprint from http://www.uk-electronic.de/PDF/BTDR-1.pdf)
@@ -62733,6 +62733,13 @@ CONN_SD-43045-010_10_MOL
 0
 10
 10
+Imported_Footprints
+CUI_TBL008V-1000-04BE
+
+
+0
+12
+12
 Imported_Footprints
 MCP3008
 
