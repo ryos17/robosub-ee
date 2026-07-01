@@ -30,6 +30,7 @@ const int currentPin = 41;
 
 // Indicators
 const int greenIndicatorLedPin = 37; // LED1
+const int redIndicatorLedPin = 36; // LED2
 const int killSwitchPin = 26;
 
 // ===== Kill switch ISR state =====
@@ -48,16 +49,8 @@ int lumenPin = 8;
 int lightVal = 1100;
 int lightCycles = 5;
 
-// Neopixels
-// static int pixelUpdateCounter = 0;  // persists between calls
-#include <Adafruit_NeoPixel.h>
-#define PIN            27          // Pin where NeoPixel strip is connected
-#define NUMPIXELS      200        // Total number of pixels
-Adafruit_NeoPixel strip(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
-
 // SD Card
 #include <SD.h>
-int sd_loop_counter = 0;
 const int chipSelect = BUILTIN_SDCARD;
 unsigned long loopIterationCounter = 0; // for perioidic SD logging
 int sdLoggingFrequency = 20000; 
@@ -95,7 +88,6 @@ void setup() {
     config_internal_sensors();
     config_indicator();   // sets up interrupt
     config_lumen();
-    config_neopixels();
     config_sd_card();
     
     Serial.println("Initialize Complete");
@@ -106,27 +98,6 @@ void config_servos() {
         servos[i].attach(servoPins[i]);   // Attach servo
         servos[i].writeMicroseconds(1500);  // Start at neutral
     }
-}
-
-void config_neopixels() {
-  strip.begin();
-  strip.show(); // Initialize all pixels to 'off'
-  int brightness = 40; // Set brightness level
-  setBlueBreathing(brightness); // Breathing animation for visual indicator
-}
-
-void setBlueBreathing(uint8_t brightness) {
-  // Generate dynamic shades of blue
-  uint8_t blue = brightness;
-  uint8_t green = brightness / 4;   // Add a hint of green for cyan tones
-  uint8_t red = brightness / 8;    // Very slight purple tint at higher brightness
-
-  uint32_t color = strip.Color(red, green, blue);
-
-  for (int i = 0; i < NUMPIXELS; i++) {
-    strip.setPixelColor(i, color);
-  }
-  strip.show();
 }
 
 // Map degrees (-HALF_RANGE..+HALF_RANGE) to microseconds (dropperMinUS..dropperMaxUS)
@@ -176,12 +147,14 @@ void config_internal_sensors() {
 
 void config_indicator() {
   pinMode(greenIndicatorLedPin, OUTPUT);
+  pinMode(redIndicatorLedPin, OUTPUT);
   pinMode(killSwitchPin, INPUT); // use INPUT_PULLUP + invert logic if needed
 
   // Seed state from live pin so LED matches reality at boot
   int ks = digitalRead(killSwitchPin);
   isKilled = (ks == KILL_ASSERTED_LEVEL);
   digitalWrite(greenIndicatorLedPin, isKilled ? LOW : HIGH);
+  digitalWriteFast(redIndicatorLedPin, isKilled ? LOW : HIGH);
 
   attachInterrupt(digitalPinToInterrupt(killSwitchPin), killISR, CHANGE);
 }
@@ -211,8 +184,10 @@ void killISR() {
 
   #ifdef digitalWriteFast
     digitalWriteFast(greenIndicatorLedPin, asserted ? LOW : HIGH);
+    digitalWriteFast(redIndicatorLedPin, asserted ? LOW : HIGH);
   #else
     digitalWrite(greenIndicatorLedPin, asserted ? LOW : HIGH);
+    digitalWrite(redIndicatorLedPin, asserted ? LOW : HIGH);
   #endif
 }
 
@@ -229,6 +204,7 @@ void applyNeutralAll() {
 
 void loop() {
     digitalWrite(greenIndicatorLedPin, isKilled ? LOW : HIGH);
+    digitalWrite(redIndicatorLedPin, isKilled ? LOW : HIGH);
     
     if (isKilled) {
       applyNeutralAll();
@@ -264,9 +240,6 @@ void loop() {
     if (loopIterationCounter % sdLoggingFrequency == 0) {
         logPeriodicData();
     }
-
-    // Indicator LED reflects nominal (on)
-    digitalWrite(greenIndicatorLedPin, HIGH);
 
     // Handle serial input
     while (Serial.available() > 0) {

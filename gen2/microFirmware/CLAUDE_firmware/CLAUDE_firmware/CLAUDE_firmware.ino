@@ -75,19 +75,6 @@ float torpedoDeg = 0;
 void applyNeutralAll();
 void killISR();
 
-// ===== USB host (Orin) connection detection — Teensy 4.1 / IMXRT1062 =====
-// Read VBUS presence straight from the USB1 OTG status register.
-// BSV (B-session valid) = bit 11 of USB1_OTGSC: 1 = VBUS present (cable in, host powered),
-// 0 = no VBUS (Orin off or USB unplugged).
-// We use this instead of the `Serial` bool because Serial tracks the DTR line, whose bit
-// latches after a *physical* unplug and falsely keeps reporting "connected".
-static inline bool orinConnected() {
-  return (USB1_OTGSC & (1u << 11)) != 0;
-}
-
-// Teensy core USB device state (set when host configures the device).
-extern "C" volatile uint8_t usb_configuration;
-
 void setup() {
     // Begin serial and I2C (via wire)
     Serial.begin(9600);
@@ -167,10 +154,7 @@ void config_indicator() {
   int ks = digitalRead(killSwitchPin);
   isKilled = (ks == KILL_ASSERTED_LEVEL);
   digitalWrite(greenIndicatorLedPin, isKilled ? LOW : HIGH);
-
-  // Red LED = Orin/USB-host status: ON when Orin disconnected, OFF when connected.
-  // Seed from live VBUS state so the LED matches reality at boot.
-  digitalWrite(redIndicatorLedPin, orinConnected() ? LOW : HIGH);
+  digitalWriteFast(redIndicatorLedPin, isKilled ? LOW : HIGH);
 
   attachInterrupt(digitalPinToInterrupt(killSwitchPin), killISR, CHANGE);
 }
@@ -198,11 +182,12 @@ void killISR() {
   isKilled = asserted;
   killISRMicros = nowUs;
 
-  // Green LED only = kill-switch indicator. Red LED is Orin status (set in loop).
   #ifdef digitalWriteFast
     digitalWriteFast(greenIndicatorLedPin, asserted ? LOW : HIGH);
+    digitalWriteFast(redIndicatorLedPin, asserted ? LOW : HIGH);
   #else
     digitalWrite(greenIndicatorLedPin, asserted ? LOW : HIGH);
+    digitalWrite(redIndicatorLedPin, asserted ? LOW : HIGH);
   #endif
 }
 
@@ -219,36 +204,18 @@ void applyNeutralAll() {
 
 void loop() {
     digitalWrite(greenIndicatorLedPin, isKilled ? LOW : HIGH);
-
-    // Red LED = Orin status via VBUS. Connected -> red OFF, disconnected -> red ON.
-    // Runs every loop, before kill early-return.
-    digitalWrite(redIndicatorLedPin, orinConnected() ? LOW : HIGH);
-
-    // ===== TEMP USB-detect diagnostics (remove after we pick the right signal) =====
-    // Logs candidate connection signals to SD every 200ms. Survives USB unplug because
-    // it writes to the SD card, not the (gone) serial monitor. Capture: external power on,
-    // unplug USB ~5s, replug, then send "transfer" to dump datalog.txt and compare values.
-    static unsigned long lastUsbDbgMs = 0;
-    if (millis() - lastUsbDbgMs >= 200) {
-      lastUsbDbgMs = millis();
-      String dbg = "USBDBG OTGSC=0x" + String(USB1_OTGSC, HEX) +
-                   " BSV=" + String((int)((USB1_OTGSC >> 11) & 1)) +
-                   " ASV=" + String((int)((USB1_OTGSC >> 10) & 1)) +
-                   " AVV=" + String((int)((USB1_OTGSC >> 9) & 1)) +
-                   " ID="  + String((int)((USB1_OTGSC >> 8) & 1)) +
-                   " usbcfg=" + String((int)usb_configuration) +
-                   " SerialBool=" + String((int)(bool)Serial);
-      write_data_sd(dbg);
-    }
-
+    digitalWrite(redIndicatorLedPin, isKilled ? LOW : HIGH);
+    
     if (isKilled) {
       applyNeutralAll();
 
       // Print once when entering killed state
       if (!killMsgPrinted) {
-        Serial.println(String("[KILLED] ISR at us=") + killISRMicros + ". Outputs forced to 1500us.");
-        write_data_sd("KILL asserted -> neutralized all outputs");
+        Serial.println(String("[KILLED] ISR at us=") + killISRMicros + ". Outputs forced to 1500us. UART commands rejected.");
+        write_data_sd("KILL asserted -> neutralized all outputs, UART rejected");
         killMsgPrinted = true;
+        // Drop any partially-received command so it can't run on un-kill
+        bufferPosition = 0;
       }
 
       // Periodic logging still active
@@ -257,15 +224,23 @@ void loop() {
         logPeriodicData();
       }
 
-      // Avoid serial buffer buildup (optional)
+      // ===== Reject ALL incoming UART while killed =====
+      // Drain and discard every byte the Orin sends. process_input() is never
+      // called here, so even a flood of motor-move commands is ignored. Keep the
+      // command buffer empty so nothing leaks into normal operation on un-kill.
       while (Serial.available() > 0) (void)Serial.read();
+      bufferPosition = 0;
       return;
     } else {
       // If we just left killed state, note it once
       if (killMsgPrinted) {
         write_data_sd("KILL cleared -> normal operation");
-        Serial.println("[READY] Kill cleared by switch.");
+        Serial.println("[READY] Kill cleared by switch. UART resumed.");
         killMsgPrinted = false;
+        // Start clean: discard anything buffered during/at the kill edge so a
+        // stale/partial command from the killed window can't execute now.
+        while (Serial.available() > 0) (void)Serial.read();
+        bufferPosition = 0;
       }
     }
 
@@ -292,6 +267,11 @@ void loop() {
 }
 
 void process_input(char *input) {
+  // Hard safety gate: never act on any UART command while killed. The loop()
+  // already drains serial in kill mode, so this should be unreachable then, but
+  // guard here too so no code path can command a motor/actuator during kill.
+  if (isKilled) return;
+
   int s0, s1, s2, s3, s4, s5, s6, s7;
   int servoNum, val;
 
