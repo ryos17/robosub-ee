@@ -528,17 +528,22 @@ void handleSerial() {
 
 void process_input(char *input) {
   // ---- Heartbeat (normal operation) ----
-  // A heartbeat performs no actuation, so it is answered here while running.
+  // Consumed SILENTLY: heartbeats arrive once a second, so acking them would
+  // spam every serial monitor on the port. Set HB_ACK_REPLY to 1 to get an
+  // "[HB] ack ..." reply per heartbeat when debugging the link.
   // While the kill switch is asserted the firmware is in the kill island, which
-  // drains UART -- heartbeats are NOT answered during a kill; the periodic
+  // drains UART -- heartbeats are NOT seen during a kill; the periodic
   // "[KILLED] sub is killed" message is sent instead.
+  #define HB_ACK_REPLY 0
   long hbSeq;
   if (sscanf(input, "heartbeat %ld", &hbSeq) == 1) {
     orinHeartbeatSeen = true;         // arms the red-LED heartbeat watchdog
     lastOrinHeartbeatMs = millis();
+    #if HB_ACK_REPLY
     Serial.println("[HB] ack seq=" + String(hbSeq) +
                    " uptime_ms=" + String(millis()) +
                    " isKilled=" + String(isKilled ? 1 : 0));
+    #endif
     return;
   }
 
