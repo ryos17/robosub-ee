@@ -28,6 +28,50 @@ Adafruit_BME280 bme280_sensor;
 const int voltagePin = 40;
 const int currentPin = 41;
 
+// ============================================================================
+// BNO085 9-DOF IMU (Teyleten Robot GY-BNO085 module) -- CURRENTLY DISABLED
+// ============================================================================
+// Secondary IMU wired to the Teensy over I2C. This is NOT the XSENS MTi (that
+// one talks to the Orin directly over USB and never touches this firmware).
+// The BNO085 runs CEVA's SH-2 protocol and does sensor fusion ON-CHIP, so
+// instead of raw axes it hands us fused outputs:
+//   - rotation vector: absolute orientation as a unit quaternion (w,x,y,z)
+//   - calibrated gyroscope: angular velocity, rad/s
+//   - linear acceleration: m/s^2 with gravity already removed
+//   - calibrated magnetometer: uT
+//
+// TO ENABLE once the sensor is physically connected:
+//   1. Wire the module to the Teensy 4.1 I2C1 bus:
+//        module SDA -> Teensy pin 17 (SDA1)
+//        module SCL -> Teensy pin 16 (SCL1)
+//        VIN -> 3.3V, GND -> GND
+//      (Module has onboard pullups; if the bus is flaky add external
+//      2.2k-4.7k pullups to 3.3V.)
+//   2. Make sure "adafruit/Adafruit BNO08x" is in lib_deps for the
+//      teensy41_dev env in platformio.ini (already added).
+//   3. Flip ENABLE_BNO085 to 1 below and re-flash.
+//   4. If init fails, the module may be strapped to the alternate I2C
+//      address: change BNO085_I2C_ADDR from 0x4A to 0x4B.
+#define ENABLE_BNO085 0
+
+#if ENABLE_BNO085
+#include <Adafruit_BNO08x.h>
+
+const uint8_t BNO085_I2C_ADDR = 0x4A;         // default; 0x4B if ADR pin pulled high
+#define BNO085_WIRE Wire1                     // Teensy 4.1 I2C1: SDA1 = pin 17, SCL1 = pin 16
+const uint32_t BNO085_REPORT_INTERVAL_US = 10000; // 100 Hz per report
+
+Adafruit_BNO08x bno085(-1);                   // -1: reset pin not wired
+bool bno085Ok = false;                        // init succeeded; gates all reads
+
+// Latest fused values. poll_bno085() refreshes these every loop pass; the
+// telemetry line just reports whatever is cached here.
+float bnoQuatW = 1, bnoQuatX = 0, bnoQuatY = 0, bnoQuatZ = 0; // orientation quaternion
+float bnoGyroX = 0, bnoGyroY = 0, bnoGyroZ = 0;               // rad/s
+float bnoAccX  = 0, bnoAccY  = 0, bnoAccZ  = 0;               // m/s^2, gravity removed
+float bnoMagX  = 0, bnoMagY  = 0, bnoMagZ  = 0;               // uT
+#endif
+
 // Indicators
 const int greenIndicatorLedPin = 37; // LED1
 const int redIndicatorLedPin = 36; // LED2
@@ -47,6 +91,28 @@ volatile unsigned long _lastKillIsrUs = 0;
 // tell the Orin the sub is killed. KILL_MSG_PERIOD_MS is how often that message
 // is sent.
 constexpr unsigned long KILL_MSG_PERIOD_MS = 500;
+
+// ===== Red LED status config =====
+// The red LED no longer mirrors the green (kill) LED. It now signals:
+//   - flashing "... pause ..." : Orin heartbeat lost (highest priority)
+//   - solid ON                 : battery below LOW_BATTERY_VOLTAGE
+//   - OFF                      : nominal
+constexpr float LOW_BATTERY_VOLTAGE = 13.5f;
+constexpr float LOW_BATTERY_HYSTERESIS = 0.2f;   // must recover above 13.7 V to clear
+constexpr unsigned long BATTERY_CHECK_PERIOD_MS = 500;
+bool lowBattery = false;
+unsigned long lastBatteryCheckMs = 0;
+
+// Orin heartbeat watchdog. The Orin-side sender is not implemented yet, so the
+// watchdog only arms after the FIRST "heartbeat N" message is received --
+// until then the red LED stays quiet instead of flashing forever.
+constexpr unsigned long ORIN_HB_TIMEOUT_MS = 3000;
+bool orinHeartbeatSeen = false;
+unsigned long lastOrinHeartbeatMs = 0;
+
+// Flash pattern for a dead heartbeat: three short blinks, pause, repeat.
+constexpr unsigned long HB_BLINK_MS = 150;   // per on/off segment
+constexpr unsigned long HB_PAUSE_MS = 900;   // gap between blink bursts
 
 // External lumen lights
 Servo lightServo;
@@ -83,6 +149,7 @@ void handleSerial();
 void enterKillIsland();
 bool killSwitchAsserted();
 void setKillLeds(bool killed);
+void updateRedLed(bool heartbeatMonitored);
 
 void setup() {
     // Begin serial and I2C (via wire)
@@ -95,6 +162,7 @@ void setup() {
     config_depth();
     config_battery();
     config_internal_sensors();
+    config_bno085();      // no-op unless ENABLE_BNO085 is 1
     config_indicator();   // sets up interrupt
     config_lumen();
     config_sd_card();
@@ -151,8 +219,118 @@ void config_internal_sensors() {
   // Initialize the BME280 Environmental Sensor.
   // Assumes the I2C address is 0x77. If you have issues, try 0x77.
   // The return value is ignored to prevent serial output.
-  bme280_sensor.begin(0x77); 
+  bme280_sensor.begin(0x77);
 }
+
+// ===================== BNO085 IMU functions =====================
+#if ENABLE_BNO085
+
+// Tell the BNO085 which fused outputs to stream and at what rate. Called at
+// init and again whenever the chip reports it reset itself (reports do not
+// survive a reset).
+static void bno085EnableReports() {
+  bno085.enableReport(SH2_ROTATION_VECTOR,           BNO085_REPORT_INTERVAL_US);
+  bno085.enableReport(SH2_GYROSCOPE_CALIBRATED,      BNO085_REPORT_INTERVAL_US);
+  bno085.enableReport(SH2_LINEAR_ACCELERATION,       BNO085_REPORT_INTERVAL_US);
+  bno085.enableReport(SH2_MAGNETIC_FIELD_CALIBRATED, BNO085_REPORT_INTERVAL_US);
+}
+
+// One-time init on the I2C1 bus. If the sensor is missing/unresponsive we just
+// leave bno085Ok false and everything else keeps working without it.
+void config_bno085() {
+  BNO085_WIRE.begin();
+  bno085Ok = bno085.begin_I2C(BNO085_I2C_ADDR, &BNO085_WIRE);
+  if (bno085Ok) {
+    bno085EnableReports();
+  } else {
+    Serial.println("[BNO085] init FAILED (check wiring / try addr 0x4B)");
+  }
+}
+
+// Drain every report the sensor has queued since the last pass and cache the
+// newest value of each kind. Non-blocking; called once per loop() pass.
+void poll_bno085() {
+  if (!bno085Ok) return;
+
+  // The BNO085 resets itself occasionally (brownout, internal watchdog);
+  // report subscriptions are lost when that happens, so re-enable them.
+  if (bno085.wasReset()) {
+    bno085EnableReports();
+  }
+
+  sh2_SensorValue_t event;
+  while (bno085.getSensorEvent(&event)) {
+    switch (event.sensorId) {
+      case SH2_ROTATION_VECTOR:            // absolute orientation quaternion
+        bnoQuatW = event.un.rotationVector.real;
+        bnoQuatX = event.un.rotationVector.i;
+        bnoQuatY = event.un.rotationVector.j;
+        bnoQuatZ = event.un.rotationVector.k;
+        break;
+      case SH2_GYROSCOPE_CALIBRATED:       // angular velocity, rad/s
+        bnoGyroX = event.un.gyroscope.x;
+        bnoGyroY = event.un.gyroscope.y;
+        bnoGyroZ = event.un.gyroscope.z;
+        break;
+      case SH2_LINEAR_ACCELERATION:        // m/s^2, gravity removed
+        bnoAccX = event.un.linearAcceleration.x;
+        bnoAccY = event.un.linearAcceleration.y;
+        bnoAccZ = event.un.linearAcceleration.z;
+        break;
+      case SH2_MAGNETIC_FIELD_CALIBRATED:  // uT
+        bnoMagX = event.un.magneticField.x;
+        bnoMagY = event.un.magneticField.y;
+        bnoMagZ = event.un.magneticField.z;
+        break;
+      default:
+        break;
+    }
+  }
+}
+
+// Extra "key: value" fields appended to the main "> ..." telemetry line. The
+// Orin-side parser (arduino.py) splits that line into a key/value dict, so
+// new keys are picked up without breaking the existing ones.
+String bno085Telemetry() {
+  if (!bno085Ok) return "";
+  return " quat_w: "  + String(bnoQuatW, DIGITS) +
+         " quat_x: "  + String(bnoQuatX, DIGITS) +
+         " quat_y: "  + String(bnoQuatY, DIGITS) +
+         " quat_z: "  + String(bnoQuatZ, DIGITS) +
+         " gyro_x: "  + String(bnoGyroX, DIGITS) +
+         " gyro_y: "  + String(bnoGyroY, DIGITS) +
+         " gyro_z: "  + String(bnoGyroZ, DIGITS) +
+         " accel_x: " + String(bnoAccX, DIGITS) +
+         " accel_y: " + String(bnoAccY, DIGITS) +
+         " accel_z: " + String(bnoAccZ, DIGITS) +
+         " mag_x: "   + String(bnoMagX, DIGITS) +
+         " mag_y: "   + String(bnoMagY, DIGITS) +
+         " mag_z: "   + String(bnoMagZ, DIGITS);
+}
+
+// Human-readable dump for the "imu" debug command (like "batt" / "depth").
+void print_bno085_debug() {
+  if (!bno085Ok) {
+    Serial.println("BNO085 enabled in firmware but init failed (check wiring / address)");
+    return;
+  }
+  poll_bno085();  // grab the freshest data before printing
+  Serial.println("Quat(wxyz): " + String(bnoQuatW, DIGITS) + " " + String(bnoQuatX, DIGITS) + " " + String(bnoQuatY, DIGITS) + " " + String(bnoQuatZ, DIGITS));
+  Serial.println("Gyro rad/s: " + String(bnoGyroX, DIGITS) + " " + String(bnoGyroY, DIGITS) + " " + String(bnoGyroZ, DIGITS));
+  Serial.println("LinAccel m/s^2: " + String(bnoAccX, DIGITS) + " " + String(bnoAccY, DIGITS) + " " + String(bnoAccZ, DIGITS));
+  Serial.println("Mag uT: " + String(bnoMagX, DIGITS) + " " + String(bnoMagY, DIGITS) + " " + String(bnoMagZ, DIGITS));
+}
+
+#else  // ENABLE_BNO085 == 0: no-op stubs so call sites need no #if guards
+
+void config_bno085() {}
+void poll_bno085() {}
+String bno085Telemetry() { return ""; }
+void print_bno085_debug() {
+  Serial.println("BNO085 disabled (set ENABLE_BNO085 to 1 in firmware)");
+}
+
+#endif  // ENABLE_BNO085
 
 void config_indicator() {
   pinMode(greenIndicatorLedPin, OUTPUT);
@@ -163,7 +341,7 @@ void config_indicator() {
   int ks = digitalRead(killSwitchPin);
   isKilled = (ks == KILL_ASSERTED_LEVEL);
   digitalWrite(greenIndicatorLedPin, isKilled ? LOW : HIGH);
-  digitalWriteFast(redIndicatorLedPin, isKilled ? LOW : HIGH);
+  digitalWrite(redIndicatorLedPin, LOW);   // red is status-only now; starts off
 
   attachInterrupt(digitalPinToInterrupt(killSwitchPin), killISR, CHANGE);
 }
@@ -193,10 +371,8 @@ void killISR() {
 
   #ifdef digitalWriteFast
     digitalWriteFast(greenIndicatorLedPin, asserted ? LOW : HIGH);
-    digitalWriteFast(redIndicatorLedPin, asserted ? LOW : HIGH);
   #else
     digitalWrite(greenIndicatorLedPin, asserted ? LOW : HIGH);
-    digitalWrite(redIndicatorLedPin, asserted ? LOW : HIGH);
   #endif
 }
 
@@ -220,6 +396,8 @@ void loop() {
     }
 
     setKillLeds(false);
+    updateRedLed(true);   // battery + Orin-heartbeat status
+    poll_bno085();        // keep cached IMU values fresh (no-op if disabled)
 
     // ===== Normal operation (not killed) =====
     // SD Card periodic logs
@@ -238,10 +416,44 @@ bool killSwitchAsserted() {
     return digitalRead(killSwitchPin) == KILL_ASSERTED_LEVEL;
 }
 
-// Indicator LEDs: both off when killed, both on when nominal (matches prior wiring).
+// Kill indicator: green LED only. Off when killed, on when nominal.
+// The red LED is driven independently by updateRedLed().
 void setKillLeds(bool killed) {
     digitalWrite(greenIndicatorLedPin, killed ? LOW : HIGH);
-    digitalWrite(redIndicatorLedPin, killed ? LOW : HIGH);
+}
+
+// Red LED status machine. Non-blocking; call every loop pass.
+//   heartbeatMonitored=false suppresses the heartbeat-dead flash (used inside
+//   the kill island, where the UART is drained so heartbeats can't arrive).
+// Priority: heartbeat-dead flash > low-battery solid > off.
+void updateRedLed(bool heartbeatMonitored) {
+    unsigned long now = millis();
+
+    // Sample the battery on a slow tick, with hysteresis so the LED doesn't
+    // flicker around the threshold.
+    if (now - lastBatteryCheckMs >= BATTERY_CHECK_PERIOD_MS) {
+        lastBatteryCheckMs = now;
+        float current, voltage;
+        handle_battery_command(current, voltage);
+        if (lowBattery) {
+            if (voltage > LOW_BATTERY_VOLTAGE + LOW_BATTERY_HYSTERESIS) lowBattery = false;
+        } else if (voltage < LOW_BATTERY_VOLTAGE) {
+            lowBattery = true;
+        }
+    }
+
+    bool hbDead = heartbeatMonitored && orinHeartbeatSeen &&
+                  (now - lastOrinHeartbeatMs > ORIN_HB_TIMEOUT_MS);
+
+    if (hbDead) {
+        // "... pause ...": three HB_BLINK_MS blinks (on/off), then HB_PAUSE_MS dark.
+        unsigned long cycle = 6 * HB_BLINK_MS + HB_PAUSE_MS;
+        unsigned long t = now % cycle;
+        bool on = (t < 6 * HB_BLINK_MS) && ((t / HB_BLINK_MS) % 2 == 0);
+        digitalWrite(redIndicatorLedPin, on ? HIGH : LOW);
+    } else {
+        digitalWrite(redIndicatorLedPin, lowBattery ? HIGH : LOW);
+    }
 }
 
 // ========================= KILL ISLAND =========================
@@ -267,6 +479,11 @@ void enterKillIsland() {
         // 1) Keep every actuator idle on each pass (defends against any glitch).
         applyNeutralAll();
 
+        // Keep the low-battery indication alive while killed. Heartbeat-dead
+        // flashing is suppressed here: the island drains the UART, so a
+        // missing heartbeat means nothing during a kill.
+        updateRedLed(false);
+
         // 2) Periodically tell the Orin we are still killed.
         unsigned long now = millis();
         if (now - lastBeat >= KILL_MSG_PERIOD_MS) {
@@ -282,6 +499,9 @@ void enterKillIsland() {
     // ---- Kill switch released: leave the island cleanly ----
     isKilled = false;
     setKillLeds(false);
+    // Heartbeats couldn't arrive during the kill; restart the watchdog grace
+    // period so the red LED doesn't flash the instant we resume.
+    lastOrinHeartbeatMs = millis();
     bufferPosition = 0;
     while (Serial.available() > 0) (void)Serial.read();   // start with an empty buffer
     Serial.println(String("[READY] kill cleared. Resuming normal operation. uptime_ms=") + millis());
@@ -312,6 +532,8 @@ void process_input(char *input) {
   // "[KILLED] sub is killed" message is sent instead.
   long hbSeq;
   if (sscanf(input, "heartbeat %ld", &hbSeq) == 1) {
+    orinHeartbeatSeen = true;         // arms the red-LED heartbeat watchdog
+    lastOrinHeartbeatMs = millis();
     Serial.println("[HB] ack seq=" + String(hbSeq) +
                    " uptime_ms=" + String(millis()) +
                    " isKilled=" + String(isKilled ? 1 : 0));
@@ -357,8 +579,9 @@ void process_input(char *input) {
     float current, voltage;
     handle_battery_command(current, voltage);
 
-    // Print those data for orin
-    Serial.println("> pressure: " + String(pressure, DIGITS) + " external_temperature: " + String(temperature, DIGITS) + " depth: " + String(depth, DIGITS) + " internal_temperature1: " + String(internalTemp1, DIGITS) + " internal_temperatur2: " + String(internalTemp2, DIGITS) + " humidity: " + String(humidity, DIGITS) + " current: " + String(current, DIGITS) + " voltage: " + String(voltage, DIGITS));
+    // Print those data for orin. bno085Telemetry() appends the IMU fields
+    // when the BNO085 is enabled and alive, and is an empty string otherwise.
+    Serial.println("> pressure: " + String(pressure, DIGITS) + " external_temperature: " + String(temperature, DIGITS) + " depth: " + String(depth, DIGITS) + " internal_temperature1: " + String(internalTemp1, DIGITS) + " internal_temperatur2: " + String(internalTemp2, DIGITS) + " humidity: " + String(humidity, DIGITS) + " current: " + String(current, DIGITS) + " voltage: " + String(voltage, DIGITS) + bno085Telemetry());
   
   } else if (strcmp(input, "batt") == 0) {   // Debugging battery
     Serial.println("TESTING BATTERY");
@@ -374,6 +597,10 @@ void process_input(char *input) {
     } else {
         Serial.println("Invalid command");
     }
+
+  } else if (strcmp(input, "imu") == 0) {   // Debugging BNO085 IMU
+    Serial.println("TESTING BNO085 IMU");
+    print_bno085_debug();
 
   } else if (strcmp(input, "depth") == 0) {   // Debugging depth sensor
     Serial.println("TESTING DEPTH SENSOR");
