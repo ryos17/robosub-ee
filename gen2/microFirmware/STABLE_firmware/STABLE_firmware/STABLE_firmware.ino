@@ -51,6 +51,7 @@ int lightCycles = 5;
 
 // SD Card
 #include <SD.h>
+constexpr bool ENABLE_SD_CARD = false;   // set true to re-enable SD card logging
 const int chipSelect = BUILTIN_SDCARD;
 unsigned long loopIterationCounter = 0; // for perioidic SD logging
 int sdLoggingFrequency = 20000; 
@@ -166,6 +167,7 @@ void config_lumen() {
 }
 
 void config_sd_card() {
+  if (!ENABLE_SD_CARD) return;
   SD.begin(chipSelect);
   write_data_sd("Configuring");
 }
@@ -439,6 +441,7 @@ void logPeriodicData() {
 }
 
 void transfer_sd_log(){
+  if (!ENABLE_SD_CARD) { Serial.println("SD card disabled."); return; }
   if (SD.exists("datalog.txt")) {
     Serial.println("Transfering datalog.txt ...");
     // Open the file for reading
@@ -459,6 +462,7 @@ void transfer_sd_log(){
 }
 
 void delete_sd_log() {
+  if (!ENABLE_SD_CARD) { Serial.println("SD card disabled."); return; }
   if (SD.exists("datalog.txt")) {
       // Remove the file
       if (SD.remove("datalog.txt")) {
@@ -480,6 +484,7 @@ void delete_sd_log() {
 }
 
 void write_data_sd(String dataString) {
+  if (!ENABLE_SD_CARD) return;
   // Get the timestamp
   String timestamp = getTimestamp();
   // open the file.

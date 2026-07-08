@@ -41,7 +41,12 @@ volatile unsigned long killISRMicros = 0;
 constexpr unsigned long KILL_ISR_DEBOUNCE_US = 3000; // ~3 ms
 volatile unsigned long _lastKillIsrUs = 0;
 
-bool killMsgPrinted = false;
+// ===== Kill island config =====
+// While the kill switch is asserted the firmware sits in a hard, blocking loop
+// (enterKillIsland) that does nothing but idle every actuator and periodically
+// tell the Orin the sub is killed. KILL_MSG_PERIOD_MS is how often that message
+// is sent.
+constexpr unsigned long KILL_MSG_PERIOD_MS = 500;
 
 // External lumen lights
 Servo lightServo;
@@ -74,19 +79,10 @@ float torpedoDeg = 0;
 // ======= Forward declarations =======
 void applyNeutralAll();
 void killISR();
-
-// ===== USB host (Orin) connection detection — Teensy 4.1 / IMXRT1062 =====
-// Read VBUS presence straight from the USB1 OTG status register.
-// BSV (B-session valid) = bit 11 of USB1_OTGSC: 1 = VBUS present (cable in, host powered),
-// 0 = no VBUS (Orin off or USB unplugged).
-// We use this instead of the `Serial` bool because Serial tracks the DTR line, whose bit
-// latches after a *physical* unplug and falsely keeps reporting "connected".
-static inline bool orinConnected() {
-  return (USB1_OTGSC & (1u << 11)) != 0;
-}
-
-// Teensy core USB device state (set when host configures the device).
-extern "C" volatile uint8_t usb_configuration;
+void handleSerial();
+void enterKillIsland();
+bool killSwitchAsserted();
+void setKillLeds(bool killed);
 
 void setup() {
     // Begin serial and I2C (via wire)
@@ -167,10 +163,7 @@ void config_indicator() {
   int ks = digitalRead(killSwitchPin);
   isKilled = (ks == KILL_ASSERTED_LEVEL);
   digitalWrite(greenIndicatorLedPin, isKilled ? LOW : HIGH);
-
-  // Red LED = Orin/USB-host status: ON when Orin disconnected, OFF when connected.
-  // Seed from live VBUS state so the LED matches reality at boot.
-  digitalWrite(redIndicatorLedPin, orinConnected() ? LOW : HIGH);
+  digitalWriteFast(redIndicatorLedPin, isKilled ? LOW : HIGH);
 
   attachInterrupt(digitalPinToInterrupt(killSwitchPin), killISR, CHANGE);
 }
@@ -198,11 +191,12 @@ void killISR() {
   isKilled = asserted;
   killISRMicros = nowUs;
 
-  // Green LED only = kill-switch indicator. Red LED is Orin status (set in loop).
   #ifdef digitalWriteFast
     digitalWriteFast(greenIndicatorLedPin, asserted ? LOW : HIGH);
+    digitalWriteFast(redIndicatorLedPin, asserted ? LOW : HIGH);
   #else
     digitalWrite(greenIndicatorLedPin, asserted ? LOW : HIGH);
+    digitalWrite(redIndicatorLedPin, asserted ? LOW : HIGH);
   #endif
 }
 
@@ -218,56 +212,14 @@ void applyNeutralAll() {
 }
 
 void loop() {
-    digitalWrite(greenIndicatorLedPin, isKilled ? LOW : HIGH);
-
-    // Red LED = Orin status via VBUS. Connected -> red OFF, disconnected -> red ON.
-    // Runs every loop, before kill early-return.
-    digitalWrite(redIndicatorLedPin, orinConnected() ? LOW : HIGH);
-
-    // ===== TEMP USB-detect diagnostics (remove after we pick the right signal) =====
-    // Logs candidate connection signals to SD every 200ms. Survives USB unplug because
-    // it writes to the SD card, not the (gone) serial monitor. Capture: external power on,
-    // unplug USB ~5s, replug, then send "transfer" to dump datalog.txt and compare values.
-    static unsigned long lastUsbDbgMs = 0;
-    if (millis() - lastUsbDbgMs >= 200) {
-      lastUsbDbgMs = millis();
-      String dbg = "USBDBG OTGSC=0x" + String(USB1_OTGSC, HEX) +
-                   " BSV=" + String((int)((USB1_OTGSC >> 11) & 1)) +
-                   " ASV=" + String((int)((USB1_OTGSC >> 10) & 1)) +
-                   " AVV=" + String((int)((USB1_OTGSC >> 9) & 1)) +
-                   " ID="  + String((int)((USB1_OTGSC >> 8) & 1)) +
-                   " usbcfg=" + String((int)usb_configuration) +
-                   " SerialBool=" + String((int)(bool)Serial);
-      write_data_sd(dbg);
+    // The kill switch is checked FIRST, every pass. The instant it is asserted we
+    // drop into the kill island and do not come back until it is re-enabled.
+    if (killSwitchAsserted() || isKilled) {
+        enterKillIsland();   // blocks until the kill switch is released
+        return;              // restart loop() clean once released
     }
 
-    if (isKilled) {
-      applyNeutralAll();
-
-      // Print once when entering killed state
-      if (!killMsgPrinted) {
-        Serial.println(String("[KILLED] ISR at us=") + killISRMicros + ". Outputs forced to 1500us.");
-        write_data_sd("KILL asserted -> neutralized all outputs");
-        killMsgPrinted = true;
-      }
-
-      // Periodic logging still active
-      loopIterationCounter++;
-      if (loopIterationCounter % sdLoggingFrequency == 0) {
-        logPeriodicData();
-      }
-
-      // Avoid serial buffer buildup (optional)
-      while (Serial.available() > 0) (void)Serial.read();
-      return;
-    } else {
-      // If we just left killed state, note it once
-      if (killMsgPrinted) {
-        write_data_sd("KILL cleared -> normal operation");
-        Serial.println("[READY] Kill cleared by switch.");
-        killMsgPrinted = false;
-      }
-    }
+    setKillLeds(false);
 
     // ===== Normal operation (not killed) =====
     // SD Card periodic logs
@@ -277,6 +229,67 @@ void loop() {
     }
 
     // Handle serial input
+    handleSerial();
+}
+
+// True while the kill switch is physically asserted. Read straight from the pin
+// (independent of the ISR) so island entry/exit can never miss an edge.
+bool killSwitchAsserted() {
+    return digitalRead(killSwitchPin) == KILL_ASSERTED_LEVEL;
+}
+
+// Indicator LEDs: both off when killed, both on when nominal (matches prior wiring).
+void setKillLeds(bool killed) {
+    digitalWrite(greenIndicatorLedPin, killed ? LOW : HIGH);
+    digitalWrite(redIndicatorLedPin, killed ? LOW : HIGH);
+}
+
+// ========================= KILL ISLAND =========================
+// A hard, blocking loop entered the instant the kill switch is asserted. Until the
+// switch is physically released this does ONLY two things:
+//   1) hold every actuator at its passive/neutral value (motors idled), and
+//   2) send a periodic "sub is killed" message to the Orin.
+// Nothing else runs: no commands processed, no sensors read, no SD logging. Any
+// bytes the Orin sends are drained and discarded. The one and only way out is the
+// kill switch being re-enabled (de-asserted).
+void enterKillIsland() {
+    isKilled = true;
+    setKillLeds(true);
+    applyNeutralAll();
+    bufferPosition = 0;   // drop any half-received command
+
+    unsigned long beat = 0;
+    unsigned long lastBeat = millis();
+    // Immediate first notice so the Orin knows the moment we entered.
+    Serial.println(String("[KILLED] sub is killed  n=") + beat + " uptime_ms=" + millis());
+
+    while (killSwitchAsserted()) {
+        // 1) Keep every actuator idle on each pass (defends against any glitch).
+        applyNeutralAll();
+
+        // 2) Periodically tell the Orin we are still killed.
+        unsigned long now = millis();
+        if (now - lastBeat >= KILL_MSG_PERIOD_MS) {
+            lastBeat = now;
+            beat++;
+            Serial.println(String("[KILLED] sub is killed  n=") + beat + " uptime_ms=" + now);
+        }
+
+        // Discard anything the Orin sends; nothing acts while killed.
+        while (Serial.available() > 0) (void)Serial.read();
+    }
+
+    // ---- Kill switch released: leave the island cleanly ----
+    isKilled = false;
+    setKillLeds(false);
+    bufferPosition = 0;
+    while (Serial.available() > 0) (void)Serial.read();   // start with an empty buffer
+    Serial.println(String("[READY] kill cleared. Resuming normal operation. uptime_ms=") + millis());
+}
+
+// Read and dispatch any complete newline-terminated commands from the UART.
+// Used only in normal operation (the kill island drains UART on its own).
+void handleSerial() {
     while (Serial.available() > 0) {
         char inChar = (char)Serial.read();
         if (inChar == '\n' || inChar == '\r') { // End of one command
@@ -292,6 +305,24 @@ void loop() {
 }
 
 void process_input(char *input) {
+  // ---- Heartbeat (normal operation) ----
+  // A heartbeat performs no actuation, so it is answered here while running.
+  // While the kill switch is asserted the firmware is in the kill island, which
+  // drains UART -- heartbeats are NOT answered during a kill; the periodic
+  // "[KILLED] sub is killed" message is sent instead.
+  long hbSeq;
+  if (sscanf(input, "heartbeat %ld", &hbSeq) == 1) {
+    Serial.println("[HB] ack seq=" + String(hbSeq) +
+                   " uptime_ms=" + String(millis()) +
+                   " isKilled=" + String(isKilled ? 1 : 0));
+    return;
+  }
+
+  // Hard safety gate (defense in depth): never act on an actuator command while
+  // killed. In practice the kill island already owns the UART during a kill, so
+  // this is unreachable then, but keep it so no path can move an actuator mid-kill.
+  if (isKilled) return;
+
   int s0, s1, s2, s3, s4, s5, s6, s7;
   int servoNum, val;
 
