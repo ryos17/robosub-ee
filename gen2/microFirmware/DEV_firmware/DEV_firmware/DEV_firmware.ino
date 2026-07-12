@@ -97,8 +97,8 @@ constexpr unsigned long KILL_MSG_PERIOD_MS = 500;
 //   - flashing "... pause ..." : Orin heartbeat lost (highest priority)
 //   - solid ON                 : battery below LOW_BATTERY_VOLTAGE
 //   - OFF                      : nominal
-constexpr float LOW_BATTERY_VOLTAGE = 13.5f;
-constexpr float LOW_BATTERY_HYSTERESIS = 0.2f;   // must recover above 13.7 V to clear
+constexpr float LOW_BATTERY_VOLTAGE = 14.5f;
+constexpr float LOW_BATTERY_HYSTERESIS = 0.2f;   // must recover above 14.7 V to clear
 constexpr unsigned long BATTERY_CHECK_PERIOD_MS = 500;
 bool lowBattery = false;
 unsigned long lastBatteryCheckMs = 0;
