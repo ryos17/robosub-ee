@@ -262,6 +262,18 @@ void process_input(char *input) {
   int s0, s1, s2, s3, s4, s5, s6, s7;
   int servoNum, val;
 
+  // ---- Quick neutralize ('q') ----
+  // Type "q" to slam all 8 thrusters back to 1500 us (neutral). Emergency-stop
+  // convenience for the serial monitor; does not touch dropper/torpedo/light.
+  if (strcmp(input, "q") == 0) {
+    for (int i = 0; i < 8; i++) {
+      servos[i].writeMicroseconds(1500);
+      lastThrusterPWM[i] = 1500;
+    }
+    Serial.println("Thrusters neutralized: 1500 1500 1500 1500 1500 1500 1500 1500");
+    return;
+  }
+
   if (sscanf(input, "%d %d %d %d %d %d %d %d", &s0, &s1, &s2, &s3, &s4, &s5, &s6, &s7) == 8) {   // Setting servos
     // Set servos
     servos[0].writeMicroseconds(s0);

@@ -79,11 +79,30 @@ const int killSwitchPin = 26;
 
 // ===== Kill switch ISR state =====
 volatile bool isKilled = false;               // Latched when ISR fires
-constexpr int KILL_ASSERTED_LEVEL = HIGH; // killed when HIGH (flip if this changes)
+constexpr int KILL_ASSERTED_LEVEL = HIGH; // killed when HIGH. Switch CLOSED shorts pin to GND (LOW) = running; switch
+                                          // OPEN lets the 4.7k + internal pull-up drive the pin HIGH = dead. Any wiring
+                                          // fault (open/disconnected pin) therefore fails safe to HIGH = dead.
 volatile unsigned long killISRMicros = 0;
 
 constexpr unsigned long KILL_ISR_DEBOUNCE_US = 3000; // ~3 ms
 volatile unsigned long _lastKillIsrUs = 0;
+
+// ===== Kill-switch instability watchdog (easily disabled) =====
+// A dying / intermittent kill switch does not make a clean HIGH<->LOW
+// transition -- it FLICKERS the line rapidly. Rather than stutter the thrusters
+// by toggling running<->killed on every edge, we treat a burst of edges as a
+// fault and LATCH into the killed (dead) state -- fail-safe. The latch clears
+// only after the line has read running (de-asserted), with no new edges, for
+// INSTABILITY_CLEAR_STABLE_MS continuously.
+//
+// To DISABLE this feature entirely, set ENABLE_INSTABILITY_KILL to 0: the raw
+// kill-switch level then fully controls the sub, flicker and all.
+#define ENABLE_INSTABILITY_KILL 1
+constexpr unsigned int  INSTABILITY_EDGE_THRESHOLD  = 10;    // edges within the window to trip
+constexpr unsigned long INSTABILITY_WINDOW_MS       = 500;   // evaluation window
+constexpr unsigned long INSTABILITY_CLEAR_STABLE_MS = 2000;  // line must be stably running this long to clear the latch
+volatile unsigned int   killEdgeCount = 0;          // raw kill-pin edges, bumped in the ISR (pre-debounce)
+volatile bool           instabilityLatched = false; // latched killed because the line was judged unreliable
 
 // ===== Kill island config =====
 // While the kill switch is asserted the firmware sits in a hard, blocking loop
@@ -149,6 +168,7 @@ void killISR();
 void handleSerial();
 void enterKillIsland();
 bool killSwitchAsserted();
+void updateInstabilityWatchdog();
 void setKillLeds(bool killed);
 void updateRedLed(bool heartbeatMonitored);
 
@@ -336,7 +356,9 @@ void print_bno085_debug() {
 void config_indicator() {
   pinMode(greenIndicatorLedPin, OUTPUT);
   pinMode(redIndicatorLedPin, OUTPUT);
-  pinMode(killSwitchPin, INPUT); // use INPUT_PULLUP + invert logic if needed
+  pinMode(killSwitchPin, INPUT_PULLUP); // external 4.7k + internal pull-up to 3V3. Switch CLOSED = LOW = running;
+                                        // switch OPEN (or any disconnect) floats HIGH = dead. Pull-up reinforces the
+                                        // fail-safe (dead) direction and stops the pin floating to ~Vdd/2.
 
   // Seed state from live pin so LED matches reality at boot
   int ks = digitalRead(killSwitchPin);
@@ -362,6 +384,13 @@ void config_sd_card() {
 // ===== Interrupt Service Routine =====
 void killISR() {
   unsigned long nowUs = micros();
+
+#if ENABLE_INSTABILITY_KILL
+  // Count EVERY raw edge (before the debounce return below) so a flicker storm
+  // is still visible even when edges arrive closer together than the debounce.
+  killEdgeCount++;
+#endif
+
   if (nowUs - _lastKillIsrUs < KILL_ISR_DEBOUNCE_US) return;
   _lastKillIsrUs = nowUs;
 
@@ -392,13 +421,18 @@ void applyNeutralAll() {
 void loop() {
     // The kill switch is checked FIRST, every pass. The instant it is asserted we
     // drop into the kill island and do not come back until it is re-enabled.
-    if (killSwitchAsserted() || isKilled) {
-        enterKillIsland();   // blocks until the kill switch is released
+    if (killSwitchAsserted() || isKilled
+#if ENABLE_INSTABILITY_KILL
+        || instabilityLatched
+#endif
+       ) {
+        enterKillIsland();   // blocks until the kill switch is released (and stable)
         return;              // restart loop() clean once released
     }
 
     setKillLeds(false);
     updateRedLed(true);   // battery + Orin-heartbeat status
+    updateInstabilityWatchdog();  // latch to killed if the kill line is flickering (no-op if disabled)
     poll_bno085();        // keep cached IMU values fresh (no-op if disabled)
 
     // ===== Normal operation (not killed) =====
@@ -416,6 +450,32 @@ void loop() {
 // (independent of the ISR) so island entry/exit can never miss an edge.
 bool killSwitchAsserted() {
     return digitalRead(killSwitchPin) == KILL_ASSERTED_LEVEL;
+}
+
+// Kill-switch instability watchdog. Called once per loop pass during normal
+// operation. Counts raw kill-pin edges over a tumbling INSTABILITY_WINDOW_MS
+// window; if too many occur the line is judged unreliable and we latch killed.
+// The latch is only cleared later, inside the kill island, once the line has
+// been stably running again. No-op when ENABLE_INSTABILITY_KILL is 0.
+void updateInstabilityWatchdog() {
+#if ENABLE_INSTABILITY_KILL
+    static unsigned long windowStartMs = 0;
+    unsigned long now = millis();
+    if (now - windowStartMs < INSTABILITY_WINDOW_MS) return;
+
+    noInterrupts();
+    unsigned int edges = killEdgeCount;
+    killEdgeCount = 0;
+    interrupts();
+    windowStartMs = now;
+
+    if (edges >= INSTABILITY_EDGE_THRESHOLD && !instabilityLatched) {
+        instabilityLatched = true;
+        isKilled = true;
+        Serial.println(String("[KILL-INSTAB] kill line unstable (") + edges +
+                       " edges in " + INSTABILITY_WINDOW_MS + " ms) -> latching KILLED");
+    }
+#endif
 }
 
 // Kill indicator: green LED only. Off when killed, on when nominal.
@@ -477,7 +537,17 @@ void enterKillIsland() {
     // Immediate first notice so the Orin knows the moment we entered.
     Serial.println(String("[KILLED] sub is killed  n=") + beat + " uptime_ms=" + millis());
 
-    while (killSwitchAsserted()) {
+#if ENABLE_INSTABILITY_KILL
+    // Start of the current run of "stably running" time used to clear the latch.
+    unsigned long stableRunningSinceMs = millis();
+    noInterrupts(); killEdgeCount = 0; interrupts();   // ignore edges from before entry
+#endif
+
+    while (killSwitchAsserted()
+#if ENABLE_INSTABILITY_KILL
+           || instabilityLatched
+#endif
+          ) {
         // 1) Keep every actuator idle on each pass (defends against any glitch).
         applyNeutralAll();
 
@@ -494,13 +564,31 @@ void enterKillIsland() {
             Serial.println(String("[KILLED] sub is killed  n=") + beat + " uptime_ms=" + now);
         }
 
+#if ENABLE_INSTABILITY_KILL
+        // Try to clear an instability latch. The line must read running
+        // (de-asserted) AND produce no new edges for INSTABILITY_CLEAR_STABLE_MS
+        // continuously; any assertion or flicker restarts the stability timer.
+        if (instabilityLatched) {
+            noInterrupts(); unsigned int edges = killEdgeCount; killEdgeCount = 0; interrupts();
+            if (killSwitchAsserted() || edges > 0) {
+                stableRunningSinceMs = now;
+            } else if (now - stableRunningSinceMs >= INSTABILITY_CLEAR_STABLE_MS) {
+                instabilityLatched = false;
+                Serial.println(String("[KILL-INSTAB] kill line stable again -> clearing latch  uptime_ms=") + now);
+            }
+        }
+#endif
+
         // Discard anything the Orin sends; nothing acts while killed.
         while (Serial.available() > 0) (void)Serial.read();
     }
 
-    // ---- Kill switch released: leave the island cleanly ----
+    // ---- Kill switch released (and stable): leave the island cleanly ----
     isKilled = false;
     setKillLeds(false);
+#if ENABLE_INSTABILITY_KILL
+    noInterrupts(); killEdgeCount = 0; interrupts();   // fresh window for normal operation
+#endif
     // Heartbeats couldn't arrive during the kill; restart the watchdog grace
     // period so the red LED doesn't flash the instant we resume.
     lastOrinHeartbeatMs = millis();
