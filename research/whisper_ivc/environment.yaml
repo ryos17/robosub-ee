@@ -1,0 +1,36 @@
+name: whisper_ivc
+channels:
+  - conda-forge
+dependencies:
+  - python=3.10
+  - pip
+  - ffmpeg
+  - pip:
+      # Jetson GPU builds (JetPack 6 / L4T r36, CUDA 12.6) from pypi.jetson-ai-lab.io.
+      # Plain PyPI aarch64 torch wheels do NOT support the Orin iGPU, so pin by URL.
+      - https://pypi.jetson-ai-lab.io/jp6/cu126/+f/37d/7e156cfb4a646/torch-2.10.0-cp310-cp310-linux_aarch64.whl
+      - https://pypi.jetson-ai-lab.io/jp6/cu126/+f/692/6eb2c403d4e0e/torchaudio-2.10.0-cp310-cp310-linux_aarch64.whl
+      # torch's Jetson build dlopens these NVIDIA libs; they are not in JetPack
+      - nvidia-cudss-cu12
+      - nvidia-cusparselt-cu12
+      - openai-whisper
+      - pyserial
+      - tqdm
+      # speech-enhancement deps (torch-free). speechbrain itself must be
+      # installed manually with --no-deps or pip will replace the Jetson
+      # torch above with a broken PyPI build:
+      #   <env>/bin/pip install --no-deps speechbrain
+      - hyperpyyaml
+      - joblib
+      - sentencepiece
+      - huggingface_hub
+      - scipy
+      - soundfile
+
+# Post-create step (torch can't find the pip-installed NVIDIA libs otherwise):
+# the env needs an activate.d script exporting LD_LIBRARY_PATH to
+# site-packages/nvidia/cu12/lib and site-packages/nvidia/cusparselt/lib ONLY —
+# see etc/conda/activate.d/jetson_cuda_libs.sh in the created env.
+# Do NOT add site-packages/nvidia/cublas (or nvrtc) to LD_LIBRARY_PATH: pip's
+# cuBLAS 12.9 is an SBSA build that shadows the Jetson system cuBLAS 12.6 and
+# makes cublasCreate fail (CUBLAS_STATUS_ALLOC_FAILED) at inference time.
