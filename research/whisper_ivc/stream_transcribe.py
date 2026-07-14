@@ -332,6 +332,7 @@ canvas{background:#fafafa;border:1px solid #ddd;border-radius:6px;width:100%;
    <option>off</option><option>metricgan</option><option>sepformer</option>
  </select></label>
  <button id=rec>● start</button>
+ <button id=clear>clear</button>
  <span id=status></span>
 </div>
 <canvas id=spec width=1200 height=220></canvas>
@@ -349,6 +350,7 @@ function cfg(){api('/api/config',{mode:$('mode').value,
 ['mode','window','channel','denoise'].forEach(id=>$(id).onchange=cfg);
 $('load').onclick=()=>api('/api/load_model',{name:$('model').value});
 $('rec').onclick=()=>{recording?api('/api/stop'):api('/api/start');};
+$('clear').onclick=()=>{$('transcript').innerHTML='';$('log').innerHTML='';};
 function logLine(html){const d=$('log');d.innerHTML+=html+'\\n';
   d.scrollTop=d.scrollHeight;}
 const ctx=$('spec').getContext('2d');
