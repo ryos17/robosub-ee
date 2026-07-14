@@ -1,15 +1,54 @@
+// ============================================================================
+// STABLE_firmware -- competition build for the Teensy 4.1 breakout board.
+//
+// IMPORTANT NOTES (keep in sync with the repo README):
+//
+// Thrusters:
+//   * DO NOT RUN THRUSTERS AT FULL POWER FOR THE TIME BEING -- 20 to 30% max.
+//   * DO NOT RUN FOR MORE THAN 10 SECONDS WHILE OUTSIDE OF WATER.
+//   * PWM assignment: 1100 us = full reverse, 1500 us = off/neutral,
+//     1900 us = full forward.
+//
+// Comms (Orin <-> Teensy over USB serial, 9600 baud, newline-terminated):
+//   * "s0 s1 s2 s3 s4 s5 s6 s7"  -- set all 8 thruster PWMs; replies with the
+//     "> ..." telemetry line the Orin parses (format is load-bearing, see
+//     process_input()). Values are clamped to THRUSTER_MIN_US..THRUSTER_MAX_US.
+//   * "thruster_number pwm_value" -- set a single thruster (same clamp range).
+//   * "q" -- software emergency stop: all thrusters to 1500 us immediately.
+//   * "heartbeat N" -- Orin liveness; arms the red-LED heartbeat watchdog.
+//   * Debug commands: "batt", "depth", "test", "light <us>",
+//     "light gradient <n>", dropper/torpedo commands, "transfer", "delete".
+//
+// Kill switch (physical, overrides everything):
+//   * Fail-safe: pin HIGH (switch open / wire broken) = KILLED.
+//   * While asserted the firmware blocks in the kill island: all actuators
+//     held neutral, UART drained, periodic "[KILLED]" message to the Orin.
+// ============================================================================
+
 #include <Servo.h>
 #include <Wire.h>
 
-// Servos
-Servo servos[8];   // Array to store servo objects
+// Thrusters (driven as servos via ESCs)
+Servo servos[8];
 const int servoPins[8] = {4, 3, 0, 2, 1, 6, 5, 7};
-int lastThrusterPWM[8] = {1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500};   
+int lastThrusterPWM[8] = {1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500};
 
-// Serial setup
-char inputBuffer[64]; // Buffer to store incoming serial data
-int bufferPosition = 0; // Position in the buffer
-const int DIGITS = 8;
+// Hard PWM limits enforced on EVERY thruster command (full ESC range is
+// 1100-1900 us; kept tighter on purpose while the "20-30% max power" rule is
+// in effect). A corrupted or out-of-range value is clamped, never passed raw.
+constexpr int THRUSTER_MIN_US = 1200;
+constexpr int THRUSTER_MAX_US = 1800;
+
+inline int clampThrusterUS(int us) {
+  if (us < THRUSTER_MIN_US) return THRUSTER_MIN_US;
+  if (us > THRUSTER_MAX_US) return THRUSTER_MAX_US;
+  return us;
+}
+
+// Serial command buffer
+char inputBuffer[64];
+int bufferPosition = 0;
+const int DIGITS = 8;   // decimal places in telemetry output
 
 // Depth sensor
 #include "MS5837.h"
@@ -28,49 +67,17 @@ Adafruit_BME280 bme280_sensor;
 const int voltagePin = 40;
 const int currentPin = 41;
 
-// ============================================================================
-// BNO085 9-DOF IMU (Teyleten Robot GY-BNO085 module) -- CURRENTLY DISABLED
-// ============================================================================
-// Secondary IMU wired to the Teensy over I2C. This is NOT the XSENS MTi (that
-// one talks to the Orin directly over USB and never touches this firmware).
-// The BNO085 runs CEVA's SH-2 protocol and does sensor fusion ON-CHIP, so
-// instead of raw axes it hands us fused outputs:
-//   - rotation vector: absolute orientation as a unit quaternion (w,x,y,z)
-//   - calibrated gyroscope: angular velocity, rad/s
-//   - linear acceleration: m/s^2 with gravity already removed
-//   - calibrated magnetometer: uT
-//
-// TO ENABLE once the sensor is physically connected:
-//   1. Wire the module to the Teensy 4.1 I2C1 bus:
-//        module SDA -> Teensy pin 17 (SDA1)
-//        module SCL -> Teensy pin 16 (SCL1)
-//        VIN -> 3.3V, GND -> GND
-//      (Module has onboard pullups; if the bus is flaky add external
-//      2.2k-4.7k pullups to 3.3V.)
-//   2. Make sure "adafruit/Adafruit BNO08x" is in lib_deps for the
-//      teensy41_dev env in platformio.ini (already added).
-//   3. Flip ENABLE_BNO085 to 1 below and re-flash.
-//   4. If init fails, the module may be strapped to the alternate I2C
-//      address: change BNO085_I2C_ADDR from 0x4A to 0x4B.
-#define ENABLE_BNO085 0
-
-#if ENABLE_BNO085
-#include <Adafruit_BNO08x.h>
-
-const uint8_t BNO085_I2C_ADDR = 0x4A;         // default; 0x4B if ADR pin pulled high
-#define BNO085_WIRE Wire1                     // Teensy 4.1 I2C1: SDA1 = pin 17, SCL1 = pin 16
-const uint32_t BNO085_REPORT_INTERVAL_US = 10000; // 100 Hz per report
-
-Adafruit_BNO08x bno085(-1);                   // -1: reset pin not wired
-bool bno085Ok = false;                        // init succeeded; gates all reads
-
-// Latest fused values. poll_bno085() refreshes these every loop pass; the
-// telemetry line just reports whatever is cached here.
-float bnoQuatW = 1, bnoQuatX = 0, bnoQuatY = 0, bnoQuatZ = 0; // orientation quaternion
-float bnoGyroX = 0, bnoGyroY = 0, bnoGyroZ = 0;               // rad/s
-float bnoAccX  = 0, bnoAccY  = 0, bnoAccZ  = 0;               // m/s^2, gravity removed
-float bnoMagX  = 0, bnoMagY  = 0, bnoMagZ  = 0;               // uT
-#endif
+// ===== Cached sensor readings =====
+// The MS5837 read blocks ~40 ms (two ADC conversions with delays inside the
+// BlueRobotics lib) and the I2C sensors add more. Doing that inline for every
+// thruster command capped the command rate and put a possible I2C stall in
+// the control path. Instead, refresh_sensor_cache() samples everything on a
+// slow tick in loop() and the telemetry reply just reads these cached values.
+bool depthSensorOk = false;   // MS5837 init succeeded; gates all reads
+constexpr unsigned long SENSOR_REFRESH_MS = 100;
+unsigned long lastSensorRefreshMs = 0;
+float cachedPressure = 0, cachedExternalTemp = 0, cachedDepth = 0;
+float cachedInternalTemp1 = 0, cachedInternalTemp2 = 0, cachedHumidity = 0;
 
 // Indicators
 const int greenIndicatorLedPin = 37; // LED1
@@ -82,8 +89,6 @@ volatile bool isKilled = false;               // Latched when ISR fires
 constexpr int KILL_ASSERTED_LEVEL = HIGH; // killed when HIGH. Switch CLOSED shorts pin to GND (LOW) = running; switch
                                           // OPEN lets the 4.7k + internal pull-up drive the pin HIGH = dead. Any wiring
                                           // fault (open/disconnected pin) therefore fails safe to HIGH = dead.
-volatile unsigned long killISRMicros = 0;
-
 constexpr unsigned long KILL_ISR_DEBOUNCE_US = 3000; // ~3 ms
 volatile unsigned long _lastKillIsrUs = 0;
 
@@ -143,12 +148,12 @@ int lightCycles = 5;
 #include <SD.h>
 constexpr bool ENABLE_SD_CARD = false;   // set true to re-enable SD card logging
 const int chipSelect = BUILTIN_SDCARD;
-unsigned long loopIterationCounter = 0; // for perioidic SD logging
-int sdLoggingFrequency = 20000; 
+unsigned long loopIterationCounter = 0; // for periodic SD logging
+int sdLoggingFrequency = 20000;   // log every N loop passes
 
 // dropper
 Servo dropper;
-const int dropperPin = 21;  // change this depending
+const int dropperPin = 21;
 const int dropperMinUS = 800;     // SER-201X spec
 const int dropperMaxUS = 2200;    // SER-201X spec
 float dropperHalfRangeDeg = 70.0f;   // default ±70° per datasheet (use 100.0f if reprogrammed)
@@ -183,7 +188,6 @@ void setup() {
     config_depth();
     config_battery();
     config_internal_sensors();
-    config_bno085();      // no-op unless ENABLE_BNO085 is 1
     config_indicator();   // sets up interrupt
     config_lumen();
     config_sd_card();
@@ -193,12 +197,12 @@ void setup() {
 
 void config_servos() {
     for (int i = 0; i < 8; i++) {
-        servos[i].attach(servoPins[i]);   // Attach servo
-        servos[i].writeMicroseconds(1500);  // Start at neutral
+        servos[i].attach(servoPins[i]);
+        servos[i].writeMicroseconds(1500);  // start at neutral
     }
 }
 
-// Map degrees (-HALF_RANGE..+HALF_RANGE) to microseconds (dropperMinUS..dropperMaxUS)
+// Map degrees (-halfRangeDeg..+halfRangeDeg) to microseconds (usMin..usMax)
 int degToUS_generic(float deg, float halfRangeDeg, int usMin, int usMax) {
   if (deg < -halfRangeDeg) deg = -halfRangeDeg;
   if (deg > +halfRangeDeg) deg = +halfRangeDeg;
@@ -223,7 +227,11 @@ void config_torpedo() {
 
 void config_depth() {
     sensor.setModel(MS5837::MS5837_02BA); // model number for Bar02
-    sensor.init();
+    // If init fails (sensor unplugged, I2C fault) all depth reads are skipped:
+    // calling sensor.read() with a dead sensor can stall the I2C bus, and that
+    // stall would sit in the control loop.
+    depthSensorOk = sensor.init();
+    if (!depthSensorOk) Serial.println("[DEPTH] MS5837 init FAILED -- depth telemetry will read 0");
     sensor.setFluidDensity(997); // kg/m^3 (997 freshwater, 1029 for seawater)
 }
 
@@ -233,125 +241,11 @@ void config_battery() {
 }
 
 void config_internal_sensors() {
-   // Initialize the MCP9808 High-Accuracy Temperature Sensor.
-  // The return value is ignored to prevent serial output.
+  // Return values ignored on purpose: a missing sensor just reads garbage in
+  // telemetry instead of blocking boot or spamming the Orin's serial parser.
   mcp9808_sensor.begin();
-
-  // Initialize the BME280 Environmental Sensor.
-  // Assumes the I2C address is 0x77. If you have issues, try 0x77.
-  // The return value is ignored to prevent serial output.
-  bme280_sensor.begin(0x77);
+  bme280_sensor.begin(0x77);   // if init fails, try the alternate address 0x76
 }
-
-// ===================== BNO085 IMU functions =====================
-#if ENABLE_BNO085
-
-// Tell the BNO085 which fused outputs to stream and at what rate. Called at
-// init and again whenever the chip reports it reset itself (reports do not
-// survive a reset).
-static void bno085EnableReports() {
-  bno085.enableReport(SH2_ROTATION_VECTOR,           BNO085_REPORT_INTERVAL_US);
-  bno085.enableReport(SH2_GYROSCOPE_CALIBRATED,      BNO085_REPORT_INTERVAL_US);
-  bno085.enableReport(SH2_LINEAR_ACCELERATION,       BNO085_REPORT_INTERVAL_US);
-  bno085.enableReport(SH2_MAGNETIC_FIELD_CALIBRATED, BNO085_REPORT_INTERVAL_US);
-}
-
-// One-time init on the I2C1 bus. If the sensor is missing/unresponsive we just
-// leave bno085Ok false and everything else keeps working without it.
-void config_bno085() {
-  BNO085_WIRE.begin();
-  bno085Ok = bno085.begin_I2C(BNO085_I2C_ADDR, &BNO085_WIRE);
-  if (bno085Ok) {
-    bno085EnableReports();
-  } else {
-    Serial.println("[BNO085] init FAILED (check wiring / try addr 0x4B)");
-  }
-}
-
-// Drain every report the sensor has queued since the last pass and cache the
-// newest value of each kind. Non-blocking; called once per loop() pass.
-void poll_bno085() {
-  if (!bno085Ok) return;
-
-  // The BNO085 resets itself occasionally (brownout, internal watchdog);
-  // report subscriptions are lost when that happens, so re-enable them.
-  if (bno085.wasReset()) {
-    bno085EnableReports();
-  }
-
-  sh2_SensorValue_t event;
-  while (bno085.getSensorEvent(&event)) {
-    switch (event.sensorId) {
-      case SH2_ROTATION_VECTOR:            // absolute orientation quaternion
-        bnoQuatW = event.un.rotationVector.real;
-        bnoQuatX = event.un.rotationVector.i;
-        bnoQuatY = event.un.rotationVector.j;
-        bnoQuatZ = event.un.rotationVector.k;
-        break;
-      case SH2_GYROSCOPE_CALIBRATED:       // angular velocity, rad/s
-        bnoGyroX = event.un.gyroscope.x;
-        bnoGyroY = event.un.gyroscope.y;
-        bnoGyroZ = event.un.gyroscope.z;
-        break;
-      case SH2_LINEAR_ACCELERATION:        // m/s^2, gravity removed
-        bnoAccX = event.un.linearAcceleration.x;
-        bnoAccY = event.un.linearAcceleration.y;
-        bnoAccZ = event.un.linearAcceleration.z;
-        break;
-      case SH2_MAGNETIC_FIELD_CALIBRATED:  // uT
-        bnoMagX = event.un.magneticField.x;
-        bnoMagY = event.un.magneticField.y;
-        bnoMagZ = event.un.magneticField.z;
-        break;
-      default:
-        break;
-    }
-  }
-}
-
-// Extra "key: value" fields appended to the main "> ..." telemetry line. The
-// Orin-side parser (arduino.py) splits that line into a key/value dict, so
-// new keys are picked up without breaking the existing ones.
-String bno085Telemetry() {
-  if (!bno085Ok) return "";
-  return " quat_w: "  + String(bnoQuatW, DIGITS) +
-         " quat_x: "  + String(bnoQuatX, DIGITS) +
-         " quat_y: "  + String(bnoQuatY, DIGITS) +
-         " quat_z: "  + String(bnoQuatZ, DIGITS) +
-         " gyro_x: "  + String(bnoGyroX, DIGITS) +
-         " gyro_y: "  + String(bnoGyroY, DIGITS) +
-         " gyro_z: "  + String(bnoGyroZ, DIGITS) +
-         " accel_x: " + String(bnoAccX, DIGITS) +
-         " accel_y: " + String(bnoAccY, DIGITS) +
-         " accel_z: " + String(bnoAccZ, DIGITS) +
-         " mag_x: "   + String(bnoMagX, DIGITS) +
-         " mag_y: "   + String(bnoMagY, DIGITS) +
-         " mag_z: "   + String(bnoMagZ, DIGITS);
-}
-
-// Human-readable dump for the "imu" debug command (like "batt" / "depth").
-void print_bno085_debug() {
-  if (!bno085Ok) {
-    Serial.println("BNO085 enabled in firmware but init failed (check wiring / address)");
-    return;
-  }
-  poll_bno085();  // grab the freshest data before printing
-  Serial.println("Quat(wxyz): " + String(bnoQuatW, DIGITS) + " " + String(bnoQuatX, DIGITS) + " " + String(bnoQuatY, DIGITS) + " " + String(bnoQuatZ, DIGITS));
-  Serial.println("Gyro rad/s: " + String(bnoGyroX, DIGITS) + " " + String(bnoGyroY, DIGITS) + " " + String(bnoGyroZ, DIGITS));
-  Serial.println("LinAccel m/s^2: " + String(bnoAccX, DIGITS) + " " + String(bnoAccY, DIGITS) + " " + String(bnoAccZ, DIGITS));
-  Serial.println("Mag uT: " + String(bnoMagX, DIGITS) + " " + String(bnoMagY, DIGITS) + " " + String(bnoMagZ, DIGITS));
-}
-
-#else  // ENABLE_BNO085 == 0: no-op stubs so call sites need no #if guards
-
-void config_bno085() {}
-void poll_bno085() {}
-String bno085Telemetry() { return ""; }
-void print_bno085_debug() {
-  Serial.println("BNO085 disabled (set ENABLE_BNO085 to 1 in firmware)");
-}
-
-#endif  // ENABLE_BNO085
 
 void config_indicator() {
   pinMode(greenIndicatorLedPin, OUTPUT);
@@ -398,7 +292,6 @@ void killISR() {
   bool asserted = (ks == KILL_ASSERTED_LEVEL);
 
   isKilled = asserted;
-  killISRMicros = nowUs;
 
   #ifdef digitalWriteFast
     digitalWriteFast(greenIndicatorLedPin, asserted ? LOW : HIGH);
@@ -433,17 +326,38 @@ void loop() {
     setKillLeds(false);
     updateRedLed(true);   // battery + Orin-heartbeat status
     updateInstabilityWatchdog();  // latch to killed if the kill line is flickering (no-op if disabled)
-    poll_bno085();        // keep cached IMU values fresh (no-op if disabled)
+    refresh_sensor_cache();       // slow-tick sensor sampling; telemetry replies read the cache
 
     // ===== Normal operation (not killed) =====
     // SD Card periodic logs
-    loopIterationCounter++;
-    if (loopIterationCounter % sdLoggingFrequency == 0) {
-        logPeriodicData();
+    if (ENABLE_SD_CARD) {
+        loopIterationCounter++;
+        if (loopIterationCounter % sdLoggingFrequency == 0) {
+            logPeriodicData();
+        }
     }
 
     // Handle serial input
     handleSerial();
+}
+
+// Sample all slow sensors (MS5837 depth, MCP9808, BME280) into the cached_*
+// globals on a SENSOR_REFRESH_MS tick. This is the ONLY place the blocking
+// MS5837 read happens; command handling never waits on a sensor.
+void refresh_sensor_cache() {
+    unsigned long now = millis();
+    if (now - lastSensorRefreshMs < SENSOR_REFRESH_MS) return;
+    lastSensorRefreshMs = now;
+
+    if (depthSensorOk) {
+        sensor.read();                          // blocks ~40 ms
+        cachedPressure     = sensor.pressure(); // mbar
+        cachedExternalTemp = sensor.temperature(); // C
+        cachedDepth        = sensor.depth();    // m
+    }
+    cachedInternalTemp1 = mcp9808_sensor.readTempC();
+    cachedInternalTemp2 = bme280_sensor.readTemperature();
+    cachedHumidity      = bme280_sensor.readHumidity();
 }
 
 // True while the kill switch is physically asserted. Read straight from the pin
@@ -599,6 +513,11 @@ void enterKillIsland() {
 
 // Read and dispatch any complete newline-terminated commands from the UART.
 // Used only in normal operation (the kill island drains UART on its own).
+// NOTE: commands longer than sizeof(inputBuffer)-1 (63 chars) are silently
+// truncated -- the overflow bytes are dropped and the truncated prefix is
+// still parsed at the newline. Since actuator commands must now parse
+// EXACTLY (see process_input), a truncated command fails parsing and gets
+// echoed back instead of driving anything.
 void handleSerial() {
     while (Serial.available() > 0) {
         char inChar = (char)Serial.read();
@@ -652,68 +571,62 @@ void process_input(char *input) {
     return;
   }
 
-  int s0, s1, s2, s3, s4, s5, s6, s7;
+  int s[8];
   int servoNum, val;
+  int consumed = 0;   // set by %n: how much of the input the sscanf matched
 
-  if (sscanf(input, "%d %d %d %d %d %d %d %d", &s0, &s1, &s2, &s3, &s4, &s5, &s6, &s7) == 8) {   // Setting servos
-    // Set servos
-    servos[0].writeMicroseconds(s0);
-    servos[1].writeMicroseconds(s1);
-    servos[2].writeMicroseconds(s2);
-    servos[3].writeMicroseconds(s3);
-    servos[4].writeMicroseconds(s4);
-    servos[5].writeMicroseconds(s5);
-    servos[6].writeMicroseconds(s6);
-    servos[7].writeMicroseconds(s7);
+  // ---- Set all 8 thrusters ----
+  // The trailing "%n + end-of-string" check makes the parse EXACT: a garbled
+  // line (e.g. a corrupted digit mid-message) that only partially parses no
+  // longer falls through to the 2-integer single-thruster branch below and
+  // silently drives one thruster. Partial/garbled lines match nothing and get
+  // echoed back by the final else.
+  if (sscanf(input, "%d %d %d %d %d %d %d %d %n",
+             &s[0], &s[1], &s[2], &s[3], &s[4], &s[5], &s[6], &s[7], &consumed) == 8
+      && input[consumed] == '\0') {
+    for (int i = 0; i < 8; i++) {
+      int us = clampThrusterUS(s[i]);
+      servos[i].writeMicroseconds(us);
+      lastThrusterPWM[i] = us;
+    }
 
-    // Record last thruster value
-    lastThrusterPWM[0] = s0; 
-    lastThrusterPWM[1] = s1;
-    lastThrusterPWM[2] = s2;
-    lastThrusterPWM[3] = s3;
-    lastThrusterPWM[4] = s4;
-    lastThrusterPWM[5] = s5;
-    lastThrusterPWM[6] = s6;
-    lastThrusterPWM[7] = s7;
-
-    // THIS MUST BE KEPT THE SAME IN ORDER TO WORK WITH ORIN CODE
-    float pressure, temperature, depth;
-    handle_depth_command(pressure, temperature, depth);
-
-    float internalTemp1, internalTemp2, humidity;
-    handle_internalSensors_command(internalTemp1, internalTemp2, humidity);
-
+    // Telemetry reply from the sensor cache (refreshed on a 100 ms tick in
+    // loop(); no blocking sensor reads here). The key names MUST stay exactly
+    // as-is (including the "internal_temperatur2" typo) -- the Orin-side
+    // parser matches on them. snprintf into a static buffer instead of String
+    // concatenation so the hot path does no heap allocation.
     float current, voltage;
     handle_battery_command(current, voltage);
+    static char telem[320];
+    snprintf(telem, sizeof(telem),
+             "> pressure: %.*f external_temperature: %.*f depth: %.*f"
+             " internal_temperature1: %.*f internal_temperatur2: %.*f"
+             " humidity: %.*f current: %.*f voltage: %.*f",
+             DIGITS, cachedPressure, DIGITS, cachedExternalTemp, DIGITS, cachedDepth,
+             DIGITS, cachedInternalTemp1, DIGITS, cachedInternalTemp2,
+             DIGITS, cachedHumidity, DIGITS, current, DIGITS, voltage);
+    Serial.println(telem);
 
-    // Print those data for orin. bno085Telemetry() appends the IMU fields
-    // when the BNO085 is enabled and alive, and is an empty string otherwise.
-    Serial.println("> pressure: " + String(pressure, DIGITS) + " external_temperature: " + String(temperature, DIGITS) + " depth: " + String(depth, DIGITS) + " internal_temperature1: " + String(internalTemp1, DIGITS) + " internal_temperatur2: " + String(internalTemp2, DIGITS) + " humidity: " + String(humidity, DIGITS) + " current: " + String(current, DIGITS) + " voltage: " + String(voltage, DIGITS) + bno085Telemetry());
-  
   } else if (strcmp(input, "batt") == 0) {   // Debugging battery
     Serial.println("TESTING BATTERY");
     float current, voltage;
     handle_battery_command(current, voltage);
     Serial.println("Current:" + String(current, DIGITS) + " voltage:" + String(voltage, DIGITS));
 
-  } else if (sscanf(input, "%d %d", &servoNum, &val) == 2) {   // Turn on single servo
-     Serial.println("TESTING SINGLE SERVO");
-    if (val >= 1100 && val <= 1900 && servoNum >= 0 && servoNum <= 7) {
+  } else if (sscanf(input, "%d %d %n", &servoNum, &val, &consumed) == 2
+             && input[consumed] == '\0') {   // Set single thruster (exact parse, same clamp range)
+    Serial.println("TESTING SINGLE SERVO");
+    if (val >= THRUSTER_MIN_US && val <= THRUSTER_MAX_US && servoNum >= 0 && servoNum <= 7) {
         servos[servoNum].writeMicroseconds(val);
         lastThrusterPWM[servoNum] = val;
     } else {
         Serial.println("Invalid command");
     }
 
-  } else if (strcmp(input, "imu") == 0) {   // Debugging BNO085 IMU
-    Serial.println("TESTING BNO085 IMU");
-    print_bno085_debug();
-
-  } else if (strcmp(input, "depth") == 0) {   // Debugging depth sensor
+  } else if (strcmp(input, "depth") == 0) {   // Debugging depth sensor (reads the cache)
     Serial.println("TESTING DEPTH SENSOR");
-    float pressure, temperature, depth;
-    handle_depth_command(pressure, temperature, depth);
-    Serial.println("Pressure: " + String(pressure, DIGITS) + " mbar, Temperature: " + String(temperature, DIGITS) + " °C, Depth: " + String(depth, DIGITS) + " m");
+    if (!depthSensorOk) Serial.println("MS5837 init failed at boot -- values are stale zeros");
+    Serial.println("Pressure: " + String(cachedPressure, DIGITS) + " mbar, Temperature: " + String(cachedExternalTemp, DIGITS) + " °C, Depth: " + String(cachedDepth, DIGITS) + " m");
 
   } else if (strcmp(input, "test") == 0) {   // Debugging all servos
     Serial.println("RUNNING SERVO TEST SCRIPT");
@@ -727,7 +640,7 @@ void process_input(char *input) {
       Serial.println("Invalid light value. Please enter a value between 1100 and 1900.");
     }
 
-  } else if (sscanf(input, "light gradient %d", &lightCycles) == 1) {   // Graient lumen lights
+  } else if (sscanf(input, "light gradient %d", &lightCycles) == 1) {   // Sweep lumen light brightness
     Serial.println("LIGHT GRADIENT SET");
     gradient_lumen_light(lightCycles);
 
@@ -777,21 +690,12 @@ void process_input(char *input) {
   } else if (strcmp(input, "delete") == 0) {   // SD Card Delete
     delete_sd_log();
   } else {
+    // Unrecognized command: echo it back verbatim. This is INTENTIONAL -- the
+    // echo is how the Orin (and anyone on a serial monitor) sees that a line
+    // arrived but matched nothing, without a prefix the telemetry parser
+    // would have to special-case.
     Serial.println(input);
   }
-}
-
-void handle_depth_command(float& pressure, float& temperature, float& depth) {
-  sensor.read();
-  pressure = sensor.pressure(); // mbar
-  temperature = sensor.temperature(); // C
-  depth = sensor.depth(); // m
-}
-
-void handle_internalSensors_command(float& internalTemp1, float& internalTemp2, float& humidity){
-    internalTemp1 = mcp9808_sensor.readTempC();
-    internalTemp2 = bme280_sensor.readTemperature();
-    humidity = bme280_sensor.readHumidity();
 }
 
 void handle_battery_command(float& current, float& voltage) {
@@ -799,26 +703,25 @@ void handle_battery_command(float& current, float& voltage) {
   voltage = (analogRead(voltagePin) * 60.0) / 1024; // V
 }
 
+// Pulse each thruster in turn at 1550 us (barely above neutral) for 2 s.
 void test_servos() {
   for (int i = 0; i < 8; i++) {
-    // Set the current servo to 1550 microseconds
     servos[i].writeMicroseconds(1550);
     lastThrusterPWM[i] = 1550;
-    delay(2000);  // wait 500 ms for the servo to move
-    // Return the servo to its neutral position (1500 microseconds)
+    delay(2000);
     servos[i].writeMicroseconds(1500);
     lastThrusterPWM[i] = 1500;
-    delay(500);  // wait 500 ms before moving to the next servo
+    delay(500);
   }
 }
 
+// Depth values come from the sensor cache (refreshed on a 100 ms tick).
 void logPeriodicData() {
   float current, voltage;
   handle_battery_command(current, voltage);
 
-  float pressure, temperature, depth;
-  handle_depth_command(pressure, temperature, depth);
-  
+  float pressure = cachedPressure, temperature = cachedExternalTemp, depth = cachedDepth;
+
   String dataString = "current:" + String(current, DIGITS) +
                   " voltage:" + String(voltage, DIGITS) +
                   " servo:"; 
@@ -838,14 +741,13 @@ void logPeriodicData() {
   write_data_sd(dataString);
 }
 
+// Dump datalog.txt over serial so it can be saved on the host.
 void transfer_sd_log(){
   if (!ENABLE_SD_CARD) { Serial.println("SD card disabled."); return; }
   if (SD.exists("datalog.txt")) {
     Serial.println("Transfering datalog.txt ...");
-    // Open the file for reading
     File dataFile = SD.open("datalog.txt", FILE_READ);
     if (dataFile) {
-      // Read the file and send its content to the Serial port
       while (dataFile.available()) {
         Serial.write(dataFile.read());
       }
@@ -859,16 +761,15 @@ void transfer_sd_log(){
   }
 }
 
+// Delete datalog.txt and recreate it empty.
 void delete_sd_log() {
   if (!ENABLE_SD_CARD) { Serial.println("SD card disabled."); return; }
   if (SD.exists("datalog.txt")) {
-      // Remove the file
       if (SD.remove("datalog.txt")) {
         Serial.println("datalog.txt deleted.");
       } else {
         Serial.println("Error deleting datalog.txt.");
       }
-      // Recreate the file
       File dataFile = SD.open("datalog.txt", FILE_WRITE);
       if (dataFile) {
         dataFile.close();
@@ -883,16 +784,12 @@ void delete_sd_log() {
 
 void write_data_sd(String dataString) {
   if (!ENABLE_SD_CARD) return;
-  // Get the timestamp
   String timestamp = getTimestamp();
-  // open the file.
   File dataFile = SD.open("datalog.txt", FILE_WRITE);
-  // if the file is available, write to it
   if (dataFile) {
     dataFile.println(timestamp + " -> " + dataString);
     dataFile.close();
   } else {
-    // if the file isn't open, pop up an error:
     Serial.println("error opening datalog.txt");
   }
 }
@@ -910,6 +807,7 @@ void gradient_lumen_light(int cycles) {
   }
 }
 
+// Uptime as zero-padded "HH:MM:SS.mmm" (from millis(); no RTC).
 String getTimestamp() {
   unsigned long milliseconds = millis();
   unsigned long seconds = milliseconds / 1000;
@@ -920,15 +818,14 @@ String getTimestamp() {
   seconds %= 60;
   minutes %= 60;
 
-  // Format the timestamp
   String timestamp = "";
-  if (hours < 10) timestamp += "0"; // Add leading zero for hours
+  if (hours < 10) timestamp += "0";
   timestamp += String(hours) + ":";
-  if (minutes < 10) timestamp += "0"; // Add leading zero for minutes
+  if (minutes < 10) timestamp += "0";
   timestamp += String(minutes) + ":";
-  if (seconds < 10) timestamp += "0"; // Add leading zero for seconds
+  if (seconds < 10) timestamp += "0";
   timestamp += String(seconds) + ".";
-  if (milliseconds < 100) timestamp += "0"; // Add leading zeros for milliseconds
+  if (milliseconds < 100) timestamp += "0";
   if (milliseconds < 10) timestamp += "0";
   timestamp += String(milliseconds);
 
