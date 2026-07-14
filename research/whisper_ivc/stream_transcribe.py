@@ -151,6 +151,20 @@ class Engine:
         finally:
             self.busy = ""
 
+    def unload_model(self):
+        import gc
+        if self.boards.recording:
+            self.emit("log", text="stop recording before clearing the model")
+            return
+        self.model = None
+        self.model_name = None
+        self.denoisers = {}
+        gc.collect()
+        torch.cuda.empty_cache()
+        self.emit("log", text=f"GPU cleared "
+                  f"({torch.cuda.memory_allocated() / 1e9:.2f} GB still "
+                  f"allocated)")
+
     def get_denoiser(self, kind):
         if kind == "off":
             return lambda x: x
@@ -319,6 +333,7 @@ canvas{background:#fafafa;border:1px solid #ddd;border-radius:6px;width:100%;
 <div class=row>
  <label>model <select id=model></select></label>
  <button id=load>load model</button>
+ <button id=unload>clear model</button>
  <span id=mstat class=m>no model loaded</span>
 </div>
 <div class=row>
@@ -349,6 +364,7 @@ function cfg(){api('/api/config',{mode:$('mode').value,
   denoise:$('denoise').value});}
 ['mode','window','channel','denoise'].forEach(id=>$(id).onchange=cfg);
 $('load').onclick=()=>api('/api/load_model',{name:$('model').value});
+$('unload').onclick=()=>api('/api/unload_model');
 $('rec').onclick=()=>{recording?api('/api/stop'):api('/api/start');};
 $('clear').onclick=()=>{$('transcript').innerHTML='';$('log').innerHTML='';};
 function logLine(html){const d=$('log');d.innerHTML+=html+'\\n';
@@ -435,6 +451,12 @@ async def config(body: dict):
 async def load_model(body: dict):
     threading.Thread(target=ENGINE.load_model, args=(body["name"],),
                      daemon=True).start()
+    return {"ok": True}
+
+
+@app.post("/api/unload_model")
+async def unload_model():
+    threading.Thread(target=ENGINE.unload_model, daemon=True).start()
     return {"ok": True}
 
 
