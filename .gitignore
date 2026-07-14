@@ -19,3 +19,6 @@ __pycache__/
 
 # PlatformIO build output
 .pio/
+
+# ignore build files for daisyseed
+gen2/daisyseed_firmware/build
