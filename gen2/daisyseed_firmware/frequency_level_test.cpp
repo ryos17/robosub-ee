@@ -1,6 +1,7 @@
 #include "daisy_seed.h"
 #include "daisysp.h"
 #include "library/fft_library.h"
+#include "library/serial_library.h"
 #include <string>
 #include <cmath>
 #include <vector>
@@ -119,8 +120,10 @@ int main(void)
     // Initialize the FFT library with the actual sample rate
     fftLibrary = FFTLibrary(hw.AudioSampleRate());
 
-	// Start program
-    hw.StartLog(true);
+	// Start program (SerialLibrary wraps StartLog and adds the "reboot"
+	// command so this firmware stays flashable without buttons)
+    SerialLibrary serial(hw);
+    serial.Init(true);
     hw.StartAudio(MyCallback);
 
 	// Get timestamp
@@ -130,6 +133,9 @@ int main(void)
 
     while (1)
     {
+        // Handle "reboot" (DFU for make flash) from the host
+        serial.Poll();
+
         // If the buffer is full, process the FFT.
         if (fft_ready_for_processing)
         {

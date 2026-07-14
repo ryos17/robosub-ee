@@ -153,6 +153,9 @@ int main(void)
 
     while (1)
     {
+        // Handle "reboot" (DFU for make flash) from the host
+        serial.Poll();
+
         // Update latest magnitudes when FFT buffers are ready
         if (fft_ready_for_processing_0)
         {

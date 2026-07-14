@@ -13,10 +13,10 @@ SerialLibrary::~SerialLibrary() {
     }
 }
 
-void SerialLibrary::Init() {
-    // Start the log and wait for connection
-    hw_.StartLog(true);
-    
+void SerialLibrary::Init(bool wait_for_connection) {
+    // Start the log; only block for a host when requested
+    hw_.StartLog(wait_for_connection);
+
     // Set USB callback
     hw_.usb_handle.SetReceiveCallback(UsbCallback, UsbHandle::UsbPeriph::FS_INTERNAL);
 }
@@ -42,35 +42,51 @@ bool SerialLibrary::CheckCommand(const char* command) {
             // End of line found, check if command matches
             std::string cmd = command_buffer_;
             command_buffer_.clear();
-            
+
             // Remove any trailing whitespace
             while (!cmd.empty() && (cmd.back() == ' ' || cmd.back() == '\t')) {
                 cmd.pop_back();
             }
-            
-            return (cmd == command);
+
+            // Built-in: drop into the STM DFU bootloader so the host can
+            // reflash without touching the BOOT/RESET buttons
+            if (cmd == "reboot") {
+                System::ResetToBootloader();
+            }
+
+            if (command && cmd == command) {
+                return true;
+            }
+            // Non-matching line: keep scanning any remaining input
         }
     }
-    
+
     // Also check if the current buffer matches the command (without newline)
-    if (!command_buffer_.empty()) {
+    if (command && !command_buffer_.empty()) {
         std::string cmd = command_buffer_;
-        
+
         // Remove any trailing whitespace
         while (!cmd.empty() && (cmd.back() == ' ' || cmd.back() == '\t')) {
             cmd.pop_back();
         }
-        
+
         if (cmd == command) {
             command_buffer_.clear(); // Clear for next command
             return true;
+        } else if (cmd == "reboot") {
+            command_buffer_.clear();
+            System::ResetToBootloader();
         } else if (cmd.length() >= strlen(command)) {
             // If buffer is longer than expected command, clear it
             command_buffer_.clear();
         }
     }
-    
+
     return false;
+}
+
+void SerialLibrary::Poll() {
+    CheckCommand(nullptr);
 }
 
 // Static callback function
@@ -81,4 +97,4 @@ void SerialLibrary::UsbCallback(uint8_t* buff, uint32_t* length) {
             instance_->msg_fifo_.PushBack(buff[i]);
         }
     }
-} 
+}

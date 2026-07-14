@@ -121,9 +121,11 @@ int main(void)
     // Initialize the FFT library with the actual sample rate
     fftLibrary = FFTLibrary(hw.AudioSampleRate());
 
-    // // Initialize serial
-    // SerialLibrary serial(hw);
-    // serial.Init();
+    // Initialize serial without blocking: the slave normally runs standalone
+    // (no USB host), but if a USB cable is attached this makes it reachable
+    // for the "reboot" command so it can be reflashed without buttons.
+    SerialLibrary serial(hw);
+    serial.Init(false);
 
     // Initialize DAC outputs
 	DacHandle::Config cfg;
@@ -143,6 +145,9 @@ int main(void)
 
     while (1)
     {
+        // Handle "reboot" (DFU for make flash) from the host
+        serial.Poll();
+
         // Update latest magnitudes when FFT buffers are ready
         if (fft_ready_for_processing_2)
         {
