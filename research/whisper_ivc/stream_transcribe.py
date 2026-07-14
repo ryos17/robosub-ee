@@ -175,7 +175,6 @@ def main():
 
         if args.record:
             write_segment(mono, seg_dir, seg_n, pbar)
-            seg_n += 1
 
         t0 = time.time()
         result = model.transcribe(mono, fp16=True, language="en",
@@ -183,6 +182,11 @@ def main():
         text = result["text"].strip()
         pbar.write(f"[{time.strftime('%H:%M:%S')} dn={dt_dn:.1f}s "
                    f"asr={time.time() - t0:.1f}s] {text}")
+
+        if args.record:
+            with open(os.path.join(seg_dir, f"{seg_n}.txt"), "w") as f:
+                f.write(text + "\n")
+            seg_n += 1
 
 
 if __name__ == "__main__":
