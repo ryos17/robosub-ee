@@ -30,3 +30,6 @@ docs/superpowers
 
 # ignore data
 research/whisper_ivc/data
+
+# ignore libDaisy
+libDaisy
