@@ -30,8 +30,8 @@ import daisy_stream
 from daisy_stream import SAMPLE_RATE
 
 SB_CACHE = os.path.expanduser("~/.cache/speechbrain")
-SPECTRUM_N = 4096          # samples per spectrum frame
-SPECTRUM_BINS = 96         # log-spaced display bins
+SPECTRUM_N = 2048          # FFT window (Audacity default, Hann)
+SPECTRUM_BINS = 256        # log-spaced display bins
 
 
 def normalize(x):
@@ -291,6 +291,14 @@ class Engine:
                 x = np.mean([self.boards.latest[c] for c in avail], axis=0)
             else:
                 x = self.boards.latest[int(ch)]
+        # visualize what whisper would hear: run the active denoiser on the
+        # window (only once it's already loaded; never trigger a load here)
+        kind = self.cfg["denoise"]
+        if kind != "off" and kind in self.denoisers:
+            try:
+                x = self.denoisers[kind](normalize(x))
+            except Exception:
+                pass
         win = np.hanning(len(x))
         # scale to dBFS: full-scale sine -> 0 dB (hann coherent gain 0.5)
         mag = np.abs(np.fft.rfft(x * win)) / (len(x) / 4)
@@ -319,7 +327,7 @@ button{cursor:pointer}
 #rec.on{background:#c33;color:#fff}
 #status{color:#567;font-size:13px}
 canvas{background:#fafafa;border:1px solid #ddd;border-radius:6px;width:100%;
-  height:220px;display:block}
+  height:260px;display:block}
 #transcript{background:#f4faf4;border:1px solid #bcd8bc;border-radius:6px;
   padding:16px;min-height:180px;max-height:340px;overflow-y:auto;
   font-size:22px;line-height:1.5;margin-top:10px;white-space:pre-wrap}
@@ -346,11 +354,17 @@ canvas{background:#fafafa;border:1px solid #ddd;border-radius:6px;width:100%;
  <label>denoise <select id=denoise>
    <option>off</option><option>metricgan</option><option>sepformer</option>
  </select></label>
+</div>
+<div class=row>
  <button id=rec>● start</button>
- <button id=clear>clear</button>
+ <button id=clear>clear transcription</button>
+ <label>min dB <input id=mindb type=number value=-100 step=5
+   style="width:64px"></label>
+ <label>max dB <input id=maxdb type=number value=-60 step=5
+   style="width:64px"></label>
  <span id=status></span>
 </div>
-<canvas id=spec width=1200 height=220></canvas>
+<canvas id=spec width=1200 height=260></canvas>
 <div id=transcript></div>
 <div id=log></div>
 <script>
@@ -366,38 +380,72 @@ function cfg(){api('/api/config',{mode:$('mode').value,
 $('load').onclick=()=>api('/api/load_model',{name:$('model').value});
 $('unload').onclick=()=>api('/api/unload_model');
 $('rec').onclick=()=>{recording?api('/api/stop'):api('/api/start');};
-$('clear').onclick=()=>{$('transcript').innerHTML='';$('log').innerHTML='';};
+$('clear').onclick=()=>{$('transcript').innerHTML='';};
 function logLine(html){const d=$('log');d.innerHTML+=html+'\\n';
   d.scrollTop=d.scrollHeight;}
 const ctx=$('spec').getContext('2d');
-const F_LO=50,F_HI=8000,DB_LO=-100,DB_HI=0,ML=46,MB=24,MT=8,MR=8;
-function drawSpec(bins){const W=$('spec').width,H=$('spec').height;
-  const pw=W-ML-MR,ph=H-MT-MB;
+const F_LO=50,F_HI=8000,ML=46,MB=20,MT=8,MR=64,COLW=8;
+let DB_LO=-100,DB_HI=-60;
+const PW=$('spec').width-ML-MR,PH=$('spec').height-MT-MB;
+const plot=document.createElement('canvas');plot.width=PW;plot.height=PH;
+const pctx=plot.getContext('2d');
+pctx.fillStyle='#14041f';pctx.fillRect(0,0,PW,PH);
+// Audacity-style colormap: dark purple -> magenta -> orange -> white
+function cmapRGB(f){f=Math.max(0,Math.min(1,f));
+  const s=[[0,20,4,45],[0.35,120,20,130],[0.62,225,80,45],
+           [0.85,255,190,80],[1,255,255,255]];
+  for(let i=1;i<s.length;i++)if(f<=s[i][0]){
+    const t=(f-s[i-1][0])/(s[i][0]-s[i-1][0]);
+    return [s[i-1][1]+t*(s[i][1]-s[i-1][1])|0,
+            s[i-1][2]+t*(s[i][2]-s[i-1][2])|0,
+            s[i-1][3]+t*(s[i][3]-s[i-1][3])|0];}
+  return [255,255,255];}
+function cmap(f){const c=cmapRGB(f);
+  return `rgb(${c[0]},${c[1]},${c[2]})`;}
+function axes(){const W=$('spec').width,H=$('spec').height;
   ctx.fillStyle='#fafafa';ctx.fillRect(0,0,W,H);
-  ctx.font='11px system-ui';ctx.strokeStyle='#e2e2e2';ctx.fillStyle='#777';
-  // y grid: dB
-  for(let db=DB_LO;db<=DB_HI;db+=20){
-    const y=MT+ph*(1-(db-DB_LO)/(DB_HI-DB_LO));
-    ctx.beginPath();ctx.moveTo(ML,y);ctx.lineTo(W-MR,y);ctx.stroke();
-    ctx.textAlign='right';ctx.fillText(db+' dB',ML-5,y+4);}
-  // x grid: log frequency up to Nyquist
+  ctx.font='11px system-ui';ctx.fillStyle='#666';
   [50,100,200,500,1000,2000,4000,8000].forEach(f=>{
-    const x=ML+pw*Math.log(f/F_LO)/Math.log(F_HI/F_LO);
-    ctx.beginPath();ctx.moveTo(x,MT);ctx.lineTo(x,H-MB);ctx.stroke();
-    ctx.textAlign='center';
-    ctx.fillText(f>=1000?(f/1000)+'k':f,x,H-MB+14);});
-  ctx.fillText('Hz (log)',ML+pw/2,H-2);
-  // EQ-style line with soft fill
-  const pts=bins.map((v,i)=>{
-    const x=ML+pw*(i+0.5)/bins.length;
-    const f=Math.max(0,Math.min(1,(v-DB_LO)/(DB_HI-DB_LO)));
-    return [x,MT+ph*(1-f)];});
-  ctx.beginPath();ctx.moveTo(ML,H-MB);
-  pts.forEach(p=>ctx.lineTo(p[0],p[1]));ctx.lineTo(W-MR,H-MB);
-  ctx.closePath();ctx.fillStyle='rgba(40,140,70,0.12)';ctx.fill();
-  ctx.beginPath();pts.forEach((p,i)=>i?ctx.lineTo(p[0],p[1])
-    :ctx.moveTo(p[0],p[1]));
-  ctx.strokeStyle='#2c8c2c';ctx.lineWidth=1.6;ctx.stroke();ctx.lineWidth=1;}
+    const y=MT+PH*(1-Math.log(f/F_LO)/Math.log(F_HI/F_LO));
+    ctx.textAlign='right';
+    ctx.fillText(f>=1000?(f/1000)+'k':f,ML-5,y+4);});
+  ctx.save();ctx.translate(12,MT+PH/2);ctx.rotate(-Math.PI/2);
+  ctx.textAlign='center';ctx.fillText('Hz (log)',0,0);ctx.restore();
+  ctx.textAlign='center';ctx.fillText('time \\u2192',ML+PW/2,H-4);
+  // dB colorbar
+  const bx=W-MR+18,bw=14;
+  for(let y=0;y<PH;y++){
+    ctx.fillStyle=cmap(1-y/PH);ctx.fillRect(bx,MT+y,bw,1);}
+  ctx.fillStyle='#666';ctx.textAlign='left';
+  const step=(DB_HI-DB_LO)/4;
+  for(let k=0;k<=4;k++){const db=DB_HI-k*step;
+    const y=MT+PH*(1-(db-DB_LO)/(DB_HI-DB_LO));
+    ctx.fillText(Math.round(db),bx+bw+3,y+4);}
+  ctx.fillText('dB',bx+bw+3,MT+PH+14);}
+axes();
+function dbCfg(){const lo=parseFloat($('mindb').value),
+  hi=parseFloat($('maxdb').value);
+  if(isFinite(lo)&&isFinite(hi)&&hi>lo){DB_LO=lo;DB_HI=hi;axes();}}
+$('mindb').onchange=dbCfg;$('maxdb').onchange=dbCfg;
+let colCv=null,colCtx=null,prevBins=null;
+function drawSpec(bins){
+  // temporal smoothing then vertical interpolation for an Audacity-like look
+  if(prevBins&&prevBins.length===bins.length)
+    bins=bins.map((v,i)=>0.6*v+0.4*prevBins[i]);
+  prevBins=bins;
+  if(!colCv){colCv=document.createElement('canvas');
+    colCv.width=1;colCv.height=bins.length;
+    colCtx=colCv.getContext('2d');}
+  const img=colCtx.createImageData(1,bins.length);
+  bins.forEach((v,i)=>{
+    const c=cmapRGB((v-DB_LO)/(DB_HI-DB_LO));
+    const o=(bins.length-1-i)*4;
+    img.data[o]=c[0];img.data[o+1]=c[1];img.data[o+2]=c[2];img.data[o+3]=255;});
+  colCtx.putImageData(img,0,0);
+  pctx.drawImage(plot,-COLW,0);
+  pctx.imageSmoothingEnabled=true;
+  pctx.drawImage(colCv,PW-COLW-2,0,COLW+2,PH);
+  ctx.drawImage(plot,ML,MT);}
 function connect(){const ws=new WebSocket(`ws://${location.host}/ws`);
  ws.onmessage=e=>{const m=JSON.parse(e.data);
   if(m.type==='spectrum')drawSpec(m.bins);
@@ -444,6 +492,11 @@ async def config(body: dict):
     ENGINE.cfg.update({k: v for k, v in body.items()
                        if k in ("channel", "denoise", "mode", "window")})
     ENGINE.emit("log", text=f"config: {ENGINE.cfg}")
+    # preload the denoiser so the spectrogram can show enhanced audio
+    kind = ENGINE.cfg["denoise"]
+    if kind != "off" and kind not in ENGINE.denoisers:
+        threading.Thread(target=ENGINE.get_denoiser, args=(kind,),
+                         daemon=True).start()
     return {"ok": True}
 
 
@@ -480,8 +533,9 @@ async def ws(sock: WebSocket):
         while True:
             for ev in ENGINE.drain():
                 await sock.send_text(json.dumps(ev))
+            bins = await asyncio.to_thread(ENGINE.spectrum)
             await sock.send_text(json.dumps(
-                {"type": "spectrum", "bins": ENGINE.spectrum()}))
+                {"type": "spectrum", "bins": bins}))
             await sock.send_text(json.dumps(
                 {"type": "status",
                  "recording": ENGINE.boards.recording,
