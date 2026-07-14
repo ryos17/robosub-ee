@@ -1,10 +1,8 @@
 #include "daisy_seed.h"
-#include "daisysp.h"
 #include "library/fft_library.h"
 #include "library/serial_library.h"
 
 using namespace daisy;
-using namespace daisysp;
 
 ////////////////////////////// Competition Configuration (WE CAN CHANGE)/////////////////////////////////////////
 // // Hydrophone normalization (manually calibrate)
