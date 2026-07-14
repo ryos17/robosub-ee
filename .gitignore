@@ -6,7 +6,6 @@
 # VSCode
 .vscode/
 
-
 # KiCad autosave / locks
 *~
 *.lck
@@ -28,3 +27,6 @@ tmp/
 
 # ignore superpowers
 docs/superpowers
+
+# ignore data
+research/whisper_ivc/data
