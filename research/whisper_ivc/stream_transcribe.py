@@ -211,7 +211,8 @@ class Engine:
                     "mode": "manual", "window": 10.0}
         self.session_dir = None
         self.seg_n = 0
-        self.events = []       # queued messages for consumers (web / cli)
+        self.events = []       # append-only (seq, event) log; bounded
+        self.ev_seq = 0        # monotonic count of events ever emitted
         self.ev_lock = threading.Lock()
         self._cont_thread = None
         self.echo = True       # web: echo raw events to the server console
@@ -221,12 +222,20 @@ class Engine:
         if self.echo:
             print(f"[{time.strftime('%H:%M:%S')}] {type_}: {kw}", flush=True)
         with self.ev_lock:
-            self.events.append({"type": type_, **kw})
+            self.events.append((self.ev_seq, {"type": type_, **kw}))
+            self.ev_seq += 1
+            if len(self.events) > 2000:          # bound memory; keep newest
+                del self.events[:len(self.events) - 1000]
 
-    def drain(self):
+    def events_since(self, cursor):
+        """Return (events with seq >= cursor, next cursor). Non-destructive:
+        a websocket that drops mid-transcription (the GIL-heavy whisper call
+        stalls the async loop) and reconnects replays the retained history
+        from cursor 0 instead of losing events. Each event carries its _seq
+        so clients can dedupe replays."""
         with self.ev_lock:
-            ev, self.events = self.events, []
-        return ev
+            out = [{**ev, "_seq": s} for s, ev in self.events if s >= cursor]
+            return out, self.ev_seq
 
     # ---- model / denoiser
     def load_model(self, name):
@@ -528,6 +537,7 @@ canvas{background:#fafafa;border:1px solid #ddd;border-radius:6px;display:block}
 <script>
 const $=id=>document.getElementById(id);
 let recording=false;
+let lastSeq=-1;   // dedupe transcript/log events replayed after a reconnect
 async function api(p,body){const r=await fetch(p,{method:'POST',
   headers:{'Content-Type':'application/json'},
   body:JSON.stringify(body||{})});return r.json();}
@@ -637,6 +647,8 @@ function drawSpec(msg){const bins=msg.bins||{};
 render(null);
 function connect(){const ws=new WebSocket(`ws://${location.host}/ws`);
  ws.onmessage=e=>{const m=JSON.parse(e.data);
+  // transcript/log carry _seq; skip ones already shown (replay after reconnect)
+  if(m._seq!==undefined){if(m._seq<=lastSeq)return;lastSeq=m._seq;}
   if(m.type==='spectrum')drawSpec(m);
   else if(m.type==='transcript'){
     const tr=$('transcript');
@@ -736,8 +748,10 @@ async def ws(sock: WebSocket):
     await sock.accept()
     import asyncio
     try:
+        cursor = 0                         # replay retained history on connect
         while True:
-            for ev in ENGINE.drain():
+            evs, cursor = ENGINE.events_since(cursor)
+            for ev in evs:
                 await sock.send_text(json.dumps(ev))
             spec = await asyncio.to_thread(ENGINE.spectrum)
             await sock.send_text(json.dumps({"type": "spectrum", **spec}))
@@ -772,15 +786,17 @@ def _spark(bins, n, lo, hi):
     return "".join(out)
 
 
-def _print_events(eng):
-    """Format and print any queued transcript / log events."""
-    for ev in eng.drain():
+def _print_events(eng, cursor):
+    """Format and print new transcript / log events; return the next cursor."""
+    evs, cursor = eng.events_since(cursor)
+    for ev in evs:
         t = time.strftime("%H:%M:%S")
         if ev["type"] == "transcript":
             print(f"[{t}] #{ev['n']} {ev['name']}  ({ev['secs']}s, "
                   f"asr {ev['asr']}s)  {ev['text'] or '—'}", flush=True)
         elif ev["type"] == "log":
             print(f"[{t}] {ev['text']}", flush=True)
+    return cursor
 
 
 def _print_status(eng, lo, hi):
@@ -817,9 +833,10 @@ def run_cli(args):
                    window=args.window, channel=args.channel,
                    denoise=args.denoise)
 
+    cursor = 0
     print(f"loading model {args.model} ...", flush=True)
     eng.load_model(args.model)
-    _print_events(eng)
+    cursor = _print_events(eng, cursor)
     if eng.model is None:
         sys.exit("model failed to load")
     if args.denoise != "off":
@@ -837,7 +854,7 @@ def run_cli(args):
     last = 0.0
     try:
         while True:
-            _print_events(eng)
+            cursor = _print_events(eng, cursor)
             now = time.time()
             if now - last >= args.status_every:
                 _print_status(eng, args.min_db, args.max_db)
@@ -846,7 +863,7 @@ def run_cli(args):
     except KeyboardInterrupt:
         print("\nstopping ...", flush=True)
         eng.stop()
-        _print_events(eng)
+        _print_events(eng, cursor)
         eng.boards.shutting_down = True   # quiet the readers as we exit
 
 
