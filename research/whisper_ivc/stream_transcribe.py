@@ -8,12 +8,20 @@ Run:  python stream_transcribe.py   (then open http://<orin>:7860)
     continuous — audio is cut into window-length chunks, each transcribed.
 - Every processed piece of audio is saved to data/<year_date_time>/<N>.wav
   with its transcription in <N>.txt — byte-identical to what whisper heard
-  (channel select -> normalize -> optional denoise -> normalize).
-- Config (channel 0-3/mix, denoise, mode, window) is changeable in the UI.
-- A log-scale spectrum of the selected channel streams while recording.
+  (channel select -> resample to 16 kHz -> normalize -> optional denoise
+  -> normalize).
+- While recording, each board's untouched stereo stream is also written to
+  data/<session>/raw_ch01.wav / raw_ch23.wav at the NATIVE sample rate and
+  bit depth (up to 96 kHz / 24-bit) — the highest-fidelity record, with the
+  pinger band intact.
+- Config (channel 0-3/mix, denoise, mode, window, rate, bits) is changeable
+  in the UI; rate/bits are pushed live to the boards (not while recording).
+- A log-scale spectrum of the selected channel streams while recording,
+  up to the stream's Nyquist (48 kHz at the full rate: pings visible).
 """
 import glob
 import json
+import math
 import os
 import threading
 import time
@@ -25,13 +33,26 @@ import uvicorn
 import whisper
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse
+from scipy.signal import resample_poly
 
 import daisy_stream
-from daisy_stream import SAMPLE_RATE
 
+WHISPER_RATE = 16000       # whisper's fixed input rate
 SB_CACHE = os.path.expanduser("~/.cache/speechbrain")
 SPECTRUM_N = 2048          # FFT window (Audacity default, Hann)
 SPECTRUM_BINS = 256        # log-spaced display bins
+
+
+def pcm_bytes(pcm, bits):
+    """Float [-1,1] (N,2) -> little-endian PCM bytes at the stream's depth.
+
+    Inverts daisy_stream's decode exactly, so the WAV holds the same ints
+    the board sent."""
+    if bits == 16:
+        return np.round(pcm * 32768.0).clip(-32768, 32767) \
+                 .astype("<i2").tobytes()
+    v = np.round(pcm * 8388608.0).clip(-8388608, 8388607).astype("<i4")
+    return np.frombuffer(v.tobytes(), np.uint8).reshape(-1, 4)[:, :3].tobytes()
 
 
 def normalize(x):
@@ -48,8 +69,13 @@ class Boards:
         self.rec = {}          # board serial -> list of (N,2) arrays
         self.rec_counts = {}
         self.recording = False
-        self.stats = {"samples": 0, "dropped": 0}
+        self.stats = {"samples": 0, "dropped": 0,
+                      "rate": daisy_stream.DEFAULT_RATE,
+                      "bits": daisy_stream.DEFAULT_BITS}
         self.connected = []
+        self.streams = {}      # board serial -> daisy_stream.Stream
+        self.raw_wavs = {}     # board serial -> open wave writer
+        self.raw_paths = []
         for serial_no, chans in daisy_stream.BOARDS.items():
             hits = glob.glob(f"/dev/serial/by-id/*{serial_no}*")
             if hits:
@@ -59,25 +85,69 @@ class Boards:
                                  daemon=True).start()
 
     def _reader(self, serial_no, chans, port):
-        for frame in daisy_stream.frames(port, self.stats):
-            pcm = frame.astype(np.float32) / 32768.0
-            with self.lock:
-                for i, ch in enumerate(chans):
-                    self.latest[ch] = np.concatenate(
-                        [self.latest[ch], pcm[:, i]])[-SPECTRUM_N:]
-                if self.recording:
-                    self.rec.setdefault(serial_no, []).append(pcm)
-                    self.rec_counts[serial_no] = \
-                        self.rec_counts.get(serial_no, 0) + len(pcm)
+        stream = daisy_stream.Stream(port)
+        self.streams[serial_no] = stream
+        try:
+            # batches, not frames: per-frame Python work (3000 frames/s at
+            # 96 kHz across both boards) starves the readers under GIL load
+            # and overflows the kernel serial buffer -> host-side drops.
+            for pcm, rate, bits in stream.batches(self.stats):
+                with self.lock:
+                    for i, ch in enumerate(chans):
+                        self.latest[ch] = np.concatenate(
+                            [self.latest[ch], pcm[:, i]])[-SPECTRUM_N:]
+                    if self.recording:
+                        self.rec.setdefault(serial_no, []).append(pcm)
+                        self.rec_counts[serial_no] = \
+                            self.rec_counts.get(serial_no, 0) + len(pcm)
+                        w = self.raw_wavs.get(serial_no)
+                        if w:
+                            w.writeframes(pcm_bytes(pcm, bits))
+        finally:
+            # a silently-dead reader looks like "0 drops": make it loud
+            print(f"READER DIED: board {serial_no} ({port}) -- restart "
+                  "stream_transcribe.py (did the board reboot/reflash?)",
+                  flush=True)
+
+    @property
+    def rate(self):
+        return self.stats["rate"]
+
+    @property
+    def bits(self):
+        return self.stats["bits"]
+
+    def configure(self, rate=None, bits=None):
+        for stream in self.streams.values():
+            stream.configure(rate=rate, bits=bits)
 
     def channels_available(self):
         return sorted(ch for _, chans in self.connected for ch in chans)
 
-    def start_recording(self):
+    def start_recording(self, session_dir):
         with self.lock:
             self.rec = {}
             self.rec_counts = {}
+            self.raw_paths = []
+            for serial_no, chans in self.connected:
+                path = os.path.join(session_dir,
+                                    f"raw_ch{chans[0]}{chans[1]}.wav")
+                w = wave.open(path, "wb")
+                w.setnchannels(2)
+                w.setsampwidth(self.bits // 8)
+                w.setframerate(self.rate)
+                self.raw_wavs[serial_no] = w
+                self.raw_paths.append(path)
             self.recording = True
+
+    def stop_recording(self):
+        """Stop and close the raw hi-fi WAVs; returns their paths."""
+        with self.lock:
+            self.recording = False
+            wavs, self.raw_wavs = self.raw_wavs, {}
+        for w in wavs.values():
+            w.close()
+        return self.raw_paths if wavs else []
 
     def take(self, n_samples=None):
         """Pop recorded audio, aligned across boards. Returns {ch: mono}."""
@@ -104,7 +174,7 @@ class Boards:
         with self.lock:
             if not self.rec_counts:
                 return 0.0
-            return min(self.rec_counts.values()) / SAMPLE_RATE
+            return min(self.rec_counts.values()) / self.rate
 
 
 # ----------------------------------------------------------------- pipeline
@@ -214,11 +284,16 @@ class Engine:
         return chans.get(int(ch))
 
     def process(self, chans):
-        """channel select -> normalize -> denoise -> normalize -> save+asr."""
+        """channel select -> 16 kHz -> normalize -> denoise -> save+asr."""
         raw = self.select_mono(chans)
-        if raw is None or len(raw) < SAMPLE_RATE // 2:
+        rate = self.boards.rate
+        if raw is None or len(raw) < rate // 2:
             self.emit("log", text="segment too short / channel missing")
             return
+        if rate != WHISPER_RATE:
+            g = math.gcd(rate, WHISPER_RATE)
+            raw = resample_poly(raw, WHISPER_RATE // g, rate // g)
+        raw = raw.astype(np.float32)
         mono = normalize(self.get_denoiser(self.cfg["denoise"])(normalize(raw)))
 
         n = self.seg_n
@@ -226,7 +301,7 @@ class Engine:
         with wave.open(wav_path, "wb") as w:
             w.setnchannels(1)
             w.setsampwidth(2)
-            w.setframerate(SAMPLE_RATE)
+            w.setframerate(WHISPER_RATE)
             w.writeframes((mono * 32767).astype("<i2").tobytes())
 
         self.busy = f"transcribing {n}.wav..."
@@ -240,7 +315,7 @@ class Engine:
         with open(os.path.join(self.session_dir, f"{n}.txt"), "w") as f:
             f.write(text + "\n")
         self.seg_n += 1
-        self.emit("transcript", n=n, secs=round(len(mono) / SAMPLE_RATE, 1),
+        self.emit("transcript", n=n, secs=round(len(mono) / WHISPER_RATE, 1),
                   asr=round(time.time() - t0, 1), text=text,
                   wav=wav_path)
 
@@ -252,18 +327,20 @@ class Engine:
                                         time.strftime("%Y_%m%d_%H%M%S"))
         os.makedirs(self.session_dir, exist_ok=True)
         self.seg_n = 0
-        self.boards.start_recording()
+        self.boards.start_recording(self.session_dir)
         self.emit("log", text=f"recording -> {self.session_dir}/ "
-                  f"(mode={self.cfg['mode']})")
+                  f"(mode={self.cfg['mode']}, "
+                  f"{self.boards.rate} Hz / {self.boards.bits}-bit raw)")
         if self.cfg["mode"] == "continuous":
             self._cont_thread = threading.Thread(target=self._cont_loop,
                                                  daemon=True)
             self._cont_thread.start()
 
     def _cont_loop(self):
-        target = int(float(self.cfg["window"]) * SAMPLE_RATE)
+        rate = self.boards.rate
+        target = int(float(self.cfg["window"]) * rate)
         while self.boards.recording:
-            if self.boards.recorded_seconds() * SAMPLE_RATE >= target:
+            if self.boards.recorded_seconds() * rate >= target:
                 chans = self.boards.take(target)
                 if chans:
                     self.process(chans)
@@ -272,15 +349,17 @@ class Engine:
 
     def stop(self):
         was_continuous = self.cfg["mode"] == "continuous"
-        self.boards.recording = False
+        raw_paths = self.boards.stop_recording()
         if self._cont_thread:
             self._cont_thread.join(timeout=30)
             self._cont_thread = None
         chans = self.boards.take()
         if chans and (not was_continuous
-                      or len(next(iter(chans.values()))) >= SAMPLE_RATE):
+                      or len(next(iter(chans.values()))) >= self.boards.rate):
             self.process(chans)
-        self.emit("log", text=f"stopped; saved to {self.session_dir}/")
+        raw_names = ", ".join(os.path.basename(p) for p in raw_paths) or "none"
+        self.emit("log", text=f"stopped; saved to {self.session_dir}/ "
+                  f"(raw: {raw_names})")
 
     # ---- spectrum
     def spectrum(self):
@@ -299,15 +378,22 @@ class Engine:
                 x = self.denoisers[kind](normalize(x))
             except Exception:
                 pass
+        rate = self.boards.rate
         win = np.hanning(len(x))
         # scale to dBFS: full-scale sine -> 0 dB (hann coherent gain 0.5)
         mag = np.abs(np.fft.rfft(x * win)) / (len(x) / 4)
-        freqs = np.fft.rfftfreq(len(x), 1 / SAMPLE_RATE)
-        edges = np.geomspace(50, SAMPLE_RATE / 2, SPECTRUM_BINS + 1)
+        freqs = np.fft.rfftfreq(len(x), 1 / rate)
+        edges = np.geomspace(50, rate / 2, SPECTRUM_BINS + 1)
         bins = []
         for i in range(SPECTRUM_BINS):
             m = (freqs >= edges[i]) & (freqs < edges[i + 1])
-            v = mag[m].max() if m.any() else 0.0
+            if m.any():
+                v = mag[m].max()
+            else:
+                # display band narrower than one FFT bin (low end of the
+                # log axis at high rates): interpolate instead of showing
+                # a hard black stripe
+                v = np.interp(np.sqrt(edges[i] * edges[i + 1]), freqs, mag)
             bins.append(round(20 * np.log10(v + 1e-9), 1))
         return bins
 
@@ -354,6 +440,11 @@ canvas{background:#fafafa;border:1px solid #ddd;border-radius:6px;width:100%;
  <label>denoise <select id=denoise>
    <option>off</option><option>metricgan</option><option>sepformer</option>
  </select></label>
+ <label>rate <select id=rate>
+   <option>96000</option><option>48000</option><option>32000</option>
+   <option>24000</option><option>16000</option></select></label>
+ <label>bits <select id=bits>
+   <option>16</option><option selected>24</option></select></label>
 </div>
 <div class=row>
  <button id=rec>● start</button>
@@ -375,8 +466,10 @@ async function api(p,body){const r=await fetch(p,{method:'POST',
   body:JSON.stringify(body||{})});return r.json();}
 function cfg(){api('/api/config',{mode:$('mode').value,
   window:parseFloat($('window').value),channel:$('channel').value,
-  denoise:$('denoise').value});}
-['mode','window','channel','denoise'].forEach(id=>$(id).onchange=cfg);
+  denoise:$('denoise').value,rate:parseInt($('rate').value),
+  bits:parseInt($('bits').value)});}
+['mode','window','channel','denoise','rate','bits'].forEach(
+  id=>$(id).onchange=cfg);
 $('load').onclick=()=>api('/api/load_model',{name:$('model').value});
 $('unload').onclick=()=>api('/api/unload_model');
 $('rec').onclick=()=>{recording?api('/api/stop'):api('/api/start');};
@@ -384,7 +477,8 @@ $('clear').onclick=()=>{$('transcript').innerHTML='';};
 function logLine(html){const d=$('log');d.innerHTML+=html+'\\n';
   d.scrollTop=d.scrollHeight;}
 const ctx=$('spec').getContext('2d');
-const F_LO=50,F_HI=8000,ML=46,MB=20,MT=8,MR=64,COLW=8;
+const F_LO=50,ML=46,MB=20,MT=8,MR=64,COLW=8;
+let F_HI=48000;
 let DB_LO=-100,DB_HI=-60;
 const PW=$('spec').width-ML-MR,PH=$('spec').height-MT-MB;
 const plot=document.createElement('canvas');plot.width=PW;plot.height=PH;
@@ -405,7 +499,8 @@ function cmap(f){const c=cmapRGB(f);
 function axes(){const W=$('spec').width,H=$('spec').height;
   ctx.fillStyle='#fafafa';ctx.fillRect(0,0,W,H);
   ctx.font='11px system-ui';ctx.fillStyle='#666';
-  [50,100,200,500,1000,2000,4000,8000].forEach(f=>{
+  [50,100,200,500,1000,2000,4000,8000,16000,32000,48000]
+   .filter(f=>f<=F_HI).forEach(f=>{
     const y=MT+PH*(1-Math.log(f/F_LO)/Math.log(F_HI/F_LO));
     ctx.textAlign='right';
     ctx.fillText(f>=1000?(f/1000)+'k':f,ML-5,y+4);});
@@ -456,12 +551,14 @@ function connect(){const ws=new WebSocket(`ws://${location.host}/ws`);
     logLine(`<span class=t>[${m.n}.wav ${m.secs}s asr=${m.asr}s]</span> ${m.text}`);}
   else if(m.type==='log')logLine(`<span class=m># ${m.text}</span>`);
   else if(m.type==='status'){recording=m.recording;
+    if(m.rate/2!==F_HI){F_HI=m.rate/2;axes();}
     $('rec').textContent=recording?'■ stop':'● start';
     $('rec').className=recording?'on':'';
     $('mstat').textContent=m.model?`model: ${m.model}`:'no model loaded';
     $('status').textContent=(m.busy?m.busy+' ':'')+
       (recording?`recording ${m.recorded}s | `:'')+
-      '16 kHz sampling / 16-bit'+
+      `${m.rate/1000} kHz / ${m.bits}-bit`+
+      (m.dropped?` | dropped ${m.dropped}`:'')+
       (m.channels.length?'':' | NO BOARDS');}};
  ws.onclose=()=>setTimeout(connect,1500);}
 fetch('/api/init').then(r=>r.json()).then(d=>{
@@ -491,6 +588,21 @@ def init():
 async def config(body: dict):
     ENGINE.cfg.update({k: v for k, v in body.items()
                        if k in ("channel", "denoise", "mode", "window")})
+    # rate/bits go straight to the boards (frozen while recording so the
+    # raw WAV headers stay truthful)
+    rate, bits = body.get("rate"), body.get("bits")
+    if rate is not None or bits is not None:
+        if ENGINE.boards.recording:
+            ENGINE.emit("log", text="stop recording to change rate/bits")
+        else:
+            want_rate = None if rate == ENGINE.boards.rate else rate
+            want_bits = None if bits == ENGINE.boards.bits else bits
+            if want_rate or want_bits:
+                try:
+                    ENGINE.boards.configure(rate=want_rate, bits=want_bits)
+                    ENGINE.emit("log", text=f"boards -> rate={rate} bits={bits}")
+                except ValueError as e:
+                    ENGINE.emit("log", text=f"bad rate/bits: {e}")
     ENGINE.emit("log", text=f"config: {ENGINE.cfg}")
     # preload the denoiser so the spectrogram can show enhanced audio
     kind = ENGINE.cfg["denoise"]
@@ -543,6 +655,8 @@ async def ws(sock: WebSocket):
                  "busy": ENGINE.busy,
                  "recorded": round(ENGINE.boards.recorded_seconds(), 1),
                  "dropped": ENGINE.boards.stats["dropped"],
+                 "rate": ENGINE.boards.rate,
+                 "bits": ENGINE.boards.bits,
                  "channels": ENGINE.boards.channels_available()}))
             await asyncio.sleep(0.12)
     except WebSocketDisconnect:

@@ -6,8 +6,16 @@ and transcribed live on the GPU with Whisper.
 ## Pipeline
 
 ```
-hydrophones -> Daisy Seed (stream_audio.cpp firmware, 96 kHz -> 16 kHz s16 PCM
-over USB CDC) -> daisy_stream.py -> record / meter / transcribe scripts
+hydrophones -> Daisy Seed (stream_audio.cpp firmware, 96 kHz codec, host-set
+rate 16-96 kHz and 16/24-bit, PCM over USB CDC) -> daisy_stream.py ->
+record / meter / transcribe scripts
+
+The boards boot at 96 kHz / 16-bit; the host changes it live with the serial
+commands `rate 96000|48000|32000|24000|16000` and `bits 16|24`. While
+recording, stream_transcribe.py also saves each board's untouched stereo
+stream as data/<session>/raw_ch01.wav / raw_ch23.wav at the native rate and
+depth — full-fidelity, pinger band (25-40 kHz) included. The TDOA ports in
+../tdoa consume those WAVs (or the live stream) directly.
 ```
 
 The firmware lives in `gen2/daisyseed_firmware/stream_audio.cpp` (flash with
