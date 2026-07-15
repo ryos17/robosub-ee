@@ -1,10 +1,18 @@
-"""Web UI for live Whisper transcription of the Daisy hydrophone streams.
+"""Live Whisper transcription of the Daisy hydrophone streams.
 
-Run:  python stream_transcribe.py   (then open http://<orin>:7860)
+Run (terminal CLI, the default):
+    python stream_transcribe.py --model large-v3 --channel 0
+    python stream_transcribe.py --continuous --window 10 --channel mix
+The CLI prints transcriptions as they finish plus a periodic per-channel
+spectrum sparkline (the '*' marks the listened channel); Ctrl-C stops (and,
+in manual mode, transcribes the take). `--help` lists every option.
 
-- Pick a whisper model from the dropdown and load it (nothing runs before).
+Run the browser UI instead:
+    python stream_transcribe.py --web        (then open http://<orin>:7860)
+
+- Pick a whisper model and load it (nothing runs before). CLI: --model.
 - Two modes:
-    manual     — Start/Stop button; the whole take is transcribed on Stop.
+    manual     — the whole take is transcribed when you stop (Ctrl-C / Stop).
     continuous — audio is cut into window-length chunks, each transcribed.
 - Every processed segment is saved to data/<year_date_time>/ as
   ch<C>_<N>.wav (C = the selected channel) or mix_<N>.wav for the channel
@@ -18,13 +26,15 @@ Run:  python stream_transcribe.py   (then open http://<orin>:7860)
   fragment (0.wav); continuous mode records 0.wav, 1.wav, ... one per
   window (they concatenate back into the full take), matching the ch<C>_<N>
   whisper segments.
-- Config (channel 0-3/mix, denoise, mode, window, rate, bits) is changeable
-  in the UI; rate/bits are pushed live to the boards (not while recording).
+- Config (channel 0-3/mix, denoise, mode, window, rate, bits) is set by CLI
+  flags at launch, or changeable live in the UI; rate/bits are pushed to the
+  boards (not while recording).
 - A log-scale spectrogram streams for every channel, one row each, up to
   the stream's Nyquist (48 kHz at the full rate: pings visible). The
   channel(s) whisper is listening to (the selected channel, or all on
   'mix') are outlined with a box.
 """
+import argparse
 import glob
 import json
 import math
@@ -75,6 +85,7 @@ class Boards:
         self.rec = {}          # board serial -> list of (N,2) arrays
         self.rec_counts = {}
         self.recording = False
+        self.shutting_down = False   # suppress reader-death noise on teardown
         self.stats = {"samples": 0, "dropped": 0,
                       "rate": daisy_stream.DEFAULT_RATE,
                       "bits": daisy_stream.DEFAULT_BITS}
@@ -92,7 +103,7 @@ class Boards:
     def _reader(self, serial_no, chans, port):
         stream = daisy_stream.Stream(port)
         self.streams[serial_no] = stream
-        try:
+        try:  # noqa: E722 (clean message, not a traceback)
             # batches, not frames: per-frame Python work (3000 frames/s at
             # 96 kHz across both boards) starves the readers under GIL load
             # and overflows the kernel serial buffer -> host-side drops.
@@ -107,11 +118,13 @@ class Boards:
                         self.rec.setdefault(serial_no, []).append(pcm)
                         self.rec_counts[serial_no] = \
                             self.rec_counts.get(serial_no, 0) + len(pcm)
-        finally:
-            # a silently-dead reader looks like "0 drops": make it loud
-            print(f"READER DIED: board {serial_no} ({port}) -- restart "
-                  "stream_transcribe.py (did the board reboot/reflash?)",
-                  flush=True)
+        except Exception as e:
+            # a silently-dead reader looks like "0 drops": make it loud, but
+            # a clean one-liner (not a traceback). shutting_down suppresses
+            # the expected death when we're tearing the boards down on stop.
+            if not self.shutting_down:
+                print(f"READER DIED: board {serial_no} ({port}): {e} -- "
+                      "restart (did the board reboot/reflash?)", flush=True)
 
     @property
     def rate(self):
@@ -198,13 +211,15 @@ class Engine:
                     "mode": "manual", "window": 10.0}
         self.session_dir = None
         self.seg_n = 0
-        self.events = []       # queued messages for the websocket
+        self.events = []       # queued messages for consumers (web / cli)
         self.ev_lock = threading.Lock()
         self._cont_thread = None
+        self.echo = True       # web: echo raw events to the server console
 
     # ---- messaging
     def emit(self, type_, **kw):
-        print(f"[{time.strftime('%H:%M:%S')}] {type_}: {kw}", flush=True)
+        if self.echo:
+            print(f"[{time.strftime('%H:%M:%S')}] {type_}: {kw}", flush=True)
         with self.ev_lock:
             self.events.append({"type": type_, **kw})
 
@@ -368,18 +383,18 @@ class Engine:
 
     def stop(self):
         was_continuous = self.cfg["mode"] == "continuous"
-        raw_paths = self.boards.stop_recording()
+        self.boards.stop_recording()
         if self._cont_thread:
             self._cont_thread.join(timeout=30)
             self._cont_thread = None
         chans = self.boards.take()
         if chans and (not was_continuous
                       or len(next(iter(chans.values()))) >= self.boards.rate):
-            self.process(chans)
-        raw_names = ", ".join(os.path.relpath(p, self.session_dir)
-                              for p in raw_paths) or "none"
-        self.emit("log", text=f"stopped; saved to {self.session_dir}/ "
-                  f"(raw: {raw_names})")
+            self.process(chans)   # writes the final window's raw fragments
+        # raw_paths is populated by process()/save_raw, so read it AFTER
+        n_raw = len(self.boards.raw_paths)
+        raw = f"{n_raw} raw fragment(s) in raw/" if n_raw else "no raw"
+        self.emit("log", text=f"stopped; saved to {self.session_dir}/ ({raw})")
 
     # ---- spectrum
     def _bins_for(self, x, rate, denoise):
@@ -445,7 +460,15 @@ button{cursor:pointer}
 .layout{display:flex;gap:16px;align-items:flex-start}
 .left{flex:1;min-width:0}
 .right{width:420px;flex-shrink:0}
-.right .row{margin-bottom:8px}
+.modelrow{display:flex;gap:8px;align-items:center;margin-bottom:6px}
+.modelrow>label{color:#555;font-size:13px}
+.modelrow select{flex:1;min-width:0}
+.grid{display:grid;grid-template-columns:auto 1fr;gap:9px 10px;
+  align-items:center;margin:10px 0 12px}
+.grid>label{text-align:right;color:#555;font-size:13px}
+.grid select,.grid input{width:100%;box-sizing:border-box}
+.actions{display:flex;gap:8px;margin-bottom:8px}
+.actions button{flex:1}
 canvas{background:#fafafa;border:1px solid #ddd;border-radius:6px;display:block}
 #transcript{background:#f4faf4;border:1px solid #bcd8bc;border-radius:6px;
   padding:14px;min-height:150px;max-height:340px;overflow-y:auto;
@@ -462,37 +485,42 @@ canvas{background:#fafafa;border:1px solid #ddd;border-radius:6px;display:block}
 <canvas id=spec width=1200 height=520></canvas>
 </div>
 <div class=right>
-<div class=row>
- <label>model <select id=model></select></label>
- <button id=load>load model</button>
- <button id=unload>clear model</button>
- <span id=mstat class=m>no model loaded</span>
+<div class=modelrow>
+ <label>model</label>
+ <select id=model></select>
+ <button id=load>load</button>
+ <button id=unload>clear</button>
 </div>
-<div class=row>
- <label>mode <select id=mode>
+<div id=mstat class=m>no model loaded</div>
+<div class=grid>
+ <label>mode</label>
+ <select id=mode>
    <option value=manual>manual (start/stop)</option>
-   <option value=continuous>continuous (windowed)</option></select></label>
- <label>window(s) <input id=window type=number value=10 min=2 max=60
-   style="width:60px"></label>
- <label>channel <select id=channel></select></label>
- <label>denoise <select id=denoise>
-   <option>off</option><option>metricgan</option><option>sepformer</option>
- </select></label>
- <label>rate <select id=rate>
+   <option value=continuous>continuous (windowed)</option></select>
+ <label>window(s)</label>
+ <input id=window type=number value=10 min=2 max=60>
+ <label>channel</label>
+ <select id=channel></select>
+ <label>denoise</label>
+ <select id=denoise>
+   <option>off</option><option>metricgan</option><option>sepformer</option></select>
+ <label>rate</label>
+ <select id=rate>
    <option>96000</option><option>48000</option><option>32000</option>
-   <option>24000</option><option>16000</option></select></label>
- <label>bits <select id=bits>
-   <option>16</option><option selected>24</option></select></label>
+   <option>24000</option><option>16000</option></select>
+ <label>bits</label>
+ <select id=bits>
+   <option>16</option><option selected>24</option></select>
+ <label>min dB</label>
+ <input id=mindb type=number value=-100 step=5>
+ <label>max dB</label>
+ <input id=maxdb type=number value=-60 step=5>
 </div>
-<div class=row>
+<div class=actions>
  <button id=rec>● start</button>
  <button id=clear>clear transcription</button>
- <label>min dB <input id=mindb type=number value=-100 step=5
-   style="width:64px"></label>
- <label>max dB <input id=maxdb type=number value=-60 step=5
-   style="width:64px"></label>
- <span id=status></span>
 </div>
+<div id=status></div>
 <div id=transcript></div>
 <div id=log></div>
 </div>
@@ -728,7 +756,151 @@ async def ws(sock: WebSocket):
         pass
 
 
+# --------------------------------------------------------------- terminal CLI
+BLOCKS = " ▁▂▃▄▅▆▇█"
+
+
+def _spark(bins, n, lo, hi):
+    """Downsample a per-channel dB spectrum to n block chars (log-freq axis)."""
+    step = len(bins) / n
+    span = (hi - lo) or 1.0
+    out = []
+    for i in range(n):
+        seg = bins[int(i * step):int((i + 1) * step)] or [lo]
+        f = (max(seg) - lo) / span
+        out.append(BLOCKS[max(0, min(8, int(f * 8)))])
+    return "".join(out)
+
+
+def _print_events(eng):
+    """Format and print any queued transcript / log events."""
+    for ev in eng.drain():
+        t = time.strftime("%H:%M:%S")
+        if ev["type"] == "transcript":
+            print(f"[{t}] #{ev['n']} {ev['name']}  ({ev['secs']}s, "
+                  f"asr {ev['asr']}s)  {ev['text'] or '—'}", flush=True)
+        elif ev["type"] == "log":
+            print(f"[{t}] {ev['text']}", flush=True)
+
+
+def _print_status(eng, lo, hi):
+    """One-line per-channel spectrum sparkline + recorded time / drops."""
+    spec = eng.spectrum()
+    if not spec["channels"]:
+        return
+    cells = []
+    for ch in spec["channels"]:
+        mark = "*" if ch in spec["listening"] else " "
+        cells.append(f"ch{ch}{mark}{_spark(spec['bins'][ch], 12, lo, hi)}")
+    rec = eng.boards.recorded_seconds()
+    drp = eng.boards.stats["dropped"]
+    print(f"[{time.strftime('%H:%M:%S')}] {rec:6.1f}s drop={drp:<4d} "
+          + "  ".join(cells), flush=True)
+
+
+def run_cli(args):
+    """Purely terminal front-end: same capability as the web UI, print-driven.
+    The '*' after a channel marks the one(s) whisper is listening to; the
+    sparkline is that channel's log-frequency spectrum (pinger band visible)."""
+    eng = ENGINE
+    eng.echo = False                      # we format the events ourselves
+    boards = eng.boards
+    if not boards.connected:
+        sys.exit("no Daisy boards connected")
+    print(f"boards: {boards.connected}")
+
+    if args.rate or args.bits:
+        boards.configure(rate=args.rate, bits=args.bits)
+        time.sleep(0.4)                   # let the new-format frames arrive
+
+    eng.cfg.update(mode="continuous" if args.continuous else "manual",
+                   window=args.window, channel=args.channel,
+                   denoise=args.denoise)
+
+    print(f"loading model {args.model} ...", flush=True)
+    eng.load_model(args.model)
+    _print_events(eng)
+    if eng.model is None:
+        sys.exit("model failed to load")
+    if args.denoise != "off":
+        print(f"loading denoiser {args.denoise} ...", flush=True)
+        eng.get_denoiser(args.denoise)
+
+    eng.start()
+    mode = eng.cfg["mode"]
+    tail = ("windows transcribe live; Ctrl-C to stop" if mode == "continuous"
+            else "Ctrl-C to stop & transcribe the take")
+    print(f"recording ({mode}, ch={args.channel}, "
+          f"{boards.rate} Hz/{boards.bits}-bit, denoise={args.denoise}) "
+          f"-> {eng.session_dir}/ — {tail}", flush=True)
+
+    last = 0.0
+    try:
+        while True:
+            _print_events(eng)
+            now = time.time()
+            if now - last >= args.status_every:
+                _print_status(eng, args.min_db, args.max_db)
+                last = now
+            time.sleep(0.15)
+    except KeyboardInterrupt:
+        print("\nstopping ...", flush=True)
+        eng.stop()
+        _print_events(eng)
+        eng.boards.shutting_down = True   # quiet the readers as we exit
+
+
+def parse_args():
+    p = argparse.ArgumentParser(
+        description="Terminal CLI (default) for live Whisper transcription of "
+                    "the Daisy hydrophone streams; --web runs the browser UI.")
+    p.add_argument("--web", action="store_true",
+                   help="serve the web UI instead of running in the terminal")
+    p.add_argument("--port", type=int, default=7860, help="web UI port")
+    p.add_argument("--model", default="large-v3", help="whisper model name")
+    p.add_argument("--channel", default="0",
+                   choices=["0", "1", "2", "3", "mix"],
+                   help="hydrophone to transcribe (or 'mix')")
+    p.add_argument("--denoise", default="off",
+                   choices=["off", "metricgan", "sepformer"])
+    p.add_argument("--continuous", action="store_true",
+                   help="transcribe fixed windows live (else one take on stop)")
+    p.add_argument("--window", type=float, default=10.0,
+                   help="continuous window length in seconds (default 10)")
+    p.add_argument("--rate", type=int, default=None,
+                   choices=[96000, 48000, 32000, 24000, 16000],
+                   help="set board sample rate (default: leave as-is)")
+    p.add_argument("--bits", type=int, default=None, choices=[16, 24],
+                   help="set board bit depth (default: leave as-is)")
+    p.add_argument("--min-db", type=float, default=-100.0,
+                   help="level-meter floor (default -100)")
+    p.add_argument("--max-db", type=float, default=-60.0,
+                   help="level-meter ceiling (default -60)")
+    p.add_argument("--status-every", type=float, default=2.0,
+                   help="seconds between level-meter status lines (default 2)")
+    return p.parse_args()
+
+
+def _lan_ip():
+    """Best-effort primary LAN IP (the default-route interface's address)."""
+    import socket
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        s.connect(("8.8.8.8", 80))     # no packets sent; just picks the iface
+        return s.getsockname()[0]
+    except OSError:
+        return "127.0.0.1"
+    finally:
+        s.close()
+
+
 if __name__ == "__main__":
     assert torch.cuda.is_available(), "CUDA not available"
-    print(f"boards: {ENGINE.boards.connected}")
-    uvicorn.run(app, host="0.0.0.0", port=7860, log_level="warning")
+    _args = parse_args()
+    if _args.web:
+        url = f"http://{_lan_ip()}:{_args.port}/"
+        print(f"\n    open in your browser:  {url}\n", flush=True)
+        print(f"boards: {ENGINE.boards.connected}")
+        uvicorn.run(app, host="0.0.0.0", port=_args.port, log_level="warning")
+    else:
+        run_cli(_args)

@@ -124,8 +124,13 @@ class Stream:
         termios.tcsetattr(self.ser.fd, termios.TCSANOW, attrs)
         tty_fd = os.open(port, os.O_RDONLY | os.O_NOCTTY)
         try:
+            # own session: a terminal Ctrl-C (the CLI's stop signal) goes to
+            # the foreground process group -- without this it would kill cat
+            # out from under the reader (EOF -> "stream ended"). close()
+            # tears it down explicitly.
             self.proc = subprocess.Popen(
-                ["cat"], stdin=tty_fd, stdout=subprocess.PIPE, bufsize=0)
+                ["cat"], stdin=tty_fd, stdout=subprocess.PIPE, bufsize=0,
+                start_new_session=True)
         finally:
             os.close(tty_fd)
         try:
