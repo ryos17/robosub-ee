@@ -13,9 +13,18 @@ dependencies:
       # torch's Jetson build dlopens these NVIDIA libs; they are not in JetPack
       - nvidia-cudss-cu12
       - nvidia-cusparselt-cu12
+      - numpy
       - openai-whisper
       - pyserial
       - tqdm
+      # FastAPI WebSocket server for the live-transcription UI. click, starlette
+      # and pydantic are transitive deps of fastapi+uvicorn, but pinned
+      # explicitly because this env has repeatedly lost transitive packages.
+      - fastapi
+      - uvicorn
+      - click
+      - starlette
+      - pydantic
       # speech-enhancement deps (torch-free). speechbrain itself must be
       # installed manually with --no-deps or pip will replace the Jetson
       # torch above with a broken PyPI build:

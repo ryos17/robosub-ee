@@ -6,14 +6,15 @@ Run:  python stream_transcribe.py   (then open http://<orin>:7860)
 - Two modes:
     manual     — Start/Stop button; the whole take is transcribed on Stop.
     continuous — audio is cut into window-length chunks, each transcribed.
-- Every processed piece of audio is saved to data/<year_date_time>/<N>.wav
-  with its transcription in <N>.txt — byte-identical to what whisper heard
-  (channel select -> resample to 16 kHz -> normalize -> optional denoise
-  -> normalize).
-- While recording, each board's untouched stereo stream is also written to
-  data/<session>/raw_ch01.wav / raw_ch23.wav at the NATIVE sample rate and
-  bit depth (up to 96 kHz / 24-bit) — the highest-fidelity record, with the
-  pinger band intact.
+- Every processed segment is saved to data/<year_date_time>/ as
+  ch<C>_<N>.wav (C = the selected channel) or mix_<N>.wav for the channel
+  mix, with its transcription in the matching .txt — byte-identical to what
+  whisper heard (channel select -> resample to 16 kHz -> normalize ->
+  optional denoise -> normalize).
+- While recording, every hydrophone's untouched stream is also written,
+  one gapless mono file per channel, to data/<session>/raw/ch<C>/0.wav at
+  the NATIVE sample rate and bit depth (up to 96 kHz / 24-bit) — the
+  highest-fidelity record, with the pinger band intact.
 - Config (channel 0-3/mix, denoise, mode, window, rate, bits) is changeable
   in the UI; rate/bits are pushed live to the boards (not while recording).
 - A log-scale spectrum of the selected channel streams while recording,
@@ -74,7 +75,7 @@ class Boards:
                       "bits": daisy_stream.DEFAULT_BITS}
         self.connected = []
         self.streams = {}      # board serial -> daisy_stream.Stream
-        self.raw_wavs = {}     # board serial -> open wave writer
+        self.raw_wavs = {}     # hydrophone channel -> open mono wave writer
         self.raw_paths = []
         for serial_no, chans in daisy_stream.BOARDS.items():
             hits = glob.glob(f"/dev/serial/by-id/*{serial_no}*")
@@ -100,9 +101,10 @@ class Boards:
                         self.rec.setdefault(serial_no, []).append(pcm)
                         self.rec_counts[serial_no] = \
                             self.rec_counts.get(serial_no, 0) + len(pcm)
-                        w = self.raw_wavs.get(serial_no)
-                        if w:
-                            w.writeframes(pcm_bytes(pcm, bits))
+                        for i, ch in enumerate(chans):
+                            w = self.raw_wavs.get(ch)
+                            if w:
+                                w.writeframes(pcm_bytes(pcm[:, i], bits))
         finally:
             # a silently-dead reader looks like "0 drops": make it loud
             print(f"READER DIED: board {serial_no} ({port}) -- restart "
@@ -129,15 +131,18 @@ class Boards:
             self.rec = {}
             self.rec_counts = {}
             self.raw_paths = []
+            # One gapless mono file per channel: data/<session>/raw/ch<C>/0.wav
             for serial_no, chans in self.connected:
-                path = os.path.join(session_dir,
-                                    f"raw_ch{chans[0]}{chans[1]}.wav")
-                w = wave.open(path, "wb")
-                w.setnchannels(2)
-                w.setsampwidth(self.bits // 8)
-                w.setframerate(self.rate)
-                self.raw_wavs[serial_no] = w
-                self.raw_paths.append(path)
+                for ch in chans:
+                    ch_dir = os.path.join(session_dir, "raw", f"ch{ch}")
+                    os.makedirs(ch_dir, exist_ok=True)
+                    path = os.path.join(ch_dir, "0.wav")
+                    w = wave.open(path, "wb")
+                    w.setnchannels(1)
+                    w.setsampwidth(self.bits // 8)
+                    w.setframerate(self.rate)
+                    self.raw_wavs[ch] = w
+                    self.raw_paths.append(path)
             self.recording = True
 
     def stop_recording(self):
@@ -297,14 +302,17 @@ class Engine:
         mono = normalize(self.get_denoiser(self.cfg["denoise"])(normalize(raw)))
 
         n = self.seg_n
-        wav_path = os.path.join(self.session_dir, f"{n}.wav")
+        ch = self.cfg["channel"]
+        stem = "mix" if ch == "mix" else f"ch{int(ch)}"
+        base = f"{stem}_{n}"
+        wav_path = os.path.join(self.session_dir, base + ".wav")
         with wave.open(wav_path, "wb") as w:
             w.setnchannels(1)
             w.setsampwidth(2)
             w.setframerate(WHISPER_RATE)
             w.writeframes((mono * 32767).astype("<i2").tobytes())
 
-        self.busy = f"transcribing {n}.wav..."
+        self.busy = f"transcribing {base}.wav..."
         t0 = time.time()
         try:
             result = self.model.transcribe(mono, fp16=True, language="en",
@@ -312,10 +320,11 @@ class Engine:
             text = result["text"].strip()
         finally:
             self.busy = ""
-        with open(os.path.join(self.session_dir, f"{n}.txt"), "w") as f:
+        with open(os.path.join(self.session_dir, base + ".txt"), "w") as f:
             f.write(text + "\n")
         self.seg_n += 1
-        self.emit("transcript", n=n, secs=round(len(mono) / WHISPER_RATE, 1),
+        self.emit("transcript", n=n, name=base,
+                  secs=round(len(mono) / WHISPER_RATE, 1),
                   asr=round(time.time() - t0, 1), text=text,
                   wav=wav_path)
 
@@ -357,7 +366,8 @@ class Engine:
         if chans and (not was_continuous
                       or len(next(iter(chans.values()))) >= self.boards.rate):
             self.process(chans)
-        raw_names = ", ".join(os.path.basename(p) for p in raw_paths) or "none"
+        raw_names = ", ".join(os.path.relpath(p, self.session_dir)
+                              for p in raw_paths) or "none"
         self.emit("log", text=f"stopped; saved to {self.session_dir}/ "
                   f"(raw: {raw_names})")
 
@@ -548,7 +558,7 @@ function connect(){const ws=new WebSocket(`ws://${location.host}/ws`);
     const tr=$('transcript');
     tr.innerHTML+=`<div><span class=seg>#${m.n}</span>${m.text||'&mdash;'}</div>`;
     tr.scrollTop=tr.scrollHeight;
-    logLine(`<span class=t>[${m.n}.wav ${m.secs}s asr=${m.asr}s]</span> ${m.text}`);}
+    logLine(`<span class=t>[${m.name}.wav ${m.secs}s asr=${m.asr}s]</span> ${m.text}`);}
   else if(m.type==='log')logLine(`<span class=m># ${m.text}</span>`);
   else if(m.type==='status'){recording=m.recording;
     if(m.rate/2!==F_HI){F_HI=m.rate/2;axes();}
