@@ -165,13 +165,22 @@ const int dropperMaxUS = 2200;      // SER-201X spec
 const float dropperHalfRangeDeg = 70.0f;  // default ±70° per datasheet (use 100.0f if reprogrammed)
 float dropperDeg = 0;
 
-// torpedo
+// torpedo (HF3240SMG)
+// Calibration from the bench-tested single-servo sketch: signal held
+// continuously so the servo holds position (fixes one-direction behavior).
 Servo torpedo;
-const int torpedoPin = 20;
-const int torpedoMinUS = 800;       // SER-201X spec
-const int torpedoMaxUS = 2200;      // SER-201X spec
-const float torpedoHalfRangeDeg = 70.0f;  // default ±70° per datasheet (use 100.0f if reprogrammed)
-float torpedoDeg = 0;
+const int torpedoPin = 22;
+const int TORPEDO_MIN_US    = 500;    // datasheet endpoints (0-180 deg)
+const int TORPEDO_MAX_US    = 2500;
+const int TORPEDO_CENTER_US = 1520;   // rated neutral / measured mechanical zero
+const float TORPEDO_US_PER_DEG = (float)(TORPEDO_MAX_US - TORPEDO_MIN_US) / 180.0f;  // 11.11 us/deg
+const int TORPEDO_MOVE_DEG  = 30;     // tested throw each way
+// LEFT = center - offset, RIGHT = center + offset. Flip sign if swapped.
+const int TORPEDO_OFFSET_US = (int)(TORPEDO_MOVE_DEG * TORPEDO_US_PER_DEG + 0.5f);
+// Motion feel (tested values)
+const int TORPEDO_STEP_US       = 20;   // us per step (smaller = smoother)
+const int TORPEDO_STEP_DELAY_MS = 1;    // ms per step (larger = slower)
+int torpedoCurrentUs = TORPEDO_CENTER_US;
 
 // ======= Forward declarations =======
 void applyNeutralAll();
@@ -223,8 +232,18 @@ int degToUS_generic(float deg, float halfRangeDeg, int usMin, int usMax) {
 inline int dropperDegToUS(float d) {
   return degToUS_generic(d, dropperHalfRangeDeg, dropperMinUS, dropperMaxUS);
 }
-inline int torpedoDegToUS(float d) {
-  return degToUS_generic(d, torpedoHalfRangeDeg, torpedoMinUS, torpedoMaxUS);
+// Smoothly step the torpedo servo to targetUs. Blocking (~1 ms per 20 us of
+// travel, worst case ~100 ms for a full 30-deg throw). The kill ISR still
+// neutralizes instantly; the isKilled gate in process_input() keeps this out
+// of the command path while killed.
+void torpedoMoveTo(int targetUs) {
+  targetUs = constrain(targetUs, TORPEDO_MIN_US, TORPEDO_MAX_US);
+  while (torpedoCurrentUs != targetUs) {
+    torpedoCurrentUs += (torpedoCurrentUs < targetUs) ? TORPEDO_STEP_US : -TORPEDO_STEP_US;
+    if (abs(torpedoCurrentUs - targetUs) < TORPEDO_STEP_US) torpedoCurrentUs = targetUs;
+    torpedo.writeMicroseconds(torpedoCurrentUs);
+    delay(TORPEDO_STEP_DELAY_MS);
+  }
 }
 
 void config_dropper() {
@@ -233,8 +252,9 @@ void config_dropper() {
 }
 
 void config_torpedo() {
-  torpedo.attach(torpedoPin, torpedoMinUS, torpedoMaxUS);
-  torpedo.writeMicroseconds(torpedoDegToUS(0));  // neutral/safe
+  torpedo.attach(torpedoPin, TORPEDO_MIN_US, TORPEDO_MAX_US);
+  torpedoCurrentUs = TORPEDO_CENTER_US;
+  torpedo.writeMicroseconds(torpedoCurrentUs);  // establish zero; signal stays attached so it holds
 }
 
 void config_depth() {
@@ -338,7 +358,9 @@ void applyNeutralAll() {
     lastThrusterPWM[i] = 1500;
   }
   dropper.writeMicroseconds(dropperDegToUS(14));
-  torpedo.writeMicroseconds(torpedoDegToUS(0));
+  // ISR-safe: direct write to center, no smooth stepping (no delay() here).
+  torpedoCurrentUs = TORPEDO_CENTER_US;
+  torpedo.writeMicroseconds(TORPEDO_CENTER_US);
 }
 
 void loop() {
@@ -721,30 +743,18 @@ void process_input(char* input) {
     Serial.print(us);
     Serial.println(" us");
 
-    // Torpedos
-  } else if (strcmp(input, "hiroshima") == 0) {
-    int us = torpedoDegToUS(-9);
-    torpedo.writeMicroseconds(us);
-  } else if (strcmp(input, "nagasaki") == 0) {
-    int us = torpedoDegToUS(37);
-    torpedo.writeMicroseconds(us);
-  } else if (strcmp(input, "enola-gay") == 0) {
-    int us = torpedoDegToUS(14);
-    torpedo.writeMicroseconds(us);
-  } else if (sscanf(input, "torpedoPosition %f", &torpedoDeg) == 1) {
-    if (torpedoDeg < -torpedoHalfRangeDeg) {
-      torpedoDeg = -torpedoHalfRangeDeg;
-    }
-    if (torpedoDeg > +torpedoHalfRangeDeg) {
-      torpedoDeg = +torpedoHalfRangeDeg;
-    }
-    int us = torpedoDegToUS(torpedoDeg);
-    torpedo.writeMicroseconds(us);
-    Serial.print("Commanded: ");
-    Serial.print(torpedoDeg, 1);
-    Serial.print(" torpedoDeg  ->  ");
-    Serial.print(us);
-    Serial.println(" us");
+    // Torpedos (HF3240SMG, tested +/-30 deg throw about center)
+  } else if (strcmp(input, "t_left") == 0) {
+    int us = TORPEDO_CENTER_US - TORPEDO_OFFSET_US;
+    torpedoMoveTo(us);
+    Serial.println("Torpedo left shot!");
+  } else if (strcmp(input, "t_right") == 0) {
+    int us = TORPEDO_CENTER_US + TORPEDO_OFFSET_US;
+    torpedoMoveTo(us);
+    Serial.println("Torpedo right shot!");
+  } else if (strcmp(input, "t_zero") == 0) {
+    torpedoMoveTo(TORPEDO_CENTER_US);
+    Serial.println("Torpedo zeroed");
   } else if (strcmp(input, "transfer") == 0) {  // SD Card Transfer
     transfer_sd_log();
   } else if (strcmp(input, "delete") == 0) {  // SD Card Delete
