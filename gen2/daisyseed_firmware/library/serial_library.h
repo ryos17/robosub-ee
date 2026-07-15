@@ -31,6 +31,12 @@ public:
     // Call this in the main loop of programs that need no other commands.
     void Poll();
 
+    // Pop one completed input line (whitespace-trimmed) into out.
+    // Returns false when no full line is pending. "reboot" is still handled
+    // internally and never returned. Use for commands with arguments,
+    // e.g. "rate 96000".
+    bool GetLine(std::string& out);
+
 private:
     DaisySeed& hw_;
     FIFO<uint8_t, 1024> msg_fifo_;

@@ -89,6 +89,39 @@ void SerialLibrary::Poll() {
     CheckCommand(nullptr);
 }
 
+bool SerialLibrary::GetLine(std::string& out) {
+    while (HasData()) {
+        int ch = GetChar();
+        if (ch >= 32 && ch <= 126) { // Printable ASCII characters
+            command_buffer_ += static_cast<char>(ch);
+        } else if (ch == '\n' || ch == '\r') {
+            std::string cmd = command_buffer_;
+            command_buffer_.clear();
+
+            // Trim leading/trailing whitespace
+            while (!cmd.empty() && (cmd.back() == ' ' || cmd.back() == '\t')) {
+                cmd.pop_back();
+            }
+            while (!cmd.empty() && (cmd.front() == ' ' || cmd.front() == '\t')) {
+                cmd.erase(cmd.begin());
+            }
+            if (cmd.empty()) {
+                continue;
+            }
+
+            // Built-in: drop into the STM DFU bootloader so the host can
+            // reflash without touching the BOOT/RESET buttons
+            if (cmd == "reboot") {
+                System::ResetToBootloader();
+            }
+
+            out = cmd;
+            return true;
+        }
+    }
+    return false;
+}
+
 // Static callback function
 void SerialLibrary::UsbCallback(uint8_t* buff, uint32_t* length) {
     if (instance_ && buff && length) {
