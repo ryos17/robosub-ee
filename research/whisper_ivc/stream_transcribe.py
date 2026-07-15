@@ -11,14 +11,19 @@ Run:  python stream_transcribe.py   (then open http://<orin>:7860)
   mix, with its transcription in the matching .txt — byte-identical to what
   whisper heard (channel select -> resample to 16 kHz -> normalize ->
   optional denoise -> normalize).
-- While recording, every hydrophone's untouched stream is also written,
-  one gapless mono file per channel, to data/<session>/raw/ch<C>/0.wav at
-  the NATIVE sample rate and bit depth (up to 96 kHz / 24-bit) — the
-  highest-fidelity record, with the pinger band intact.
+- Each window's untouched audio is also written per channel, one mono file
+  per hydrophone, to data/<session>/raw/ch<C>/<N>.wav at the NATIVE sample
+  rate and bit depth (up to 96 kHz / 24-bit) — the highest-fidelity record,
+  pinger band intact. N is the window index: manual mode records one
+  fragment (0.wav); continuous mode records 0.wav, 1.wav, ... one per
+  window (they concatenate back into the full take), matching the ch<C>_<N>
+  whisper segments.
 - Config (channel 0-3/mix, denoise, mode, window, rate, bits) is changeable
   in the UI; rate/bits are pushed live to the boards (not while recording).
-- A log-scale spectrum of the selected channel streams while recording,
-  up to the stream's Nyquist (48 kHz at the full rate: pings visible).
+- A log-scale spectrogram streams for every channel, one row each, up to
+  the stream's Nyquist (48 kHz at the full rate: pings visible). The
+  channel(s) whisper is listening to (the selected channel, or all on
+  'mix') are outlined with a box.
 """
 import glob
 import json
@@ -75,8 +80,7 @@ class Boards:
                       "bits": daisy_stream.DEFAULT_BITS}
         self.connected = []
         self.streams = {}      # board serial -> daisy_stream.Stream
-        self.raw_wavs = {}     # hydrophone channel -> open mono wave writer
-        self.raw_paths = []
+        self.raw_paths = []    # raw fragment WAVs written this session
         for serial_no, chans in daisy_stream.BOARDS.items():
             hits = glob.glob(f"/dev/serial/by-id/*{serial_no}*")
             if hits:
@@ -98,13 +102,11 @@ class Boards:
                         self.latest[ch] = np.concatenate(
                             [self.latest[ch], pcm[:, i]])[-SPECTRUM_N:]
                     if self.recording:
+                        # Just buffer; the raw WAVs are written per window in
+                        # process() so the reader hot path does no disk I/O.
                         self.rec.setdefault(serial_no, []).append(pcm)
                         self.rec_counts[serial_no] = \
                             self.rec_counts.get(serial_no, 0) + len(pcm)
-                        for i, ch in enumerate(chans):
-                            w = self.raw_wavs.get(ch)
-                            if w:
-                                w.writeframes(pcm_bytes(pcm[:, i], bits))
         finally:
             # a silently-dead reader looks like "0 drops": make it loud
             print(f"READER DIED: board {serial_no} ({port}) -- restart "
@@ -131,28 +133,30 @@ class Boards:
             self.rec = {}
             self.rec_counts = {}
             self.raw_paths = []
-            # One gapless mono file per channel: data/<session>/raw/ch<C>/0.wav
-            for serial_no, chans in self.connected:
-                for ch in chans:
-                    ch_dir = os.path.join(session_dir, "raw", f"ch{ch}")
-                    os.makedirs(ch_dir, exist_ok=True)
-                    path = os.path.join(ch_dir, "0.wav")
-                    w = wave.open(path, "wb")
-                    w.setnchannels(1)
-                    w.setsampwidth(self.bits // 8)
-                    w.setframerate(self.rate)
-                    self.raw_wavs[ch] = w
-                    self.raw_paths.append(path)
             self.recording = True
 
     def stop_recording(self):
-        """Stop and close the raw hi-fi WAVs; returns their paths."""
+        """Stop recording; returns the raw fragment WAVs written so far."""
         with self.lock:
             self.recording = False
-            wavs, self.raw_wavs = self.raw_wavs, {}
-        for w in wavs.values():
-            w.close()
-        return self.raw_paths if wavs else []
+        return list(self.raw_paths)
+
+    def save_raw(self, session_dir, chans, n):
+        """Write one native-rate mono fragment per channel for window `n`:
+        data/<session>/raw/ch<C>/<n>.wav. Manual mode has a single window
+        (0.wav); continuous mode writes 0.wav, 1.wav, ... one per window,
+        so the fragments concatenate back into the full recording."""
+        rate, bits = self.rate, self.bits
+        for ch in sorted(chans):
+            ch_dir = os.path.join(session_dir, "raw", f"ch{ch}")
+            os.makedirs(ch_dir, exist_ok=True)
+            path = os.path.join(ch_dir, f"{n}.wav")
+            with wave.open(path, "wb") as w:
+                w.setnchannels(1)
+                w.setsampwidth(bits // 8)
+                w.setframerate(rate)
+                w.writeframes(pcm_bytes(chans[ch], bits))
+            self.raw_paths.append(path)
 
     def take(self, n_samples=None):
         """Pop recorded audio, aligned across boards. Returns {ch: mono}."""
@@ -289,7 +293,15 @@ class Engine:
         return chans.get(int(ch))
 
     def process(self, chans):
-        """channel select -> 16 kHz -> normalize -> denoise -> save+asr."""
+        """one window: save raw fragments -> channel select -> 16 kHz ->
+        normalize -> denoise -> save whisper segment + asr."""
+        n = self.seg_n
+        self.seg_n += 1
+
+        # Native-rate raw fragment(s) for this window, all channels:
+        # raw/ch<C>/<n>.wav (n == the whisper segment index below).
+        self.boards.save_raw(self.session_dir, chans, n)
+
         raw = self.select_mono(chans)
         rate = self.boards.rate
         if raw is None or len(raw) < rate // 2:
@@ -301,7 +313,6 @@ class Engine:
         raw = raw.astype(np.float32)
         mono = normalize(self.get_denoiser(self.cfg["denoise"])(normalize(raw)))
 
-        n = self.seg_n
         ch = self.cfg["channel"]
         stem = "mix" if ch == "mix" else f"ch{int(ch)}"
         base = f"{stem}_{n}"
@@ -322,7 +333,6 @@ class Engine:
             self.busy = ""
         with open(os.path.join(self.session_dir, base + ".txt"), "w") as f:
             f.write(text + "\n")
-        self.seg_n += 1
         self.emit("transcript", n=n, name=base,
                   secs=round(len(mono) / WHISPER_RATE, 1),
                   asr=round(time.time() - t0, 1), text=text,
@@ -372,23 +382,16 @@ class Engine:
                   f"(raw: {raw_names})")
 
     # ---- spectrum
-    def spectrum(self):
-        with self.boards.lock:
-            ch = self.cfg["channel"]
-            if ch == "mix":
-                avail = self.boards.channels_available() or [0]
-                x = np.mean([self.boards.latest[c] for c in avail], axis=0)
-            else:
-                x = self.boards.latest[int(ch)]
-        # visualize what whisper would hear: run the active denoiser on the
-        # window (only once it's already loaded; never trigger a load here)
-        kind = self.cfg["denoise"]
-        if kind != "off" and kind in self.denoisers:
-            try:
-                x = self.denoisers[kind](normalize(x))
-            except Exception:
-                pass
-        rate = self.boards.rate
+    def _bins_for(self, x, rate, denoise):
+        # optionally visualize what whisper would hear: run the active
+        # denoiser (only if already loaded; never trigger a load here)
+        if denoise:
+            kind = self.cfg["denoise"]
+            if kind != "off" and kind in self.denoisers:
+                try:
+                    x = self.denoisers[kind](normalize(x))
+                except Exception:
+                    pass
         win = np.hanning(len(x))
         # scale to dBFS: full-scale sine -> 0 dB (hann coherent gain 0.5)
         mag = np.abs(np.fft.rfft(x * win)) / (len(x) / 4)
@@ -401,11 +404,28 @@ class Engine:
                 v = mag[m].max()
             else:
                 # display band narrower than one FFT bin (low end of the
-                # log axis at high rates): interpolate instead of showing
-                # a hard black stripe
+                # log axis at high rates): interpolate, not a black stripe
                 v = np.interp(np.sqrt(edges[i] * edges[i + 1]), freqs, mag)
             bins.append(round(20 * np.log10(v + 1e-9), 1))
         return bins
+
+    def spectrum(self):
+        """Per-channel log spectra + which channel(s) whisper is listening to
+        (the selected channel, or all when 'mix'). The UI draws one row per
+        channel and boxes the listened rows; those rows get the denoiser
+        preview so they show what whisper actually hears."""
+        with self.boards.lock:
+            rate = self.boards.rate
+            avail = self.boards.channels_available()
+            latest = {c: self.boards.latest[c].copy() for c in avail}
+        sel = self.cfg["channel"]
+        if sel == "mix":
+            listening = list(avail)
+        else:
+            listening = [int(sel)] if int(sel) in avail else []
+        return {"rate": rate, "channels": avail, "listening": listening,
+                "bins": {c: self._bins_for(latest[c], rate, c in listening)
+                         for c in avail}}
 
 
 ENGINE = Engine()
@@ -422,11 +442,14 @@ button{cursor:pointer}
 #rec{background:#2c8c2c;color:#fff;min-width:110px}
 #rec.on{background:#c33;color:#fff}
 #status{color:#567;font-size:13px}
-canvas{background:#fafafa;border:1px solid #ddd;border-radius:6px;width:100%;
-  height:260px;display:block}
+.layout{display:flex;gap:16px;align-items:flex-start}
+.left{flex:1;min-width:0}
+.right{width:420px;flex-shrink:0}
+.right .row{margin-bottom:8px}
+canvas{background:#fafafa;border:1px solid #ddd;border-radius:6px;display:block}
 #transcript{background:#f4faf4;border:1px solid #bcd8bc;border-radius:6px;
-  padding:16px;min-height:180px;max-height:340px;overflow-y:auto;
-  font-size:22px;line-height:1.5;margin-top:10px;white-space:pre-wrap}
+  padding:14px;min-height:150px;max-height:340px;overflow-y:auto;
+  font-size:16px;line-height:1.5;margin-top:10px;white-space:pre-wrap}
 #transcript .seg{color:#7a9;font-size:12px;margin-right:8px}
 #log{background:#f7f7f7;border:1px solid #ddd;border-radius:6px;padding:10px;
   height:200px;overflow-y:auto;font-family:monospace;font-size:13px;
@@ -434,6 +457,11 @@ canvas{background:#fafafa;border:1px solid #ddd;border-radius:6px;width:100%;
 .t{color:#282}.m{color:#679}
 </style></head><body>
 <h2>Stanford Robosub Inter Vehicle Communication</h2>
+<div class=layout>
+<div class=left>
+<canvas id=spec width=1200 height=520></canvas>
+</div>
+<div class=right>
 <div class=row>
  <label>model <select id=model></select></label>
  <button id=load>load model</button>
@@ -465,9 +493,10 @@ canvas{background:#fafafa;border:1px solid #ddd;border-radius:6px;width:100%;
    style="width:64px"></label>
  <span id=status></span>
 </div>
-<canvas id=spec width=1200 height=260></canvas>
 <div id=transcript></div>
 <div id=log></div>
+</div>
+</div>
 <script>
 const $=id=>document.getElementById(id);
 let recording=false;
@@ -487,13 +516,29 @@ $('clear').onclick=()=>{$('transcript').innerHTML='';};
 function logLine(html){const d=$('log');d.innerHTML+=html+'\\n';
   d.scrollTop=d.scrollHeight;}
 const ctx=$('spec').getContext('2d');
-const F_LO=50,ML=46,MB=20,MT=8,MR=64,COLW=8;
-let F_HI=48000;
-let DB_LO=-100,DB_HI=-60;
-const PW=$('spec').width-ML-MR,PH=$('spec').height-MT-MB;
-const plot=document.createElement('canvas');plot.width=PW;plot.height=PH;
-const pctx=plot.getContext('2d');
-pctx.fillStyle='#14041f';pctx.fillRect(0,0,PW,PH);
+const F_LO=50,ML=52,MT=10,MB=24,MR=64,COLW=8,ROWGAP=16,NROWS=4,RIGHTW=420;
+let F_HI=48000,DB_LO=-100,DB_HI=-60;
+const specEl=$('spec');
+// fill the left column; crisp (backing store == on-screen pixels), rows
+// sized so the four spectrograms span the viewport height
+specEl.width=Math.max(560,window.innerWidth-RIGHTW-48);
+const availH=Math.max(360,
+  window.innerHeight-specEl.getBoundingClientRect().top-16);
+const ROWH=Math.max(70,
+  Math.floor((availH-MT-MB-(NROWS-1)*ROWGAP)/NROWS));
+specEl.height=MT+NROWS*ROWH+(NROWS-1)*ROWGAP+MB;
+const PW=specEl.width-ML-MR,CW=specEl.width,CH=specEl.height;
+const rowY=i=>MT+i*(ROWH+ROWGAP);
+// re-fit on window resize (debounced; simplest correct path is a reload)
+let _rt;window.addEventListener('resize',()=>{
+  clearTimeout(_rt);_rt=setTimeout(()=>location.reload(),400);});
+// one scrolling offscreen strip per channel row
+const plots=[],pctxs=[],prev=[];
+for(let i=0;i<NROWS;i++){const p=document.createElement('canvas');
+  p.width=PW;p.height=ROWH;const c=p.getContext('2d');
+  c.fillStyle='#14041f';c.fillRect(0,0,PW,ROWH);
+  plots.push(p);pctxs.push(c);prev.push(null);}
+let colCv=null,colCtx=null;
 // Audacity-style colormap: dark purple -> magenta -> orange -> white
 function cmapRGB(f){f=Math.max(0,Math.min(1,f));
   const s=[[0,20,4,45],[0.35,120,20,130],[0.62,225,80,45],
@@ -506,54 +551,65 @@ function cmapRGB(f){f=Math.max(0,Math.min(1,f));
   return [255,255,255];}
 function cmap(f){const c=cmapRGB(f);
   return `rgb(${c[0]},${c[1]},${c[2]})`;}
-function axes(){const W=$('spec').width,H=$('spec').height;
-  ctx.fillStyle='#fafafa';ctx.fillRect(0,0,W,H);
-  ctx.font='11px system-ui';ctx.fillStyle='#666';
-  [50,100,200,500,1000,2000,4000,8000,16000,32000,48000]
-   .filter(f=>f<=F_HI).forEach(f=>{
-    const y=MT+PH*(1-Math.log(f/F_LO)/Math.log(F_HI/F_LO));
-    ctx.textAlign='right';
-    ctx.fillText(f>=1000?(f/1000)+'k':f,ML-5,y+4);});
-  ctx.save();ctx.translate(12,MT+PH/2);ctx.rotate(-Math.PI/2);
-  ctx.textAlign='center';ctx.fillText('Hz (log)',0,0);ctx.restore();
-  ctx.textAlign='center';ctx.fillText('time \\u2192',ML+PW/2,H-4);
-  // dB colorbar
-  const bx=W-MR+18,bw=14;
-  for(let y=0;y<PH;y++){
-    ctx.fillStyle=cmap(1-y/PH);ctx.fillRect(bx,MT+y,bw,1);}
-  ctx.fillStyle='#666';ctx.textAlign='left';
-  const step=(DB_HI-DB_LO)/4;
-  for(let k=0;k<=4;k++){const db=DB_HI-k*step;
-    const y=MT+PH*(1-(db-DB_LO)/(DB_HI-DB_LO));
-    ctx.fillText(Math.round(db),bx+bw+3,y+4);}
-  ctx.fillText('dB',bx+bw+3,MT+PH+14);}
-axes();
-function dbCfg(){const lo=parseFloat($('mindb').value),
-  hi=parseFloat($('maxdb').value);
-  if(isFinite(lo)&&isFinite(hi)&&hi>lo){DB_LO=lo;DB_HI=hi;axes();}}
-$('mindb').onchange=dbCfg;$('maxdb').onchange=dbCfg;
-let colCv=null,colCtx=null,prevBins=null;
-function drawSpec(bins){
+// push one new time-column into channel i's scrolling strip
+function pushColumn(i,bins){
   // temporal smoothing then vertical interpolation for an Audacity-like look
-  if(prevBins&&prevBins.length===bins.length)
-    bins=bins.map((v,i)=>0.6*v+0.4*prevBins[i]);
-  prevBins=bins;
-  if(!colCv){colCv=document.createElement('canvas');
-    colCv.width=1;colCv.height=bins.length;
-    colCtx=colCv.getContext('2d');}
+  if(prev[i]&&prev[i].length===bins.length)
+    bins=bins.map((v,k)=>0.6*v+0.4*prev[i][k]);
+  prev[i]=bins;
+  if(!colCv){colCv=document.createElement('canvas');colCv.width=1;
+    colCv.height=bins.length;colCtx=colCv.getContext('2d');}
   const img=colCtx.createImageData(1,bins.length);
-  bins.forEach((v,i)=>{
-    const c=cmapRGB((v-DB_LO)/(DB_HI-DB_LO));
-    const o=(bins.length-1-i)*4;
+  bins.forEach((v,k)=>{const c=cmapRGB((v-DB_LO)/(DB_HI-DB_LO));
+    const o=(bins.length-1-k)*4;
     img.data[o]=c[0];img.data[o+1]=c[1];img.data[o+2]=c[2];img.data[o+3]=255;});
   colCtx.putImageData(img,0,0);
-  pctx.drawImage(plot,-COLW,0);
-  pctx.imageSmoothingEnabled=true;
-  pctx.drawImage(colCv,PW-COLW-2,0,COLW+2,PH);
-  ctx.drawImage(plot,ML,MT);}
+  const pc=pctxs[i];pc.drawImage(plots[i],-COLW,0);
+  pc.imageSmoothingEnabled=true;
+  pc.drawImage(colCv,PW-COLW-2,0,COLW+2,ROWH);}
+// full-frame redraw: four channel rows + a box around the listened one(s)
+let lastMsg=null;
+function render(msg){lastMsg=msg;
+  const bins=(msg&&msg.bins)||{},listen=(msg&&msg.listening)||[];
+  ctx.fillStyle='#fafafa';ctx.fillRect(0,0,CW,CH);
+  const ticks=[100,1000,10000,20000,48000].filter(f=>f<=F_HI);
+  for(let i=0;i<NROWS;i++){const y0=rowY(i);
+    if(bins[i]!==undefined)ctx.drawImage(plots[i],ML,y0);
+    else{ctx.fillStyle='#ededed';ctx.fillRect(ML,y0,PW,ROWH);
+      ctx.fillStyle='#b0b0b0';ctx.font='12px system-ui';ctx.textAlign='center';
+      ctx.fillText('no board',ML+PW/2,y0+ROWH/2+4);}
+    ctx.font='10px system-ui';ctx.fillStyle='#888';ctx.textAlign='right';
+    ticks.forEach(f=>{const y=y0+ROWH*(1-Math.log(f/F_LO)/Math.log(F_HI/F_LO));
+      ctx.fillText(f>=1000?(f/1000)+'k':f,ML-5,y+3);});
+    const boxed=listen.indexOf(i)>=0;
+    ctx.textAlign='left';
+    ctx.font=boxed?'bold 13px system-ui':'12px system-ui';
+    ctx.fillStyle=boxed?'#8c1515':'#555';
+    ctx.fillText('ch'+i,6,y0+15);
+    if(boxed){ctx.strokeStyle='#8c1515';ctx.lineWidth=3;
+      ctx.strokeRect(ML-2,y0-2,PW+4,ROWH+4);}}
+  ctx.fillStyle='#666';ctx.font='11px system-ui';ctx.textAlign='center';
+  ctx.fillText('time \\u2192',ML+PW/2,CH-7);
+  // shared dB colorbar spanning all rows
+  const bx=CW-MR+18,bw=14,cbH=CH-MT-MB;
+  for(let y=0;y<cbH;y++){ctx.fillStyle=cmap(1-y/cbH);ctx.fillRect(bx,MT+y,bw,1);}
+  ctx.fillStyle='#666';ctx.textAlign='left';ctx.font='11px system-ui';
+  const step=(DB_HI-DB_LO)/4;
+  for(let k=0;k<=4;k++){const db=DB_HI-k*step;
+    const y=MT+cbH*(1-(db-DB_LO)/(DB_HI-DB_LO));
+    ctx.fillText(Math.round(db),bx+bw+3,y+4);}
+  ctx.fillText('dB',bx+bw+3,MT+cbH+14);}
+function dbCfg(){const lo=parseFloat($('mindb').value),
+  hi=parseFloat($('maxdb').value);
+  if(isFinite(lo)&&isFinite(hi)&&hi>lo){DB_LO=lo;DB_HI=hi;render(lastMsg);}}
+$('mindb').onchange=dbCfg;$('maxdb').onchange=dbCfg;
+function drawSpec(msg){const bins=msg.bins||{};
+  for(let i=0;i<NROWS;i++)if(bins[i]!==undefined)pushColumn(i,bins[i]);
+  render(msg);}
+render(null);
 function connect(){const ws=new WebSocket(`ws://${location.host}/ws`);
  ws.onmessage=e=>{const m=JSON.parse(e.data);
-  if(m.type==='spectrum')drawSpec(m.bins);
+  if(m.type==='spectrum')drawSpec(m);
   else if(m.type==='transcript'){
     const tr=$('transcript');
     tr.innerHTML+=`<div><span class=seg>#${m.n}</span>${m.text||'&mdash;'}</div>`;
@@ -561,7 +617,7 @@ function connect(){const ws=new WebSocket(`ws://${location.host}/ws`);
     logLine(`<span class=t>[${m.name}.wav ${m.secs}s asr=${m.asr}s]</span> ${m.text}`);}
   else if(m.type==='log')logLine(`<span class=m># ${m.text}</span>`);
   else if(m.type==='status'){recording=m.recording;
-    if(m.rate/2!==F_HI){F_HI=m.rate/2;axes();}
+    if(m.rate/2!==F_HI){F_HI=m.rate/2;render(lastMsg);}
     $('rec').textContent=recording?'■ stop':'● start';
     $('rec').className=recording?'on':'';
     $('mstat').textContent=m.model?`model: ${m.model}`:'no model loaded';
@@ -655,9 +711,8 @@ async def ws(sock: WebSocket):
         while True:
             for ev in ENGINE.drain():
                 await sock.send_text(json.dumps(ev))
-            bins = await asyncio.to_thread(ENGINE.spectrum)
-            await sock.send_text(json.dumps(
-                {"type": "spectrum", "bins": bins}))
+            spec = await asyncio.to_thread(ENGINE.spectrum)
+            await sock.send_text(json.dumps({"type": "spectrum", **spec}))
             await sock.send_text(json.dumps(
                 {"type": "status",
                  "recording": ENGINE.boards.recording,
