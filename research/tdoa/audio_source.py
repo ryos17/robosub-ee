@@ -44,27 +44,39 @@ def _read_mono_wav(path):
 def raw_dir_channels(raw_dir):
     """-> ({hydrophone: mono float32}, rate) from a session's raw/ layout.
 
-    Reads every raw/ch<C>/0.wav (mono, native rate/bit-depth) that
-    stream_transcribe writes. `raw_dir` may be the session directory or its
-    raw/ subdirectory."""
+    Reads raw/ch<C>/<N>.wav (mono, native rate/bit-depth) that
+    stream_transcribe writes — one fragment per window. Fragments for a
+    channel are concatenated in window order, so a continuous (windowed)
+    recording reads back as the full contiguous signal; manual recordings
+    are a single 0.wav. `raw_dir` may be the session dir or its raw/."""
     import glob
     import re
+    from collections import defaultdict
 
     if os.path.isdir(os.path.join(raw_dir, "raw")):
         raw_dir = os.path.join(raw_dir, "raw")
-    paths = sorted(glob.glob(os.path.join(raw_dir, "ch*", "*.wav")))
+    paths = glob.glob(os.path.join(raw_dir, "ch*", "*.wav"))
     if not paths:
         sys.exit(f"no ch*/*.wav found under {raw_dir}")
-    chans, rate = {}, None
+
+    # group fragment paths by channel, ordered by window index
+    frags = defaultdict(list)
     for path in paths:
-        m = re.search(r"ch(\d+)", os.path.basename(os.path.dirname(path)))
-        if not m:
-            continue
-        pcm, r = _read_mono_wav(path)
-        if rate is not None and r != rate:
-            sys.exit(f"sample rate mismatch: {rate} vs {r} ({path})")
-        rate = r
-        chans[int(m.group(1))] = pcm
+        cm = re.search(r"ch(\d+)", os.path.basename(os.path.dirname(path)))
+        nm = re.search(r"(\d+)", os.path.basename(path))
+        if cm and nm:
+            frags[int(cm.group(1))].append((int(nm.group(1)), path))
+
+    chans, rate = {}, None
+    for ch, items in frags.items():
+        parts = []
+        for _, path in sorted(items):
+            pcm, r = _read_mono_wav(path)
+            if rate is not None and r != rate:
+                sys.exit(f"sample rate mismatch: {rate} vs {r} ({path})")
+            rate = r
+            parts.append(pcm)
+        chans[ch] = np.concatenate(parts) if len(parts) > 1 else parts[0]
     if not chans:
         sys.exit(f"no channel WAVs decoded under {raw_dir}")
     return chans, rate
