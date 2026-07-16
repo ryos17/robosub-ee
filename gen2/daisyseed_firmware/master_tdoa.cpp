@@ -39,7 +39,7 @@ const float multiplier = 100;                  // Amplification of signal (per s
 // Frequency Detection
 const float targetFrequency = 1046.0f;        // Target frequency to detect
 const float frequencyTolerance = 0.01f;       // Tolerance for frequency detection
-const float baseThreshold = 0.04f;             // Base threshold for frequency detection
+const float baseThreshold = 0.1f;             // Base threshold for frequency detection
 
 ////////////////////////////// Internal Variables for Master (DO NOT CHANGE) ///////////////////////////////////
 // Hardware

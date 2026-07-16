@@ -44,7 +44,7 @@ const float multiplier = 100;                  // Amplification of signal (per s
 // Frequency Detection
 const float targetFrequency = 1046.0f;        // Target frequency to detect
 const float frequencyTolerance = 0.01f;       // Tolerance for frequency detection
-const float baseThreshold = 0.04f;             // Base threshold for frequency detection
+const float baseThreshold = 0.1f;             // Base threshold for frequency detection
 
 // Ping Detection
 const uint32_t listenTimeMs = 10000;          // Duration of listening for ping (ms)
