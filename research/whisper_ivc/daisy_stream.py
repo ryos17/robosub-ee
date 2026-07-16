@@ -31,7 +31,9 @@ DEFAULT_BITS = 24
 
 # board USB serial -> the two hydrophone channels wired to its codec
 BOARDS = {
-    "376C36533433": (0, 1),  # ex-master board: hydrophones 0/1
+    # This board previously enumerated as 376C36533433; it has consistently come
+    # up as 376636603433 across reflashes, replugs and different USB ports.
+    "376636603433": (0, 1),  # ex-master board: hydrophones 0/1
     "376C36573433": (2, 3),  # ex-slave board: hydrophones 2/3
 }
 
