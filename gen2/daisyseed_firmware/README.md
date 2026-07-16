@@ -17,6 +17,19 @@ make flash CURRENT_PROGRAM=<name>    # build + flash over USB, no buttons
 make flash DAISY_PORT=/dev/serial/by-id/usb-Electrosmith_...  # if 2+ boards attached
 ```
 
+With both boards attached, pass `DAISY_PORT` to pick one (serials are the
+current wiring: `573433` = slave, `533433` = master):
+
+```sh
+# slave.cpp -> slave board
+make flash CURRENT_PROGRAM=slave \
+     DAISY_PORT=/dev/serial/by-id/usb-Electrosmith_Daisy_Seed_Built_In_376C36573433-if00
+
+# master_level -> master board
+make flash CURRENT_PROGRAM=master_level \
+     DAISY_PORT=/dev/serial/by-id/usb-Electrosmith_Daisy_Seed_Built_In_376C36533433-if00
+```
+
 `make flash` sends `reboot` over the Daisy's USB serial port. The firmware's
 `SerialLibrary` recognizes that command and calls `System::ResetToBootloader()`,
 dropping the MCU into the STM DFU bootloader so `dfu-util` can program it —
