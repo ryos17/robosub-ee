@@ -4,26 +4,7 @@
 
 using namespace daisy;
 
-////////////////////////////// Competition Configuration (WE CAN CHANGE)/////////////////////////////////////////
-// // Hydrophone normalization (manually calibrate)
-// const float hydrophone_2_max = 3.5f;
-// const float hydrophone_3_max = 3.5f;
-
-// // FFT
-// constexpr size_t kFftSize = 64;             // Higher = better frequency resolution
-// constexpr size_t kBlockSize = 64;             // Block size for audio processing
-
-// // RMS
-// const float multiplier = 100;                  // Amplification of signal (per sample)
-
-// // Frequency Detection
-// const float targetFrequency = 25000.0f;        // Target frequency to detect
-// const float frequencyTolerance = 0.01f;       // Tolerance for frequency detection
-
-
-
-
-// ////////////////////////////// Testing Configuration (WE CAN CHANGE)/////////////////////////////////////////
+//////////////////////////// Competition Configuration (WE CAN CHANGE)/////////////////////////////////////////
 // Hydrophone normalization (manually calibrate)
 const float hydrophone_2_max = 4.0f;
 const float hydrophone_3_max = 4.0f;
@@ -38,6 +19,25 @@ const float multiplier = 100;                  // Amplification of signal (per s
 // Frequency Detection
 const float targetFrequency = 25000.0f;        // Target frequency to detect
 const float frequencyTolerance = 0.01f;       // Tolerance for frequency detection
+
+
+
+
+// // ////////////////////////////// Testing Configuration (WE CAN CHANGE)/////////////////////////////////////////
+// // Hydrophone normalization (manually calibrate)
+// const float hydrophone_2_max = 4.0f;
+// const float hydrophone_3_max = 4.0f;
+
+// // FFT
+// constexpr size_t kFftSize = 64;             // Higher = better frequency resolution
+// constexpr size_t kBlockSize = 64;             // Block size for audio processing
+
+// // RMS
+// const float multiplier = 100;                  // Amplification of signal (per sample)
+
+// // Frequency Detection
+// const float targetFrequency = 25000.0f;        // Target frequency to detect
+// const float frequencyTolerance = 0.01f;       // Tolerance for frequency detection
 
 ////////////////////////////// Internal Variables for Master (DO NOT CHANGE) ///////////////////////////////////
 // Hardware

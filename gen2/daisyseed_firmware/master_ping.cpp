@@ -6,30 +6,7 @@
 using namespace daisy;
 using namespace daisy::seed;
 
-////////////////////////////// Competition Configuration (WE CAN CHANGE)/////////////////////////////////////////
-// // Hydrophone normalization (manually calibrate)
-// const float hydrophone_0_max = 4.0f;
-// const float hydrophone_1_max = 4.0f;
-
-// // FFT
-// constexpr size_t kFftSize = 64;             // Higher = better frequency resolution
-// constexpr size_t kBlockSize = 64;             // Block size for audio processing
-
-// // RMS
-// const float multiplier = 100;                  // Amplification of signal (per sample)
-
-// // Frequency Detection
-// const float targetFrequency = 25000.0f;        // Target frequency to detect
-// const float frequencyTolerance = 0.01f;       // Tolerance for frequency detection
-// const float baseThreshold = 0.04f;             // Base threshold for frequency detection
-
-// // Ping Detection
-// const uint32_t listenTimeMs = 10000;          // Duration of listening for ping (ms)
-// const uint32_t offThresholdMs = 1000;         // Threshold for off-time detection (ms)
-// const uint32_t withinThresholdUs = 3000;      // Threshold for within-time detection (us)
-
-
-////////////////////////////// Testing Configuration (WE CAN CHANGE)/////////////////////////////////////////
+//////////////////////////// Competition Configuration (WE CAN CHANGE)/////////////////////////////////////////
 // Hydrophone normalization (manually calibrate)
 const float hydrophone_0_max = 4.0f;
 const float hydrophone_1_max = 4.0f;
@@ -39,17 +16,40 @@ constexpr size_t kFftSize = 64;             // Higher = better frequency resolut
 constexpr size_t kBlockSize = 64;             // Block size for audio processing
 
 // RMS
-const float multiplier = 100;                 // Amplification of signal (per sample)
+const float multiplier = 100;                  // Amplification of signal (per sample)
 
 // Frequency Detection
-const float targetFrequency = 14080.0f;        // Target frequency to detect
+const float targetFrequency = 25000.0f;        // Target frequency to detect
 const float frequencyTolerance = 0.01f;       // Tolerance for frequency detection
-const float baseThreshold = 0.02f;             // Base threshold for frequency detection
+const float baseThreshold = 0.04f;             // Base threshold for frequency detection
 
 // Ping Detection
 const uint32_t listenTimeMs = 10000;          // Duration of listening for ping (ms)
 const uint32_t offThresholdMs = 1000;         // Threshold for off-time detection (ms)
-const uint32_t withinThresholdUs = 1000000;      // Threshold for within-time detection (us)
+const uint32_t withinThresholdUs = 3000;      // Threshold for within-time detection (us)
+
+
+// ////////////////////////////// Testing Configuration (WE CAN CHANGE)/////////////////////////////////////////
+// // Hydrophone normalization (manually calibrate)
+// const float hydrophone_0_max = 4.0f;
+// const float hydrophone_1_max = 4.0f;
+
+// // FFT
+// constexpr size_t kFftSize = 64;             // Higher = better frequency resolution
+// constexpr size_t kBlockSize = 64;             // Block size for audio processing
+
+// // RMS
+// const float multiplier = 100;                 // Amplification of signal (per sample)
+
+// // Frequency Detection
+// const float targetFrequency = 14080.0f;        // Target frequency to detect
+// const float frequencyTolerance = 0.01f;       // Tolerance for frequency detection
+// const float baseThreshold = 0.02f;             // Base threshold for frequency detection
+
+// // Ping Detection
+// const uint32_t listenTimeMs = 10000;          // Duration of listening for ping (ms)
+// const uint32_t offThresholdMs = 1000;         // Threshold for off-time detection (ms)
+// const uint32_t withinThresholdUs = 1000000;      // Threshold for within-time detection (us)
 
 ////////////////////////////// Internal Variables for Master (DO NOT CHANGE) ///////////////////////////////////
 // Hardware
