@@ -46,7 +46,10 @@ const float baseThreshold = 0.04f;             // Base threshold for frequency d
 
 // Ping Detection (pinger fires a few ms every ~2 s, periodic)
 const uint32_t offThresholdMs = 1000;         // Silence gap (ms) that re-arms a measurement
-const uint32_t withinThresholdUs = 3000;      // Max spread (us) across the 4 hydrophones for a valid ping
+const uint32_t withinThresholdUs = 3000;      // Collection-window length (us) after the first detection
+
+// Output
+constexpr uint32_t kPrintIntervalMs = 200;    // Sticky front/back is printed every this many ms
 
 ////////////////////////////// Internal Variables for Master (DO NOT CHANGE) ///////////////////////////////////
 // Hardware
@@ -77,12 +80,6 @@ float normalizedDetectedFrequencyLevel_0 = 0.0f;
 float normalizedDetectedFrequencyLevel_1 = 0.0f;
 float normalizedDetectedFrequencyLevel_2 = 0.0f;
 float normalizedDetectedFrequencyLevel_3 = 0.0f;
-
-// Threshold crossing state and start time (us)
-bool wasAboveThreshold_0 = false;
-bool wasAboveThreshold_1 = false;
-bool wasAboveThreshold_2 = false;
-bool wasAboveThreshold_3 = false;
 
 // Returns true if a hydrophone index is on the front of the array.
 // Wiring: front = hydrophones 0 and 3, back = hydrophones 1 and 2
@@ -157,17 +154,36 @@ int main(void)
     hw.adc.Init(adc_cfg, 2);
     hw.adc.Start();
 
-    // Continuous ping-direction detection (no "ping" command, no time limit).
-    uint32_t mostRecentPingTimeMs = System::GetNow();
-    bool canBeMeasured = false;
-    std::uint32_t recievedTimeUs[4] = {0, 0, 0, 0};
+    // ---- Continuous sticky front/back detection ----
+    // The pinger fires the array for a few ms every ~2 s. The FIRST hydrophone
+    // to cross threshold starts a measurement; over a short collection window we
+    // record which hydrophones fire and in what order, then decide direction:
+    //   direction = majority of front{0,3} vs back{1,2} among the hydrophones
+    //               that fired during this ping; a tie is broken by the earliest
+    //               (first) arrival.
+    // Examples (front={0,3}, back={1,2}):
+    //   2 1 0 3 -> back  (front 2 vs back 2, tie -> earliest 2 = back)
+    //   2 0 3   -> front (front 2 vs back 1)
+    //   2       -> back  (earliest/only arrival is a back hydrophone)
+    // The decision is sticky: it holds until a later ping flips it, and is
+    // printed every kPrintIntervalMs.
+    bool directionFront = false;      // latched decision (false = back); arbitrary until the first ping
+    bool measuring      = false;      // currently inside a collection window
+    bool armed          = false;      // ready to start a new measurement (armed after the array is quiet)
+    uint32_t collectStartUs = 0;      // us of the first detection in the current ping
+    bool fired[4]    = {false, false, false, false};
+    int  orderSeq[4] = {-1, -1, -1, -1};   // hydrophone indices in order of arrival
+    int  orderCount  = 0;
+    bool wasAbove[4] = {false, false, false, false};
+    uint32_t lastCrossMs = System::GetNow();   // last threshold crossing (for re-arm)
+    uint32_t lastPrintMs = System::GetNow();
 
     while (1)
     {
         // Handle "reboot" (DFU for make flash) from the host
         serial.Poll();
 
-        // FFT
+        // FFT for the master's own hydrophones (0/1)
         if (fft_ready_for_processing_0)
         {
             detectedFrequencyLevel_0 = fftLibrary.getFrequencyMagnitude(fft_input_buffer_0, kFftSize, targetFrequency, frequencyTolerance);
@@ -178,122 +194,71 @@ int main(void)
             detectedFrequencyLevel_1 = fftLibrary.getFrequencyMagnitude(fft_input_buffer_1, kFftSize, targetFrequency, frequencyTolerance);
             fft_ready_for_processing_1 = false;
         }
+        if (detectedFrequencyLevel_0 > hydrophone_0_max) { detectedFrequencyLevel_0 = hydrophone_0_max; }
+        if (detectedFrequencyLevel_1 > hydrophone_1_max) { detectedFrequencyLevel_1 = hydrophone_1_max; }
 
-        // Threshold detection
-        if (detectedFrequencyLevel_0 > hydrophone_0_max)
-        {
-            detectedFrequencyLevel_0 = hydrophone_0_max;
-        }
-        if (detectedFrequencyLevel_1 > hydrophone_1_max)
-        {
-            detectedFrequencyLevel_1 = hydrophone_1_max;
-        }
+        // Normalized levels: 0/1 from this board's FFT, 2/3 from the slave via ADC
         normalizedDetectedFrequencyLevel_0 = detectedFrequencyLevel_0 / hydrophone_0_max;
         normalizedDetectedFrequencyLevel_1 = detectedFrequencyLevel_1 / hydrophone_1_max;
         normalizedDetectedFrequencyLevel_2 = hw.adc.GetFloat(0);
         normalizedDetectedFrequencyLevel_3 = hw.adc.GetFloat(1);
-        bool isAbove_0 = normalizedDetectedFrequencyLevel_0 >= baseThreshold;
-        bool isAbove_1 = normalizedDetectedFrequencyLevel_1 >= baseThreshold;
-        bool isAbove_2 = normalizedDetectedFrequencyLevel_2 >= baseThreshold;
-        bool isAbove_3 = normalizedDetectedFrequencyLevel_3 >= baseThreshold;
-        if (isAbove_0 && !wasAboveThreshold_0)
-        {
-            if (canBeMeasured)
-            {
-                recievedTimeUs[0] = System::GetUs();
-            }
-            mostRecentPingTimeMs = System::GetNow();
-        }
-        if (isAbove_1 && !wasAboveThreshold_1)
-        {
-            if (canBeMeasured)
-            {
-                recievedTimeUs[1] = System::GetUs();
-            }
-            mostRecentPingTimeMs = System::GetNow();
-        }
-        if (isAbove_2 && !wasAboveThreshold_2)
-        {
-            if (canBeMeasured)
-            {
-                recievedTimeUs[2] = System::GetUs();
-            }
-            mostRecentPingTimeMs = System::GetNow();
-        }
-        if (isAbove_3 && !wasAboveThreshold_3)
-        {
-            if (canBeMeasured)
-            {
-                recievedTimeUs[3] = System::GetUs();
-            }
-            mostRecentPingTimeMs = System::GetNow();
-        }
-        wasAboveThreshold_0 = isAbove_0;
-        wasAboveThreshold_1 = isAbove_1;
-        wasAboveThreshold_2 = isAbove_2;
-        wasAboveThreshold_3 = isAbove_3;
+        bool isAbove[4] = {
+            normalizedDetectedFrequencyLevel_0 >= baseThreshold,
+            normalizedDetectedFrequencyLevel_1 >= baseThreshold,
+            normalizedDetectedFrequencyLevel_2 >= baseThreshold,
+            normalizedDetectedFrequencyLevel_3 >= baseThreshold,
+        };
 
-        // Once all four hydrophones have received the ping, measure the TDOA
-        if (recievedTimeUs[0] != 0 && recievedTimeUs[1] != 0 && recievedTimeUs[2] != 0 && recievedTimeUs[3] != 0)
+        // Rising-edge detection per hydrophone; drives the measurement state machine
+        for (int i = 0; i < 4; i++)
         {
-            // Make sure the largest time difference is less than the within threshold
-            uint32_t latest = recievedTimeUs[0];
-            uint32_t earliest = recievedTimeUs[0];
-            for (int i = 1; i < 4; ++i)
+            bool rising = isAbove[i] && !wasAbove[i];
+            if (rising)
             {
-                if (recievedTimeUs[i] > latest)   { latest = recievedTimeUs[i]; }
-                if (recievedTimeUs[i] < earliest) { earliest = recievedTimeUs[i]; }
-            }
-            if (latest - earliest < withinThresholdUs)
-            {
-                // Find the two earliest-arriving hydrophones
-                int smallest_idx = 0;
-                for (int i = 1; i < 4; i++) {
-                    if (recievedTimeUs[i] < recievedTimeUs[smallest_idx]) {
-                        smallest_idx = i;
-                    }
-                }
-                int second_smallest_idx = (smallest_idx == 0) ? 1 : 0;
-                for (int i = 0; i < 4; i++) {
-                    if (i != smallest_idx && recievedTimeUs[i] < recievedTimeUs[second_smallest_idx]) {
-                        second_smallest_idx = i;
-                    }
-                }
-
-                // Two-earliest majority: hydrophones 0/2 = front, 1/3 = back.
-                // On a 1-1 split the single earliest arrival breaks the tie.
-                int front_votes = (isFront(smallest_idx) ? 1 : 0) + (isFront(second_smallest_idx) ? 1 : 0);
-                bool front;
-                if (front_votes == 1)
+                lastCrossMs = System::GetNow();
+                if (armed && !measuring)
                 {
-                    front = isFront(smallest_idx);
+                    // First detection of a new ping -> start collecting arrival order
+                    measuring = true;
+                    armed = false;
+                    collectStartUs = System::GetUs();
+                    for (int k = 0; k < 4; k++) { fired[k] = false; orderSeq[k] = -1; }
+                    orderCount = 0;
                 }
-                else
+                if (measuring && !fired[i])
                 {
-                    front = front_votes == 2;
-                }
-
-                if (front)
-                {
-                    hw.PrintLine("front");
-                }
-                else
-                {
-                    hw.PrintLine("back");
+                    fired[i] = true;
+                    orderSeq[orderCount++] = i;
                 }
             }
-
-            // Reset the recieved time
-            recievedTimeUs[0] = 0;
-            recievedTimeUs[1] = 0;
-            recievedTimeUs[2] = 0;
-            recievedTimeUs[3] = 0;
-            canBeMeasured = false;
+            wasAbove[i] = isAbove[i];
         }
 
-        // Re-arm once the array has been quiet long enough (between periodic pings)
-        if (System::GetNow() - mostRecentPingTimeMs >= offThresholdMs) {
-            canBeMeasured = true;
+        // Close the collection window and decide direction
+        if (measuring && (System::GetUs() - collectStartUs >= withinThresholdUs))
+        {
+            int frontCount = 0, backCount = 0;
+            for (int i = 0; i < 4; i++)
+            {
+                if (fired[i]) { if (isFront(i)) { frontCount++; } else { backCount++; } }
+            }
+            if (frontCount > backCount)       { directionFront = true;  }
+            else if (backCount > frontCount)  { directionFront = false; }
+            else                              { directionFront = isFront(orderSeq[0]); }  // tie -> earliest arrival
+            measuring = false;   // stay disarmed until the array is quiet again
+        }
+
+        // Re-arm for the next ping once the array has been quiet long enough
+        if (!measuring && !armed && (System::GetNow() - lastCrossMs >= offThresholdMs))
+        {
+            armed = true;
+        }
+
+        // Sticky output: print the latched direction every kPrintIntervalMs
+        if (System::GetNow() - lastPrintMs >= kPrintIntervalMs)
+        {
+            hw.PrintLine(directionFront ? "front" : "back");
+            lastPrintMs = System::GetNow();
         }
     }
 }

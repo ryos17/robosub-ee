@@ -18,16 +18,30 @@ make flash DAISY_PORT=/dev/serial/by-id/usb-Electrosmith_...  # if 2+ boards att
 ```
 
 With both boards attached, pass `DAISY_PORT` to pick one (serials are the
-current wiring: `573433` = slave, `533433` = master):
+current wiring: `573433` = slave, `533433` = master). **Always wipe `build/`
+first** — the Makefile reuses it across programs, so leftover objects from a
+different `CURRENT_PROGRAM` produce a broken binary (symptom: the flashed board
+hangs and won't enumerate on USB):
 
 ```sh
 # slave.cpp -> slave board
-make flash CURRENT_PROGRAM=slave \
+rm -rf build && make flash CURRENT_PROGRAM=slave \
      DAISY_PORT=/dev/serial/by-id/usb-Electrosmith_Daisy_Seed_Built_In_376C36573433-if00
 
 # master_level -> master board
-make flash CURRENT_PROGRAM=master_level \
+rm -rf build && make flash CURRENT_PROGRAM=master_level \
      DAISY_PORT=/dev/serial/by-id/usb-Electrosmith_Daisy_Seed_Built_In_376C36533433-if00
+```
+
+Never interrupt a flash (e.g. don't run it in a tmux session that might die
+mid-write) — a partial write leaves the board hung and non-enumerating. If that
+happens, or a board otherwise won't enumerate, force DFU with the buttons
+(hold **BOOT**, tap **RESET**, release) and program it directly instead of
+`make flash` (which can't `reboot` a hung/DFU board):
+
+```sh
+rm -rf build && make CURRENT_PROGRAM=<name>
+make program-dfu CURRENT_PROGRAM=<name>          # board must already be in DFU
 ```
 
 `make flash` sends `reboot` over the Daisy's USB serial port. The firmware's
