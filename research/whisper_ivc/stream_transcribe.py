@@ -11,6 +11,9 @@ Run the browser UI instead:
     python stream_transcribe.py --web        (then open http://<orin>:7860)
 
 - Pick a whisper model and load it (nothing runs before). CLI: --model.
+  With no model loaded, recording still works: it saves the native-rate
+  raw per-channel fragments only and skips transcription. In the UI just
+  hit start without loading a model; on the CLI pass --no-model.
 - Two modes:
     manual     — the whole take is transcribed when you stop (Ctrl-C / Stop).
     continuous — audio is cut into window-length chunks, each transcribed.
@@ -18,7 +21,8 @@ Run the browser UI instead:
   ch<C>_<N>.wav (C = the selected channel) or mix_<N>.wav for the channel
   mix, with its transcription in the matching .txt — byte-identical to what
   whisper heard (channel select -> resample to 16 kHz -> normalize ->
-  optional denoise -> normalize).
+  optional denoise -> normalize). With no model loaded these whisper
+  segments and .txt files are not written (raw fragments only).
 - Each window's untouched audio is also written per channel, one mono file
   per hydrophone, to data/<session>/raw/ch<C>/<N>.wav at the NATIVE sample
   rate and bit depth (up to 96 kHz / 24-bit) — the highest-fidelity record,
@@ -318,13 +322,22 @@ class Engine:
 
     def process(self, chans):
         """one window: save raw fragments -> channel select -> 16 kHz ->
-        normalize -> denoise -> save whisper segment + asr."""
+        normalize -> denoise -> save whisper segment + asr. With no model
+        loaded it stops after writing the native-rate raw fragments
+        (record-only): no whisper segment, no .txt, no transcription."""
         n = self.seg_n
         self.seg_n += 1
 
         # Native-rate raw fragment(s) for this window, all channels:
         # raw/ch<C>/<n>.wav (n == the whisper segment index below).
         self.boards.save_raw(self.session_dir, chans, n)
+
+        if self.model is None:
+            # Record-only: the native-rate raw fragments above are the whole
+            # job. There's no model to run, so skip the whisper segment
+            # (16 kHz / normalize / denoise) and transcription entirely.
+            self.emit("log", text=f"recorded window #{n} (raw only, no model)")
+            return
 
         raw = self.select_mono(chans)
         rate = self.boards.rate
@@ -364,8 +377,8 @@ class Engine:
 
     def start(self):
         if self.model is None:
-            self.emit("log", text="load a model first")
-            return
+            self.emit("log", text="no model loaded -- recording raw audio "
+                      "only (no transcription)")
         self.session_dir = os.path.join("data",
                                         time.strftime("%Y_%m%d_%H%M%S"))
         os.makedirs(self.session_dir, exist_ok=True)
@@ -817,7 +830,8 @@ def _print_status(eng, lo, hi):
 def run_cli(args):
     """Purely terminal front-end: same capability as the web UI, print-driven.
     The '*' after a channel marks the one(s) whisper is listening to; the
-    sparkline is that channel's log-frequency spectrum (pinger band visible)."""
+    sparkline is that channel's log-frequency spectrum (pinger band visible).
+    With --no-model it records raw audio only (no whisper, no transcription)."""
     eng = ENGINE
     eng.echo = False                      # we format the events ourselves
     boards = eng.boards
@@ -834,22 +848,33 @@ def run_cli(args):
                    denoise=args.denoise)
 
     cursor = 0
-    print(f"loading model {args.model} ...", flush=True)
-    eng.load_model(args.model)
-    cursor = _print_events(eng, cursor)
-    if eng.model is None:
-        sys.exit("model failed to load")
-    if args.denoise != "off":
-        print(f"loading denoiser {args.denoise} ...", flush=True)
-        eng.get_denoiser(args.denoise)
+    if args.no_model:
+        print("no model -- recording raw audio only (no transcription)",
+              flush=True)
+    else:
+        print(f"loading model {args.model} ...", flush=True)
+        eng.load_model(args.model)
+        cursor = _print_events(eng, cursor)
+        if eng.model is None:
+            sys.exit("model failed to load")
+        if args.denoise != "off":
+            print(f"loading denoiser {args.denoise} ...", flush=True)
+            eng.get_denoiser(args.denoise)
 
     eng.start()
     mode = eng.cfg["mode"]
-    tail = ("windows transcribe live; Ctrl-C to stop" if mode == "continuous"
-            else "Ctrl-C to stop & transcribe the take")
+    if args.no_model:
+        tail = ("windows record live; Ctrl-C to stop" if mode == "continuous"
+                else "Ctrl-C to stop & save the take")
+        proc = "record-only"
+    else:
+        tail = ("windows transcribe live; Ctrl-C to stop"
+                if mode == "continuous"
+                else "Ctrl-C to stop & transcribe the take")
+        proc = f"denoise={args.denoise}"
     print(f"recording ({mode}, ch={args.channel}, "
-          f"{boards.rate} Hz/{boards.bits}-bit, denoise={args.denoise}) "
-          f"-> {eng.session_dir}/ — {tail}", flush=True)
+          f"{boards.rate} Hz/{boards.bits}-bit, {proc}) "
+          f"-> {eng.session_dir}/ -- {tail}", flush=True)
 
     last = 0.0
     try:
@@ -875,6 +900,8 @@ def parse_args():
                    help="serve the web UI instead of running in the terminal")
     p.add_argument("--port", type=int, default=7860, help="web UI port")
     p.add_argument("--model", default="large-v3", help="whisper model name")
+    p.add_argument("--no-model", action="store_true",
+                   help="skip whisper; record raw audio only (no transcription)")
     p.add_argument("--channel", default="0",
                    choices=["0", "1", "2", "3", "mix"],
                    help="hydrophone to transcribe (or 'mix')")
