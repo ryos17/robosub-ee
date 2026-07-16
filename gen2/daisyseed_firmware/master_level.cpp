@@ -5,29 +5,7 @@
 using namespace daisy;
 using namespace daisy::seed;
 
-//////////////////////////// Competition Configuration (WE CAN CHANGE)/////////////////////////////////////////
-// Hydrophone normalization (manually calibrate)
-const float hydrophone_0_max = 4.0f;
-const float hydrophone_1_max = 4.0f;
-
-// FFT
-constexpr size_t kFftSize = 64;             // Higher = better frequency resolution
-constexpr size_t kBlockSize = 64;             // Block size for audio processing
-
-// RMS
-const float multiplier = 100;                  // Amplification of signal (per sample)
-
-// Frequency Detection
-const float targetFrequency = 25000.0f;        // Target frequency to detect
-const float frequencyTolerance = 0.01f;       // Tolerance for frequency detection
-
-// Printing
-constexpr int kPrintIntervalMs = 1;         // Print interval
-
-
-
-
-// ////////////////////////////// Testing Configuration (WE CAN CHANGE)/////////////////////////////////////////
+// //////////////////////////// Competition Configuration (WE CAN CHANGE)/////////////////////////////////////////
 // // Hydrophone normalization (manually calibrate)
 // const float hydrophone_0_max = 4.0f;
 // const float hydrophone_1_max = 4.0f;
@@ -45,6 +23,28 @@ constexpr int kPrintIntervalMs = 1;         // Print interval
 
 // // Printing
 // constexpr int kPrintIntervalMs = 1;         // Print interval
+
+
+
+
+////////////////////////////// Testing Configuration (WE CAN CHANGE)/////////////////////////////////////////
+// Hydrophone normalization (manually calibrate)
+const float hydrophone_0_max = 4.0f;
+const float hydrophone_1_max = 4.0f;
+
+// FFT
+constexpr size_t kFftSize = 64;             // Higher = better frequency resolution
+constexpr size_t kBlockSize = 64;             // Block size for audio processing
+
+// RMS
+const float multiplier = 100;                  // Amplification of signal (per sample)
+
+// Frequency Detection
+const float targetFrequency = 1046.0f;        // Target frequency to detect
+const float frequencyTolerance = 0.01f;       // Tolerance for frequency detection
+
+// Printing
+constexpr int kPrintIntervalMs = 1;         // Print interval
 
 ////////////////////////////// Internal Variables for Master (DO NOT CHANGE) ///////////////////////////////////
 // Hardware
