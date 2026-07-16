@@ -269,7 +269,7 @@ int main(void)
                         }
 
                         // Update the front and back counter
-                        if (smallest_idx == 0  || smallest_idx == 2)
+                        if (smallest_idx == 0  || smallest_idx == 3)
                         {
                             hw.PrintLine("front detected");
                             front_counter++;
@@ -279,7 +279,7 @@ int main(void)
                             hw.PrintLine("back detected");
                             back_counter++;
                         }
-                        if (second_smallest_idx == 0  || second_smallest_idx == 2)
+                        if (second_smallest_idx == 0  || second_smallest_idx == 3)
                         {
                             hw.PrintLine("front detected");
                             front_counter++;

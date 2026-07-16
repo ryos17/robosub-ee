@@ -84,10 +84,12 @@ bool wasAboveThreshold_1 = false;
 bool wasAboveThreshold_2 = false;
 bool wasAboveThreshold_3 = false;
 
-// Returns true if a hydrophone index is on the front of the array (0 or 2).
+// Returns true if a hydrophone index is on the front of the array.
+// Wiring: front = hydrophones 0 and 3, back = hydrophones 1 and 2
+// (0/1 = master codec inputs, 2/3 = slave).
 static inline bool isFront(int idx)
 {
-    return idx == 0 || idx == 2;
+    return idx == 0 || idx == 3;
 }
 
 ////////////////////////////////////////// Setup and Loop //////////////////////////////////////////
