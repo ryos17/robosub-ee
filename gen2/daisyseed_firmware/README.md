@@ -28,9 +28,11 @@ hangs and won't enumerate on USB):
 rm -rf build && make flash CURRENT_PROGRAM=slave \
      DAISY_PORT=/dev/serial/by-id/usb-Electrosmith_Daisy_Seed_Built_In_376C36573433-if00
 
-# master_level -> master board
+# master_level -> master board. The master's serial can enumerate garbled on a
+# marginal link (e.g. 376636603433 instead of 376C36533433), so its hard-coded
+# by-id path may not exist. Pick whatever Electrosmith by-id is NOT the slave:
 rm -rf build && make flash CURRENT_PROGRAM=master_level \
-     DAISY_PORT=/dev/serial/by-id/usb-Electrosmith_Daisy_Seed_Built_In_376C36533433-if00
+     DAISY_PORT=/dev/serial/by-id/$(ls /dev/serial/by-id | grep -i electrosmith | grep -v 376C36573433)
 ```
 
 Never interrupt a flash (e.g. don't run it in a tmux session that might die
@@ -43,6 +45,21 @@ happens, or a board otherwise won't enumerate, force DFU with the buttons
 rm -rf build && make CURRENT_PROGRAM=<name>
 make program-dfu CURRENT_PROGRAM=<name>          # board must already be in DFU
 ```
+
+On a marginal USB hub/port/cable the flash can be flaky (`-71`/`-110`
+enumeration errors in `dmesg`), with two symptoms worth knowing:
+
+- **`dfu-util: No DFU capable USB device available`** even though the board is
+  running good firmware — the board rebooted but its DFU device enumerated
+  *after* the Makefile's short wait. This wrote nothing (safe); just re-run
+  `make flash` — the next run finds it already in DFU and programs it. A few
+  retries usually gets it. If it never enumerates on one port, use a different
+  port (the hub here has known-bad ports).
+- **Garbled `by-id` serial** — a marginal link can corrupt the USB serial
+  descriptor, so a board shows up as e.g. `376636603433` instead of its real
+  `376C36533433`. The `DAISY_PORT` path above then won't match. Target it by
+  whatever Electrosmith `by-id` is present that *isn't* the other board:
+  `DAISY_PORT=/dev/serial/by-id/$(ls /dev/serial/by-id | grep -i electrosmith | grep -v <other-board-serial>)`.
 
 `make flash` sends `reboot` over the Daisy's USB serial port. The firmware's
 `SerialLibrary` recognizes that command and calls `System::ResetToBootloader()`,
