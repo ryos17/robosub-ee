@@ -31,8 +31,9 @@ docs/superpowers
 # ignore data
 research/whisper_ivc/data
 
-# ignore libDaisy
-libDaisy
+# ignore libDaisy (vendored electro-smith lib, cloned locally — see
+# gen2/daisyseed_firmware/README.md)
+gen2/daisyseed_firmware/libDaisy/
 
 research/john
 research/correlator_detect

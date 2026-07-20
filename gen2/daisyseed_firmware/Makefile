@@ -7,8 +7,10 @@ TARGET = $(CURRENT_PROGRAM)
 # Sources
 CPP_SOURCES = $(CURRENT_PROGRAM).cpp library/fft_library.cpp library/serial_library.cpp
 
-# Library Locations (DaisySP is not used — plain libDaisy only)
-LIBDAISY_DIR = ../../libDaisy/
+# Library Locations (DaisySP is not used — plain libDaisy only).
+# libDaisy is vendored (git-ignored) in this directory; see README.md to clone
+# and build it.
+LIBDAISY_DIR = ./libDaisy/
 
 # Core location, and generic Makefile.
 SYSTEM_FILES_DIR = $(LIBDAISY_DIR)/core
