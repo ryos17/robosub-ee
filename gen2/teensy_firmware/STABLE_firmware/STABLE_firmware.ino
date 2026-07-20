@@ -1,8 +1,6 @@
 // ============================================================================
 // STABLE_firmware -- competition build for the Teensy 4.1 breakout board.
 //
-// IMPORTANT NOTES (keep in sync with the repo README):
-//
 // Thrusters:
 //   * DO NOT RUN THRUSTERS AT FULL POWER FOR THE TIME BEING -- 20 to 30% max.
 //   * DO NOT RUN FOR MORE THAN 10 SECONDS WHILE OUTSIDE OF WATER.
@@ -83,7 +81,8 @@ bool depthSensorOk = false;  // MS5837 init succeeded; gates all reads
 constexpr unsigned long SENSOR_REFRESH_MS = 100;
 unsigned long lastSensorRefreshMs = 0;
 float cachedPressure = 0, cachedExternalTemp = 0, cachedDepth = 0;
-float cachedInternalTemp1 = 0, cachedInternalTemp2 = 0, cachedHumidity = 0;
+float cachedInternalTemp1 = 0, cachedHumidity = 0;  // BME280
+float cachedInternalTemp2 = 0;                       // MCP9808
 
 // Indicators
 const int greenIndicatorLedPin = 37;  // LED1
@@ -388,8 +387,8 @@ void refresh_sensor_cache() {
     cachedExternalTemp = sensor.temperature();  // C
     cachedDepth = sensor.depth();               // m
   }
-  cachedInternalTemp1 = mcp9808_sensor.readTempC();
-  cachedInternalTemp2 = bme280_sensor.readTemperature();
+  cachedInternalTemp1 = bme280_sensor.readTemperature();
+  cachedInternalTemp2 = mcp9808_sensor.readTempC();
   cachedHumidity = bme280_sensor.readHumidity();
 }
 
