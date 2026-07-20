@@ -11,7 +11,7 @@ rate 16-96 kHz and 16/24-bit, PCM over USB CDC) -> daisy_stream.py ->
 stream_transcribe.py (CLI or --web)
 ```
 
-Two boards stream four hydrophones: board `376C36533433` carries ch0/ch1,
+Two boards stream four hydrophones: board `376636603433` carries ch0/ch1,
 board `376C36573433` carries ch2/ch3. The boards boot at 96 kHz / 24-bit; the
 host changes it live with the serial commands `rate
 96000|48000|32000|24000|16000` and `bits 16|24`.
@@ -31,10 +31,8 @@ has one per `--window` seconds):
 - `raw/ch<C>/<N>.wav` — every hydrophone's untouched audio at the NATIVE rate
   and bit depth (up to 96 kHz / 24-bit), one mono file per channel per window.
   Full-fidelity, pinger band (25-40 kHz) intact. Continuous-mode fragments
-  `0.wav, 1.wav, ...` concatenate back into the whole take.
-
-The TDOA ports in `../tdoa` read the `raw/` tree directly
-(`python master.py ping --raw-dir data/<session>`).
+  `0.wav, 1.wav, ...` concatenate back into the whole take. Kept full-rate so
+  the pinger band survives for offline analysis.
 
 ## Setup
 
@@ -75,7 +73,7 @@ Two recording modes (both save the files above):
 
 Per window the selected channel is normalized, optionally denoised
 (`--denoise off|metricgan|sepformer`), resampled to 16 kHz, and transcribed
-(whisper `--model`, default large-v3). CLI flags: `--model --channel
+(whisper `--model`, default large-v3). CLI flags: `--model --no-model --channel
 {0,1,2,3,mix} --denoise --continuous --window --rate --bits --min-db --max-db
 --status-every`; `--web --port` for the UI. `--help` lists them all.
 
@@ -85,12 +83,4 @@ Per window the selected channel is normalized, optionally denoised
   a terminal Ctrl-C doesn't kill it) feeding a 1 MB pipe, which keeps the
   GIL-bound host from overflowing the kernel tty buffer.
 
-Only one process can hold the boards at a time — stop the transcriber before
-running the TDOA `--live` capture.
-
-## Known physics
-
-Speech in air couples very weakly into these piezo hydrophones (they're
-matched to water): talk loudly within a few cm of the element and expect
-window RMS ≥ 0.005 when it's working. In-water coupling is far better and is
-the real use case.
+Only one process can hold the boards at a time.

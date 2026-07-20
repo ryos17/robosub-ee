@@ -1,4 +1,4 @@
-# daisyseed_firmware
+# Audio Board Firmware (Electrosmith Daisy Seed)
 
 Firmware for the two Electrosmith Daisy Seed boards that read the vehicle's
 four hydrophones (96 kHz codec inputs, two per board). The **master** board
@@ -6,10 +6,49 @@ reads hydrophones 0/1 and talks to the Orin over USB serial; the **slave**
 board reads hydrophones 2/3 and reports its levels to the master as analog
 voltages (slave DAC → master ADC A0/A1).
 
+**Currently deployed:** both boards are kept flashed with `stream_audio.cpp`,
+which continuously streams their hydrophone audio to the Orin (for the
+[`research/whisper_ivc/`](../../research/whisper_ivc/) work). The other
+programs below are selected per build via `CURRENT_PROGRAM`.
+
+## libDaisy (vendored, not committed)
+
+The Makefile links against Electrosmith's [libDaisy](https://github.com/electro-smith/libDaisy)
+core, which lives in `libDaisy/` **inside this directory**. It is deliberately
+**not** committed to this repo — it is a large third-party tree with its own git
+submodules — so it is git-ignored (`gen2/daisyseed_firmware/libDaisy/` in the
+repo-root `.gitignore`). After a fresh clone you have to fetch and build it once:
+
+```sh
+cd gen2/daisyseed_firmware
+
+# 1. clone libDaisy *with its submodules* into ./libDaisy
+git clone --recurse-submodules https://github.com/electro-smith/libDaisy.git
+
+# (optional, for a reproducible build) pin to the commit this firmware was last
+# built against:
+git -C libDaisy checkout c02245d22b38acad3916d9c2f156bcba34fa15af
+git -C libDaisy submodule update --init --recursive
+
+# 2. build the core static library -> libDaisy/build/libdaisy.a
+make -C libDaisy
+```
+
+That produces `libDaisy/build/libdaisy.a`, which the firmware Makefile picks up
+via `LIBDAISY_DIR = ./libDaisy/`. DaisySP is **not** used, so it does not need to
+be cloned or built.
+
 ## Building and flashing
 
-Requires `gcc-arm-none-eabi`, `dfu-util`, and `libDaisy/` + `DaisySP/` built at
-the repo root (the Makefile expects them at `../../`).
+Requires `gcc-arm-none-eabi`, `dfu-util`, and `libDaisy/` built in this directory
+(see [libDaisy](#libdaisy-vendored-not-committed) above; the Makefile expects it
+at `./libDaisy/`).
+
+> **Flash from a laptop, not the Orin.** Flashing over the Orin's USB has been
+> very flaky (marginal hub/ports, `-71`/`-110` enumeration errors — see the
+> troubleshooting notes below). Whenever possible, flash the Daisy boards from a
+> laptop and only move them onto the Orin once they're confirmed running good
+> firmware.
 
 ```sh
 make CURRENT_PROGRAM=<name>          # build only (default: master_level)
@@ -134,8 +173,4 @@ no BOOT/RESET button presses needed. Caveats:
 - **`Makefile`** — selects the program via `CURRENT_PROGRAM`, pulls in the
   libDaisy core build, and adds the button-free `flash` target described
   above.
-- **`plot/plot_hydrophones.py`** — plots 4-channel hydrophone levels from
-  saved serial logs (`HH:MM:SS:ms -> Mic0..3` lines); supports `--start/--end`
-  cropping and `--save` to PNG. Example datasets in `plot/data/*.txt` (various
-  FFT sizes/frequencies from pool and TDOA tests).
 - **`build/`** — compiler output (git-ignored).

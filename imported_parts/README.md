@@ -1,4 +1,4 @@
-# imported_parts
+# Robosub Shared PCB Parts Library
 
 This folder is the shared custom parts library for the project.  
 `Micro_Breakout` and future boards should reference these libraries instead of keeping per-project duplicates.
