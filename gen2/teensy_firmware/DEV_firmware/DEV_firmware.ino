@@ -1,7 +1,5 @@
 // ============================================================================
-// STABLE_firmware -- competition build for the Teensy 4.1 breakout board.
-//
-// IMPORTANT NOTES (keep in sync with the repo README):
+// DEV_firmware -- work-in-progress build for the Teensy 4.1 breakout board.
 //
 // Thrusters:
 //   * DO NOT RUN THRUSTERS AT FULL POWER FOR THE TIME BEING -- 20 to 30% max.
@@ -83,7 +81,8 @@ bool depthSensorOk = false;  // MS5837 init succeeded; gates all reads
 constexpr unsigned long SENSOR_REFRESH_MS = 100;
 unsigned long lastSensorRefreshMs = 0;
 float cachedPressure = 0, cachedExternalTemp = 0, cachedDepth = 0;
-float cachedInternalTemp1 = 0, cachedInternalTemp2 = 0, cachedHumidity = 0;
+float cachedInternalTemp1 = 0, cachedInternalPressure = 0, cachedHumidity = 0; // BME280
+float cachedInternalTemp2 = 0;  // MCP9808
 
 // Indicators
 const int greenIndicatorLedPin = 37;  // LED1
@@ -410,9 +409,10 @@ void refresh_sensor_cache() {
     cachedExternalTemp = sensor.temperature();  // C
     cachedDepth = sensor.depth();               // m
   }
-  cachedInternalTemp1 = mcp9808_sensor.readTempC();
-  cachedInternalTemp2 = bme280_sensor.readTemperature();
+  cachedInternalTemp1 = bme280_sensor.readTemperature();
+  cachedInternalTemp2 = mcp9808_sensor.readTempC();
   cachedHumidity = bme280_sensor.readHumidity();
+  cachedInternalPressure = bme280_sensor.readPressure() / 100.0F;  // Pa -> mbar
 }
 
 // True while the kill switch is physically asserted. Read straight from the pin
@@ -664,20 +664,22 @@ void process_input(char* input) {
     }
 
     // Telemetry reply from the sensor cache (refreshed on a 100 ms tick in
-    // loop(); no blocking sensor reads here). The key names MUST stay exactly
-    // as-is (including the "internal_temperatur2" typo) -- the Orin-side
-    // parser matches on them. snprintf into a static buffer instead of String
-    // concatenation so the hot path does no heap allocation.
+    // loop(); no blocking sensor reads here). The key names MUST match the
+    // Orin-side parser -- update it in lockstep with any rename here. snprintf
+    // into a static buffer instead of String concatenation so the hot path
+    // does no heap allocation.
     float current, voltage;
     handle_battery_command(current, voltage);
-    static char telem[320];
+    static char telem[384];
     snprintf(telem, sizeof(telem),
-             "> pressure: %.*f external_temperature: %.*f depth: %.*f"
-             " internal_temperature1: %.*f internal_temperatur2: %.*f"
-             " humidity: %.*f current: %.*f voltage: %.*f",
+             "> external_pressure: %.*f external_temperature: %.*f depth: %.*f"
+             " internal_temperature: %.*f internal_humidity: %.*f"
+             " internal_pressure: %.*f internal_temperature2: %.*f"
+             " current: %.*f voltage: %.*f",
              DIGITS, cachedPressure, DIGITS, cachedExternalTemp, DIGITS, cachedDepth,
-             DIGITS, cachedInternalTemp1, DIGITS, cachedInternalTemp2,
-             DIGITS, cachedHumidity, DIGITS, current, DIGITS, voltage);
+             DIGITS, cachedInternalTemp1, DIGITS, cachedHumidity,
+             DIGITS, cachedInternalPressure, DIGITS, cachedInternalTemp2,
+             DIGITS, current, DIGITS, voltage);
     Serial.println(telem);
 
   } else if (strcmp(input, "batt") == 0) {  // Debugging battery
@@ -808,6 +810,11 @@ void logPeriodicData() {
   dataString += " pressure:" + String(pressure, DIGITS) +
                 " temperature:" + String(temperature, DIGITS) +
                 " depth:" + String(depth, DIGITS);
+
+  dataString += " internal_temperature:" + String(cachedInternalTemp1, DIGITS) +
+                " internal_humidity:" + String(cachedHumidity, DIGITS) +
+                " internal_pressure:" + String(cachedInternalPressure, DIGITS) +
+                " internal_temperature2:" + String(cachedInternalTemp2, DIGITS);
 
   dataString += " killSwitchPin:" + String(digitalRead(killSwitchPin)) +
                 " isKilled:" + String(isKilled ? 1 : 0);
