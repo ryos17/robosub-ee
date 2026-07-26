@@ -238,16 +238,34 @@ def rewrite_footprint_file_identity(fp_path: Path, new_base: str) -> Tuple[Optio
     text = fp_path.read_text(encoding="utf-8")
 
     # Header name: (module "NAME"... or (footprint "NAME"...)
+    # Replacements are callables so new_base is inserted literally. A plain
+    # r"\1" + new_base template breaks when new_base starts with a digit
+    # ("\1" + "2SK..." parses as group 12) or contains a backslash.
     text = re.sub(
         r'^(\(\s*(?:module|footprint)\s+")([^"]+)(")',
-        r"\1" + new_base + r"\3",
+        lambda m: m.group(1) + new_base + m.group(3),
         text,
         count=1,
         flags=re.M,
     )
-    text = re.sub(r'(\(descr\s+")([^"]*)(\s+footprint"\))', r"\1" + new_base + r"\3", text, count=1)
-    text = re.sub(r'(\(tags\s+")([^"]*)(\s+footprint[^"]*")', r"\1" + new_base + r"\3", text, count=1)
-    text = re.sub(r'(\(fp_text\s+value\s+)([^\s\)]+)', r"\1" + new_base, text, count=1)
+    text = re.sub(
+        r'(\(descr\s+")([^"]*)(\s+footprint"\))',
+        lambda m: m.group(1) + new_base + m.group(3),
+        text,
+        count=1,
+    )
+    text = re.sub(
+        r'(\(tags\s+")([^"]*)(\s+footprint[^"]*")',
+        lambda m: m.group(1) + new_base + m.group(3),
+        text,
+        count=1,
+    )
+    text = re.sub(
+        r'(\(fp_text\s+value\s+)([^\s\)]+)',
+        lambda m: m.group(1) + new_base,
+        text,
+        count=1,
+    )
 
     old_model = None
     new_model = None
@@ -281,7 +299,7 @@ def patch_symbol_source_footprint(symbol_src: Path, fp_basename_noext: str) -> N
     text = symbol_src.read_text(encoding="utf-8")
     text_new = re.sub(
         r'(\(property\s+"Footprint"\s+")([^"]+)(")',
-        r"\1{}:{}\3".format(FP_LIB_NICKNAME, fp_basename_noext),
+        lambda m: "{}{}:{}{}".format(m.group(1), FP_LIB_NICKNAME, fp_basename_noext, m.group(3)),
         text,
     )
     if text_new != text:
