@@ -38,3 +38,6 @@ gen2/daisyseed_firmware/libDaisy/
 research/john
 research/correlator_detect
 research/hydrophone_compensation
+# VSCode Local History (each .history dir has its own .git — was clashing as a
+# phantom submodule; see gen3/PCBs/Micro_Breakout)
+.history/
