@@ -260,9 +260,11 @@ def rewrite_footprint_file_identity(fp_path: Path, new_base: str) -> Tuple[Optio
         text,
         count=1,
     )
+    # Value token is emitted quoted: new_base may contain '(' / ')' / spaces,
+    # which would break the s-expression if written as a bare token.
     text = re.sub(
-        r'(\(fp_text\s+value\s+)([^\s\)]+)',
-        lambda m: m.group(1) + new_base,
+        r'(\(fp_text\s+value\s+)("[^"]*"|[^\s\)]+)',
+        lambda m: '{}"{}"'.format(m.group(1), new_base),
         text,
         count=1,
     )
@@ -279,7 +281,8 @@ def rewrite_footprint_file_identity(fp_path: Path, new_base: str) -> Tuple[Optio
         text = text[: m.start(2)] + new_model + text[m.end(2) :]
     else:
         # Match unquoted model path: (model packages3d/file.step
-        m2 = re.search(r'(\(model\s+)([^\s\)]+)', text)
+        # Read to end of line: the path may contain ')' (e.g. "2SK208-Y(TE85L_F)").
+        m2 = re.search(r'^([ \t]*\(model\s+)(?!")([^\n]+?)[ \t]*$', text, flags=re.M)
         if m2:
             model_path = m2.group(2)
             old_model = os.path.basename(model_path)
@@ -566,14 +569,20 @@ def patch_3d_model_paths() -> None:
             return '{}${{{}}}/{}"'.format(match.group(1), MODELS_ENV, filename)
 
         def repl_unquoted(match):
-            orig_path = match.group(1)
+            orig_path = match.group(2).strip()
             filename = os.path.basename(orig_path)
-            return '(model "${{{}}}/{}"'.format(MODELS_ENV, filename)
+            return '{}"${{{}}}/{}"'.format(match.group(1), MODELS_ENV, filename)
 
         # Quoted style: (model "path")
         new_mtext = re.sub(r'(\(model\s+")([^"]+)"', repl_quoted, mtext)
-        # Unquoted legacy style: (model path)
-        new_mtext = re.sub(r'\(model\s+(?!")([^\s\)]+)', repl_unquoted, new_mtext)
+        # Unquoted legacy style: (model path) — read to end of line, since the
+        # filename may contain ')' and would otherwise be truncated there.
+        new_mtext = re.sub(
+            r'^([ \t]*\(model\s+)(?!")([^\n]+?)[ \t]*$',
+            repl_unquoted,
+            new_mtext,
+            flags=re.M,
+        )
 
         if new_mtext != mtext:
             mod_path.write_text(new_mtext, encoding="utf-8")

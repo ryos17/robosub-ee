@@ -5,7 +5,7 @@
   (fp_text reference REF** (at 0 -3.526213) (layer F.SilkS)
     (effects (font (size 1 1) (thickness 0.15)))
   )
-  (fp_text value 2SK208-Y(TE85L_F) (at 0 3.526213) (layer F.Fab)
+  (fp_text value "2SK208-Y(TE85L_F)" (at 0 3.526213) (layer F.Fab)
     (effects (font (size 1 1) (thickness 0.15)))
   )
   (fp_circle (center 1.249987 1.449987) (end 1.279985 1.449987) (layer User.Comments) (width 0.059995))
@@ -28,7 +28,7 @@
   (fp_text user ${REFERENCE} (at 0 0) (layer F.Fab)
     (effects (font (size 1 1) (thickness 0.15)))
   )
-  (model "${ROBOSUB_3D_MODELS}/2SK208-Y(TE85L_F").step
+  (model "${ROBOSUB_3D_MODELS}/2SK208-Y(TE85L_F).step"
     (at (xyz 0.0075 0.0056 0))
     (scale (xyz 1 1 1))
     (rotate (xyz 0 0 -180))
