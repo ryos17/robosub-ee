@@ -1,5 +1,8 @@
 # Critique of the five sharpened directions (senior-author pass, 2026-09-06)
 
+> **Update 2026-09-06 (later):** the clock-sync risk in section 3 is resolved by recording on the team's Zoom H8 (one clock, 4 XLR inputs, 96 kHz/24-bit), and the Ping360 finding "zero code in repo" is a ~1-day driver task, with the sonar now planned as a geometry/ground-truth section inside P1. See [`02_hardware_updates.md`](02_hardware_updates.md). The text below is left as the original critique.
+
+
 Ground truth used: `research/eli/README.md`, `notes/00_directions.md`, the paper extracts in `research/eli/papers/`, and a spot-check of the repo claims the skeptics leaned on. The spot-check confirms them: `gen2/daisyseed_firmware/master_ros.cpp:85` documents the wiring as "front = hydrophones 0 and 3, back = 1 and 2" (both intra-board pairs are parallel fore-aft baselines); `gen2/daisyseed_firmware/stream_audio.cpp:109` silently drops newest samples on host stall behind a u8 seq; `research/whisper_ivc/daisy_stream.py:109` says the cdc-acm path "loses AND reorders chunks"; the Teensy STABLE firmware has no IMU and the ESCs are Basic ESC (no RPM telemetry). The survey's "nobody" claims in `00_directions.md` sec 1.1, 1.2, 1.4 were IEEE-Xplore-coverage artefacts, not literature facts, and every direction paid for that.
 
 Calendar reality: 13 weeks to the 7 Dec abstract, one working vehicle, three people, a sealed hull that must be opened for any clock fix, and gen3 power boards not yet ordered. That, more than novelty, decides the ranking.
