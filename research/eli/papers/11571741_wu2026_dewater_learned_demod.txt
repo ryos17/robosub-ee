@@ -1,0 +1,617 @@
+                                                                                                                                                         DeWater: Towards Efficient Underwater
+                                                                                                                                                      Communication via Fine-tuned Learning-enhanced
+                                                                                                                                                                      Demodulation
+
+
+
+
+IEEE INFOCOM 2026 - IEEE Conference on Computer Communications | 979-8-3315-4961-9/26/$31.00 ©2026 IEEE | DOI: 10.1109/INFOCOM59046.2026.11571741
+                                                                                                                                                            Yuezhong Wu1, 2, 3 , Xin Miao1, 2, 3 , Shuai Chen1, 2, 3 , Xing Chen1, 2, 3, ∗ , Xiong Wang4 , and Dong Ma5
+                                                                                                                                                                                       1 College of Computer and Data Science, Fuzhou University, China
+                                                                                                                                                                           2 Engineering Research Center of Big Data Intelligence, Ministry of Education, China
+                                                                                                                                                         3 Fujian Key Laboratory of Network Computing and Intelligent Information Processing (Fuzhou University), China
+                                                                                                                                                                 4 School of Computer Science and Technology, University of Science and Technology of China, China
+                                                                                                                                                                     5 Department of Computer Science and Technology, University of Cambridge, United Kingdom
+
+                                                                                                                                                         Email:{yuezhong.wu, 231027080, 231027053, chenxing}@fzu.edu.cn, wangxiong@ustc.edu.cn, dm878@cam.ac.uk
+
+
+
+                                                                                                                                                       Abstract—Acoustic communication is becoming increasingly
+                                                                                                                                                    pivotal in underwater environments, which are often challenged
+                                                                                                                                                    by strong multipath propagation and high ambient noise. How-
+                                                                                                                                                    ever, existing solutions typically depend on specialized hardware,
+                                                                                                                                                    complex modulation schemes, or increased transmission power to
+                                                                                                                                                    ensure reliability, which are costly and unsustainable for energy-
+                                                                                                                                                    constrained underwater systems. To overcome these limitations,
+                                                                                                                                                    we propose DeWater, a deep learning-enhanced Chirp Spread
+                                                                                                                                                    Spectrum (CSS) demodulation framework designed for robust
+                                                                                                                                                    and energy-efficient communication. DeWater integrates a Swin
+                                                                                                                                                    Transformer-based demodulator with two novel components: a
+                                                                                                                                                    Frequency Transformation Block (FTB) and a Wavelet Convo-                       Fig. 1: A use case of DeWater demodulation. A low-cost
+                                                                                                                                                    lution (WTConv) module, which together enable accurate de-                      vibration motor at the transmitter sends chirp signals to a
+                                                                                                                                                    modulation without increasing transmitter complexity or power                   piezoelectric ceramic ring at the receiver. The receiver employs
+                                                                                                                                                    consumption. To further enhance noise resilience, we propose a                  a fine-tuned deep learning-enhanced model to demodulate
+                                                                                                                                                    two-stage fine-tuning strategy: Stage 1 applies noise-aware data
+                                                                                                                                                    augmentation through temporal and spectral masking, and Stage                   received chirp signals.
+                                                                                                                                                    2 employs adversarial training using Gradient Norm Adver-
+                                                                                                                                                    sarial Augmentation (GNAA). Extensive real-world underwater                     (MI) [9], [10], they are often limited by severe attenuation,
+                                                                                                                                                    experiments using scenario-specific training demonstrate that                   line-of-sight requirements, or hardware constraints. In contrast,
+                                                                                                                                                    DeWater achieves a significant performance gain, yielding an                    acoustic communication offers superior range and resilience,
+                                                                                                                                                    82.81% reduction in symbol error rate compared to traditional                   remaining the most widely adopted technology for diverse
+                                                                                                                                                    dechirp demodulation. Notably, to maintain a 10% symbol error
+                                                                                                                                                    rate, DeWater requires 66.52% less transmitter power than the                   underwater applications [11]–[17].
+                                                                                                                                                    baseline, demonstrating its effectiveness as a low-power, robust                   Traditional underwater acoustic communication (UAC) sys-
+                                                                                                                                                    solution for underwater acoustic communication.                                 tems rely on bulky, expensive hardware [18], [19], limiting
+                                                                                                                                                       Index Terms—Underwater wireless communication, Underwa-                      scalability in energy-constrained deployments. Transitioning
+                                                                                                                                                    ter acoustic communication, Deep learning-enhanced demodula-
+                                                                                                                                                    tion, Data augmentation
+                                                                                                                                                                                                                                    to low-cost hardware introduces challenges such as frequency-
+                                                                                                                                                                                                                                    dependent attenuation, multipath distortion, and non-Gaussian
+                                                                                                                                                                               I. I NTRODUCTION                                     noise, all exacerbated by limited on-device processing ca-
+                                                                                                                                                                                                                                    pabilities. Transmitters are particularly constrained. Power
+                                                                                                                                                       Underwater communication is essential for applications
+                                                                                                                                                                                                                                    consumption during transmission can be 100 times higher than
+                                                                                                                                                    such as marine monitoring, infrastructure inspection, ocean
+                                                                                                                                                                                                                                    reception [20], preventing arbitrary increases in transmission
+                                                                                                                                                    exploration, and disaster warning systems [1]. Driven by these
+                                                                                                                                                                                                                                    power for energy-limited applications.
+                                                                                                                                                    needs, the global market is expected to rise from USD 3.8 bil-
+                                                                                                                                                    lion in 2024 to over USD 9.3 billion by 2033 [2]. Underwater                       Chirp Spread Spectrum (CSS) modulation, used in LoRa,
+                                                                                                                                                    wireless communication has emerged as a preferred solution                      offers resilience to multipath fading, Doppler shifts, and
+                                                                                                                                                    due to its scalability and flexibility, serving as a cornerstone                ambient noise [21], [22]. Recent applications include CSS-
+                                                                                                                                                    for underwater wireless sensor networks (UWSNs) [3]. While                      based emergency signaling in pools [23] and lightweight
+                                                                                                                                                    various technologies have been explored, including radio fre-                   implementations for shallow water communication [24]. How-
+                                                                                                                                                    quency (RF) [4], [5], optical [6]–[8], and magnetic induction                   ever, these solutions often rely on repetitive transmissions
+                                                                                                                                                                                                                                    or complex modulation schemes, which increase transmitter
+                                                                                                                                                      * Corresponding author                                                        power consumption, resulting in an undesirable trade-off for
+
+
+
+
+                                                                                                                                                           Authorized licensed use limited to: Stanford University. Downloaded on September 07,2026 at 01:06:24 UTC from IEEE Xplore. Restrictions apply.
+energy-constrained scenarios. Furthermore, current CSS de-                            training data and noisy real-world deployment environ-
+modulation primarily utilizes peak detection after dechirping,                        ments.
+which captures only coarse-grained features and ignores fine-                       • We design a novel deep learning-enhanced demodulator
+grained time-frequency structures vital for accurate decod-                           tailored for noisy underwater environments, incorporating
+ing [25]. These gaps necessitate more efficient and robust CSS                        a Swin Transformer backbone, Frequency Transformation
+demodulation for low-power underwater systems.                                        Block (FTB), and Wavelet Convolution (WTConv) to
+    To overcome the limitations of conventional CSS demodula-                         capture global temporal-frequency dependencies, correct
+tion under noisy underwater conditions, we propose DeWater,                           frequency drift, and extract fine-grained features, respec-
+a demodulation framework based on deep learning and two-                              tively. We propose a two-stage fine-tuning approach,
+stage fine-tuning. A use case of DeWater is shown in Fig. 1.                          where the demodulator is first fine-tuned using noise-
+DeWater relies only on a low-cost, off-the-shelf vibration mo-                        aware data augmentation, followed by adversarial training
+tor as the transmitter without specialized hardware, ensuring                         using Gradient Norm Adversarial Augmentation (GNAA)
+practical and energy-efficient deployment with the help of                            to boost resilience against complex and unseen noise
+a fine-tuned learning-enhanced demodulation model. While                              patterns.
+prior works explore neural demodulation [25] and LoRa-                              • A low-cost prototype system is implemented, where an
+based underwater communication [24], DeWater focuses on                               off-the-shelf vibration motor is used as the transmitter,
+architectural innovations and the fine-tuning pipeline that yield                     and a piezoelectric ceramic ring acts as the receiver. The
+improved robustness and lower transmission power.                                     prototype is evaluated across various water environments.
+    At the core of DeWater is a deep learning-enhanced de-                            Experimental results show that DeWater reduces the
+modulation model designed to decode noisy, time-varying                               symbol error rate by approximately 82.81% compared to
+underwater acoustic chirp signals. The model integrates three                         standard dechirp-based methods. DeWater achieves up to
+key components: 1) a Swin Transformer backbone to capture                             a 66.52% reduction in transmitter power at an equivalent
+global time–frequency dependencies via hierarchical attention;                        decoding symbol error rate of 10%.
+2) a Frequency Transformation Block (FTB) to mitigate fre-                          The remainder of this paper is structured as follows: Sec-
+quency drift by modeling inter-frequency correlations; and 3) a                  tion II presents the DeWater framework in detail. Section III
+Wavelet Convolution (WTConv) module to extract local, fine-                      provides comprehensive experimental results validating our
+grained features through multi-resolution analysis.                              approach. Section IV reviews related works. Section V con-
+    DeWater adopts a pre-training + fine-tuning paradigm. In                     cludes the paper.
+the first stage, the model is pre-trained on real signals and fine-
+                                                                                                       II. P ROPOSED M ETHODS
+tuned using noise-aware data augmentation based on [26]. This
+method simulates frequency-selective fading and burst noise                         In this section, we will first introduce the overview of
+via frequency- and time-domain masking, forcing the model                        DeWater framework, the design of the chirp signal and packet,
+to learn noise-invariant features for real-world robustness.                     followed by the details of the important stages.
+    In the second stage, resilience is enhanced via Gradient                     A. Framework Overview
+Norm Adversarial Augmentation (GNAA) [27]. GNAA iden-
+                                                                                    Fig. 2 illustrates the overall pipeline of the DeWater frame-
+tifies critical input regions by analyzing gradient norms and
+                                                                                 work, which comprises four main stages: preprocessing, fine-
+applies selective perturbations to those regions to generate
+                                                                                 tuning Stage 1, fine-tuning Stage 2, and inference. The system
+adversarial examples. Fine-tuning on these examples improves
+                                                                                 begins with chirp signal acquisition using a low-cost prototype
+generalization across unseen and complex noise patterns.
+                                                                                 composed of a vibration motor and a piezoelectric ceramic
+    We evaluate DeWater in a prototype system that transmits                     receiver, with CSS modulation applied at the transmitter.
+and receives low-power chirp signals in water with an off-
+                                                                                    • Preprocessing: The received signal undergoes a sequence
+the-shelf vibration motor at the transmitter and a simple
+                                                                                      of signal processing steps, including preamble detection,
+piezoelectric ceramic ring at the receiver, which requires no
+                                                                                      offset recovery, symbol segmentation, and symbol conver-
+specialized circuits or noise suppression hardware. The system
+                                                                                      sion. Each symbol is transformed into a time–frequency
+is deployed in different water areas to conduct comprehensive
+                                                                                      representation using STFT, and the real part of each
+experiments.
+                                                                                      spectrogram frame is extracted to form the input symbol
+    The contributions of this paper can be summarized as                              set Sinput for training and inference.
+follows:                                                                            • Fine-tuning Stage 1: A pre-trained model Mpre is ob-
+  •   We propose DeWater, a deep learning-based demodula-                             tained using Sinput , and its robustness is enhanced via
+      tion framework for underwater acoustic CSS communica-                           noise-aware data augmentation. Specifically, the Filter-
+      tion that operates using only a low-cost vibrating motor,                       Augment technique generates an augmented symbol set
+      without increasing transmitter-side power or relying on                         SfiltAug from Sinput , which is then used to retrain Mpre and
+      specialized hardware. Notably, DeWater adopts a pre-                            produce the fine-tuned model Mtuned .
+      training + fine-tuning paradigm for underwater demodu-                        • Fine-tuning Stage 2: To further improve generalization to
+      lation, effectively bridging the domain gap between clean                       unseen distortions, the model undergoes Gradient Norm
+
+
+
+
+        Authorized licensed use limited to: Stanford University. Downloaded on September 07,2026 at 01:06:24 UTC from IEEE Xplore. Restrictions apply.
+Fig. 2: The overview of DeWater framework. DeWater includes a processing module, two fine-tuning stages and an inference
+module.
+
+
+
+
+                                                                                                        Fig. 4: Packet structure
+          (a) Basic upchirp             (b) FFT on Dechirp result of
+                                        basic upchirp
+
+                                                                                where ej2π(f0 + 2 kt)t denotes the basic upchirp (see Fig. 3a)
+                                                                                                    1
+
+
+                                                                                and ∆f represents the frequency offset corresponding to the
+                                                                                data symbol. ej2π∆f t is the offset component to shift the basic
+                                                                                upchirp to the starting frequency at f0 + ∆f . k = BW T is the
+                                                                                increasing rate of the frequency. BW is the bandwidth and T
+                                                                                is the chirp duration.
+    (c) A chirp when ∆f = 1 khz         (d) FFT on Dechirp result of               Similar to LoRa [21], we use the spreading factor SF to
+                                        the chirp starting from ∆f =
+                                        1 khz                                   define the types of symbols we can encode. The relationship
+                                                                                of SF , BW and T is given as follows:
+   Fig. 3: Chirp symbols and FFT on their dechirp results
+                                                                                                                 2SF = BW · T                           (2)
+    Adversarial Augmentation (GNAA). GNAA synthesizes                             Given a fixed bandwidth BW , a larger SF leads to a longer
+    a new dataset Sgnaa based on both Sinput and SfiltAug .                     chirp duration T . So, each chirp symbol can represent one
+    Retraining on Sgnaa yields the final model Mfinal .                         of 2SF possible starting frequencies (i.e, possible types of
+  • Inference: During deployment, Mfinal is used to demodu-                     symbols).
+    late incoming data after the same preprocessing pipeline.                     Dechirp is the most widely-used demodulation method to
+                                                                                decode the chirp signal, which will be the baseline to be
+B. Chirp Signal and Packet Design                                               compared. It can be represented as:
+  Following the LoRa technique [21] and recent work [23],
+                                                                                             (ej2π(f0 + 2 kt)t )−1 · S(∆f, t) = ej2π∆f t
+                                                                                                             1
+[25], based on CSS modulation, we design our chirp symbol                                                                                               (3)
+and packet structure.
+                                                                                   Where (ej2π(f0 + 2 kt)t )−1 is the conjugate of the base up-
+                                                                                                         1
+  Chirp signals linearly sweep across a predefined bandwidth
+over time, offering strong robustness to noise. So, we use                      chirp. After applying the FFT to ej2π∆f t , we can find the index
+the vibration (i.e., acoustic) chirp signals to transmit data.                  of the peak that corresponds to the shift frequency offset (i.e.,
+We apply a frequency offset ∆f to embed data to the basic                       data encoded in the signal) as shown in Fig. 3b and 3d.
+upchirp. The resulting chirp signal can be expressed as:                           As shown in Fig. 4, each packet is composed of three
+                                                                                segments: a preamble, a Start Frame Delimiter (SFD), and
+              S(∆f, t) = ej2π(f0 + 2 kt)t · ej2π∆f t
+                                         1
+                                                                        (1)     a data payload. The preamble consists of 6 basic upchirp
+
+
+
+
+       Authorized licensed use limited to: Stanford University. Downloaded on September 07,2026 at 01:06:24 UTC from IEEE Xplore. Restrictions apply.
+                                     Fig. 5: The structure of the proposed learning-enhanced model.
+
+
+symbols and is used for synchronization. The SFD is formed                      a patch partition and linear embedding to project the input into
+by 2.25 basic downchirp symbols to mark the beginning of                        token sequences.
+the payload section. The data segment contains cyclically                          The proposed model consists of four stages. Each stage
+shifted chirps, each representing a symbol encoded using CSS                    includes multiple repeated sub-networks, where each sub-
+modulation.                                                                     network consists of a Wavelet Transform Convolution (WT-
+                                                                                Conv2d) [31], an FTB block, and a Swin Transformer Block.
+C. Preprocessing                                                                The sub-network repeats 2 times in stage 1,2 and 4 and repeats
+   The following preprocessing is carried out:                                  6 times in stage 3. Between stages, patch merging layers
+   1) Preamble Detection: To detect incoming packets, we                        are used to reduce the spatial resolution while increasing the
+utilize the known structure of the preamble, which consists of                  number of channels, forming a pyramid-like structure. Finally,
+5 basic upchirp symbols. A sliding window of symbol length                      the output is normalized, flattened, and passed through a linear
+(referred to as a window signal) is applied to the received                     classification head followed by a SoftMax layer to produce
+stream, and each segment is dechirped to obtain window                          symbol predictions. Compared to [25], which uses CNN and
+chirps. When the window chirp aligns with the preamble, its                     LSTM, DeWater incorporates the Swin Transformer backbone
+FFT spectrum exhibits strong energy at bin 0. The presence of                   to capture global time-frequency dependencies, the FTB to
+multiple such aligned window chirps with consistent energy                      specifically mitigate frequency drift, and Wavelet Transform
+peaks indicates the existence of a LoRa packet.                                 Convolution (WTConv2d) to capture fine-grained features. The
+   2) Offset Recovery: After detecting the packet, we align                     components in each sub-network are introduced as follows:
+the chirp symbols by shifting the observed FFT peak to bin                           Swin Transformer Block: The Swin Transformer operates
+0, thereby correcting the symbol timing. Furthermore, the                       on non-overlapping local windows and introduces a shifted
+basic downchirps in the SFD are used to estimate and com-                       window mechanism to enable cross-window interaction with
+pensate for carrier frequency offset (CFO), enabling accurate                   high efficiency. It is particularly effective at capturing global
+reconstruction of high-quality chirp symbols for subsequent                     temporal-frequency dependencies from spectrograms while
+demodulation.                                                                   maintaining linear computational complexity.
+   3) Symbol Segmentation: After the offset recovery, the data                       Frequency Transformation Block (FTB): The FTB mod-
+part of the aligned signal is segmented into individual symbols                 ule is designed to capture inter-frequency relationships and
+based on the symbol length. For example, symbol length =                        mitigate frequency drift caused by channel distortion. By
+16ms, when BW = 2k, SF = 5. This process yields separated                       performing attention-like transformations along the frequency
+chirp symbols for the following symbol conversion.                              axis, FTB highlights salient frequency components essential
+   4) Symbol Conversion: During symbol conversion, each                         for symbol classification.
+                                                                                     Wavelet Transform Convolution (WTConv2d): WT-
+separated chirp symbol is transformed into a time–frequency
+                                                                                Conv2d introduces a multi-resolution decomposition of the
+representation via STFT, and only the real part is retained. A
+                                                                                input through wavelet-inspired convolutions. It captures fine-
+real part input is shown in Fig 7a. Using the real part simplifies
+                                                                                grained local details across different spectral and temporal
+the network while retaining the sweep trajectory. Previous
+                                                                                resolutions, improving the model’s robustness to noise and
+study showed that adding the phase component increased
+                                                                                spectral variability in underwater environments.
+training complexity with marginal SER gains [28].
+                                                                                E. Fine-tuning Stage 1 with Noise-aware Data Augmentation
+D. Learning-enhanced Demodulation Model                                           Although the pre-trained model achieves reasonable perfor-
+   As shown in Fig. 5, we design a hierarchical learning-                       mance on clean, high-SNR samples, it often fails to generalize
+enhanced demodulation model tailored using the Swin Trans-                      well under realistic underwater conditions characterized by
+former [29] as the backbone. The input to the model is the                      dynamic noise. These domain shifts between pre-training and
+real part of the STFT-transformed spectrogram. The model                        deployment environments necessitate further fine-tuning.
+begins with a Frequency Transformation Block (FTB) [30]                           Firstly, we collected high-SNR chirp symbols at a distance
+that enhances frequency-domain representations, followed by                     of 30 meters in a river (see Fig. 9c) to obtain a pre-trained
+
+
+
+
+       Authorized licensed use limited to: Stanford University. Downloaded on September 07,2026 at 01:06:24 UTC from IEEE Xplore. Restrictions apply.
+               (a) Step filter                   (b) Linear filter              Fig. 8: An example of generating a new   symbol xnew by
+                                                                                                                           ∂(cost)/∂x
+                                                                                adding x and the perturbation part ε |∂(cost)/∂x|     using
+         Fig. 6: Different filter types: Step and Linear
+                                                                                GNAA. The perturbation part is visually imperceptible, but
+                                                                                can lead to a change in the model outputs.
+
+
+                                                                                structured spectral distortions that simulate real-world acoustic
+                                                                                fading and interference patterns.
+                                                                                   Then, we fine-tune the previous pre-trained model by re-
+                                                                                training it using the augmented symbols.
+  (a) Original symbol            (b) Step type              (c) Linear type
+                                                                                F. Fine-tuning Stage 2 with GNAA
+Fig. 7: Original symbol and its corresponding generated sym-
+bols using Step type weight filter and Linear type weight filter.                  The Fine-tuning stage 2 continues to fine-tune the re-
+                                                                                trained model to increase the model’s resistance to noise and
+                                                                                perturbations. Fine-tuning stage 2 uses GNAA to generate
+model, which serves as the foundation for the subsequent fine-                  symbols for fine-tuning. GNAA can generate new symbols
+tuning stages.                                                                  by perturbing the currently extracted effective features of the
+    To improve model robustness against real-world underwater                   model. Fine-tuning the model with GNAA further improves
+distortions, we adopt a noise-aware data augmentation method                    the model’s ability to extract valid features and increases the
+called FilterAugment [26], which can simulate frequency-                        robustness and generalization of the model.
+dependent signal attenuation caused by different acoustic en-                      In Fine-tuning stage 2, we further improve model gener-
+vironments. Since environmental noise and propagation char-                     alization through Gradient Norm Adversarial Augmentation
+acteristics can selectively affect specific frequency compo-                    (GNAA). GNAA introduces imperceptible variance to the
+nents, FilterAugment applies learnable or randomly generated                    input data based on the gradient of the model. Specifically, we
+frequency-weighted filters to input spectrograms, mimicking                     generate adversarial examples by adding a small, directionally-
+the acoustic filtering effects observed in underwater channels.                 guided perturbation to each input, encouraging the model to
+    As shown in Fig. 6, we use two types of filters: (a) step                   learn more robust and noise-invariant feature representations.
+filters, which simulate abrupt energy dropouts in specific                         Given an input x, we define its generated counterpart xnew
+frequency bands, and (b) linear filters, which gradually vary                   as:
+the energy across frequencies to mimic smooth changes. Each                                                                  
+filter is defined over K frequency intervals, where K ∈ [2, 6]                                                   ∂(cost)/∂x
+                                                                                                xnew = x + ε                                 (4)
+is randomly chosen per sample. The full bandwidth of the                                                        |∂(cost)/∂x|
+original symbol is split into K −1 non-overlapping bands, and                      Here, cost denotes the output from the cross-entropy loss
+each is assigned a random gain sampled from a predefined                        function, and ∂(cost)  is the gradient of the loss with respect
+                                                                                                  ∂x
+range [gainmin , gainmax ] = [0, 1]. For step filters, a constant               to the input. This gradient indicates the direction in the input
+weight is applied within each band, while for linear filters, the               space that causes the steepest increase in loss. To ensure the
+weights are interpolated linearly between adjacent frequency                    perturbation remains controlled, the gradient is normalized
+boundaries.                                                                     by its ℓ2 -norm |·|, and scaled by a small constant ε. We set
+    Formally, the augmentation is applied in three steps:                       ε = 0.1. An example is given in Fig. 8. This formulation yields
+    1) Divide the input bandwidth into K frequency intervals                    adversarial samples that lie on the decision boundary and
+        with minimum width BWmin .                                              challenge the model’s confidence, promoting stronger general-
+    2) Sample K gain values from [0, 1] and assign them to                      ization. By training on these gradient-based augmented inputs,
+        the corresponding boundaries.                                           our model becomes more resilient to real-world distortions and
+    3) Generate the frequency-domain filter by either (a) as-                   ambient noise typically encountered in underwater acoustic
+        signing constant values (step) or (b) using linear inter-               communication scenarios. In our experiments, we use both
+        polation between gains (linear).                                        the collected real symbols and the generated symbols from
+    4) Apply (i.e., multiply) the filter to the input.                          the Fine-tuning stage 1 as x to generate GNAA-augmented
+    Fig. 7 illustrates a raw symbols and its corresponding gen-                 symbols, which are used to re-train the model to obtain the
+erated symbol using FilterAugment. This method introduces                       final model. The final model can serve as the demodulator
+
+
+
+
+       Authorized licensed use limited to: Stanford University. Downloaded on September 07,2026 at 01:06:24 UTC from IEEE Xplore. Restrictions apply.
+             (a) Pond                                (b) Lake                            (c) River 1 (Slow)                        (d) River 2 (Fast)
+
+                                               Fig. 9: Different water areas for data collection.
+
+
+                                                                                B. Experiment Setup
+                                                                                   1) Hardware Implementation: The proposed vibration-
+                                                                                based underwater communication prototype features a low-
+                                                                                cost vibration motor driven by CSS-modulated signals via a
+                                                                                PAM8406 audio driver, with energy monitored by a Juwei
+                                                                                A3 power meter. Housed in a waterproof sleeve, the motor
+                                                                                enables safe underwater transmission. On the receiver side,
+                                                                                a piezoelectric ceramic ring captures vibration signals, which
+                                                                                are sampled and processed by a Raspberry Pi Zero with an
+                                                                                IQaudio Codec. Powered by a portable power bank, the system
+     (a) Transmitter setup                          (b) Receiver setup          supports flexible field deployment. The motor and ceramic ring
+Fig. 10: The hardware setup of the transmitter and receiver of                  are submerged for in-water data transmission and reception, as
+the proposed prototype.                                                         illustrated in Fig. 10.
+                                                                                   2) Data Collection Setting: In our CSS modulation config-
+                                                                                uration, we experimented with various bandwidths (BW) of
+to decode the following chirps in the future communications.                    1 kHz, 2 kHz, and 4 kHz, and spreading factors (SF) of 4, 5,
+We selected FilterAugment and GNAA because they specifi-                        and 6. We selected a default setting of BW = 2 kHz and SF = 5,
+cally target frequency-selective fading and decision-boundary                   as it provides a balance between data rate and demodulation
+robustness, respectively. Unlike generic white noise addition,                  accuracy.
+these methods can mimic the spectral distortions common in                         To evaluate the performance under real-world conditions,
+underwater acoustics.                                                           we conducted data collection in four distinct types of outdoor
+                                                                                water bodies with different communication distances, as shown
+                         III. E VALUATION                                       in Fig. 9. These environments include a shallow pond (55 m
+   In this section, we detail the metrics and experimental setup,               of communication distance), a large still-water lake (100 m),
+followed by an evaluation of the DeWater performance.                           a slow-flowing river (85 m), and a fast-flowing river (80 m).
+                                                                                For each scenario, 32,000 symbols are collected. These sites
+A. Metrics                                                                      were selected to represent diverse propagation conditions,
+   We use dechirp as the baseline for our evaluation because                    including different levels of multipath, ambient noise, water
+it is by far the most widely used demodulation method for                       current, and vegetation interference. During each experiment,
+underwater acoustic communication. We use two main metrics                      the transmitter and receiver were deployed submerged at a
+as follows:                                                                     depth of 40 cm at fixed distances apart. To pretrain the model,
+   Symbol Error Rate (SER): The SER is defined as the                           we collect a total of 50,000 high SNR chirps for different BWs
+ratio of incorrectly demodulated chirp symbols over the total                   and SFs in Fig. 9c within a distance of 30 m.
+number of transmitted symbols. It is used to evaluate the                          3) Training and Testing Methodology: We implemented
+robustness of the demodulation model against noise.                             our model using PyTorch and employed the Adam optimizer
+   Signal-to-Noise Ratio (SNR) Gains: The SNR gain refers                       for training. For both pre-training and fine-tuning, the initial
+to the gap in SNR between our proposed methods and dechirp                      learning rate was set to 0.001, while the batch size was set to
+at an SER of 10%. When SER is bigger than 10%, it becomes                       32. We run each training for 100 epochs, which was sufficient
+highly difficult to decode even with error-correcting meth-                     for convergence. The model with the best performance across
+ods [25]. This metric reflects the additional noise resilience                  the 100 epochs was selected as the output trained model. All
+offered by our approach.                                                        experiments were conducted on an NVIDIA GeForce RTX
+
+
+
+
+       Authorized licensed use limited to: Stanford University. Downloaded on September 07,2026 at 01:06:24 UTC from IEEE Xplore. Restrictions apply.
+       (a) SER vs. Different BWs                                 (b) SER vs. Different SFs                            (c) SER vs. Different water bodies
+
+                     Fig. 11: SER vs. different bandwidths (BWs), Spreading factors (SFs) and water bodies.
+
+
+
+
+ (a) SER vs. SNR on different BWs        (b) SNR gains of Different BWs         (c) SER vs. SNR on different SFs          (d) SNR gains of Different SFs
+
+                        Fig. 12: Performance of the pre-trained deep learning-enhanced demodulation model
+
+
+3090 GPU (24 GB). To ensure the generalization of our results,                  SF decreases, which aligns with expectations: lower SF values
+we employed a 5-fold cross-validation strategy within each                      correspond to shorter chirp symbols that are more vulnerable
+specific water environment. The model was trained and tested                    to noise corruption.
+separately for each scenario (pond, lake, and two rivers). In                      Fig. 11c presents the comparison of SER among our
+each fold, the dataset was split with a training-to-testing ratio               method, a demodulation method based on ConvNeXt [32] and
+of 80:20.                                                                       the baseline dechirp decoder across four different real-world
+C. Overall Performance                                                          underwater bodies, including a pond, lake, a slow-flowing
+                                                                                river and a fast-flowing river (as introduced in Fig. 9). All
+   To further evaluate the robustness of our method, we con-
+                                                                                experiments are conducted under the configuration of BW =
+duct real-world experiments under different communication
+                                                                                2 kHz and SF = 5.
+configurations using the underwater setup shown in Fig. 9c.
+Specifically, we analyze the Symbol Error Rate (SER) perfor-                       Across all tested scenarios, our method consistently
+mance under varying bandwidths (BWs) and spreading factors                      achieves significantly lower SER than the ConvNeXt-based
+(SFs), with results shown in Fig. 11a and 11b.                                  method and dechirp, with average reductions of 58.32%
+   Fig. 11a compares SERs under three bandwidth settings:                       (7.27% to 3.03%) and 82.81% (from 17.63% to 3.03%),
+1 kHz, 2 kHz, and 4 kHz, with SF fixed to 5. Across all con-                    respectively. In particular, under the lake setting (Fig. 9b),
+figurations, our method consistently outperforms the baseline                   all methods perform best, achieving SERs of 11.50%, 2.78%,
+dechirp decoder. On average, our method achieves a 30.78%                       and 0.96%, respectively. In the river 1 (slow) (Fig. 9c), our
+reduction in SER. Notably, the best overall performance is                      model achieves an SER of 1.74%, which is notably better
+observed under the 2 kHz setting, where our method and                          than the 2.7% observed in the pond scenario (Fig. 9a). This
+dechirp yield SERs of 1.74% and 21.86%, respectively. We                        performance gap can be attributed to the shallow depth of the
+attribute this to a trade-off between symbol duration and                       pond (approximately 0.5 m), where strong multipath effects
+noise resilience: increasing the bandwidth shortens the chirp                   and surface-bottom reflections introduce more severe noise and
+duration, leading to weaker noise immunity; however, reducing                   distortion.
+the bandwidth below a threshold (e.g., 1 kHz) limits the chirp’s                   Finally, in the river 2 (fast) (Fig. 9d), which features faster
+spectral spread, making it more susceptible to noise masking.                   water flow and more complex acoustic noise, all methods
+   Similarly, Fig. 11b presents SER results under varying SFs                   experience degradation, but our method still outperforms
+(4, 5, and 6) with bandwidth fixed to 2 kHz. Again, our method                  others significantly (6.70% vs. 12.22% vs. 23.23%). These
+consistently delivers lower SER than dechirp, achieving an                      results validate the robustness of our approach in diverse and
+average reduction of 19.76%. The best SER is obtained at SF                     challenging underwater conditions. For the sake of space, the
+= 6 (1.06% vs. 19.54%), but we observe increasing SER as                        following evaluation uses data from River 1 in Fig. 9c, since
+
+
+
+
+       Authorized licensed use limited to: Stanford University. Downloaded on September 07,2026 at 01:06:24 UTC from IEEE Xplore. Restrictions apply.
+                                                                                     TABLE I: SER under different augmented data sizes.
+                                                                                Data Sizes   (6k,38k)    (12k,44k)   (18k,50k)   (24k,56k)   (30k,62k)
+                                                                                   SER         2.23%       2.05%       1.74%        1.86%       2.11%
+
+
+
+
+                                                                                w/o WTConv&FTB, where both modules are removed; and
+                                                                                (4) the baseline dechirp. The results across various SNR levels
+                                                                                are shown in Fig. 13.
+                                                                                   As observed in the figure, even when both WTConv and
+Fig. 13: The impact of different components of the proposed                     FTB are disabled, our model still significantly outperforms
+learning-enhanced demodulation model.                                           dechirp at all SNR levels, indicating the effectiveness of the
+                                                                                learning-based backbone alone. For instance, at SNR = -15 dB,
+                                                                                the version without WTConv2D and FTB achieves a 21.16%
+similar observations can be found in other scenarios.                           lower SER than dechirp. The model without FTB achieves a
+                                                                                39.76% SER reduction, while the version without WTConv
+D. Impact of Deep Learning-enhanced Demodulator                                 achieves a 32.85% reduction at the same SNR level. This
+   To evaluate the noise resilience of our learning-enhanced                    confirms that both FTB and WTConv2D positively contribute
+demodulator, we first examine its Symbol Error Rate (SER)                       to demodulation robustness, with WTConv offering slightly
+under different SNR conditions and bandwidth (BW) settings                      greater benefit.
+with SF fixed at 5. Controlled SNR levels were obtained by                         Finally, the complete model with both FTB and WTConv2D
+injecting varying levels of noise into the received high-SNR                    achieves the best performance. At SNR = -15 dB, it reduces
+signals, following the methodology in [25]. Fig. 12a shows                      SER by 41.17% compared to dechirp, validating the com-
+the SER trends of our method and the dechirp baseline under                     plementary effects of both components in enhancing noise
+BW = 1 kHz, 2 kHz, and 4 kHz. Across all BW configurations,                     resilience and demodulation accuracy.
+our model consistently outperforms dechirp, particularly in the                 E. Impact of Different Fine-tuning Stages
+low-SNR region from -10 dB to -20 dB. At SNR = -15 dB with                         In this subsection, we evaluate the impact of FilterAugment
+BW = 4 kHz, our model reduces the SER by up to 39.41%.                          and GNAA on SER performance under the configuration of SF
+The SER trends of DeWater and dechirp between 2 kHz and                         = 5 and BW = 2 kHz. We compare four variants: (1) pretrained
+4 kHz are inconsistent because the higher bandwidth shortens                    (baseline model without fine-tuning), (2) FilterAugment (fine-
+symbol duration, which reduces noise immunity despite the                       tuned with filter-based augmentation only), (3) GNAA (fine-
+higher spectral spread.                                                         tuned with adversarial augmentation only), and (4) Both,
+   Fig. 12b further summarizes the minimum SNR required to                      which applies FilterAugment and GNAA in a two-stage fine-
+achieve a target SER of 10% across different bandwidth set-                     tuning process. The results are shown in Fig. 14.
+tings. Compared to dechirp, our method consistently achieves                       Compared to the pretrained baseline, both individual aug-
+lower SNR thresholds, demonstrating improved noise robust-                      mentation strategies significantly reduce SER, with FilterAug-
+ness. On average, our model provides 7.2 dB of SNR gain,                        ment and GNAA achieving SER reductions of 10.15% and
+with the largest improvement of 10.5 dB observed under BW                       10.08%, respectively. Notably, FilterAugment alone provides
+= 4 kHz.                                                                        slightly better performance than GNAA. When combined in
+   We then evaluate the impact of the spreading factor (SF) by                  a two-stage fine-tuning procedure, the model achieves the
+fixing BW = 2 kHz and varying SF from 4 to 6. As shown in                       best performance, reducing SER to 1.74%, demonstrating the
+Fig. 12c, our method again consistently outperforms dechirp                     complementary benefits of the two techniques.
+across all SFs, with an average SER reduction of 19.76%. At                        We further analyze the effect of different data augmentation
+SNR = -15 dB, the largest SER drop reaches 35.81% under                         volumes on SER during the two-stage fine-tuning process. For
+SF = 6. The corresponding SNR thresholds for achieving                          each tuple (e.g., (6k,36k)), the first value indicates the number
+10% SER are plotted in Fig. 12d. It can be seen that our                        of augmented samples used in Stage 1 (FilterAugment), and
+method significantly lowers the required SNR, with the most                     the second indicates the number used in Stage 2 (GNAA). As
+noticeable gain of 10.3 dB at SF = 4. Based on the above                        shown in Table I, the configuration (18k,50k) yields the lowest
+results and for the sake of space, we select SF = 5 and BW =                    SER, and is thus selected as our default setting.
+2 kHz as the default configuration for subsequent evaluations.
+   In this section, we evaluate the contribution of different                   F. Performance under Varying Transmission Power
+components in our learning-enhanced demodulation model.We                          We further investigate the power efficiency of our proposed
+compare the SER performance of the full model (Ours) with                       method in real underwater conditions. Fig. 15 compares the
+several ablated variants: (1) w/o FTB, where the Frequency                      SER of our method and the baseline dechirp approach across
+Transformation Block is removed; (2) w/o WTConv, where                          different transmission power levels. As shown in the figure,
+the Wavelet Transform Convolution module is removed; (3)                        our method consistently outperforms dechirp across all tested
+
+
+
+
+       Authorized licensed use limited to: Stanford University. Downloaded on September 07,2026 at 01:06:24 UTC from IEEE Xplore. Restrictions apply.
+                                                                                reliable transmission. MI-based approaches use near-field elec-
+                                                                                tromagnetic coupling to bypass water conductivity issues [35],
+                                                                                but typically require large coils (e.g., >30 cm diameter) to
+                                                                                achieve ranges beyond 10 m, limiting practical deployment. In
+                                                                                contrast, acoustic communication remains the most reliable
+                                                                                and widely adopted method for underwater environments.
+                                                                                It supports long-distance transmission, strong environmental
+                                                                                robustness, and effective signal penetration, making it the de
+                                                                                facto choice for practical underwater wireless systems [3].
+             Fig. 14: Impact of fine-tuning stages.                             B. Underwater Acoustic Communication
+                                                                                   Underwater acoustic communication (UAC) is essential
+                                                                                for medium- to long-range underwater wireless transmis-
+                                                                                sion. Recent advances address coverage via acoustic recon-
+                                                                                figurable intelligent surfaces (aRIS) [17], cost through open-
+                                                                                source modems like “ahoi” [36], and energy constraints via
+                                                                                battery-free piezo-acoustic backscatter [11], [12]. Software-
+                                                                                based solutions like AquaApp and AquaHelper utilize com-
+                                                                                modity hardware for adaptive OFDM and SOS chirp detec-
+                                                                                tion [23], [37]. Furthermore, high-accuracy 3D localization
+                                                                                has been achieved through software-only positioning [38] and
+                                                                                piezoacoustic arrays [39]. However, most existing methods
+          Fig. 15: SER on different sending powers.                             require specialized hardware or high transmit power, hindering
+                                                                                energy-constrained deployments. This paper leverages deep
+                                                                                learning and fine-tuning to enhance UAC performance without
+power levels. Notably, our SER curve remains significantly
+                                                                                increasing transmitter-side burden.
+lower, achieving up to a 40% reduction in SER compared to
+the baseline under the same power settings when the sending                                                 V. C ONCLUSION
+power = 0.25 W. Furthermore, to achieve a target SER of                           We propose DeWater, a deep learning framework for ro-
+10%, our method requires only approximately 33.48% of                           bust, energy-efficient underwater acoustic communication via
+the transmission power needed by dechirp, which means a                         Chirp Spread Spectrum. By integrating a Swin Transformer,
+reduction of 66.52%. This clearly demonstrates the superior                     Frequency Transformation Block, and Wavelet Convolution,
+energy efficiency of our approach. Despite increased receiver-                  DeWater captures hierarchical time-frequency features. Envi-
+side computation from the deep learning model, this trade-off                   ronmental robustness is enhanced via noise-aware masking and
+is advantageous in asymmetric underwater networks where                         Gradient Norm Adversarial Augmentation. Prototype exper-
+receivers (e.g., AUVs, gateways) possess greater processing                     iments demonstrate that DeWater outperforms conventional
+power. By enabling reliable communication at extremely                          dechirp decoding, reducing average Symbol Error Rate by
+low SNRs, DeWater significantly reduces retransmissions and                     82.81% and cutting power consumption by up to 66.52% at
+transmit power requirements, thereby extending overall system                   a 10% SER threshold. Future work can investigate extended
+lifespan.                                                                       ranges, prolonged durations, highly mobile scenarios, and
+                                                                                model compression to reduce computational overhead.
+                       IV. R ELATED W ORK
+                                                                                                         ACKNOWLEDGMENT
+A. Underwater Wireless Communication
+                                                                                  This work was supported by the National Natural Science
+   Underwater wireless communication technologies primarily
+                                                                                Foundation of China under Grant No. 92582105 and Fujian
+include radio frequency (RF), optical, magnetic induction
+                                                                                Provincial Artificial Intelligence Industry Development Tech-
+(MI), and acoustic methods. RF-based communication, while
+                                                                                nology Project under Grant No. 2025H0042.
+prevalent in terrestrial applications, suffers from severe atten-
+uation in water due to its conductive nature, limiting transmis-                                              R EFERENCES
+sion range. For example, Seatooth S200 achieves 100 bps over                     [1] T. Theocharidis and E. Kavallieratou, “Underwater communication tech-
+15–40 m, while S300 offers 156 kbps over 2–10 m [33]. Low-                           nologies: A review,” Telecommunication Systems, vol. 88, no. 2, p. 54,
+frequency RF and extremely low frequency (ELF) bands have                            2025.
+                                                                                 [2] R. Rai, “Underwater communication system market size,” 2024, [On-
+been explored [34], but they require large antennas and suffer                       line]. Available: https://straitsresearch.com/report/underwater-communi
+from low data rates [3]. Optical communication enables high                          cation-system-market [Accessed: Jul. 25, 2025].
+data rates and has been studied for short-range underwater                       [3] A. Pal, F. Campagnaro, K. Ashraf, M. R. Rahman, A. Ashok, and
+                                                                                     H. Guo, “Communication for underwater sensor networks: A compre-
+links [6]–[8]. However, it is highly sensitive to water turbidity                    hensive summary,” ACM Transactions on Sensor Networks, vol. 19,
+and ambient light, requiring clear line-of-sight conditions for                      no. 1, pp. 1–44, 2022.
+
+
+
+
+       Authorized licensed use limited to: Stanford University. Downloaded on September 07,2026 at 01:06:24 UTC from IEEE Xplore. Restrictions apply.
+ [4] A. Zoksimovski, C. Rappaport, D. Sexton, and M. Stojanovic, “Un-            [21] Z. Sun, H. Yang, K. Liu, Z. Yin, Z. Li, and W. Xu, “Recent advances in
+     derwater electromagnetic communications using conduction: Channel                lora: A comprehensive survey,” ACM Transactions on Sensor Networks,
+     characterization,” in Proceedings of the 7th International Conference            vol. 18, no. 4, pp. 1–44, 2022.
+     on Underwater Networks & Systems, 2012, pp. 1–7.                            [22] G. Pasolini, “On the lora chirp spread spectrum modulation: Signal
+ [5] I. Smolyaninov, Q. Balzano, and D. Young, “Development of broadband              properties and their impact on transmitter and receiver architectures,”
+     underwater radio communication for application in unmanned underwa-              IEEE Transactions on Wireless Communications, vol. 21, no. 1, pp. 357–
+     ter vehicles,” Journal of Marine Science and Engineering, vol. 8, no. 5,         369, 2021.
+     p. 370, 2020.                                                               [23] Q. Yang and Y. Zheng, “Aquahelper: Underwater sos transmission
+ [6] B. Shihada, O. Amin, C. Bainbridge, S. Jardak, O. Alkhazragi, T. K.              and detection in swimming pools,” in Proceedings of the 21st ACM
+     Ng, B. S. Ooi, M. L. Berumen, and M.-S. Alouini, “Aqua-Fi: Delivering            Conference on Embedded Networked Sensor Systems, 2023, pp. 294–
+     internet underwater using wireless optical networks,” IEEE Communi-              307.
+     cations Magazine, vol. 58, no. 5, pp. 84–89, 2020.                          [24] F. Steinmetz and B.-C. Renner, “Taking lora for a dive: Css for low-
+ [7] A. Caiti, E. Ciaramella, G. Conte, G. Cossu, D. Costa, S. Grechi,                power acoustic underwater communication,” in 2022 Sixth Underwater
+     R. Nuti, D. Scaradozzi, and A. Sturniolo, “Optocomm: introducing a new           Communications and Networking Conference (UComms), 2022, pp. 1–5.
+     optical underwater wireless communication modem,” in 2016 IEEE third        [25] C. Li, H. Guo, S. Tong, X. Zeng, Z. Cao, M. Zhang, Q. Yan, L. Xiao,
+     underwater communications and networking conference (UComms),                    J. Wang, and Y. Liu, “Nelora: Towards ultra-low snr lora communication
+     2016, pp. 1–5.                                                                   with neural-enhanced demodulation,” in Proceedings of the 19th ACM
+ [8] Y. Tian, L. Wang, C. Lin, Y. Chi, B. Lu, and Z. Qin, “Minimizing                 Conference on Embedded Networked Sensor Systems, 2021, pp. 56–68.
+     age of information for underwater optical wireless sensor networks,” in     [26] H. Nam, S.-H. Kim, and Y.-H. Park, “Filteraugment: An acoustic
+     IEEE INFOCOM 2023-IEEE Conference on Computer Communications,                    environmental data augmentation method,” in ICASSP 2022-2022 IEEE
+     2023, pp. 1–10.                                                                  International Conference on Acoustics, Speech and Signal Processing
+ [9] Y. Li, S. Wang, C. Jin, Y. Zhang, and T. Jiang, “A survey of under-              (ICASSP), 2022, pp. 4308–4312.
+     water magnetic induction communications: Fundamental issues, recent         [27] O. Ali, M. Saif-ur Rehman, S. Dyck, T. Glasmachers, I. Iossifidis, and
+     advances, and challenges,” IEEE Communications Surveys & Tutorials,              C. Klaes, “Enhancing the decoding accuracy of EEG signals by the
+     vol. 21, no. 3, pp. 2466–2487, 2019.                                             introduction of anchored-stft and adversarial data augmentation method,”
+[10] D. Wei, L. Yan, C. Huang, J. Wang, J. Chen, M. Pan, and Y. Fang, “Dy-            Scientific reports, vol. 12, no. 1, p. 4245, 2022.
+     namic magnetic induction wireless communications for autonomous-            [28] K. Dakic, B. Al Homssi, A. Al-Hourani, and M. Lech, “Lora signal
+     underwater-vehicle-assisted underwater iot,” IEEE Internet of Things             demodulation using deep learning, a time-domain approach,” in 2021
+     Journal, vol. 7, no. 10, pp. 9834–9845, 2020.                                    IEEE 93rd Vehicular Technology Conference (VTC2021-Spring), 2021,
+[11] J. Jang and F. Adib, “Underwater backscatter networking,” in Proceed-            pp. 1–6.
+     ings of the ACM special interest group on data communication, 2019,         [29] Z. Liu, Y. Lin, Y. Cao, H. Hu, Y. Wei, Z. Zhang, S. Lin, and
+     pp. 187–199.                                                                     B. Guo, “Swin transformer: Hierarchical vision transformer using shifted
+[12] R. Ghaffarivardavagh, S. S. Afzal, O. Rodriguez, and F. Adib, “Ultra-            windows,” in Proceedings of the IEEE/CVF international conference on
+     wideband underwater backscatter via piezoelectric metamaterials,” in             computer vision, 2021, pp. 10 012–10 022.
+     Proceedings of the ACM SIGCOMM 2020 Conference, 2020, pp. 722–              [30] D. Yin, C. Luo, Z. Xiong, and W. Zeng, “Phasen: A phase-and-
+     734.                                                                             harmonics-aware speech enhancement network,” in Proceedings of the
+[13] S. Lmai, M. Chitre, C. Laot, and S. Houcke, “Throughput-efficient super-         AAAI conference on artificial intelligence, vol. 34, no. 05, 2020, pp.
+     tdma mac transmission schedules in ad hoc linear underwater acoustic             9458–9465.
+     networks,” IEEE Journal of Oceanic Engineering, vol. 42, no. 1, pp.         [31] S. E. Finder, R. Amoyal, E. Treister, and O. Freifeld, “Wavelet convo-
+     156–174, 2016.                                                                   lutions for large receptive fields,” in European Conference on Computer
+[14] R. Diamant, P. Casari, F. Campagnaro, and M. Zorzi, “Leveraging                  Vision, 2024, pp. 363–380.
+     the near–far effect for improved spatial-reuse scheduling in underwater     [32] Z. Liu, H. Mao, C.-Y. Wu, C. Feichtenhofer, T. Darrell, and S. Xie, “A
+     acoustic networks,” IEEE Transactions on Wireless Communications,                convnet for the 2020s,” in Proceedings of the IEEE/CVF conference on
+     vol. 16, no. 3, pp. 1480–1493, 2016.                                             computer vision and pattern recognition, 2022, pp. 11 976–11 986.
+[15] Z. Li, M. Chitre, and M. Stojanovic, “Underwater acoustic communica-        [33] Sonardyne International Ltd, “Seatooth S200 underwater acoustic mo-
+     tions,” Nature Reviews Electrical Engineering, vol. 2, no. 2, pp. 83–95,         dem,” 2018, [Online]. Available: https://d3pcsg2wjq9izr.cloudfront.net/
+     2025.                                                                            files/29501/download/352722/2.pdf [Accessed: Jul. 25, 2025].
+[16] M. Stojanovic and J. Preisig, “Underwater acoustic communication            [34] Federation of American Scientists, “Extremely low frequency transmitter
+     channels: Propagation models and statistical characterization,” IEEE             site: Clam Lake, Wisconsin,” 2003, [Online]. Available: https://nuke.fas
+     communications magazine, vol. 47, no. 1, pp. 84–89, 2009.                        .org/guide/usa/c3i/fs clam lake elf2003.pdf [Accessed: Jul. 24, 2025].
+[17] L. Zhao, J. Tan, J. Wang, I. F. Akyildiz, and Z. Sun, “Covering underwa-    [35] M. Muzzammil, N. Ahmed, G. Qiao, I. Ullah, and L. Wan, “Fundamen-
+     ter shadow zones using acoustic reconfigurable intelligent surfaces,” in         tals and advancements of magnetic-field communication for underwater
+     IEEE INFOCOM 2025-IEEE Conference on Computer Communications,                    wireless sensor networks,” IEEE Transactions on Antennas and Propa-
+     2025, pp. 1–10.                                                                  gation, vol. 68, no. 11, pp. 7555–7570, 2020.
+[18] R. Francescon, F. Campagnaro, E. Coccolo, A. Signori, F. Guerra,            [36] B.-C. Renner, J. Heitmann, and F. Steinmetz, “Ahoi: Inexpensive, low-
+     F. Favaro, and M. Zorzi, “An event-based stack for data transmission             power communication and localization for underwater sensor networks
+     through underwater multimodal networks,” in 2021 Fifth Underwater                and µauvs,” ACM Transactions on Sensor Networks (TOSN), vol. 16,
+     Communications and Networking Conference (UComms), 2021, pp. 1–                  no. 2, pp. 1–46, 2020.
+     5.                                                                          [37] T. Chen, J. Chan, and S. Gollakota, “Underwater messaging using mobile
+[19] D. Sinkiewicz, T. Sobers, D. Egnor, and B. Smith, “Towards a common              devices,” in Proceedings of the ACM SIGCOMM 2022 Conference, 2022,
+     interface for underwater acoustic modems,” in OCEANS 2021: San                   pp. 545–559.
+     Diego–Porto, 2021, pp. 1–6.                                                 [38] ——, “Underwater 3D positioning on smart devices,” in Proceedings of
+[20] J. Partan, J. Kurose, and B. N. Levine, “A survey of practical issues            the ACM SIGCOMM 2023 Conference, 2023, pp. 33–48.
+     in underwater networks,” ACM SIGMOBILE Mobile Computing and                 [39] S. S. Afzal, W. Chen, and F. Adib, “3d-blue: Backscatter localization
+     Communications Review, vol. 11, no. 4, pp. 23–33, 2007.                          for underwater robotics,” in 2024 IEEE/RSJ International Conference
+                                                                                      on Intelligent Robots and Systems (IROS), 2024, pp. 11 040–11 047.
+
+
+
+
+        Authorized licensed use limited to: Stanford University. Downloaded on September 07,2026 at 01:06:24 UTC from IEEE Xplore. Restrictions apply.
+

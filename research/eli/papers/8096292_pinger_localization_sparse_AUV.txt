@@ -1,0 +1,325 @@
+      2017 14th International Conference on Electrical Engineering/Electronics, Computer, Telecommunications
+      and Information Technology (ECTI-CON)
+
+
+
+       A Pinger Localization Algorithm Using Sparse
+        Representation for Autonomous Underwater
+                          Vehicles
+                  T. Kasetkasem1 , D. Worasawate2 , Y. Tipsuwan3 , P. Thiennviboon4 and P. Hoonsuwan5
+                               1−4
+                            Faculty of Engineering, Kasetsart University, Bangkok, Thailand 10900
+                 5
+                PTT Exploration and Production PCL., Energy Complex Building A, Bangkok, Thailand 10900
+       Email: fengtsk@ku.ac.th1 , fengdcw@ku.ac.th2 , yyt@ku.ac.th3 , fengpst@ku.ac.th4 and phakhachonk@pttep.com5
+
+
+   Abstract—The problem of underwater Pinger localization is a                   find the solution of the maximum likelihood estimate. The
+crucial part of the underwater pipeline monitoring and main-                     main limitation of this algorithm is that the number of multi-
+tenance by using an AUV in oil and gas industries. In this                       paths must be known in advance. This condition cannot be
+problem, a Pinger repeatedly transmits pulses of audio signals to
+an array of hydrophones. Due to the delay pattern, the direction                 obtained in most practical situations. Similarly, the work in
+of a Pinger relative to the hydrophone array can be estimated.                   [3] tried to address this problem by extending the concept in
+However, since underwater environment is multipath in nature,                    [2] to the problem of joint estimation of angles of arrival and
+multiple copies of Pinger pulses arrive at the hydrophones. In                   time delays. The authors used the two-stage signal subspace-
+this paper, we employed the sparse representation to find the                    based processing approach, with or without training data, to
+best combinations of the multipath signals, and use the direction
+of the first arrival path to be the direction of a Pinger.                       estimate the time delays first and then the angles of arrival
+                                                                                 for each estimated time delay. However, this work did not
+                     I. I NTRODUCTION                                            consider the prior knowledge on the number of multi-paths
+   The problem of underwater Pinger localization is a crucial                    into consideration.
+part of the underwater pipeline monitoring and maintenance                          As a result, our paper attempts to address the problem
+by using an AUV in oil and gas industries. In this problem,                      of unknown number of multi-paths by applying the sparse
+a Pinger repeatedly transmits pulses of audio signals to an                      representation to extract signals arrived from the different
+array of hydrophones. The goal is to estimate the direction                      paths from each other. The sparse representation of a signal [5]
+of a Pinger relative to the hydrophone array placed in an                        has been proven to be very powerful in acquiring, representing,
+autonomous underwater vehicle. If only a line-of-sight path                      un-mixing, compressing high-dimensional signals. The sparse
+exists between a Pinger and a hydrophone array, the direction                    representation relies on the fact that signals such audio and
+of a Pinger can be extracted by measuring the phase delay                        images are naturally sparse with respect to some basis set of
+between hydrophones. However, the actual underwater envi-                        signal. To apply this idea, we assume that the received signal at
+ronment results in multipaths and fading between a Pinger and                    a hydrophone is a summation of a line-of-sight signal and few
+hydrophone arrays. As a result, the received signal is a sum of                  non-line-of-sight multipath signal. The orthogonal matching
+multiple copies of the same transmitted signal with different                    pursuit (OMP) studied in [6] is employed to decompose the
+time delays, magnitudes, phases, and angles of arrival. Hence,                   received signal. Next, the subspace technique used in [3] is
+there is a need for more sophisticated algorithms that can                       then employed to estimate the bearing angles of each path.
+decompose a received signal into signals arrived from different                     The rest of the paper is organized as follows. We will
+paths. As a result, we consider this problem as the bearing                      introduce the problem statement considered in this paper in
+estimation problem in the multipath fading channel.                              the Section II. In Section III, we will propose the main
+   The problem of bearing estimations have been studied by                       algorithms. The performance of our proposed algorithm will
+many researchers [1]-[4]. In [1], the authors proposed the                       be demonstrated in Section IV on both simulated data and real
+JADE algorithm to jointly estimate both angle of arrival and                     data. In the last section, we will conclude our work.
+time delay. The JADE technique is first estimate the channel
+which requires the training bits, and follows by estimating                                            II. P ROBLEM S TATEMENT
+the parameters of interest. The results are very promising.                        Let s[n] be a transmitted signal pulse from a Pinger at time
+However, in the problem of Pinger location, it is difficult to                   n. A simple example of s[n] is given as
+obtain any training data since the distance, time delay and                                
+                                                                                              a0 cos(2πf0 n + ζ0 ) n = 0, 1, 2, . . . , N0
+bearing are usually unknown. The work by [2] introduced the                         s[n] =                                                   (1)
+                                                                                              0                      elsewhere
+maximum likelihood to the problem of estimating the angles of
+arrival. The authors employed the alternating projection that                    where a0 , f0 , ζ0 and N0 are the amplitude, frequency, phase,
+transforms the multivariate nonlinear maximization problem                       and pulse length of a transmitted pulse, respectively. This pulse
+into a sequence of one-dimensional maximization problem to                       is transmitted over fading channel through P paths. In general,
+
+
+
+Copyright notice: 978-1-5386-0449-6/17/$31.00 (c) 2017 IEEE
+                                                                             533
+        Authorized licensed use limited to: Stanford University. Downloaded on September 07,2026 at 00:51:23 UTC from IEEE Xplore. Restrictions apply.
+      2017 14th International Conference on Electrical Engineering/Electronics, Computer, Telecommunications
+      and Information Technology (ECTI-CON)
+
+
+the value of P is unknown. In the noise-free environment, the                   the solution to the above optimization problem yields N sets
+received complex signal at the i-th hydrophone from the p-th                    of time delays and bearings. This can lead to the mislabeling
+path is given by                                                                problem of the LOS path between a Pinger and the hydrophone
+                                                                                array.
+           yi,τp [n] = gτp × ei (θτp , φτp ) × s[n − τp ]               (2)
+                                                                                   Hence, in this paper, we introduce an additional constraint
+where gτp is the complex gain, ei (θτp , φτp ) = ejdi (θτp ,φτp ) is            into Eq. (8) to limit the number of possible paths, i.e., the
+the phase delay of the i-hydrophone from the arrival elevation                  number of multipaths should be as small as possible. To
+and azimuth angles, θτp and φτp , τp ∈ {0, 1, . . . , N − 1} is the             incorporate this additional constraint, the optimization must
+travel time of an audio signal from a Pinger to the hydrophone                  be modified. Hence, the optimization problem becomes
+array along the p-th path, and n = 0, . . . , N − 1. Here, we                                      minimize       kgk0
+assume that all paths have distinct time delays, i.e., τp 6= τq                                         x                                                (9)
+for p 6= q, and N is the number of collected samples. In this                                      subject to kZ − SGEk2F ≤ 
+paper, we define                                                                where kgk0 is the number of non-zero entries in g. The
+                   di (θτp , φτp ) = Ψf (θτp , φτp )                    (3)     problem in Eq. (9) is called the sparse representation problem
+                                                                                [5]. In this paper, we employ the orthogonal matching pursuit
+where Ψ = 2π/λ is a function of wavelength λ, and                               (OMP) [6] to find the solution in Eq. (9) due to its simplicity.
+f (θτp , φτp ) is a function of elevation and azimuth angles. Next,             To apply the OMP successfully, we divide the algorithm into
+we assume that the line-of-sight (LOS) path between a Pinger                    two processes, namely arrival time and bearing estimations.
+and the hydrophone array is a shortest path with the smallest
+τp .                                                                            A. Arrival Time Estimation Algorithm
+   The overall received signal at the i-th hydrophone from all                     The algorithm for finding the arrival times are given in
+P paths can be written as                                                       Algorithm 1. Note that this algorithm first chooses the arrival
+      yi [n] =
+                     PP −1              PN −1                                   time, τp , with the largest sum of the magnitudes of the
+                        p=0 yi,τp [n] =    m=0 yi,m [n]         (4)
+                     PN   −1                                                    correlation coefficients between s[n − τp ] and the received
+                =       m=0 gm × ei (θm , φm ) × s[n − m]                       pulses r0,m [n] = zm at all hydrophones. After that the OMP
+where |gm | = 0 and ei (θm , φm ) = 1 if m ∈           / {τp | p ∈              projects the received signals onto a subspace orthogonal to
+{0, 1, . . . , P − 1}}, i.e., there is no path with time delay τp =             s[n − τp ] called r1,m [n] where rh,m [n], h = 1, 2, . . . , hmax ,
+m. Eq. (4) can be arranged into a vector format as                              is the signal that is orthogonal to a subspace of all chosen
+                                                                                signal pulses corresponding to the estimated arrival times at
+                             yi = SGei .                 (5)                    the iteration number h. The next arrival time with the largest
+                                                                                sum of the magnitudes of the correlation coefficients between
+                                        
+Here, we define S = s0 · · · sN −1 , G = diag(g), and
+       
+ei = ei (θ0 , φ0 ) · · · ei (θN −1 , φN −1 )
+                                             T
+                                                where sτp =                     s[n − τp0 ] and the projected signals is chosen. Then, r2,m [n]
+                                 T                        T                   is calculated from the projection of the received signals onto
+  s[0 − τp ] · · · s[N − 1 − τp ]    , g = [g0 · · · gN −1 ]
+                                                                                a new orthogonal subspace. This process is repeated until the
+and diag(v) creates a diagonal matrix from v.
+                                                                              maximum number of iterations is reached, or the norm of the
+   Furthermore, let Y = y0 · · · yM −1 be a collection
+                                                                                projected signals less than a predefined value, 0 . Let T =
+of observations from all M hydrophones. Hence, we can write
+                                                                                {τ0 , τ1 , . . . , τP −1} be the resulting
+                                                                                                                          estimated arrival times and
+                                                                                ST = S(T ) = sτ0 , · · · , sτP −1 be a matrix containing the
+                                               
+           Y = SGE = SG e0 · · · eM −1 .                 (6)
+                                                                                corresponding delayed versions of the transmitted signal where
+Finally, for the noisy environment, the observation matrix is                   P is the number of estimated arrival paths.
+given by
+                         Z =Y +W                          (7)                   B. Bearing Estimation Algorithm
+where Z = [z0 , · · · , zM −1 ], W = [w0 , · · · , wM −1 ]. Note that              Here, we follow the idea introduced in [3]. From the
+wm is assumed to be a zero-mean white Gaussian noise vector                     estimated arrival times in the previous subsection, the received
+with covariance matrix σ 2 I.                                                   signal can be rewritten as
+
+    III. T HE OPTIMUM BEARING AND TIME OF ARRIVAL                                                           Z = ST GT ET + W                            (10)
+                    ESTIMATION ALGORITHM                                        where GT = diag([gτ0 , · · · , gτP −1 ]), and
+  Traditionally, due to the fact that noise is additive white                                                                                          
+Gaussian, the least square error criteria is used to find the                              e0 (θτ0 , φτ0 )      ···        eM −1 (θτ0 , φτ0 )
+                                                                                 ET =           .
+                                                                                                 ..                                                     .
+                                                                                                                                                       
+optimum bearing and time of arrivals from all paths, i.e.,
+                   opt
+         (τ, θ, φ) = arg min kZ − SGEk2F
+                                                  
+                                                           (8)                               e0 (θτP −1 , φτP −1 ) · · ·     eM −1 (θτP −1 , φτP −1 )
+                                  (τ,θ,φ)
+                                                                                Hence, the optimization problem reduced to
+where (τ, θ, φ) = {(τp , θτp , φτp ) | τp = 0, 1, . . . , N − 1 },                             opt
+                                                                                         (θ, φ) = arg min kZ − ST GT ET k2F
+                                                                                                                           
+and k.kF denotes the Frobenius norm of a matrix. Clearly,                                                                                               (11)
+                                                                                                                 (θ,φ)
+
+
+
+
+                                                                            534
+       Authorized licensed use limited to: Stanford University. Downloaded on September 07,2026 at 00:51:23 UTC from IEEE Xplore. Restrictions apply.
+      2017 14th International Conference on Electrical Engineering/Electronics, Computer, Telecommunications
+      and Information Technology (ECTI-CON)
+
+Algorithm 1 Finding Solution of Eq. (9) by using the orthog-                                                  IV. E XAMPLE
+onal matching pursuit
+                                                                                    In this section, we examined the performance of the pro-
+ 1: h = 0, TERMINATED = FALSE, T0 = ∅, S0 = S(T0 ) =                             posed algorithm on both simulated and real datasets. In both
+    ∅, and R0 = [r0,0 , r0,1 , · · · , r0,M −1 ] = Z.                            cases, we assume that the hydrophone array consists of four
+ 2: for n=0 to N-1 do                                                            hydrophones located at the four corners of a square with the
+ 3:    ŝn = kssnn k                                                             length d on each side. Hence, the hydrophones are located
+ 4: end for                                                                      at coordinates (−d/2, −d/2), (−d/2, d/2), (d/2, d/2) and
+ 5: while h < hmax and not TERMINATED do                                         (d/2, −d/2) where d = 2 cm. The azimuth and elevation
+ 6:    h + 1 −→ h P                                                              angles (φ and θ) are measured from x and z axes, respectively.
+                       M −1
+ 7:    n̂ = arg max m=0 |hrh−1,m , ŝn i|.                                       Fig. 1 displays the hydrophone setup used in this experiment.
+                     n
+ 8:    Th = Th−1 ∪ {n̂}−1andHSh = S(Th )
+ 9:    Q = Sh ShH Sh        Sh .
+10:    Rh = (I − Q)Z
+11:    if kRh k < 0 then
+12:       TERMINATED = TRUE
+13:       T = Th , P = h, and ST = S(T ).
+14:    end if
+15: end while
+
+
+
+By
+      projecting Eq. (11) onto a space spanned by
+  sτ0 , · · · , sτP −1 , and the optimization problem can be
+reduced to                                                                                Fig. 1. Hydrophone arrangement considered in this paper
+                       opt
+                 (θ, φ) = arg min kC − GT ET k2F
+                                                  
+                                                         (12)
+                                  (θ,φ)
+                                                                                 A. simulation
+                      −1 H
+where C = STH ST          ST Z, and (.)H denotes the matrix                         In the simulation, we assume that a Pinger transmits a signal
+Hermitian operation. We note here that C and GT ET are P ×                       given in Eq.(1) for 4 milliseconds at f0 = 25 kHz. This signal
+M matrices where their p-th rows are associated with the p-                      is sampled with an analog to digital converter at the sampling
+th path between a Pinger and the hydrophone array, and m-                        rate of 192 kHz. Hence, we have N0 = 768 samples. The
+th columns are associated with the m-th hydrophone. Let cp                       Pinger is located at θ0 and φ0 with respect to the hydrophone
+denote the p-th row of C in the column format. We can write                      array axes, and the LOS distance between the Pinger and
+the optimization problem for a path with the arrival time τp                     hydrophone array results in the signal pulse arrives at n = τ0 .
+as                                                                               In this experiment, we assume that θ0 and φ0 are uniformly
+             opt                                                                distributed from 0 to π/2 and from −π to π, respectively. Next,
+                  = arg min kcp − gτp e(θτp , φτp )k22 (13)
+                                                     
+   θτp , φτp                                                                     the amplitude, a0 , is assumed to Rayleigh distributed with the
+                           (θτp ,φτp )
+                                                                                 mean of 1 and the phase, ζ0 is a uniform random variable
+where e(θp , φp ) = [e0 (θp , φp ) , · · · , eM −1 (θp , φp )]T .                between −π and π. To simulate the multipath environment,
+  The optimization term in Eq.(13), can be rewritten as                          we assume that there are other P − 1 paths that a signal can
+                                                                                 take. The p-th reflected signal arrives at the bearing angles
+  kcp − gτp e(θτp , φτp )k22 = K − 2Re(gp cH
+                                           p e(θτp , φτp )) (14)
+                                                                                 θp and φp and the arrival time τp > τ0 with the amplitude
+                      2
+where K = kcp k2 + M |gp |2 has a positive real value. The                       of ap . Here, θp and φp are again assumed to be uniformly
+value of gp can be estimated from cp and it is given by                          distributed between 0 and π2 and and −π and π respectively
+                                                                                 for p = 0, 1, . . . , P − 1. The amplitude of the reflected signal
+              eH (θτp , φτp )cp          eH (θτp , φτp )cp                       (ap for p = 1, . . . , P − 1) is also assumed to be Rayleigh
+    gp =    H
+                                       =                   .            (15)
+           e (θτp , φτp )e(θτp , φτp )         M                                 distributed with mean µp < 1, and the arrival time τp for
+By substituting Eq. (15) into Eq. (14), we yield                                 p > 0 is assumed to be uniformly distributed between 0 and
+                                                                                 τmax . The received signal is also corrupted by the additive
+                                    1 H               2
+  kcp − gτp e(θτp , φτp )k22 = kcp k2 −
+                                          2
+                                      e (θτp , φτp )cp .                         white Gaussian noise with mean of zero and variance of σn2 .
+                                   M                                                In this experiment, we examined the effect of noise to the
+                                                      (16)
+Hence, the optimization problem becomes                                          system performance. Here, assumed P = 11 and varied σn2
+               opt                             2
+                                                                                 form 0.01 to 10, or the line-of-sight (LOS) signals have the
+     θτp , φτp      = arg max eH (θτp , φτp )cp .     (17)                       signal to noise ratio (SNR) of −10 to 20 dB. τ0 and τmax are
+                               (θτp ,φτp )
+                                                                                 equal to 1 and 6 ms, respectively. The root mean square errors
+The above problem can be solved using a traditional optimiza-                    (RMSs) after 100 runs for τ0 , θ0 and φ0 are different SNRs
+tion technique such as the Newton method [7].                                    are given in Tab.I. Here, we observed that, as SNR decreases,
+
+
+
+                                                                             535
+        Authorized licensed use limited to: Stanford University. Downloaded on September 07,2026 at 00:51:23 UTC from IEEE Xplore. Restrictions apply.
+     2017 14th International Conference on Electrical Engineering/Electronics, Computer, Telecommunications
+     and Information Technology (ECTI-CON)
+
+
+                            TABLE I                                                                         TABLE III
+ROOT M EAN S QUARE E RRORS OF THE ESTIMATED PARAMETERS FOR THE                           T HE BEARING ANGLES USED IN THE REAL EXPERIMENT
+                      LOS PATH VERSUS SNR
+                                                                                              Experiment      1       2       3      4        5
+                  Proposed Method                Convolutional Filter                            φ0          30◦     30◦     30◦    75◦      70◦
+  SNR (dB)
+              τ0 (µs)    φ0       θ0         τ0 (µs)      φ0         θ0                          θ0          52◦     26◦     60◦    38◦      83◦
+     -10       1199     74.2◦   27.0◦         638.0     76.4◦      24.2◦
+      0        124.9    32.4◦   16.0◦         564.6    63.75◦      22.4◦
+     10        33.0     22.3◦   9.84◦         577.9     64.8◦      25.7◦                                   TABLE IV
+     20        40.6     9.12◦   8.95◦         589.2     72.1◦      24.7◦          T HE ESTIMATED BEARING ANGLES FROM OUR PROPOSED ALGORITHM
+
+                                                                                         Experiment        1         2        3        4         5
+                                TABLE II                                                    φ0           27.8◦     31.8◦    24.5◦    65.8◦     65.2◦
+ROOT M EAN S QUARE E RRORS OF THE ESTIMATED PARAMETERS FOR THE                              θ0           50.8◦     22.7◦    47.0◦    34.0◦     68.1◦
+               LOS PATH VERSUS NUMBER OF NLSP S
+
+                 Proposed Method               Convolutional Filter             term of bearing angles only. The resulting bearing angles are
+    NLSP
+             τ0 (µs)    φ0       θ0         τ0 (µs)     φ0        θ0
+      5       3.72     5.89◦   8.26◦         337.3    41.2◦     19.9◦           given in Tab. IV. From our results, it can be observed that our
+      10      33.0     22.3◦   9.84◦         589.2    72.1◦     24.7◦           algorithm provides accurate results for small elevation angles.
+      15      136.3    25.1◦   9.7◦          770.1    87.3◦     29.9◦
+      20      156.2    30.3◦   15.6◦         799.8    89.2◦     29.9◦
+      25      223.4    45.6◦   20.5◦         859.1    80.5◦     28.1◦                                  V. C ONCLUSION
+      30      202.0    39.2◦   16.5◦         851.2    93.7◦     30.0◦
+                                                                                   This paper introduced a new Pinger bearing estimation
+                                                                                based on the concept of sparse representation and two-stage
+the estimation errors in terms of arrival times and bearings                    signal subspace-based processing approach. Here, we decom-
+increases. For the comparison, we employed the matched filter                   posed the received signal into the summation of multiple
+to estimate the arrival times. Here, we associated the peaks                    copies of the transmitted signals with different arrival times
+of the output of the matched filter to the LOS signal where                     and bearings. The goal of the sparse representation is to choose
+τmatch = tp − N0 is the estimated arrival time of the LOS                       the solution as the few number of paths as possible where the
+signal using match filter. Next, the same technique for bearing                 desired errors between received signal and reconstructed signal
+estimation is used to estimate the azimuth and elevation                        is achieved. From our both simulation and real experiments,
+angles where ST = [sτmatch ]. From Tab. I, we observed that                     we concluded that our proposed technique can successfully
+our algorithm outperforms the convolution filter approach for                   estimate the bearing angles of the line-of-sight path.
+high and medium SNR. However, when SNR is small, our                                                 ACKNOWLEDGMENT
+approach and convolution filter approach yield roughly the
+same performance. This suggests that our algorithm requires                        The authors would like to thank our sponsors, Faculty of
+sufficiently high SNR to achieve some improvement over the                      Engineering, Kasetsart University and PTTEP, which provide
+traditional method.                                                             the financial supports. We appreciate staffs from Hiveground,
+   Next, we examined the effect of multipaths to the system                     Co. Ltd., and EmOne, Co. Ltd., for their advises to our
+performance. Here, we varied the number of non-line-of-sight                    students. Finally, we thank Kasetsart University for providing
+paths (NLSPs) from 5 to 30 while setting the SNR of the LOS                     us time and space to use a university diving pool.
+path to 10 dB. The results are given in Tab. II. We observed                                                  R EFERENCES
+that the performance of our approach degrades slowly as the                     [1] M.C. Vanderveen, B.C. Ng, C.B. Papadias, and A. Paulraj,”Joint Angle
+number of NLSPs increases, and the performances of the                              and Delay Estimation (JADE) for Signals in Multipath Environments”,
+convolutional filter approach are significantly worse than our                      Proceedings of the 1996 30th Asilomar Conference on Signals, Systems
+                                                                                    and Computers, Part 2, pp. 2436-2449, Oct. 1996.
+proposed technique.                                                             [2] I. Ziskind and M. Wax, ”Maximum Likelihood Localization of Multiple
+                                                                                    Sources by Alternating Projection,” IEEE Transactions on Acoustics,
+B. Real Dataset                                                                     Speech and Signal Processing, vol. 36, no. 10,pp. 1553-1560, Oct. 1988,.
+                                                                                [3] P. Panagiotou, A. Polydoros, and P. Thiennviboon, ”Multiple-Path
+   In this real data set, we collected the data by using a                          Direction-of-Arrival Estimation for Cognitive Radio Sensing,” 2010 IEEE
+Pinger model ALP-365 from Teledyne that produced the                                21st International Symposium on Personal Indoor and Mobile Radio
+acoustic pulse every 2 seconds. Each pulse is a constant phase                      Communications (PIMRC), pp. 791-796, 26-30 Sep. 2010.
+                                                                                [4] M. Mohanna, M.L. Rabeh, E.M. Zieur, and S. Hekala, ”Optimization of
+sinusoidal with the frequency of 30 kHz. This acoustic signals                      MUSIC algorithm for angle of arrival estimation in wireless communica-
+are collected using four Reson TC-4013 hydrophones arranged                         tions,” NRIAG Journal of Astronomy and Geophysics, vol. 2, pp., 116-124,
+as shown in Fig. 1. An Analog Devices SHARC-21369 digital                           Sep. 2013.
+                                                                                [5] J. Wright, Y. Ma, J. Mairal, G. Sapiro, T. Huang, and S. Yan, ”Sparse
+signal processor is used to collect the data at the sampling rate                   Representation for Computer Vision and Pattern Recognition,” Proceed-
+of 192 kHz.                                                                         ing of the IEEE, vol. 98, no. 6, pp. 1031-1044, June 2010.
+   The Pinger was moved around at five locations (Tab. III) the                 [6] T. TonyCai and L. Wang, ”Orthogonal Matching Pursuit for Sparse Signal
+                                                                                    Recovery with Noise,” IEEE Transactions on information theory, vol. 57,
+swimming pool in Kasetsart University while the hydrophone                          no. 7, pp. 4680-4688, Jul. 2011.
+array is kept at a fixed location. Since the arrival times is                   [7] K.E. Atkinson,An Introduction to Numerical Analysis, John Wiley &
+unknown, we examined the performance of our algorithm in                            Sons, 1989.
+
+
+
+
+                                                                            536
+       Authorized licensed use limited to: Stanford University. Downloaded on September 07,2026 at 00:51:23 UTC from IEEE Xplore. Restrictions apply.
+

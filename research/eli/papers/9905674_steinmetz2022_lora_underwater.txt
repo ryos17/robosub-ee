@@ -1,0 +1,359 @@
+                                                                                                                                                                   Taking LoRa for a Dive: CSS for Low-Power
+                                                                                                                                                                       Acoustic Underwater Communication
+
+
+
+
+2022 Sixth Underwater Communications and Networking Conference (UComms) | 978-1-6654-7461-0/22/$31.00 ©2022 IEEE | DOI: 10.1109/UComms56954.2022.9905674
+                                                                                                                                                                                        Fabian Steinmetz                                                     Bernd-Christian Renner
+                                                                                                                                                                    Institute of Autonomous Cyber-Physical Systems                             Institute of Autonomous Cyber-Physical Systems
+                                                                                                                                                                            Hamburg University of Technology                                           Hamburg University of Technology
+                                                                                                                                                                                    Hamburg, Germany                                                           Hamburg, Germany
+                                                                                                                                                                                 fabian.steinmetz@tuhh.de                                                   christian.renner@tuhh.de
+
+
+                                                                                                                                                              Abstract—Long Range (LoRa) is a rising technology for                        and discuss an efficient synchronization and demodulation. We
+                                                                                                                                                           low-power over-water wide area networks. In this paper, we                      use Watermark [13] to replay our recorded channels from [3]
+                                                                                                                                                           modify the physical layer (PHY) of the LoRa communication                       to evaluate our implementation. We compare our implemen-
+                                                                                                                                                           standard for use in acoustic underwater communication. First,
+                                                                                                                                                           we describe a light-weight LoRa-inspired chirp spread spectrum                  tation to JANUS, an existing and well-studied underwater
+                                                                                                                                                           (CSS) implementation and evaluate it in simulations and real-                   communication standard [14]. Furthermore, we present the
+                                                                                                                                                           world trials. Second, we compare our results to the JANUS                       findings of real-world measurements to support the result of
+                                                                                                                                                           underwater communication standard. Especially in scenarios                      the simulations.
+                                                                                                                                                           with strong multipath propagation, our CSS implementation                          Based on the simulations and real-world evaluation, we
+                                                                                                                                                           offers advantages compared to JANUS communication. Third,
+                                                                                                                                                           we pinpoint weaknesses and identify room for improvements.                      point out that our implementation enables a low bit error rate
+                                                                                                                                                              Index Terms—underwater communication, underwater wire-                       (BER) in strong multipath environments. For example, in the
+                                                                                                                                                           less sensor network, ahoi modem, LoRa                                           channel with the highest multipath propagation, JANUS has a
+                                                                                                                                                                                                                                           6.1 % BER and our CSS implementation goes down to 0.6 %
+                                                                                                                                                                                    I. I NTRODUCTION                                       BER at 15 dB signal to noise ratio (SNR). At last, we pinpoint
+                                                                                                                                                              Micro autonomous underwater vehicles (µAUVs), e. g., [1],                    further improvements and future research directions.
+                                                                                                                                                           and underwater wireless sensor networks (UWSNs), e. g., [2],
+                                                                                                                                                                                                                                                                  II. L O R A M ODULATION
+                                                                                                                                                           enable diverse underwater applications in ports and shallow
+                                                                                                                                                           water scenarios. Most acoustic communication channels in                          The LoRa-PHY1 is a proprietary standard for low-power
+                                                                                                                                                           these scenarios expose a strong multipath propagation. Based                    and long-range over-water communication. LoRa is based on
+                                                                                                                                                           on that, acoustic underwater communication is challenging for                   CSS recently patented by Semtech [15]. During the last years,
+                                                                                                                                                           µAUVs and UWSNs.                                                                the research community investigated and described the LoRa-
+                                                                                                                                                              In the proceedings of UComms’20 we discussed four                            PHY, for example in [4], [16]–[19].
+                                                                                                                                                           challenging very-shallow-water acoustic communication chan-                     A. Definitions and Modulation
+                                                                                                                                                           nels [3]. In this paper, we present different chirp spread
+                                                                                                                                                                                                                                              A complex up-chirp centered at 0 Hz is defined by
+                                                                                                                                                           spectrum (CSS) modulation schemes and evaluate their perfor-
+                                                                                                                                                           mance in these channels. The CSS is derived from the LoRa-
+                                                                                                                                                                                                                                                                          Rt                    µ    BW
+                                                                                                                                                                                                                                                         x0 (t) = ej2π 0 f (τ )dτ = ej2π( 2 t− 2 )t                (1)
+                                                                                                                                                           PHY, a low-power and long-range over-water communication
+                                                                                                                                                           standard. LoRa is a recent technique for the over-water Internet                with bandwidth BW, instantaneous frequency f (t), chirp rate
+                                                                                                                                                           of Things (IOT) [4]. Compared to other modulations schemes,                                                      df (t)   BW
+                                                                                                                                                           CSS has a strong resilience against multipath propagation.                                                µ=            =                               (2)
+                                                                                                                                                                                                                                                                              dt     Tsym
+                                                                                                                                                              CSS is already used in acoustic underwater communication,
+                                                                                                                                                           e. g., for synchronization [5]–[7], data modulation [8], [9] or                 and symbol duration Tsym . Furthermore, the spreading fac-
+                                                                                                                                                           sweeped carrier frequency [10], [11]. However, by the authors’                  tor SF is defined as
+                                                                                                                                                           best knowledge, this is the first implementation of frequency-                             SF = log2 (Tsym BW) ⇔ 2SF = Tsym BW .                        (3)
+                                                                                                                                                           shift chirp modulation (which is used by LoRa) combined with
+                                                                                                                                                           dechirping for acoustic underwater communication.                               The spreading factor describes the relation of the number of
+                                                                                                                                                              Our implementation is running in Matlab to allow a hard-                     bits per symbol and symbol duration for a constant bandwidth.
+                                                                                                                                                           ware independent proof-of-concept. However, it is a compu-                      Each symbol carries SF bits, which leads to 2SF different
+                                                                                                                                                           tationally light-weight implementation, which enables a usage                   data symbols. Recommended values are SF ∈ {7, ..., 12}
+                                                                                                                                                           on low-power modems, e. g., our ahoi modem [12].                                and BW ∈ {125 kHz, 250 kHz, 500 kHz} [4]. LoRa uses a
+                                                                                                                                                                                                                                           frequency-shift chirp modulation, which is described in [16].
+                                                                                                                                                           A. Contributions and Organization
+                                                                                                                                                                                                                                              1 In most publications (including this one), the LoRa-PHY involves the
+                                                                                                                                                             The paper is organized as follows. First, we introduce LoRa                   physical and data link layer. The layer above the LoRa-PHY is LoRa wide
+                                                                                                                                                           communication. Afterwards, we describe our implementation                       area network (LoRaWAN), a media access control (MAC) layer.
+
+
+
+
+                                                                                                                                                                  Authorized licensed use limited to: Stanford University. Downloaded on September 07,2026 at 01:06:40 UTC from IEEE Xplore. Restrictions apply.
+                           Preamble                    SFD                 Data                 offset (CFO), symbol timing offset (STO) and sampling fre-
+             BW
+
+
+
+ frequency
+                                                                                                quency offset (SFO). We focus on the STO, based on the
+              2
+
+              0
+                                                                                                propagation time. CFO and SFO usually come from low-cost
+        − BW
+           2                                                                                    hardware, e. g., quartz crystals. In the following, the imple-
+                  0    1   2   3   4   5   6       7   8     9 10.25   12.25   14.25   16.25
+                                      time t/Tsym
+                                                                                                mentation runs in a simulation without CFO and SFO and with
+         Figure 1. LoRa packet with preamble, SFD and six data symbols.
+                                                                                                USB oscilloscopes with precise clocks compared to low-cost
+                                                                                                receivers. However, opposed to the LoRa over-water communi-
+   To decode a received, sampled and synchronized sym-                                          cation based on the electromagnetic wave, acoustic underwater
+             SF
+bol yS ∈ R2 , a filter bank of 2SF matched filters can be                                       communication uses lower carrier frequencies in the kilo-
+applied. A computationally more efficient decoding method,                                      Hertz range (opposed to the mega-Hertz range for over-water
+called dechirping, is described in [18]. In short, the received                                 communication), which typically results in a smaller CFO.
+symbol is sampled with sampling frequency BW resulting                                          Future implementations may use frequency synchronization to
+in 2SF samples per symbol. Afterwards, the discrete Fourier                                     compensate motion-introduced Doppler shifts.
+transform DFT {·} of the product of received symbol yS and                                         The implemented acoustic CSS receiver performs the fol-
+                              SF
+complex down chirp x∗0 ∈ R2 is calculated                                                       lowing steps in the base-band for time synchronization:
+                      [X0 , X1 , ..., X2SF −1 ] = DFT {yS ◦ x∗0 }                         (4)   (1) Matched filter with an up-chirp (2SF samples per symbol).
+                                                                                                (2) Every 2SF samples, find the maximum value in the last
+The data symbol can be estimated with                                                           2SF+1 samples of the matched filter. (3) Calculate a threshold
+                                   Ŝ = argmax (|Xk |) .                                  (5)   for the maximum value from step 2. If the maximum is
+                                               k                                                above the threshold an up-chirp is detected. (4) If an up-
+B. Packet Structure                                                                             chirp is detected,   the receiver  compares the maximum in
+                                                                                                the interval 0.9 · 2SF , 1.1 · 2SF after the previous detected
+                                                                                                              
+   Figure 1 depicts a LoRa packet with Npre = 6 preamble
+                                                                                                peak to a peak detection threshold. The interval was chosen
+symbols, Nsfd = 4.25 starting frame delimiter (SFD) symbols
+                                                                                                based on preliminary experiments. It is a trade-off between
+(2 up-chirps and 2.25 down-chirps) and Ndata = 6 data sym-
+                                                                                                computational efficiency, suspending false synchronizations
+bols. The SFD is used for time and frequency synchronization.
+                                                                                                and allowing variations of previous peak detection. In addition
+It is important to note, that the LoRa-PHY includes coding,
+                                                                                                to that, the receiver starts a matched filter with down-chirps
+data structure (header and payload) and cyclic redundancy
+                                                                                                and tries to find down-peaks similar to steps 2-3. (5) If the
+checks (CRCs). In the following, we focus on the packet
+                                                                                                receiver can not find a following chirp (up-chirp or down-
+structure with preamble, SFD and data to evaluate the BER.
+                                                                                                chirp), the number of detected chirps is set to zero. (6) If the
+                               III. I MPLEMENTATION                                             receiver finds a pattern of two up-chirp followed by two down-
+   We explain the implementation of the CSS transmitter and                                     chirps, the SFD is detected and the synchronization finished.
+receiver for acoustic underwater communication. Transmitter                                     (7) After a SFD detection, the receiver calculated the begin of
+and receiver are implemented in Matlab.                                                         the data symbols based on the preamble and SFD peaks.
+                                                                                                   The threshold calculation is critical. The calculation has
+A. Packet Structure and Encoding                                                                to maximize the symbol detection probability and minimize
+   The packet structure is similar to Section II-B. Opposed                                     probability of a false detection. During the development dif-
+to the LoRa-PHY the payload length is not transmitted in the                                    ferent methods were implemented (due to the page limit,
+packet header, the number of data symbols is fixed and known                                    they are not discussed in this paper). The current receiver
+at transmitter and receiver. This allows a BER evaluation                                       uses a cell averaging constant false alarm rate (CA-CFAR)
+without additional error coding. Moreover, the data is Gray-                                    with NCFAR = 32 samples, Nguard = 8 guard samples and
+coded and modulated to the data symbols. The packet is                                          Pfa = 10−5 false alarm probability. CA-CFAR is used in radar
+generated in the base-band and afterwards shifted to a carrier                                  applications, for further details the reader is referred to [20].
+frequency fc in the transmission band.                                                          After synchronization, the receiver calculates the data symbol
+   For the real-world trials, the transmission characteristic from                              frames and demodulates the symbols according to Eqs. (4)
+the data sheet of the hydrophone (Aquarian Scientific AS-1)                                     and (5).
+is compensated at the transmitter. Based on that, the spectral
+density of transmitted acoustic wave is flat in the transmission                                                          IV. E VALUATION
+bandwidth [fc − BW/2, fc + BW/2].                                                                  We evaluated the synchronization rate and BER of the
+                                                                                                presented CSS modulation and compare the results to
+B. Synchronization and Decoding
+                                                                                                JANUS [14], a well-studied and widely used communication
+   The received signal is shifted to base-band and downsam-                                     standard. We used the online available Matlab implementation
+pled to BW (resulting in ±BW/2 Nyquist frequency).                                              JANUS 3.0.52 . For a fair comparison, we made following
+   Afterwards, an accurate synchronization is required to es-                                   modifications in to the provided source code:
+timate the symbol frames of the following data symbols.
+According to [19], the receiver has to recover carrier frequency                                  2 https://www.januswiki.com/
+
+
+
+
+              Authorized licensed use limited to: Stanford University. Downloaded on September 07,2026 at 01:06:40 UTC from IEEE Xplore. Restrictions apply.
+Table I. Evaluation setup for the simulations. The bit rate is calculated based
+
+
+                                                                                           Pτ (τ ) in dB
+                                                                                                             0
+on the duration Tsym and the bits per symbol. The Eb /N0 is calculated for                                 −10
+the simulated SNR between −15 to 15 dB (in the 20 kHz bandwidth).                                          −20
+                                                                                                           −30
+  Modulation        BW         Tsym     Bit/Sym Bit Rate          Eb /N0                                   −40
+                                                                                                                 0         5       10       15     20          25
+CSS, SF = 10 20.0 kHz 51.20 ms            10 bit   195 bit/s    5.1 to 35.1 dB                                            τ in ms
+                                                                                  Figure 2. Power delay profile (47.5 kHz–77.5 kHz) measured during the
+CSS, SF = 9      20.0 kHz 25.60 ms         9 bit   352 bit/s    2.5 to 32.5 dB
+                                                                                  real-world evaluation in a canal.
+CSS, SF = 8      20.0 kHz 12.80 ms         8 bit   625 bit/s    0.1 to 30.1 dB    Table II. Results of the real-world trials in a canal in Hamburg, Germany.
+CSS, SF = 7      20.0 kHz     6.40 ms      7 bit 1094 bit/s −2.4 to 27.6 dB
+                                                                                        Modulation                   Bit Rate    Duration    SNR        Sync        BER
+CSS, SF = 6      20.0 kHz     3.20 ms      6 bit 1875 bit/s −4.7 to 25.3 dB
+                                                                                      CSS, SF = 10                   195 bit/s 3187 ms 25.80 dB 100 % 1.09 %
+JANUS, default     4.2 kHz    6.25 ms      1 bit   160 bit/s    9.4 to 39.4 dB
+                                                                                      CSS, SF = 9                    352 bit/s 1722 ms 26.79 dB 100 % 1.59 %
+JANUS            16.6 kHz     1.60 ms      1 bit   625 bit/s −0.3 to 29.7 dB
+                                                                                      CSS, SF = 8                    625 bit/s    950 ms 26.58 dB 100 % 1.09 %
+   (1) The payload length was set to 24 B to bypass the                               CSS, SF = 7                1094 bit/s       539 ms 25.95 dB 100 % 0.53 %
+packet header which usually carries the payload length. (2) The                       CSS, SF = 6                1875 bit/s       308 ms 26.57 dB 100 % 0.86 %
+header CRC was ignored and the payload received in all cases.
+                                                                                      JANUS, default                 160 bit/s 3663 ms 27.92 dB 100 % 0.23 %
+(3) The BER was calculated based on a hard decision of the
+                                                                                      JANUS                          625 bit/s    916 ms 26.56 dB 100 % 0.08 %
+raw chip values. Further coding was omitted (usually, JANUS
+requires two chips for an information bit), because our CSS                       20 kHz bandwidth and not the energy per bit to noise power
+implementation does not use additional error coding. (4) Dur-                     spectral density ratio Eb /N0 . The Eb /N0 is listed in Table I.
+ing the real-world evaluation, the transmission characteristic                    JANUS had a bit rate of 160 bit/s or 625 bit/s compared to
+of the hydrophone was compensated (see Section III-A).                            bit rates between 195 bit/s to 1875 bit/s of CSS.
+   Based on our soundings in [3] and the communication                                The highest improvements were measured in CASTLE-2
+bandwidth of our ahoi modem [12], a carrier of fc = 62.5 kHz                      with strong multipath propagation. The channel was recorded
+was selected. The CSS had BW = 20 kHz and was evaluated                           in a port near to ships and quay walls. In this scenario, CSS
+with SF ∈ {6, 7, 8, 9, 10}. JANUS was used with the default                       with high spreading (SF ≥ 8) had lower BER than JANUS.
+bandwidth of 4.16 kHz and a wide bandwidth of 16.64 kHz.                          The BER for CSS in Fig. 3c correspond with the synchroniza-
+Table I provides an overview and bit rates.                                       tion rates in Fig. 3b. To eliminate the effect of synchronization
+                                                                                  failures, Fig. 3d plots the BER for synchronized packets only
+A. Simulation
+                                                                                  (if the packet is synchronized, the bits are considered). In
+   We used Watermark [13] to replay four recorded channel                         case of a lower synchronization rate less bits were included
+impulse responses. The setup and parameters are described                         in the BER calculation. This increased the observation error,
+in [3]. In all cases, the channels were sounded for 10 min                        i. e. variation. In all cases, the BER was below 2 % for all
+in the frequency range from 50 kHz to 75 kHz. The power                           spreading factors SF and for SNRs higher than 0 dB, and the
+delay profiles are shown in Fig. 3a. In all cases, 512 bit per                    BER was reduced to 0.15 %. Based on that, the overall BER
+packet were transmitted without Doppler shift. Ten randomly                       can be enhanced by using a larger SF for the synchronization
+generated data sequences were transmitted 150 times per chan-                     (preamble and SFD) than the data transmission.
+nel (PLANE-1/2 and CASTLE-1/2). Afterwards, the received
+signal strengths were measured and white Gaussian noise was                       B. Real-World Trials
+added with different SNRs. The SNR was always calculated                             The real-world trials took place in a canal (25 m width) in
+over a bandwidth of 20 kHz centered at 62.5 kHz. During                           Hamburg, Germany (May 2022). The water temperature was
+evaluation, each received packet from Watermark was repeated                      14.8 ◦ C and we measured 1465 m/s speed of sound with a
+ten times per SNR step and a random delay between 100 ms                          professional CTD-probe. During the evaluation, we observed
+and 500 ms was applied. In total, 15 000 packets (7.68 Mbit)                      small waves (up to 10 cm). Two hydrophones were submerged
+were decoded per SNR step per channel.                                            circa 1 m under the water surface mounted under small buoys.
+   At first, the synchronization rate is depicted in Fig. 3b. For                 The communication distance was circa 190 m and water
+every SNR step, the successful synchronizations were counted.                     depth was 2.5 m at transmitter and 3.3 m at receiver. Fig. 2
+In general, each step of SF resulted in a processing gain of                      depicts the measured power delay profile. Compared to the
+circa 3.5 dB. Due to the strong multipath arrivals during the                     simulations, the real-world channel had a longer reverberation-
+first 5 ms in the channel CASTLE-2, SF = 6 dropped out and                        tail than PLANE-1/2 and was from this point of view more
+stayed below 83.0 % and SF = 7 below 93.5 %.                                      similar to CASTLE-2. However, opposed to CASTLE-2 with
+   Figure 3c depicts the BERs for CSS and JANUS. In the case                      strong multipath arrivals during the first 5 ms, the real-world
+of a missed synchronization, all bits are set to zero (i. e. 50 %                 channel had a strong line-of-sight path and weaker multipath
+BER). In the channels PLANE-1 and PLANE-2, the default                            propagation channels.
+JANUS modulation has the lowest BER. It is important to                              During the trials, ten packets with random data (512 bit per
+note, that Fig. 3c depicts the (input) SNR calculated over the                    packet) were generated. Each packet was repeated 15 times. In
+
+
+
+
+        Authorized licensed use limited to: Stanford University. Downloaded on September 07,2026 at 01:06:40 UTC from IEEE Xplore. Restrictions apply.
+                                          PLANE-1                                            PLANE-2                                       CASTLE-1                                       CASTLE-2
+
+
+Pτ (τ ) in dB
+                   0
+                 −10
+                 −20
+                 −30
+                 −40
+                          0          5      10         15      20    25    0            5     10         15      20    25   0          5     10        15       20    25   0          5      10       15         20    25
+                          τ in ms                             τ in ms                           τ in ms                            τ in ms
+     (a) Power delay profiles of the recorded acoustic underwater channels (50 kHz–75 kHz). The channels were used for the simulations with Watermark.
+                                                           CSS SF = 10                      CSS SF = 9                  CSS SF = 8                      CSS SF = 7                    CSS SF = 6
+
+
+
+Sync Rate in %
+                 100      SF10                                            SF10                                              SF10                                               SF10
+                  80
+                  60                                 SF6                                           SF6                                                SF6                                                  SF6
+                  40
+                  20
+                   0
+                       −15 −10 −5             0            5   10    15 −15 −10 −5               0           5   10    15 −15 −10 −5           0            5   10    15 −15 −10 −5           0        5         10    15
+                                          SNR in dB                            SNR in dB                         SNR in dB                          SNR in dB
+                                         (b) Synchronization rate for different spreading factors SF. Every SNR step 15000 transmissions were simulated.
+                                                           CSS SF = 10                      CSS SF = 9                  CSS SF = 8                      CSS SF = 7                    CSS SF = 6
+                 100
+                                                     SF6                                               SF6                                            SF6                                                    SF6
+                 10−1
+BER                        SF10                                             SF10                                             SF10                                                     SF10
+                 10−2
+                 10−3
+                                                                                              JANUS, default (4.2 kHz)                     JANUS (16.6 kHz)
+                 100
+                 10−1
+BER
+                 10−2
+                 10−3
+                     −15 −10 −5                  0         5   10    15 −15 −10 −5                 0         5   10    15 −15 −10 −5              0         5   10    15 −15 −10 −5               0    5         10    15
+                                         SNR in dB                          SNR in dB                            SNR in dB                              SNR in dB
+                                          (c) BER of all packets. In the case of a failure during the synchronization, the received bits are set to zero.
+                                                           CSS SF = 10                      CSS SF = 9                  CSS SF = 8                      CSS SF = 7                    CSS SF = 6
+                 100
+                 10−1
+BER                                                            SF6                                               SF6                                            SF6                                              SF6
+                 10−2         SF10                                               SF10                                           SF10                                           SF10
+                 10−3
+                                                                                              JANUS, default (4.2 kHz)                     JANUS (16.6 kHz)
+                 100
+                 10−1
+BER
+                 10−2
+                 10−3
+                     −15 −10 −5                  0         5   10    15 −15 −10 −5                 0         5   10    15 −15 −10 −5              0         5   10    15 −15 −10 −5               0    5         10    15
+                     SNR in dB                          SNR in dB                         SNR in dB                          SNR in dB
+                (d) BER of the synchronized packets. Opposed to Fig. 3c the BER is calculated for synchronized packets (see Fig. 3b).
+Figure 3. Results of the simulation with Watermark. The SNR was always calculated over a bandwidth of 20 kHz centered at 62.5 kHz. The gray filled area
+in the BER diagrams for JANUS indicates the minimal and maximal BER of the CSS implementation.
+
+total, 150 packets respectively 76.8 kbit per modulation were                                                                                                   V. C ONCLUSION
+transmitted. The results are listed in Table II. All packets were                                                          In this paper, we presented first results with a LoRa-inspired
+correctly detected. However, the BER of JANUS (0.23 % and                                                               CSS modulation for acoustic underwater communication in
+0.08 %) was lower compared to CSS (between 0.53 % and                                                                   shallow-water scenarios with strong multipath propagation.
+1.59 %). Surprisingly, the CSS modulations with SF ∈ {6, 7}                                                             We used a lightweight implementation, which enables further
+had lower BERs than SF ∈ {8, 9, 10}. A closer inspection                                                                usage on low-power devices, e. g., our ahoi modem with a
+showed, that the energy after dechirping was distributed over                                                           Cortex-M4 microcontroller.
+two DFT bins (c. f. Eq. (4)), which reduced the probability of a                                                           To evaluate our CSS implementation, we used previously
+correct detection of Xk and enhanced the chance to decode the                                                           recorded channel soundings in Watermark and real-world tri-
+neighbor symbol Xk−1 or Xk+1 (c. f. Eq. (5)). We observed                                                               als. In comparison to the existing and well-studied underwater
+this for all SF. The channel varied over the transmission                                                               communication standard JANUS, our CSS implementation
+time. Based on that, longer packets (higher SF) leaded to                                                               outperform JANUS in scenarios with strong multipath prop-
+more channel variation over transmission time and, therefore,                                                           agation and equals JANUS in situations with less multipath
+a higher probability of small STO errors during the reception.                                                          arrivals in most cases.
+Summarizing the real-world trials, our CSS implementation                                                                  Based on the results, the weak point in our implementation
+produced promising results for a light-weight frequency-shift                                                           is the synchronization. Future implementations will include
+chirp modulation for acoustic underwater communication. In                                                              a frequency synchronization to cope with Doppler shifts. In
+all cases, the BER was below 1.6 % However, future work                                                                 addition, we plan a CSS with a higher spreading than the data
+has to improve the synchronization to reduce fractional STO                                                             symbols for the preamble and SFD to enhance the detection
+errors.                                                                                                                 and synchronization probability.
+
+
+
+
+                       Authorized licensed use limited to: Stanford University. Downloaded on September 07,2026 at 01:06:40 UTC from IEEE Xplore. Restrictions apply.
+                        ACKNOWLEDGMENT                                             [9] J. A. Neasham, G. Goodfellow, and R. Sharphouse, “Development
+                                                                                       of the “Seatrac” miniature acoustic modem and USBL positioning
+  This work has been partially carried out at the University                           units for subsea robotics and diver applications,” in MTS/IEEE Oceans
+of Koblenz-Landau in Koblenz, Germany.                                                 Conference & Exposition (OCEANS), Genova, Italy, May 2015.
+                                                                                  [10] K. Kebkal and R. Bannasch, “Sweep-spread carrier for underwater com-
+                             R EFERENCES                                               munication over acoustic channels with strong multipath propagation,”
+                                                                                       The Journal of the Acoustical Society of America, vol. 112, pp. 2043–
+[1] D. A. Duecker, N. Bauschmann, T. Hansen, E. Kreuzer, and R. Seifried,              2052, 2002.
+    “HippoCampus X – A Hydrobatic Open-source Micro AUV for Con-                  [11] L. Marchetti and R. Reggiannini, “An Efficient Receiver Structure for
+    fined Environments,” in IEEE/OES Autonomous Underwater Vehicles                    Sweep-Spread-Carrier Underwater Acoustic Links,” IEEE Journal of
+    Symposium (AUV), St. Johns, Canada (Virtual), 2020.                                Oceanic Engineering (JOE), vol. 41, no. 2, pp. 440–449, Jul. 2016.
+[2] A. Signori, F. Campagnaro, F. Steinmetz, B.-C. Renner, and M. Zorzi,          [12] C. Renner, J. Heitmann, and F. Steinmetz, “ahoi: Inexpensive, Low-
+    “Data Gathering from a Multimodal Dense Underwater Acoustic Sensor                 Power Communication and Localization for Underwater Sensor Net-
+    Network Deployed in Shallow Fresh Water Scenarios,” Journal of Sensor              works and µAUVs,” Transactions on Sensor Networks (TOSN), vol. 16,
+    and Actuator Networks, vol. 8, no. 4, 2019.                                        no. 2, pp. 1–46, 2020.
+[3] F. Steinmetz and B.-C. Renner, “From the Long-Range Channel in the            [13] P. A. van Walree, F.-X. Socheleau, R. Otnes, and T. Jenserud, “The
+    Ocean to the Short-Range and Very Shallow-Water Acoustic Channel in                Watermark Benchmark for Underwater Acoustic Modulation Schemes,”
+    Ports and Harbors,” in 5th Underwater Communications and Networking                IEEE Journal of Oceanic Engineering (JOE), vol. 42, no. 4, pp. 1007–
+    Conference (UComms), Lerici, Italy (Virtual), Aug. 2021.                           1018, Oct. 2017.
+[4] J. C. Liando, A. Gamage, A. W. Tengourtius, and M. Li, “Known and             [14] J. Potter, J. Alves, D. Green, G. Zappa, I. Nissen, and K. McCoy,
+    Unknown Facts of LoRa: Experiences from a Large-Scale Measurement                  “The JANUS underwater communications standard,” in Underwater
+    Study,” ACM Transactions on Sensor Networks (TOSN), vol. 15, no. 2,                Communications and Networking (UComms), Sestri Levante, Italy, 2014.
+    Apr. 2019.                                                                    [15] “Patent us8406275b2,” US patentus US8 406 275B2, Mar. 26, 2013.
+[5] Y. Su, L. Dong, Z. Zhou, X. Liu, and X. Wei, “A General Embedded Un-               [Online]. Available: https://patents.google.com/patent/US8406275B2/en
+    derwater Acoustic Communication System Based on Advance STM32,”               [16] L. Vangelista, “Frequency Shift Chirp Modulation: The LoRa Modula-
+    IEEE Embedded Systems Letters, vol. 13, no. 3, pp. 90–93, Sep. 2021.               tion,” IEEE Signal Processing Letters, vol. 24, no. 12, pp. 1818–1821,
+[6] E. Coccolo, F. Campagnaro, D. Tronchin, A. Montanari, R. Francescon,               2017.
+    L. Vangelista, and M. Zorzi, “Underwater Acoustic Modem for a                 [17] M. Knight and B. Seeber, “Decoding LoRa: Realizing a Modern
+    MOrphingDistributed Autonomous Underwater Vehicle (MODA),” in                      LPWAN with SDR,” in 6th GNU Radio Conference, 2016.
+    MTS/IEEE Oceans Conference & Exposition (OCEANS), Chennai, India,             [18] R. Ghanaatian, O. Afisiadis, M. Cotting, and A. Burg, “Lora Digital Re-
+    Feb. 2022.                                                                         ceiver Analysis and Implementation,” in IEEE International Conference
+[7] F. Steinmetz, J. Heitmann, and C. Renner, “A Practical Guide to                    on Acoustics, Speech and Signal Processing (ICASSP), Brighton, UK,
+    Chirp Spread Spectrum for Acoustic Underwater Communication in                     May 2019.
+    Shallow Waters,” in 13th ACM International Conference on Underwater           [19] C. Bernier, F. Dehmas, and N. Deparis, “Low Complexity LoRa Frame
+    Networks & Systems (WUWNet), Shenzhen, China, Dec. 2018.                           Synchronization for Ultra-Low Power Software-Defined Radios,” IEEE
+[8] D. J. Schott, A. Gabbrielli, W. Xiong, G. Fischer, F. Höflinger, J. Wende-        Transactions on Communications, vol. 68, no. 5, pp. 3140–3152, 2020.
+    berg, C. Schindelhauer, and S. J. Rupitsch, “Asynchronous Chirp Slope         [20] M. A. Richards, J. A. Scheer, and W. A. Holm, Eds., Principles of
+    Keying for Underwater Acoustic Communication,” Sensors, vol. 21,                   Modern Radar: Basic principles. SciTech Publishing, Inc., 2010 (2015
+    no. 9, 2021.                                                                       reprinted with corrections).
+
+
+
+
+       Authorized licensed use limited to: Stanford University. Downloaded on September 07,2026 at 01:06:40 UTC from IEEE Xplore. Restrictions apply.
+

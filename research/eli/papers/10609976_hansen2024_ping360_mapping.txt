@@ -1,0 +1,506 @@
+                                                                                                                                                       2024 IEEE International Conference on Robotics and Automation (ICRA)
+                                                                                                                                                       May 13-17, 2024. Yokohama, Japan
+
+
+
+                                                                                                                                                        An Open-Source Solution for Fast and Accurate Underwater Mapping
+                                                                                                                                                                  with a Low-Cost Mechanical Scanning Sonar
+                                                                                                                                                                                                              Tim Hansen and Andreas Birk1
+
+
+
+
+2024 IEEE International Conference on Robotics and Automation (ICRA) | 979-8-3503-8457-4/24/$31.00 ©2024 IEEE | DOI: 10.1109/ICRA57147.2024.10609976
+                                                                                                                                                          Abstract— An open-source software framework is presented                    not only much more expensive than vision, but they also
+                                                                                                                                                       that allows real-time underwater mapping with popular marine                   require payload- and energy-capabilities that are beyond
+                                                                                                                                                       robotics components, namely a BlueRobotics BlueROV2 with                       typical low-cost marine robots. Somewhat an exception are
+                                                                                                                                                       its standard Ping360 Mechanical Scanning Sonar (MSS) and a
+                                                                                                                                                       A50 Doppler Velocity Log (DVL), which are low-cost devices for                 Mechanically Scanning Sonars (MSS), which as the name
+                                                                                                                                                       their respective types - if not even the most affordable ones on               suggests mechanically rotate a single sonar beam. Despite
+                                                                                                                                                       the market. The software runs with low computational power on                  their simplicity, they can be very useful in low visibility
+                                                                                                                                                       a Raspberry Pi4. The framework builds upon Synthetic Scan                      environments like harbors or marinas [26], [27], [28], [29],
+                                                                                                                                                       Formation (SSF) where single MSS beams or scan-lines are                       [30], [31], [32], [33], [34], [35], [36], [37], [38]. Our interest
+                                                                                                                                                       embedded into a pose-graph. The rendering of scans is not only
+                                                                                                                                                       based on navigation, but based on the graph itself. Scans formed               in the topic stems from the exploration of the flooded
+                                                                                                                                                       from scan-lines can be optimized by online Simultaneous                        basement of a WW-II submarine bunker (Fig.1) [39], [40]
+                                                                                                                                                       Localization and Mapping (SLAM) and result in improved                         in the context of the digitization of cultural heritage [41].
+                                                                                                                                                       scans, based on the current state of the graph. In subsequent                     The work presented here uses a BlueRobotics Ping360
+                                                                                                                                                       steps this leads to improved registration results. To this end, a              MSS, a WaterLinked A50 Doppler Velocity Log (DVL),
+                                                                                                                                                       combination of two different types of loop-closures is presented.
+                                                                                                                                                       Namely a consecutive loop closure, and a proximity based loop                  and a BlueROV2, which are among the - if not the - most
+                                                                                                                                                       closure, which reduces the overall drift. The framework is                     affordable devices of their respective type on the market.
+                                                                                                                                                       validated in three different test-environments, namely a pool,                 Like with low-cost robotics in general, there are also two
+                                                                                                                                                       a test-tank with a gantry for ground truth motion, and the                     main aspects to be considered. First, there are the sensors
+                                                                                                                                                       flooded basement of a WW-II submarine bunker. Among others,                    themselves with their limitations in terms of, e.g., spatial
+                                                                                                                                                       it is shown that there is an increased accuracy compared to
+                                                                                                                                                       conventional SLAM and that the software is usable in real-                     and temporal resolution as well as with respect to the
+                                                                                                                                                       time during a mission with the low-cost hardware.                              noise level compared to high-end devices. Second, there
+                                                                                                                                                                                                                                      are computational resource limitations, namely those of a
+                                                                                                                                                                             I. INTRODUCTION                                          Raspberry Pi 4 that can be easily integrated on a BlueROV2.
+                                                                                                                                                          There has always been a strong tradition and interest in                    Note in this context that onboard processing is not only
+                                                                                                                                                       low-cost solutions in robotics. For marine robotics, this has                  essential for Autonomous Underwater Vehicles (AUV). It is
+                                                                                                                                                       even substantially increased in recent years, among others                     also of interest for Unmanned Underwater Vehicles (UUV) in
+                                                                                                                                                       due to the availability of commercial open-source devices,                     general, as there can be limitations in communications band-
+                                                                                                                                                       e.g., in form of the BlueRobotics BlueROV2 and its related                     widths for even very high-end Remotely Operated Vehicles
+                                                                                                                                                       components [1]. Also in academic research, there is a body of                  (ROV) [42], [43].
+                                                                                                                                                       work on hardware related aspects of low-cost marine robots                        The Ping360 is used to generate maps with Synthetic Scan
+                                                                                                                                                       [2], [3], [4], [5], [6], [7], [8], [9], [10].                                  Formation (SSF) [44], which operates on a level between
+                                                                                                                                                                                                                                      conventional Synthetic Aperture Sonar [45], [46], [47], [48]
+                                                                                                                                                          With respect to the software side of low-cost marine
+                                                                                                                                                                                                                                      and Simultaneous Localization and Mapping (SLAM) with
+                                                                                                                                                       robotics, there is for example research on navigation [11],
+                                                                                                                                                                                                                                      MSS [39], [26], [27], [28], [29], [30], [31], [32], [33], [34],
+                                                                                                                                                       [12], [13], [14], [15], [16], control [17], [18], [19], or diver
+                                                                                                                                                                                                                                      [35], [36], [37], [38]. The core idea of SSF is to use pose-
+                                                                                                                                                       tracking [20], [21], [22]. Vision plays an important role
+                                                                                                                                                                                                                                      estimates for each single beam or scan-line to form synthetic
+                                                                                                                                                       in many of these approaches. This includes also generic
+                                                                                                                                                                                                                                      scans. Instead of just using core navigation to combine
+                                                                                                                                                       research on low-cost underwater vision like the estimation of
+                                                                                                                                                                                                                                      multiple scan-lines into each scan once, SSF uses online
+                                                                                                                                                       depth-information from monocular images [23], which can
+                                                                                                                                                                                                                                      SLAM to update the pose-estimates of the scan-lines and
+                                                                                                                                                       be used in a variety of applications.
+                                                                                                                                                                                                                                      new, improved scans can be (re-)rendered. Improved scans
+                                                                                                                                                          But while cameras tend to be relatively low-cost, there
+                                                                                                                                                                                                                                      lead to improved registration results in the subsequent SLAM
+                                                                                                                                                       are many use-cases for marine robots where underwater
+                                                                                                                                                                                                                                      processing and they hence lead to an overall improved map
+                                                                                                                                                       visibility is poor. Sonar [24], [25], is a well-established
+                                                                                                                                                                                                                                      quality.
+                                                                                                                                                       alternative, but many devices, respectively device types are
+                                                                                                                                                                                                                                         The full code of the low-cost implementation of
+                                                                                                                                                         *This work was supported by the Deutsche Forschung Gemeinschaft              underwater mapping with SSF, in ROS2, is freely available at
+                                                                                                                                                       (DFG) in the project ”Unconstrained Synthetic Aperture Sonar (U-SAS)”          https://github.com/constructor-robotics/
+                                                                                                                                                         1 Tim Hansen and Andreas Birk are with the School of
+                                                                                                                                                                                                                                      underwaterSLAM_2D_lowCost.
+                                                                                                                                                       Computer Science and Engineering, Constructor University, 28759
+                                                                                                                                                       Bremen,    Germany     thansen@constructor.university,                            The rest of this paper is structured as follows. Sec.II
+                                                                                                                                                       abirk@constructor.university                                                   provides a short overview of Synthetic Scan Formation
+
+                                                                                                                                                       979-8-3503-8457-4/24/$31.00 ©2024 IEEE                                    9968
+                                                                                                                                                             Authorized licensed use limited to: Stanford University. Downloaded on September 07,2026 at 01:07:14 UTC from IEEE Xplore. Restrictions apply.
+                                                                               frame Ftsl of each slt with Ftsl = [x(t), y(t), ϕ(t) + γ(t)]T ,
+                                                                               where the rotation is the addition of rotation from the robot
+                                                                               and the sonar. To form a scan sc(ti ), each slt with ti ≤
+                                                                               t ≤ ti+k is projected into the frame Ftsli+k at the end of the
+                                                                               scan. Given scan sc(ti ), it can be entered into a pose graph
+                                                                               at node vi and processed for a loop closure with the help of
+                                                                               a registration.
+                                                                                  Contrary to the state-of-the-art, in SSF, each scan-line slt
+                                                                               is entered into a node vj together with its frame Ftsl . At first
+                                                                               glance, there is no benefit in this as the individual scan-lines
+                                                                               do not contain enough information for registration and a scan
+                                                                               formation still needs to be used. The major advantage is that
+                                                                               the frames Fisl associated with each sli can get optimized
+                                                                               by online SLAM, i.e., the quality of scans formed from them
+Fig. 1: The WW-II submarine bunker Valentin that is in-                        improves.
+vestigated within the context of the digitization of cultural                     The trade-off is that the computation effort increases.
+heritage (top). In the flooded basement that is of historical                  Before a scan can be used for registration in a loop-closure,
+interest, there is very low to no visibility, which makes                      it needs to be newly rendered when one of the pose-estimates
+the use of sonar necessary for orientation during a mission                    of its scan-lines has been optimized. But this leads to
+(bottom).                                                                      improved results and the increase in time is minor [44].
+                                                                                  Note that SSF generalizes to any form of graph-SLAM,
+                                                                               i.e., it is independent of the back-end, and to any registration
+(SSF). The implementation of our software framework is                         method, i.e., it can be used with other forms of registration
+described in Sec.III. This includes the specific methods for                   than the one used here; this also includes methods using,
+implementing SSF (Sec.III-A), the loop closures strategies                     e.g., point-clouds or features extracted from the scans.
+that play an important role from the perspective of this paper
+(Sec.III-B), and a short overview of the structure of the                                             III. I MPLEMENTATION
+software package (Sec.III-C). Experiments and results from                     A. Methods for the Scan Formation
+three different test environments are presented in Sec.IV.
+Sec.V concludes the paper and shortly discusses use-cases                         The implementation of the synthetic scan formation is
+as well as possible modifications for future work.                             based on factor graphs [49] that are optimized with iSAM2
+                                                                               [50] from the GTsam library [51]. In the front-end, Fourier-
+               II. S YNTHETIC S CAN F ORMATION                                 SOFT in 2D (FS2D) is used, which is a spectral registration
+   Our open source code for MSS scan integration and                           method that is well suited for low-quality, noisy sonar scans
+mapping builds upon Synthetic Scan Formation (SSF), which                      [52]. A grid size of N = 128 is chosen for the registration
+is shortly described here. A detailed presentation can be                      with FS2D. For SLAM, FS2D needs to be augmented with
+found in [44].                                                                 an uncertainty estimation. FS2D operates in the frequency
+   The following notations are used. A scan-line sl is a                       domain where the different signal processing methods used
+vector I[itof ] of the return intensities measured by a single                 in there generate in theory Dirac pulses for each degree of
+beam. The index itof corresponds to the time-of-flight, i.e., it               freedom (dof). In reality with imperfect data, a peak detection
+determines the distance d to the point where the back-scatter                  is needed to determine the registration results. Here, the
+originated. A MSS mechanically rotates the beam, i.e., the                     0-th dimensional persistent homology for 2D images [53]
+scan-line sl(γ) from a minimum angle γmin to a maximum                         is used to this end. As in [54], a Principal Components
+angle γmax with a step-width ∆γ. The three parameters                          Analysis (PCA) in a circle around each peak is used to
+γmin , γmax , ∆γ can typically be set by the user.                             determine a co-variance matrix.
+   A scan sc is simply a collection of k consecutive scan-                        The core navigation is based on the standard approach
+lines sli . Given a sonar at a fixed location, a scan sc forms                 for underwater dead-reckoning [55], [56], [57]. An Extended
+a polar image I[γ][d] of the sonar’s surroundings. But on a                    Kalman Filter (EKF) estimates the current pose of the robot
+                                                                                                        ⊤
+moving platform, motion-compensation has to be used to                         xekf = [x, y, z, ψ, θ, ϕ] using the input from a Doppler Ve-
+avoid distortions. This means that the 2D pose ps (t) =                        locity Log (DVL) and an Inertial Measurement Unit (IMU),
+[xs (t), ys (t), ϕs (t)]T of the sensor at time-step t needs to                namely an A50 [58] and an Xsens MTi-300 [59].
+be taken into account, which depends in a fixed and known                         Due to the relatively slow speed of the BlueROV2, the
+way on the 2D vehicle pose p(t) = [x(t), y(t), ϕ(t)]T . For                    g vector can be used for the estimation of roll and pitch
+the sake of simplicity, we just refer to the vehicle pose p(t)                 with the IMU. The state variables [x, y, ϕ] are open loop
+in the following.                                                              estimations, while the others can be measured by the avail-
+   The state-of-the-art is to use the pose-estimate p(t) from                  able sensors. The z value is provided by the default pressure
+the core navigation with dead-reckoning to estimate the                        sensor of the BlueROV2.
+
+                                                                          9969
+      Authorized licensed use limited to: Stanford University. Downloaded on September 07,2026 at 01:07:14 UTC from IEEE Xplore. Restrictions apply.
+            DVL
+                                                                                 Front End                                        SLAM
+        Depth Sensor                                                                                                            Optimization
+                                     EKF
+                                                           create Vertex                       If full Rotation:
+            IMU
+                                                       - pose-diff by EKF                     - create type A
+                                                       - connect scan line                      loop closure
+                                                         and pose                             - attempt type B
+              Mechanical Scanning                                                               loop closure                        Map
+                    Sonar                                                                                                          Creation
+
+
+Fig. 2: An overview of the components of the software framework. The blue arrows indicate an asynchronous data stream,
+while the green arrows synchronizes the computation in the framework.
+
+
+B. Loop Closures                                                               respectively cover 1π. Every time a loop closure of type A
+                                                                               is added to a graph, a type B loop closure is also attempted.
+    Loop closures are essential for SLAM in general and for
+                                                                               In order to create a type B loop closure, the earlier visited
+SSF in particular. Many different ways of constructing a
+                                                                               location has to be nearby, which is defined by a constant
+loop closure with the graph formulation described above are
+                                                                               radius rlc , i.e., based on proximity.
+possible. We use here two different kinds of loop closures.
+    First, a loop closure based on the recently recorded scan                  C. Framework Structure
+lines is used, which is denoted here as type A loop closure.
+Second, a proximity based loop closure with previously                            The software framework is using the Robotic Operating
+generated synthetic scans is used, which we denote as type                     System (ROS2) for the communication between each com-
+B loop closure.                                                                ponent. RViz is used for visualization. The software is split
+    Type A loop closures are designed to reduce the error of                   into three main parts. First, there is the Extended Kalman
+the dead-reckoning system as motivated as follows. Assume                      Filter (EKF) state estimation. Second, the front-end including
+a new scan line is recorded and we want to create a loop                       Fourier-SOFT in 2D (FS2D) registration. Third, there is the
+closure. The goal is to cover a large area with the scan                       back-end with the iSAM2 optimization and map rendering.
+lines and to have a good quality 2D sonar image rendered                          In Fig. 2 an overview of the software package is depicted.
+from the scan-lines. Hence, the rotation of the scan lines                     The blue arrows indicate that the signal is received asyn-
+combined with the rotation of the nodes should cover a full                    chronously while the green arrow indicates a synchronized
+circle, to maximize the area. For the type A loop closure,                     data stream. The design of the software is straight forward.
+the strategy is used that the node rotation and the scan line                  Every time a new measurement by the EKF arrives, the
+rotation together should reach 2π to trigger the rendering                     measurement is appended to a list, which is used when a new
+of a new scan (image), which is registered with the previous                   scan line arrives. A new node is created, and the scan line
+one. This means that k scan-lines sli are used for rendering a                 is added. Thereafter, if the observed rotation is greater than
+scan whenever the sli cover a 360o field of view. Therefore,                   2π, the loop closures are attempted, and the optimization is
+the type A loop closure is a kind of local loop closure.                       performed in the end.
+The second scan for registration is here also generated every
+                                                                                               IV. E XPERIMENTS AND R ESULTS
+2π. The frequency, how often the type A loop closure is
+computed can be chosen. For example, we can generate                              Three different test environments (Fig.3) are used to eval-
+a type A loop closure each half scan of the environment,                       uate our software framework. Fig.3a shows the BlueROV2
+which results in two for each full 2π scan. Depending on                       vehicle and first test environment in form of a simple pool
+the speed of the vehicle, or the registration algorithm used                   in the Oceanlab of Constructor University.
+and its robustness, etc., various other options that generate                     The second environment is quite interesting as it provides
+more or less overlap between scans could be used.                              ground truth motion data, which is a major challenge for
+    The type B loop closure is simply a proximity based                        underwater robotics in general. Fig.3b shows a test-tank
+strategy on the so to say global map level. When the robot                     at the Institute of Mechanics and Ocean Engineering of
+is close to an earlier visited location in the graph, the scan-                the Technical University of Hamburg(TUHH), which has a
+lines that were last entered into the graph and that together                  gantry mechanism that can be used as a so-to-say propulsion
+cover 2π are used to render a scan scnow . The second scan                     system. The Computerized Numerical Control (CNC) of
+scpast is rendered based on the vertex v past in the proximity                 the gantry provides accurate motions and highly precise
+of the currently visited location. To this end, all scan-lines                 localization, thus allowing a quantitative analysis. The down-
+slipast− before, respectively slipast+ after vpast are used that               side is that the tank is only 2 m wide and 4 m long.
+
+                                                                          9970
+      Authorized licensed use limited to: Stanford University. Downloaded on September 07,2026 at 01:07:14 UTC from IEEE Xplore. Restrictions apply.
+            (a) Constructor Ocean Lab                              (b) TUHH Test-Tank with Gantry                   (c) Access to Valentin Basement
+                                           Fig. 3: An overview of the three test environments.
+
+
+
+
+Fig. 4: Map generated in the pool in the Constructor Ocean                    Fig. 5: Map generated in the TUHH test-tank with a gantry
+Lab. The estimated path is shown in green.                                    for ground truth motion. The very challenging path with
+                                                                              abrupt changes in direction is shown in red.
+
+
+   The entrance to the basement of the WW-II submarine                        tank, the related true path is also shown in red in Fig. 5. The
+bunker Valentin is shown in Fig.3c. This environment is a                     motion in this environment is quite challenging as it forms a
+typical real use-case where the generation of maps with sonar                 rectangular zig-zag pattern with very abrupt changes in the
+is important for exploration due to the low visibility (Fig.1).               direction of the motion. The core navigation with the EKF
+   As can be seen in Fig.’s 4, 5 and 6, our software produces                 as part of our software smooths these corners, which leads
+reasonable maps in all three environments. The Oceanlab                       to the estimated path shown in green.
+pool is simply a rectangular basin that is correctly repre-
+sented. For the TUHH test-tank, a window (upper left corner)                  TABLE I: Accuracy of our framework with Synthetic Scan
+and some structures inside the tank are well captured. The                    Formation (SSF) in comparison to core navigation with the
+map of the bunker basement shows exits and corridors at both                  EKF (nav) and a state-of-the-art SLAM (sota SLAM).
+ends as well as some brick-made wall-fragments inside. In
+addition to the maps as renderings of the accumulated scan                                       error (mean ±std) as L2-norm (m)
+images, the estimated paths are shown in green.                                             nav             sota SLAM           SSF (ours)
+                                                                                      0.3836 ± 0.2155 0.1449 ± 0.1002 0.0959 ± 0.0698
+   As the ground truth motion is available for the TUHH test-
+
+                                                                         9971
+     Authorized licensed use limited to: Stanford University. Downloaded on September 07,2026 at 01:07:14 UTC from IEEE Xplore. Restrictions apply.
+                                                                              speed setting, the average time to acquire the data for a scan
+                                                                              is about 9 sec while it is about 32 sec for the slow scanning
+                                                                              speed setting. The 9 sec are an example for a kind of lower
+                                                                              bound for the scan acquisition time if a coarse coverage
+                                                                              of a small environment is sufficient, while the 32 sec are
+                                                                              an example for the typical settings for exploring a medium
+                                                                              sized-environment.
+                                                                                 Note that the time to acquire a full scan fluctuates due to
+                                                                              the strategy used here to render a scan based on a collection
+                                                                              of scan-lines that cover 360o , i.e., the combined rotation of
+                                                                              the mechanically actuated sonar beam and of the vehicle on
+                                                                              which the sensor is mounted on should be 2π. Therefore it
+                                                                              depends directly of the movement of the robot during the
+                                                                              mission. The time to acquire a scan is hence constant in the
+                                                                              experiment in the TUHH test-tank (Fig.7c) as the gantry only
+                                                                              provides translations as ground truth motions, i.e., there is
+                                                                              no rotation from the ”vehicle” in this case.
+                                                                                 The most important insight is in all four cases shown
+                                                                              in Fig.7 is that the time for processing (brown line) is
+                                                                              substantially shorter than the update rate with which the
+                                                                              sensor can provide new data (blue line). So, the processing
+                                                                              can be done in real-time despite the computational limitations
+                                                                              of a Raspberry Pi 4. The difference in computation times
+Fig. 6: Map generated in the basement of the submarine                        in different scenarios also depend on the other settings of
+bunker Valentin.                                                              the sonar. When larger amounts of data is returned by the
+                                                                              sonar measurement, namely the intensity array size, the
+                                                                              rendering process of a full sonar scan increases. This can
+   More importantly, the ground truth allows a quantitative                   be seen between the two different figures of the OceanLab
+analysis of the accuracy of our framework. Standard core                      computation times.
+navigation with the EKF and a state-of-the-art SLAM [39]                         Nonetheless, there is also an increase in computation time
+without synthetic scan formation are used for comparison.                     over the mission duration. This is due to the fact that over
+All three methods are provided with the same input data. The                  time the graph size increases and more type A and type
+results are shown in Tab.I. The errors are computed via the                   B loop closures are created. This increases both the opti-
+Euclidean distances of the estimated locations to the accurate                mization time from iSAM2 and the rendering computational
+ground truth for each pose.                                                   overload of different parts in the algorithm.
+   As can be expected, navigation with just the EKF per-                         Fig.8 provides a bit of insight into the computational re-
+forms worst with substantial errors that render it useless                    quirements of the different parts of the software. The average
+for mapping. SLAM substantially improves the situation.                       computation time is differentiated into four parts, namely
+A further clear improvement is achieved with our approach                     the optimization time of iSAM2, the two types of loop
+using synthetic scan formation.                                               closures, and the rendering process with its computational
+   Further important results from the perspective of this paper               overhead. The respective processing times are averaged over
+are shown in Fig.7. The graphs in the sub-figures show the                    four minute time windows in the mission time and their
+time it takes (y-axis, in sec) to acquire the sonar data for a                distribution at the end of each window is shown. It can
+full sonar scan (blue line) and to process a scan (brown line)                be seen that the average time of the type B loop closure
+over the duration of each mission (x-axis, in min).                           depends heavily on the trajectory of the robot. For example,
+   While the speed of sound is slow and the maximum range                     the average computation time between minute 13 and 17
+has hence a strong influence on the time it takes to acquire                  for that software part is much smaller than for the other
+a single scan-line, other settings of the sonar also influence                times of the mission. This window corresponds to a part of
+the scanning speed. One way to acquire a faster scanning                      the mission where the robot is moving into areas it has not
+speed is to increase the mechanical stepping angle of each                    visited before and where it therefore can not successfully
+measured scan line. Furthermore, the size of the intensity                    attempt any type B loop closures.
+array measured by the sonar can be set, which also also                          This can for example be exploited in a exploration-
+influences the scanning speed.                                                exploitation trade-off strategy when using the software
+   This is illustrated in Fig.’s 7a and 7b where two different                framework in third party experiments or missions that are
+stepping angle settings are used in the Oceanlab pool, namely                 intended to run over multiple hours or even days. In general,
+0.9◦ and 4.5◦ combined with two different intensity array                     there are vast opportunities to use the presented code as a
+sizes of 500 and 200, respectively. With the fast scanning                    basis for third party experiments and systems.
+
+                                                                         9972
+     Authorized licensed use limited to: Stanford University. Downloaded on September 07,2026 at 01:07:14 UTC from IEEE Xplore. Restrictions apply.
+                        (a) OceanLab, short scans                                                (b) OceanLab, long Scans
+
+
+
+
+                            (c) TUHH test-tank                                                 (d) Bunker Valentin basement
+Fig. 7: The time it takes (y-axis, in sec) to acquire the sonar data for a full sonar scan (blue line) and to fully process a scan
+(brown line) over the duration of each mission (x-axis, in min) for the three scenarios, respectively two different parameter
+settings in the Oceanlab pool. In all cases, the processing can be done in real-time.
+
+
+                                                                              scan formation performs in real-time and it can be used
+                                                                              for tasks including navigation, obstacle-avoidance, object-
+                                                                              recognition, and environment classification. Furthermore, the
+                                                                              code provides as it is high quality mapping in real-time over
+                                                                              extended time periods well above mission durations of 20 to
+                                                                              30 minutes.
+                                                                                 In addition to using the code in the variety of use-cases
+                                                                              mentioned above, there are further options for future work.
+                                                                              Though being likely the least costly available DVL on the
+                                                                              market, the A50 is nonetheless the most expensive single
+                                                                              component of our set-up. It can hence be of interest to
+Fig. 8: The development of the distribution of the processing                 study the option to replace it with a hydrodynamic model
+time (y-axis, in sec) over mission time-windows (y-axis, in                   of the vehicle. Furthermore, the synthetic scan formation
+min) for the different software components in the bunker                      as used now provides high quality mapping in real-time,
+Valentin experiment.                                                          but with increasing overall computation time due to the
+                                                                              increasing optimization effort in the iSAM2 back-end. There
+                                                                              are multiple options to address this for extended mission
+          V. C ONCLUSION AND F UTURE W ORK                                    times. These include the use of more sophisticated loop-
+                                                                              closure strategies or the use of hierarchical mapping. Last
+    We presented an open-source framework for synthetic                       but not least, synthetic scan formation is agnostic to the
+scan formation on popular low-cost hardware in form of a                      SLAM back-end as well as to the registration method used
+BlueROV2 with a Raspberry Pi4 and its standard sonar and                      within the front-end. It is hence an option to investigate the
+doppler velocity log (DVL), i.e., a Ping360 and a A50, which                  performance of alternatives to iSAM2 or SF2D.
+are all also popular components for the development of low-
+cost AUVs. Despite the resource-constraints and the limita-                                         ACKNOWLEDGMENT
+tions in sensor quality, the open-source code can be used as                    We thank the Institute of Mechanics and Ocean Engineer-
+it is for a wide-range of functions for operator-assistance and               ing of the Technical University of Hamburg for giving us
+semi- as well as full-autonomy. More precisely, the synthetic                 access to their research pool with the gantry.
+
+                                                                         9973
+     Authorized licensed use limited to: Stanford University. Downloaded on September 07,2026 at 01:07:14 UTC from IEEE Xplore. Restrictions apply.
+                             R EFERENCES                                             human-robot interaction,” IEEE Robotics and Automation Magazine
+                                                                                     (RAM), vol. 28, no. 3, pp. 67–78, 2021.
+ [1] BlueRobotics, “Bluerov2,” 2023. [Online]. Available: https:                [21] H. M. Chou, Y. C. Chou, and H. H. Chen, “Development of a
+     //bluerobotics.com/store/rov/bluerov2/                                          monocular vision deep learning-based auv diver-following control
+ [2] K. Xue, X. Ji, D. Qu, Y. Peng, and H. Qian, “Oboat: An agile                    system,” in IEEE/MTS Global Oceans.          IEEE, 2020, Conference
+     omnidirectional robotic platform for unmanned surface vehicle tasks,”           Proceedings, pp. 1–4.
+     IEEE/ASME Transactions on Mechatronics, pp. 1–12, 2023.                    [22] W. Remmas, A. Chemori, and M. Kruusmaa, “Diver tracking in
+ [3] Y. Zhang, R. Zhu, J. Wu, and H. Wang, “Simobot: An underactuated                open waters: A low-cost approach based on visual and acoustic
+     miniature robot driven by a single motor,” IEEE/ASME Transactions               sensor fusion,” Journal of Field Robotics, 2020. [Online]. Available:
+     on Mechatronics, vol. 27, no. 6, pp. 5748–5759, 2022.                           https://onlinelibrary.wiley.com/doi/abs/10.1002/rob.21999
+ [4] Z. Yang, D. Chen, D. J. Levine, and C. Sung, “Origami-inspired robot       [23] B. Yu, J. Wu, and M. J. Islam, “Udepth: Fast monocular depth
+     that swims via jet propulsion,” IEEE Robotics and Automation Letters,           estimation for visually-guided underwater robots,” in 2023 IEEE
+     vol. 6, no. 4, pp. 7145–7152, 2021.                                             International Conference on Robotics and Automation (ICRA), 2023,
+ [5] G. Knizhnik, P. deZonia, and M. Yim, “Pauses provide effective con-             Conference Proceedings, pp. 3116–3123.
+     trol for an underactuated oscillating swimming robot,” IEEE Robotics       [24] J. P. Marage and Y. Mori, Sonar and Underwater Acoustics. Wiley,
+     and Automation Letters, vol. 5, no. 4, pp. 5075–5080, 2020.                     2013.
+ [6] F. Berlinger, J. Dusek, M. Gauci, and R. Nagpal, “Robust maneuver-         [25] R. P. Hodges, Underwater Acoustics: Analysis, Design and Perfor-
+     ability of a miniature, low-cost underwater robot using multiple fin            mance of Sonar. Wiley, 2010.
+     actuation,” IEEE Robotics and Automation Letters, vol. 3, no. 1, pp.       [26] Z. Xu, H. Qiu, M. Dong, H. Wang, and C. Wang, “Underwater
+     140–147, 2018.                                                                  simultaneous localization and mapping based on 2d-slam framework,”
+ [7] B. R. Page, S. Ziaeefard, A. J. Pinar, and N. Mahmoudian, “Highly               in IEEE International Conference on Unmanned Systems (ICUS),
+     maneuverable low-cost underwater glider: Design and development,”               2022, Conference Proceedings, pp. 184–189.
+     IEEE Robotics and Automation Letters, vol. 2, no. 1, pp. 344–349,          [27] L. Chen, A. Yang, H. Hu, and W. Naeem, “Rbpf-msis: Toward rao-
+     2017.                                                                           blackwellized particle filter slam for autonomous underwater vehicle
+ [8] J. Higgins and C. Detweiler, “The waterbug sub-surface sampler: De-             with slow mechanical scanning imaging sonar,” IEEE Systems Journal,
+     sign, control and analysis,” in IEEE/RSJ International Conference on            vol. 14, no. 3, pp. 3301–3312, 2020.
+     Intelligent Robots and Systems (IROS), 2016, Conference Proceedings,       [28] M. Jiang, S. Song, J. M. Herrmann, J. H. Li, Y. Li, Z. Hu, Z. Li,
+     pp. 330–337.                                                                    J. Liu, S. Li, and X. Feng, “Underwater loop-closure detection for
+ [9] M. Makrodimitris, I. Aliprantis, and E. Papadopoulos, “Design and               mechanical scanning imaging sonar by filtering the similarity matrix
+     implementation of a low cost, pump-based, depth control of a small              with probability hypothesis density filter,” IEEE Access, vol. 7, pp.
+     robotic fish,” in IEEE/RSJ International Conference on Intelligent              166 614–166 628, 2019.
+     Robots and Systems (IROS), 2014, Conference Proceedings, pp. 1127–
+                                                                                [29] M. Jiang, S. Song, F. Tang, Y. Li, J. Liu, and X. Feng, “Scan
+     1132.
+                                                                                     registration for underwater mechanical scanning imaging sonar using
+[10] A. Caffaz, A. Caiti, G. Casalino, and A. Turetta, “The hybrid
+                                                                                     symmetrical kullback-leibler divergence,” Journal of Electronic Imag-
+     glider/auv folaga,” IEEE Robotics and Automation Magazine, vol. 17,
+                                                                                     ing, vol. 28, no. 1, 2019.
+     no. 1, pp. 31–44, 2010.
+                                                                                [30] A. Mallios, P. Ridao, D. Ribas, and E. Hernández, “Scan
+[11] Y. Wang, R. Hu, S. H. Huang, Z. Wang, P. Du, W. Yang, and Y. Chen,
+                                                                                     matching slam in underwater environments,” Autonomous Robots,
+     “Passive inverted ultra-short baseline positioning for a disc-shaped
+                                                                                     vol. 36, no. 3, pp. 181–198, 2014. [Online]. Available: https:
+     autonomous underwater vehicle: Design and field experiments,” IEEE
+                                                                                     //doi.org/10.1007/s10514-013-9345-0
+     Robotics and Automation Letters, vol. 7, no. 3, pp. 6942–6949, 2022.
+[12] S. Yan, Z. Wu, J. Wang, M. Tan, and J. Yu, “Marine autonomous navi-        [31] A. Burguera, Y. González, and G. Oliver, “Underwater slam with
+     gation for biomimetic underwater robots based on deep stereo attention          robocentric trajectory using a mechanically scanned imaging sonar,” in
+     network,” in IEEE/RSJ International Conference on Intelligent Robots            IEEE/RSJ International Conference on Intelligent Robots and Systems,
+     and Systems (IROS), 2021, Conference Proceedings, pp. 8418–8423.                2011, Conference Proceedings, pp. 3577–3582.
+[13] E. M. Fischell, N. R. Rypkema, and H. Schmidt, “Relative autonomy          [32] A. Mallios, P. Ridao, M. Carreras, and E. Hernandez, “Navigating and
+     and navigation for command and control of low-cost autonomous                   mapping with the sparus auv in a natural and unstructured underwater
+     underwater vehicles,” IEEE Robotics and Automation Letters, vol. 4,             environment,” in OCEANS 2011, 2011, Conference Proceedings, pp.
+     no. 2, pp. 1800–1806, 2019.                                                     1–7.
+[14] J. Eisele, Z. Song, K. Nelson, and K. Mohseni, “Visual-inertial guid-      [33] H. Bülow, M. Pfingsthorn, and A. Birk, “Using robust spectral regis-
+     ance with a plenoptic camera for autonomous underwater vehicles,”               tration for scan matching of sonar range data,” in 7th Symposium on
+     IEEE Robotics and Automation Letters, vol. 4, no. 3, pp. 2777–2784,             Intelligent Autonomous Vehicles (IAV), IFAC. IFAC, 2010, Conference
+     2019.                                                                           Proceedings.
+[15] N. R. Rypkema, E. M. Fischel, and H. Schmidt, “Closed-loop single-         [34] A. Burguera, G. Oliver, and Y. Gonzàlez, “Scan-based slam with
+     beacon passive acoustic navigation for low-cost autonomous under-               trajectory correction in underwater environments,” in IEEE/RSJ In-
+     water vehicles,” in IEEE/RSJ International Conference on Intelligent            ternational Conference on Intelligent Robots and Systems, 2010,
+     Robots and Systems (IROS), 2018, Conference Proceedings, pp. 641–               Conference Proceedings, pp. 2546–2551.
+     648.                                                                       [35] A. Mallios, P. Ridao, E. Hernandez, D. Ribas, F. Maurelli, and
+[16] S. Wirth, P. L. N. Carrasco, and G. O. Codina, “Visual odometry for             Y. Petillot, “Pose-based slam with probabilistic scan matching
+     autonomous underwater vehicles,” in MTS/IEEE OCEANS. IEEE,                      algorithm using a mechanical scanned imaging sonar,” in OCEANS
+     2013, Conference Proceedings, pp. 1–6.                                          2009, 2009, Conference Proceedings, pp. 1–6. [Online]. Available:
+[17] G. Knizhnik, P. Li, X. Yu, and M. A. Hsieh, “Flow-based control of              10.1109/OCEANSE.2009.5278219
+     marine robots in gyre-like environments,” in International Conference      [36] E. Hernandez, P. Ridao, D. Ribas, and A. Mallios, “Probabilistic
+     on Robotics and Automation (ICRA), 2022, Conference Proceedings,                sonar scan matching for an auv,” in Intelligent Robots and
+     pp. 3047–3053.                                                                  Systems, 2009. IROS 2009. IEEE/RSJ International Conference on,
+[18] D. A. Duecker, N. Bauschmann, T. Hansen, E. Kreuzer, and                        2009, Conference Proceedings, pp. 255–260. [Online]. Available:
+     R. Seifried, “Towards micro robot hydrobatics: Vision-based guidance,           10.1109/IROS.2009.5354656
+     navigation, and control for agile underwater vehicles in confined          [37] D. Ribas, P. Ridao, J. D. Tardos, and J. Neira, “Underwater slam
+     environments,” in IEEE/RSJ International Conference on Intelligent              in man-made structured environments,” Journal of Field Robotics,
+     Robots and Systems (IROS), 2020, Conference Proceedings, pp. 1819–              vol. 25, no. 11/12, pp. 898–921, 2008.
+     1826.                                                                      [38] D. Ribas, P. Ridao, J. Domingo Tardos, and J. Neira, “Underwater
+[19] E. M. Fischell, A. R. Kroo, and B. W. O’Neill, “Single-hydrophone               slam in a marina environment,” in Intelligent Robots and Systems,
+     low-cost underwater vehicle swarming,” IEEE Robotics and Automa-                2007. IROS 2007. IEEE/RSJ International Conference on, P. Ridao,
+     tion Letters, vol. 5, no. 2, pp. 354–361, 2020.                                 Ed., 2007, Conference Proceedings, pp. 1455–1460.
+[20] A. G. Chavez, A. Ranieri, D. Chiarella, and A. Birk, “Underwater           [39] T. Hansen, F. Buda, and A. Birk, “Underwater exploration with sonar
+     vision-based gesture recognition: A robustness validation for safe              of the flooded basement of a ww-ii submarine bunker in the context
+
+
+                                                                           9974
+       Authorized licensed use limited to: Stanford University. Downloaded on September 07,2026 at 01:07:14 UTC from IEEE Xplore. Restrictions apply.
+     of digitization of cultural heritage,” in MTS/IEEE OCEANS, 2023,
+     Conference Proceedings, pp. 1–5.
+[40] A. Birk, F. Buda, and T. Hansen, “Dating wall constructions from
+     brick sizes in the flooded basement of a ww-ii submarine bunker for
+     the digitization of cultural heritage,” in MTS/IEEE OCEANS, 2023,
+     Conference Proceedings.
+[41] A. Birk, F. Buda, H. Bülow, A. G. Chavez, C. A. Müller, and J. Timpe,
+     Digitizing a Gigantic Nazi Construction: 3D-Mapping of Bunker
+     Valentin in Bremen. Berlin, Boston: De Gruyter, 2022, pp. 133–168.
+     [Online]. Available: https://doi.org/10.1515/9783110714692-006
+[42] T. Luczynski, P. Luczynski, LukasPehle, M. Wirsum, and A. Birk,
+     “Model based design of a stereo vision system for intelligent deep-
+     sea operations,” Measurement, vol. 144, pp. 298–310, 2019.
+[43] A. Birk, T. Doernbach, C. Mueller, T. Luczynski, A. G. Chavez,
+     D. Köhntopp, A. Kupcsik, S. Calinon, A. Tanwani, G. Antonelli,
+     P. d. Lillo, E. Simetti, G. Casalino, G. Indiveri, L. Ostuni, A. Turetta,
+     A. Caffaz, P. Weiss, T. Gobert, B. Chemisky, J. Gancet, T. Siedel,
+     S. Govindaraj, X. Martinez, and P. Letier, “Dexterous underwater
+     manipulation from distant onshore locations,” IEEE Robotics and
+     Automation Magazine (RAM), vol. 25, no. 4, pp. 24–33, 2018.
+[44] T. Hansen and A. Birk, “Synthetic scan formation for underwater
+     mapping with low-cost mechanical scanning sonars (mss),” IEEE
+     Access, 2023.
+[45] P. Vouras, K. V. Mishra, A. Artusio-Glimpse, S. Pinilla, A. Xenaki,
+     D. W. Griffith, and K. Egiazarian, “An overview of advances in signal
+     processing techniques for classical and quantum wideband synthetic
+     apertures,” IEEE Journal of Selected Topics in Signal Processing,
+     vol. 17, no. 2, pp. 317–369, 2023.
+[46] M. Amani, F. Mohseni, N. F. Layegh, M. E. Nazari, F. Fatolazadeh,
+     A. Salehi, S. A. Ahmadi, H. Ebrahimy, A. Ghorbanian, S. Jin,
+     S. Mahdavi, and A. Moghimi, “Remote sensing systems for ocean:
+     A review (part 2: Active systems),” IEEE Journal of Selected Topics
+     in Applied Earth Observations and Remote Sensing, vol. 15, pp. 1421–
+     1453, 2022.
+[47] R. E. Hansen, Introduction to Synthetic Aperture Sonar. InTech,
+     2011.
+[48] M. P. Hayes and P. T. Gough, “Synthetic aperture sonar: A review of
+     current status,” Oceanic Engineering, IEEE Journal of, vol. 34, no. 3,
+     pp. 207–224, 2009.
+[49] D. Koller and N. Friedman, Probabilistic Graphical Models: Princi-
+     ples and Techniques. The MIT Press, 2009.
+[50] M. Kaess, H. Johannsson, R. Roberts, V. Ila, J. Leonard, and F. Del-
+     laert, “isam2: Incremental smoothing and mapping with fluid relin-
+     earization and incremental variable reordering,” in IEEE International
+     Conference on Robotics and Automation (ICRA), 2011, Conference
+     Proceedings, pp. 3281–3288.
+[51] D. Frank and K. Michael, Factor Graphs for Robot Perception.
+     now, 2017. [Online]. Available: http://ieeexplore.ieee.org/document/
+     8187520
+[52] T. Hansen and A. Birk, “Using registration with fourier-soft in
+     2d (fs2d) for robust scan matching of sonar range data,” in IEEE
+     International Conference on Robotics and Automation (ICRA), 2023,
+     Conference Proceedings.
+[53] H. Edelsbrunner and J. Harer, Computational Topology: An Introduc-
+     tion. American Mathematical Society, 2010.
+[54] M. Pfingsthorn, S. Schwertfeger, H. Bülow, and A. Birk, “Maximum
+     likelihood mapping with spectral image registration,” in IEEE Interna-
+     tional Conference on Robotics and Automation (ICRA). IEEE Press,
+     2010, Conference Proceedings.
+[55] F. Maurelli, S. Krupinski, X. Xiang, and Y. Petillot, “Auv localisation:
+     a review of passive and active techniques,” International Journal of
+     Intelligent Robotics and Applications, vol. 6, no. 2, pp. 246–269, 2022.
+     [Online]. Available: https://doi.org/10.1007/s41315-021-00215-x
+[56] L. Paull, M. Seto, S. Saeedi, and J. J. Leonard, Navigation for
+     Underwater Vehicles. Berlin, Heidelberg: Springer, 2018, pp. 1–15.
+     [Online]. Available: https://doi.org/10.1007/978-3-642-41610-1 15-1
+[57] L. Paull, S. Saeedi, M. Seto, and H. Li, “Auv navigation and localiza-
+     tion: A review,” IEEE Journal of Oceanic Engineering, vol. 39, no. 1,
+     pp. 131–149, 2014.
+[58] WaterLinked, “A50 dvl,” 2023. [Online]. Available: https:
+     //waterlinked.com/dvl-a50
+[59] Xsense, “Mti-300 ahrs,” 2023. [Online]. Available: https://www.
+     movella.com/products/sensor-modules/xsens-mti-300-ahrs
+
+
+
+
+                                                                             9975
+       Authorized licensed use limited to: Stanford University. Downloaded on September 07,2026 at 01:07:14 UTC from IEEE Xplore. Restrictions apply.
+

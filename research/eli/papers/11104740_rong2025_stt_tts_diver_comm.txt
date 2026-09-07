@@ -1,0 +1,355 @@
+                                                                                                      Underwater Diver Communication System Based on
+                                                                                                                  Speech/Text Conversion
+                                                                                                                                                         Yue Rong∗ , Peng Chen∗ , and Zheng Nan†
+                                                                                                           ∗
+                                                                                                            School of Electrical Engineering, Computing and Mathematical Sciences, Curtin University, Bentley, WA, Australia
+                                                                                                                                                   {y.rong, peng.chen}@curtin.edu.au
+                                                                                                          †
+                                                                                                            School of Electrical Engineering and Telecommunications, University of New South Wales, Sydney, NSW, Australia
+                                                                                                                                                        zheng.nan@unsw.edu.au
+
+
+                                                                                                         Abstract—Underwater acoustic (UA) communication system                             In order to achieve real-time and reliable speech-to-text con-
+                                                                                                      has low data rate due to the limited bandwidth of the UA channel.                  version, we investigate fine-tuning the state-of-the-art general-
+                                                                                                      This makes real-time speech communication challenging. In                          purpose automatic speech recognition (ASR) models including
+                                                                                                      this paper, we present an underwater diver communication
+                                                                                                      system which uses speech-to-text conversion at the transmitter to                  Wav2vec2 [4] and Whisper [5] using diver speech samples
+                                                                                                      achieve speech compression. The text message is converted back                     and deploying them on underwater devices. Despite their large
+                                                                                                      to speech at the receiver end using text-to-speech conversion.                     parameter counts, both models are built on the Transformer
+                                                                                                      Automatic speech recognition (ASR) models including Wav2vec2                       architecture [6], which supports efficient parallel processing,
+                                                                                                      and Whisper are investigated for their feasibility of real-time                    thereby making real-time conversion on such devices feasible.
+                                                                                                      conversion. A prototype underwater diver speech communication
+                                                                                                      system utilizing Raspberry Pi 5 is presented in the paper. The                     To achieve state-of-the-art recognition performance, Wav2vec2
+                                                                                                      system design encompasses both the transmitting and receiving                      is first pre-trained using self-supervised learning (SSL) and
+                                                                                                      processes, with a focus on its real-time capabilities. We discuss the              subsequently fine-tuned for speech recognition, both on the
+                                                                                                      performance of this diver communication system, validating its                     960-hour Librispeech dataset. While Whisper is trained in
+                                                                                                      efficacy through an experiment conducted in Fremantle, Western                     a fully supervised manner on a much larger corpus, which
+                                                                                                      Australia. It is shown that with the Whisper-base model, real-
+                                                                                                      time communication is achieved with an average word error rate                     consists of 680,000 hours of crawled speech data.
+
+
+
+
+OCEANS 2025 Brest | 979-8-3315-3747-0/25/$31.00 ©2025 IEEE | DOI: 10.1109/OCEANS58557.2025.11104740
+                                                                                                      of 2.4%.
+                                                                                                                                                                                            We present a prototype diver speech communication system
+                                                                                                                                                                                         developed by our team. The core parts of the prototype are
+                                                                                                                                  I. I NTRODUCTION
+                                                                                                                                                                                         real-time offline speech-to-text and text-to-speech converters
+                                                                                                         Classical speech communication requires an 8 kHz sampling                       implemented on a Raspberry Pi 5 board. The prototype has a
+                                                                                                      rate and 8-bit quantization, resulting in a data rate of 64 kbps.                  small form factor, lightweight and is portable by divers. We
+                                                                                                      Such data rate is too high for real-time diver speech communi-                     discuss the hardware and software design at the transmitter
+                                                                                                      cation, due to the limited bandwidth of the underwater acoustic                    end and the receiver end. At the transmitter side, we study
+                                                                                                      (UA) channel [1]. Low-rate audio codecs can be applied to                          converting diver speech into text using a fine-tuned Wav2vec2
+                                                                                                      achieve speech compression. However, data rate of the state-                       or Whisper model. At the receiver end, PicoTTS [7] is chosen
+                                                                                                      of-the-art low-rate audio codecs such as Lyra and Opus is in                       as the text-to-speech engine, due to its high speech quality and
+                                                                                                      the order of several thousand bits per second [2], which is still                  ability to generate personalized speech.
+                                                                                                      high for speech communication through the UA channel [3].
+                                                                                                         To solve this problem, we propose an underwater diver                              We demonstrate the performance of this real-time system,
+                                                                                                      communication system, which uses speech-to-text conversion                         validating its efficacy through a UA communication exper-
+                                                                                                      at the transmitter to achieve speech compression. The justifi-                     iment conducted in the Success Boat Harbor in Fremantle,
+                                                                                                      cation is given below. The average speech rate is around 140                       Western Australia. Initial trial results show promising out-
+                                                                                                      words per minute in normal conversation. In underwater diver                       comes of the proposed diver communication system. To the
+                                                                                                      scenarios, the speech rate could be even lower. Considering                        best of our knowledge, it is the first time such diver commu-
+                                                                                                      that the average word length is 5.5 characters, and ASCII (8                       nication system is presented in open literature. Experiment
+                                                                                                      bit) is used for character encoding, the data rate of the speech                   results show that with the Whisper-base model, real-time
+                                                                                                      text is around 140 × 5.5 × 8/60 = 103 bps. Thus, the data                          communication is achieved with an average word error rate
+                                                                                                      rate after speech-to-text conversion is one order lower than the                   (WER) of 2.4%.
+                                                                                                      rate of the most advanced speech codec, making the converted
+                                                                                                      text suitable for transmission through bandwidth-limited UA                           The remainder of this paper is organized as follows. In
+                                                                                                      channel.                                                                           Section II, the diver communication system hardware and
+                                                                                                                                                                                         software design is presented. Experimental results are demon-
+                                                                                                        This research was supported by the Defence Science Centre, an initiative         strated in detail in Section III. Finally, conclusions are drawn
+                                                                                                      of the State Government of Western Australia.                                      in Section IV with discussions on future works.
+
+
+
+
+                                                                                                                Authorized licensed use limited to: Stanford University. Downloaded on September 07,2026 at 01:07:29 UTC from IEEE Xplore. Restrictions apply.
+
+                                                                                                               979-8-3315-3747-0/25/$31.00 ©2025 IEEE
+                                                                                team. Two amplifiers are applied to enhance the speech signal,
+   Speech                Pre‐             Speech to            Transmitter
+  Recording           Processing            Text                 Modem          one for earphones and the other for the microphone. The
+                                                                                specifications of the Raspberry Pi 5 board are summarized
+                                                                                in Table I.
+
+                                                                                                                TABLE I
+    Speech                                 Text to                 Receiver
+                                                                                             S PECIFICATIONS OF THE R ASPBERRY P I 5 B OARD
+   Playback                                Speech                  Modem
+                                                                                   CPU             Broadcom 2.4 GHz quad-core 64-bit Arm Cortex-A76
+                                                                                   Memory          8 GB
+                      Fig. 1. System architecture.                                 GPU             800 MHz VideoCore VII
+                                                                                   Interface       2×USB 3.0 + 2×USB 2.0
+                                                                                   Input power     Type-C (5.1 V, 5 A)
+                      II. S YSTEM D ESIGN                                          Weight          32 g
+                                                                                   Storage         microSD card, can support NVMe SSDs
+   In this section, we present the system design of the
+speech/text conversion-based underwater diver communication
+system. The system design encompasses both the transmit-                           A pair of Delphis acoustic modems [9] manufactured by
+ting and receiving processes, with a focus on its real-time                     Succorfish Ltd are used to transmit and receive signals under-
+capabilities. The data transmission workflow of the system is                   water. The Delphis acoustic modems are low-cost, low-power,
+illustrated in Fig. 1. The diver speech signal is first recorded                and have a small form factor, making them ideal for portable
+and processed to filter out the bubble noise, breathing noise,                  diver applications. Specifications of the Delphis modem are
+and background noise. Then the pre-processed speech signal                      listed in Table II. Spread spectrum with binary phase-shift
+is passed to a speech recognition engine where the speech is                    keying (BPSK) modulation and error correction code are used
+converted to text. The transcription is passed to the transmitter               in the physical layer of the modem.
+modem as ASCII characters, which are sent through the UA
+                                                                                                                TABLE II
+channel to the receiver modem. At the receiver end, the ASCII                                    S PECIFICATIONS OF THE D ELPHIS M ODEM
+text is converted to speech signal through a text-to-speech
+engine. Then, the speech signal is played back.                                           Frequency band      24-32 kHz
+                                                                                          Source level        168 dB re 1 µPa @ 1 m
+A. Hardware Configuration                                                                 Raw data rate       640 bits/s
+                                                                                          Maximal range       2 km sea water; 3.5 km fresh water
+   The hardware configuration of the prototype diver com-                                 Depth rating        350 m
+munication system is shown in Fig. 2. The microphone and                                  Supply voltage      5V
+speaker from a diver mask are connected to a Raspberry Pi 5                               Current             2.5 mA listening; 5 mA receiving;
+                                                                                                              maximal 300 mA transmitting
+board through amplifiers, together with a push-to-talk button.
+This button can release two commands with short press for
+starting new speech and long press for playing back the last                    B. Software Design
+received message.                                                                  The flowchart of the diver communication system software
+                                                                                is illustrated in Fig. 3. The system starts with two parallel
+                                    Earphone                                    processes, one for receiving signals while the other for trans-
+                                                                                mitting signals. Note that the system has included the replay
+                                     Microphone                                 function, which is useful in case the incoming speech is not
+      Amplifier
+                                                                                fully comprehended by the diver due to reasons such as lack
+                                                                                of attention from the diver or high background noise level.
+ Control
+ Button                            Amplifier                                    Alternatively, we can include warning sounds such as a beep
+                                                              Laptop
+                                                                                to alert the diver of the incoming speech. After each receiving
+                                                                                process, the target file for replay is updated.
+                                                                                   The system software is developed using Python. At
+                                                                                the transmitter side, speech-to-text conversion is performed
+                                                                                through an ASR model to transcribe speech to text. In par-
+                                                                                ticular, we investigate two state-of-the-art models: Wav2vec2
+                                                                                and Whisper. For Wav2vec2, the Wav2vec2-base-960 model1
+                     Modem                                                      is chosen, which has 95 million parameters and is pretrained
+                                                      Modem
+                                                                                and fine-tuned on the 960-hour Librispeech dataset [8]. The
+                                                                                Wav2vec2-large-960 model is not chosen, as its 317 million
+        Fig. 2. Hardware configuration of the prototype system.                 parameters may exceed the resource capacity of a Raspberry
+                                                                                Pi board, considering that the Raspberry Pi board also needs
+   The Raspberry Pi board shown in Fig. 2 can be inserted
+into a watertight pressure housing designed and made by our                       1 https://huggingface.co/facebook/wav2vec2-base-960h
+
+
+
+
+       Authorized licensed use limited to: Stanford University. Downloaded on September 07,2026 at 01:07:29 UTC from IEEE Xplore. Restrictions apply.
+                                                                                 the speaker on a laptop computer located on a jetty. This setup
+                                                                                 simulates the scenario of communication between a diver and
+                                                                                 the topside. In this underwater communication experiment, a
+                                                                                 total of 41 sentences of common underwater diver dialogue
+                                                                                 were spoken by the diver. In addition to testing the real-time
+                                                                                 performance of the prototype system, these 41 sentences were
+                                                                                 recorded into 41 speech files. The duration of each recording is
+                                                                                 set to 4 seconds, while the length of each speech varies and is
+                                                                                 always shorter than 4 seconds. These 41 recordings were used
+                                                                                 later as the test set to evaluate the speech-to-text conversion
+                                                                                 performance of the Wav2vec2 and Whisper models.
+                                                                                 A. Wav2vec2 Model Results
+                                                                                   The WER of the Wav2vec2 model for each of the 41 speech
+                                                                                 samples is shown in Fig. 4, which is obtained by calculating
+                                                                                 the ratio of the total word errors (including word substitutions,
+                                                                                 word insertions, and word deletions) to the total number of
+                                                                                 words spoken in each speech. It can be seen from Fig. 4
+                                                                                 that there is no WER difference when the same model is
+                                                                                 operated on a desktop computer and on Raspberry Pi. With
+                    Fig. 3. System software flowchart.                           the original Wav2vec2-base-960 model, the average WER for
+                                                                                 these recordings is calculated to be 41.9% both on the desktop
+                                                                                 computer and on the Raspberry Pi, as shown on Table III.
+to handle other algorithms. For Whisper, we apply the small,
+base, and tiny models2 , whose numbers of parameters are
+                                                                                                                    WER of Wav2vec2 Model
+shown in Table III.                                                                           100
+                                                                                                                     Original (on Raspberry Pi)
+                                                                                               90                    Original (on desktop)
+                           TABLE III                                                                                 Fine-tuned (on Raspberry Pi)
+PARAMETER S IZE , WER, AND P ROCESSING T IME OF VARIOUS W HISPER                               80                    Fine-tuned (on desktop)
+              M ODELS AND THE WAV 2 VEC 2 M ODEL
+                                                                                               70
+            Models                 Small    Base     Tiny    Wav2vec2
+                                                                                               60
+
+                                                                                    WER (%)
+      Parameters (million)          244      74       39        95
+    WER original model (%)          5.7     14.2     17.9      41.9                            50
+   WER fine-tuned model (%)         1.7      2.4      7.1      8.4
+    Time original model (s)         12.8     4.4      2.2      1.4                             40
+   Time fine-tuned model (s)        12.9     4.3      2.2      1.3                             30
+
+                                                                                               20
+   The resulting text message is transmitted under the binary
+terminal mode of the Delphis modem [9]. The Python pyserial                                    10
+
+library is used to communicate between the Raspberry Pi board                                   0
+                                                                                                    0     5    10    15      20      25     30      35   40   45
+and the Delphis UA communication modem. The receiver                                                                      Speech File Index
+modem also works under the binary terminal mode and applies
+the Pico text-to-speech engine to convert text to speech.                                           Fig. 4. WER of each speech using the Wav2vec2 model.
+Compared with other tools such as the Google text-to-speech
+(gTTS), PicoTTS provides a better speech quality. In addition,                      To adapt the Wav2vec2 model, which was originally de-
+it can also be trained to generate personalized speech.                          signed for general-purpose speech recognition, to diver speech
+                                                                                 in underwater environments, we further fine-tuned it using
+                    III. E XPERIMENT R ESULTS                                    a set of 100 different sentences spoken by the same diver
+   An initial trial of the system was carried out in the Success                 under different underwater acoustic conditions using different
+Boat Harbor in Fremantle, Western Australia. During this trial,                  recording equipment. The fine-tuned model was trained with
+a diver talked through a microphone located in the AGA mask                      the feature extractor of the Wav2vec2 model locked, and only
+(Interspiro Divator). The speech signal was converted to text                    the transformer encoder and the output layer were fine-tuned.
+by the Raspberry Pi board located in a watertight canister                       The Adam optimizer was used in the training with the learning
+carried by the diver, and the text signal was transmitted                        rate of 1 × 10−4 . The number of epochs used was 150.
+by one Delphis modem to another Delphis modem. The                                  The WER for each of the 41 speech samples using the fine-
+received signal was converted to speech and played back to                       tuned Wav2vec2-base-960 model is shown in Fig. 4. It can
+                                                                                 be seen that through fine-tuning, the average WER is reduced
+  2 https://github.com/openai/whisper                                            from 41.9% to 8.4% as illustrated on Table III. Similar to the
+
+
+
+
+        Authorized licensed use limited to: Stanford University. Downloaded on September 07,2026 at 01:07:29 UTC from IEEE Xplore. Restrictions apply.
+original model, the WER of the fine-tuned model is identical                                  training data is limited. For example, fine-tuning the Whisper-
+on the desktop computer and on the Rapberry Pi.                                               base model with LoRA involves only 885 thousand trainable
+   In addition to the recognition performance, the processing                                 parameters, which are just 0.36% of the total parameters of
+time for speech-to-text conversion is another critical factor to                              the model.
+consider when deploying a model in real-world applications.
+Therefore, we next evaluate the processing time required by                                                                   WER of Whisper Models
+                                                                                                           100
+the Wav2vec2 model on a Raspberry Pi 5 board for converting
+                                                                                                                                                   Small Original
+speech samples into text. Fig. 5 provides the detailed pro-                                                                                        Small Fine-tuned
+cessing time for each sample speech. It can be seen that the                                                80                                     Base Original
+                                                                                                                                                   Base Fine-tuned
+conversion time varies, which depends on factors such as the                                                                                       Tiny Original
+length of speech and background programs running on the                                                                                            Tiny Fine-tuned
+                                                                                                            60
+Raspberry Pi. The fine-tuned model takes slightly shorter time
+                                                                                                 WER (%)
+than the original model. On average, the conversion time is 1.4
+seconds for the original model and 1.3 seconds for the fine-                                                40
+tuned model, as shown on Table III.
+
+                                                                                                            20
+                                   Processing Time of Wav2vec2 Model
+                    5
+                                 Wav2vec2-base-960 original
+                   4.5           Wav2vec2-base-960 fine-tuned                                                0
+                                                                                                                 0   5   10    15       20    25        30   35       40   45
+                    4
+                                                                                                                                    Speech File Index
+                   3.5
+                                                                                                            Fig. 6. WER of each speech using various Whisper models.
+
+
+   Time (second)
+                    3
+
+                   2.5                                                                           The average WER results for the Whisper models (deployed
+                    2                                                                         on Raspberry Pi) across the 41 speech samples are shown in
+                   1.5                                                                        Table III. As illustrated in Fig. 6 and Table III, the WER
+                                                                                              decreases as the model size increases. Furthermore, when
+                    1
+                                                                                              comparing the three fine-tuned Whisper models with their
+                   0.5                                                                        original counterparts, we observe that fine-tuning significantly
+                    0                                                                         improved the models’ performance on diver speech, with an
+                         0   5       10    15      20      25     30   35   40   45
+                                                                                              average reduction of 71.2% in WER across the models.
+                                                Speech File Index
+                                                                                                 Table III shows the average processing time of the Whisper
+Fig. 5. Processing time of each speech by the Wav2vec2 model on the                           models across the 41 speech samples, while Fig. 7 provides
+Raspberry Pi 5 board.                                                                         the detailed processing time for each sample per model. As
+                                                                                              demonstrated in Fig. 7, the difference between the processing
+                                                                                              time of the original and the corresponding fine-tuned Whisper
+B. Whisper Model Results                                                                      models is negligible, since fine-tuning with LoRA does not
+   The WERs of each speech yielded by various Whisper                                         introduce any additional parameters to the original model.
+models (including the small, base, and tiny models) on a                                      Moreover, although a larger model could yield a better recog-
+Raspberry Pi 5 board are shown in Fig. 6. The WERs of both                                    nition performance (as revealed in Fig. 6 and Table III), it
+the original model and fine-tuned model are demonstrated. The                                 also requires a longer processing time. We can also observe
+fine-tuning was performed using the same 100 sentences that                                   the time fluctuation is bigger with a larger model.
+were employed previously in Section III-A for the Wav2vec2
+                                                                                              C. Summary
+model fine-tuning. The fine-tuning process was conducted on
+a desktop computer configured with Python 3.12.7, PyTorch                                        When comparing the recognition performance of the
+2.6.0+cu124, CUDA 12.2, and an RTX A6000 GPU. The                                             Wav2vec2 and Whisper models (as illustrated in Fig. 4 and
+training parameters included a batch size of 8, a learning                                    Fig. 6, respectively), we observe that the Whisper models
+rate of 1 × 10−3 , and 16 epochs for each model. The low-                                     achieve a substantially lower WER. This improvement is
+rank adaptation (LoRA) technique [10] was used to fine-tune                                   mainly due to the fact that the pre-training corpus of Whisper
+the attention head layers (q proj and v proj) of the Whisper                                  considerably exceeds that of Wav2vec2 in both scale and
+models. For the LoRA implementation, we set the rank r to 8,                                  diversity, thereby providing enhanced robustness against noise.
+the scaling parameter α to 32, and the dropout probability to                                 This advantage of Whisper gives it an edge in underwater
+0.05. Compared with other adaptation approaches, LoRA re-                                     diver speech communication, as the underwater acoustic en-
+duces the number of trainable parameters significantly, making                                vironment is known to be noisy with an excessive amount of
+it suitable for underwater diver speech recognition where the                                 impulsive noise [11].
+
+
+
+
+                     Authorized licensed use limited to: Stanford University. Downloaded on September 07,2026 at 01:07:29 UTC from IEEE Xplore. Restrictions apply.
+                                   Processing Time of Whisper Models                                                   ACKNOWLEDGMENT
+                    25
+                                                                     Small Original             The authors would like to thank O2Metocean and Tech-
+                                                                     Small Fine-tuned         Nautics, Frementle, WA, Australia, for their technical support
+                                                                     Base Original
+                    20
+                                                                     Base Fine-tuned
+                                                                                              during the development and trial of the prototype system.
+                                                                     Tiny Original
+                                                                     Tiny Fine-tuned                                        R EFERENCES
+
+
+    Time (second)
+                    15                                                                         [1] P. Chen, Y. Rong, S. Nordholm, and Z. He, “An underwater acoustic
+                                                                                                   OFDM system based on NI CompactDAQ and LabVIEW,” IEEE Sys-
+                                                                                                   tems Journal, vol. 13, pp. 3858-3868, Dec. 2019.
+                    10                                                                         [2] N. Zeghidour, A. Luebs, A. Omran, J. Skoglund, and M. Tagliasacchi,
+                                                                                                   “SoundStream: An end-to-end neural audio codec,” https://arxiv.org/abs/
+                                                                                                   2107.03312, 2021.
+                     5
+                                                                                               [3] K. Y. Islam, I. Ahmad, Y. Rong, and D. Habibi, “Joint energy and
+                                                                                                   security optimization in underwater wireless communication networks,”
+                                                                                                   IEEE Internet of Things J., vol. 11, pp. 14282-14295, Apr. 2024.
+                                                                                               [4] A. Baevski, H. Zhou, A. Mohamed, and M. Auli, “Wav2vec 2.0: A
+                     0                                                                             framework for self-supervised learning of speech representations,” https:
+                         0   5    10     15      20      25     30      35     40       45
+                                                                                                   //arxiv.org/abs/2006.11477, 2020.
+                                              Speech File Index                                [5] A. Radford, J. Wook Kim, T. Xu, G. Brockman, C. McLeavey, and I.
+                                                                                                   Sutskever, “Robust speech recognition via large-scale weak supervision,”
+Fig. 7. Processing time of each speech by various Whisper models on the                            Proc. 40th International Conference on Machine Learning, Honolulu,
+Raspberry Pi 5 board.                                                                              HI, USA, July 23-29, 2023, Article No. 1182, pp. 28492-28518.
+                                                                                               [6] A. Vaswani, N. Shazeer, N. Parmar, J. Uszkoreit, L. Jones, A. N. Gomez,
+                                                                                                   L. Kaiser, and I. Polosukhin, “Attention is all you need,” Proc. Advances
+   However, in terms of the processing time for speech-to-text                                     Neural Inform. Process. Syst., Long Beach, CA, USA, Dec. 4-9, 2017.
+                                                                                               [7] “Pico Text-to-Speech,” [Online]. Available: https://github.com/ihuguet/
+conversion, the Wav2vec2 model requires much shorter time                                          picotts.
+(see Fig. 5 and Fig. 7) than the Whisper models. Considering                                   [8] V. Panayotov, G. Chen, D. Povey, and S. Khudanpur, “Librispeech: An
+the tradeoff between recognition performance and processing                                        ASR corpus based on public domain audio books,” Proc. 40th IEEE Int.
+                                                                                                   Conf. Acoustics, Speech, and Signal Processing, South Brisbane, QLD,
+time, the fine-tuned Whisper-base model emerges as the most                                        Australia, Apr. 19-24, 2015, pp. 5206-5210.
+suitable choice for the diver communication application.                                       [9] “Succorfish Delphis,” [Online]. Available: https://succorfish.com/
+   During the trial, the laptop computer also sent speech to                                       products/delphis/.
+                                                                                              [10] E. Hu, Y. Shen, P. Wallis, Z. Allen-Zhu, Y. Li, S. Wang, L. Wang, and W.
+the diver. Noises generated by wind and boat activities were                                       Chen, “LoRA: Low-rank adaptation of large language models,” arXiv,
+present during the trial. The experimental results indicate                                        Oct. 2021, [Online]. Available: https://arxiv.org/abs/2106.09685.
+the successful functioning of the prototype system in a real                                  [11] P. Chen, Y. Rong, S. Nordholm, and Z. He, “Joint channel and impulsive
+                                                                                                   noise estimation in underwater acoustic OFDM systems,” IEEE Trans.
+underwater environment.                                                                            Veh. Technol., vol. 66, pp. 10567-10571, Nov. 2017.
+
+                                       IV. C ONCLUSIONS
+   We have presented a speech-to-text conversion-based diver
+underwater communication system. Initial trial results show
+promising outcomes of the proposed diver communication sys-
+tem. Using a fine-tuned Whisper-base model, an average WER
+of 2.4% is achieved during the trial with an average processing
+time of 4.3 seconds. Future works include further improving
+the reliability of the speech-to-text conversion algorithm and
+the integration of the system to diver equipment.
+
+
+
+
+                     Authorized licensed use limited to: Stanford University. Downloaded on September 07,2026 at 01:07:29 UTC from IEEE Xplore. Restrictions apply.
+

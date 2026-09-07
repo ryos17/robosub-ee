@@ -1,0 +1,1517 @@
+                                                                                                                                                                                   1
+
+
+
+                                            Data-aided Underwater Acoustic Ray Propagation
+                                                                                                  Modeling
+                                                                                           Kexin Li, Mandar Chitre
+
+                                             ARL, Tropical Marine Science Institute and Department of Electrical and Computer
+
+                                                                          Engineering, National University of Singapore
+
+
+
+
+arXiv:2205.06066v2 [cs.SD] 24 Aug 2023
+                                                                                                         Abstract
+
+                                                    Acoustic propagation models are widely used in numerous oceanic and underwater applications. Most con-
+                                               ventional models are approximate solutions of the acoustic wave equation, and require accurate environmental
+                                               knowledge to be available beforehand. Environmental parameters may not always be easily or accurately measurable.
+                                               While data-driven techniques might allow us to model acoustic propagation without the need for extensive prior
+                                               environmental knowledge, such techniques tend to be data-hungry and often infeasible in oceanic applications
+                                               where data collection is difficult and expensive. We propose a data-aided physics-based high-frequency acoustic
+                                               propagation modeling approach that enables us to train models with only a small amount of data. The proposed
+                                               framework is not only data-efficient, but also offers flexibility to incorporate varying degrees of environmental
+                                               knowledge, and generalizes well to permit extrapolation beyond the area where data were collected. We demonstrate
+                                               the feasibility and applicability of our method through four numerical case studies, and one controlled experiment.
+                                               We also benchmark our method’s performance against two classical data-driven techniques – Gaussian process
+                                               regression and deep neural network.
+
+
+                                                                                                       Index Terms
+
+                                                    Acoustic propagation modeling, scientific machine learning, data-efficient modeling, ray method, physics-
+                                               informed machine learning.
+
+
+
+                                                                                                  I. I NTRODUCTION
+
+                                            Acoustic propagation in typical ocean environments exhibits strong spatial and temporal variability.
+                                         The dynamic nature of oceans across all spatiotemporal scales poses a difficult problem for underwater
+                                         acoustics. The ability to effectively model acoustic propagation is vital in many oceanic applications,
+                                         ©2023 IEEE. Personal use of this material is permitted. Permission from IEEE must be obtained for all other uses, in any current or future
+                                         media, including reprinting/republishing this material for advertising or promotional purposes, creating new collective works, for resale or
+                                                           redistribution to servers or lists, or reuse of any copyrighted component of this work in other works.
+                                                                                                         2
+
+
+
+and therefore necessary although often challenging. Applications related to oceanic acoustic propagation
+modeling can be broadly categorized into two main classes – forward problems and inverse problems.
+The forward problems seek to estimate acoustic fields at various receiver locations given environmental
+information [1]–[3]. On the other hand, inferring unknown environmental parameters from acoustic mea-
+surements is the goal of inverse problems [4]–[7]. Common inverse problems mainly focus on localization
+and remote sensing of the ocean environments [8]. Matched field processing (MFP) is a generalized
+beamforming method that is widely used in inverse problems. Conventional MFP employs acoustic
+propagation modeling to search for environmental parameters that generate field replicas matching acoustic
+measurements [9]–[11].
+  Physics-based acoustic propagation models estimate acoustic field by leveraging our physical un-
+derstanding of acoustic propagation. Most physics-based models are derived from the acoustic wave
+equation [12]. Closed-form solutions of the wave equation are typically analytically intractable in ocean
+environments [13]. There are various widely used approximate solutions to the wave equation, most of
+which can be seen as variants of the following four groups: ray methods [14], normal modes [15], parabolic
+equations [16], and wavenumber integration [17].
+  There are two main limitations of the physics-based models – high computational complexity (especially
+in complex three-dimensional (3D) environments), and the need for accurate environmental knowledge.
+A common approach today is to approximate 3D propagation effects by applying two-dimensional (2D)
+models to N azimuths. This idea is often referred to as 2.5D models or N ×2D models in literature [18],
+[19]. While it is computationally more efficient than full 3D modeling, 2.5D models can only be applied
+in environments where the out-of-plane arrival energy is insignificant. Since the multipath structure of
+an ocean environment leads to complicated constructive and destructive interference patterns that are
+strongly dependent on the environmental parameters [20]–[22], conventional physics-based models require
+accurate environmental knowledge to make good predictions of the acoustic field. Accurate measurement
+of environmental parameters such as sediment properties, bathymetry, internal waves, suspended bubbles,
+surface wave spectra, etc. may be difficult or expensive in practice. Even in cases where such information
+is available, it may not always be straightforward to incorporate it into propagation models.
+  While the limitations in physics-based models pose a practical hurdle for many underwater applications,
+the emergence of data-driven machine learning (ML) algorithms might offer a promising alternative. ML
+algorithms allow computers to automatically learn from data and perform certain tasks that were previously
+                                                                                                            3
+
+
+
+considered difficult [23], [24]. We can model acoustic field using classical data-driven ML techniques such
+as Gaussian process regression (GPR) [25], [26] and artificial neural networks (NNs) [27], [28], provided
+sufficient acoustic field measurements are available as training data for the models. The Gaussian process
+model is a probabilistic model widely used for regression and classification problems. GPR is capable
+of capturing relations between inputs and outputs through non-parametric Bayesian inference [29]–[32].
+Given a set of acoustic measurements and the corresponding measurement locations, GPR can interpolate
+and extrapolate acoustic predictions with uncertainty distributions at unvisited locations. The computational
+cost of the traditional GPR scales poorly with the size of training data, but sparse GPR models have been
+proposed to counter such a limitation [33]. The availability of a large amount of accessible datasets has
+driven the rapid growth in the development of NN algorithms over the past years. NNs are composed of
+interconnected neurons arranged in layers. NNs learn to identify complicated patterns and relationships
+in training data by properly adjusting weights and biases of all neurons [34]. The universal function
+approximation theorem establishes that multilayer feed-forward NNs have the capability to approximate
+any continuous function given a sufficient number of hidden units [35]. This suggests that a NN should
+be able to approximate the solution of the wave equation by learning appropriate weights and biases from
+the training data.
+  Since data-driven approaches only require acoustic measurements for training, they eliminate the need to
+have full and accurate prior environmental knowledge. Once the model is trained, evaluating 3D acoustic
+fields at unvisited locations is much faster than 2.5D numerical methods. These factors make data-driven
+methods a feasible alternative for predicting acoustic fields in cases where physics-based models fail.
+However, the two key problems that limit their use in practical acoustic propagation modeling are the
+necessity of a large training dataset, and the inability to extrapolate well [36]. The cost of acoustic data
+acquisition is inevitably high, as the ocean environment tends to be expensive to operate in. In this paper,
+we address these two problems by developing hybrid propagation modeling methods that not only learn
+from data, but also utilize the knowledge of the physics of acoustic propagation, without requiring full
+environmental knowledge. We leverage the complementary strengths of physics-based propagation models
+and data-driven ML to develop a hybrid approach that utilizes available environmental knowledge, requires
+limited training data, and extrapolates well.
+  The need to combine knowledge of physics with data-driven ML is not limited to ocean acoustic
+modeling, and is in fact the focus of an emerging field called scientific machine learning (SciML) [37].
+                                                                                                           4
+
+
+
+
+Fig. 1: The typical model structure of PINNs. Node u denotes the predicted output of the NN and node
+f denotes the residual, measuring how well the predictions satisfy the underlying physical PDE. The
+residual term becomes 0 in the loss function when NN prediction fully satisfies the underlying physics.
+
+
+Researchers have explored synergistic ways that use scientific domain knowledge to aid data-driven
+ML [38]–[43]. A popular SciML strategy, named physics-informed neural networks (PINNs), imposes
+physics constraints in the form of partial differential equations (PDEs) to act as a regularizer in the loss
+function of a NN [44]. Such an augmentation in the loss function helps to alleviate the problems of
+requiring large amounts of data, and the inability to extrapolate. A typical structure of PINN models is
+shown in Fig. 1. In the context of acoustic propagation, NNs can be informed by the acoustic wave equation
+to generate data-efficient solution approximations [45]–[47]. However, as far as we are aware, there are
+limited attempts at exploring the use of SciML for ocean modeling. One of the few works that assess the
+effectiveness of PINNs in solving simple ocean-related modeling problems is [48]. Although there are
+many successful implementations showing that imposing physics knowledge improves model training, the
+authors of [48] found no significant benefits to the training error by having additional physics-informed
+constraints in the loss function in their simulation studies. The authors of [49] explored the benefits of
+using PINNs to solve three ocean modeling-related PDEs, including the wave equation.
+  PINNs encode the physics as part of the loss function, and strike a balance between data-driven and
+physics-informed through hyper-parameters that control the weights of various terms in the loss function.
+Hyper-parameter tuning is critical to the successful application of PINNs, but can often be difficult. We
+take a different approach to incorporate underlying physics in our models. We design a class of ML
+                                                                                                                                      5
+
+
+
+algorithms where the physics is encoded in the structure of the algorithms. The functions these algorithms
+learn are automatically solutions to the acoustic wave equation. We give up the universal approximation
+property of NNs, and instead constrain our algorithms to only learn physically realistic functions. This
+constraint enables learning from very little data, and extrapolation beyond the region where the data were
+collected. Our approach is not only data-efficient, but also avoids the need for additional hyper-parameter
+tuning. Moreover, the algorithm is computationally simple and we are able to fully model 3D acoustic
+environments easily.
+   To the best of our knowledge, our previous preliminary works [50], [51] are the first attempts to explore
+the feasibility of modifying the structure of neurons in a NN in order to incorporate the underlying
+physics of ocean acoustics propagation. Ray models are computationally efficient and widely used in
+high-frequency underwater applications [52]. They can be seen as an intuitive way to interpret the wave
+equation solution as they track trajectories of a set of rays originating from the source as they propagate
+in oceans [14]. In [50], we utilized ray models as the basis of our data-aided modeling. In this follow-up
+paper, we investigate this idea further and develop a general recipe* that targets solving forward problems
+in cases where there is a lack of environmental knowledge (but some acoustic measurements are available).
+Although inverse problems are not the focus of our work here, our modeling approach can also help solve
+some inverse problems as a by-product. The recipe presented in this paper is based on ray methods, but it
+can be extended to other physics-based modeling approaches (e.g. normal modes) as demonstrated in [51].
+   The main contributions of this paper are summarized below:
+
+   1) We develop a recipe to generate physics-aided data-driven forward acoustic propagation models that
+       solve the acoustic wave equation in a desired number of dimensions (typically 1D, 2D or 3D).
+   2) The model does not require accurate environmental knowledge, but is able to utilize any available
+       environmental knowledge.
+   3) The model does not require a large amount of training data, and has the ability to extrapolate beyond
+       the region where data were collected.
+   4) The recipe supports composition, thus enabling us to combine purely data-driven ML models and
+       physics-aided ML models into a single propagation model. For example, we may use a standard
+       NN to model the reflection coefficient of the seabed, and combine it with a physics-aided model
+       for the overall propagation modeling.
+    * In this paper, the term “recipe” refers to a general approach that yields a class of physics-based data-aided propagation modeling
+
+algorithms.
+                                                                                                       6
+
+
+                               TABLE I: A BBREVIATIONS USED IN THE PAPER .
+
+                             Abbreviation   Description
+
+                             GPR            Gaussian Process Regression
+                             ML             Machine Learning
+                             NN             Neural Network
+                             DNN            Deep Neural Network
+                             SciML          Scientific Machine Learning
+                             PINN           Physics-Informed Neural Network
+                             PDE            Partial Differential Equation
+                             AOI            Area Of Interest
+                             CW             Continuous Wave
+                             RBNN           Ray Basis Neural Network
+                             RCNN           Reflection Coefficient Neural Network
+                             ISM            Image Source Method
+                             RMS            Root Mean Square
+                             MATE           Mean Absolute Test Error
+
+
+
+  5) Our framework brings interpretability to trained model parameters. This is particularly useful in
+     inverse problems, where environmental information may be extracted from the trained model pa-
+     rameters.
+  6) We demonstrate our method with several numerical experiments, and benchmark it against two
+     popular data-driven techniques – GPR and deep neural network (DNN). We also carry out a
+     controlled experiment in a water tank to validate the performance of a generated propagation model.
+
+  The rest of the paper is organized as follows. In Section II, we introduce the modeling recipe and
+illustrate three example formulations arising from the use of the recipe. In Section III, we numerically
+demonstrate some use cases of the proposed framework for four common oceanic applications. This is
+followed by an experimental validation in a water tank environment in Section IV. The field estimation
+results are benchmarked against a GPR model and a DNN model. In Section V, we highlight the
+assumptions and limitations of our proposed recipe. We also discuss potential solutions and possible
+extensions. In Section VI, we summarize our findings and conclude this paper.
+  Some abbreviations and symbols used throughout the paper are listed in Table I and Table II.
+  N otation: Bold symbols and [·] denote vectors. Symbols in calligraphic font and (·) represent tuples.
+Sets are written as {·}. We use the interval notation: [a, b) = {x ∈ R|a ⩽ x < b}. |c| denotes the
+magnitude of a complex number c. For vectors a and b, a · b is the dot product. ∥a∥1 and ∥a∥2 denote
+L1 -norm and L2 -norm of vector a respectively. The symbol ≡ denotes equivalence, and the symbol ∇2
+                                                                                                                                          7
+
+
+                                             TABLE II: S YMBOLS USED IN THE PAPER .
+
+ Symbol      Description                                       Symbol      Description
+ rs          Source location                                   ns          Number of surface reflections
+ f           Frequency                                         eθ          Error to pre-calculated nominal azimuthal angle θ′
+ r           Spatial coordinate                                eψ          Error to pre-calculated nominal elevation angle ψ ′
+ c           Sound speed                                       ed          Error to pre-calculated nominal distance d′
+ ω           Angular velocity                                  r train     Measurement locations in training dataset
+ p̄(r)       Complex pressure amplitude at location r          y train     Acoustic measurements in training dataset
+ k           Wavenumber                                        α           Penalty coefficient of arrival ray amplitude
+ k           Wave propagation vector                           ζ           Penalty coefficient of angular error
+ A           Amplitude of a ray                                β           Penalty coefficient of distance error
+ ϕ           Phase of a ray                                    η           Penalty coefficient of reflection energy
+ θ           Azimuthal angle                                   T           Trainable parameters in RBNN model
+ ψ           Elevation angle                                   R           Trainable parameters in RCNN model
+ d¯          Propagation distance of a ray                     ϵ           Reflection coefficient
+ ro          Reference location                                κ           Reflection phase shift
+ s           Image source location                             γ           Incident angle of a reflection
+ d           Distance between s and r o                        Γ           Complex reflection coefficient
+ nray        Number of arrival rays                            la          Volume absorption loss term
+ nref        Order of reflection                               lrc         Reflection loss term
+ nb          Number of bottom reflections                      lg          Geometric spreading loss term
+
+
+
+is the Laplace operator.
+
+
+                                        II. P ROBLEM & S OLUTION F ORMULATION
+
+A. Ray-basis Neural Network Framework
+
+   We consider an acoustic propagation modeling problem where we have limited environmental knowledge
+and a small amount of acoustic data collected within an area of interest (AOI). We assume an acoustic
+source is located at position r s and omni-directionally transmits a continuous wave (CW) signal at
+frequency f . The signal emitted from the source is scattered by the water surface and other boundaries
+as it propagates through the acoustic channel. The received signal p(r) at location r is composed of a
+sum of multipath arrivals, each with associated intensity and arrival time. The constructive and destructive
+interference due to the multipath may lead to strong spatial variations in the acoustic field within AOI.
+   The acoustic wave equation determines the propagation of the acoustic energy from a source, and is
+expressed as [12]:
+                                                            ∂ 2p
+                                                                 = c2 ∇2 p,                                                             (1)
+                                                            ∂t2
+
+where p represents acoustic pressure, t denotes time and c is the sound speed in water† . A solution to (1)
+     †
+       In a general formulation, the sound speed c may vary with position and depth. While the method in this paper can be extended for
+application in such cases, in this paper, we mostly restrict our discussion to the case where c is constant in the AOI for field estimation.
+                                                                                                            8
+
+
+
+
+     Fig. 2: An example showing the superposition of 5 multipath arrivals at a receiver location r.
+
+
+can be written as:
+                                             p(r, t) = p̄(r)eiωt ,                                        (2)
+
+
+where r is the spatial coordinate, p̄(r) represents complex pressure amplitude, and ω = 2πf denotes
+angular frequency. Substituting (2) back into (1), and rearranging, we get the Helmholtz equation [12]:
+
+
+                                          k 2 p̄(r) + ∇2 p̄(r) = 0,                                       (3)
+
+
+where k = ωc is called the wavenumber. Equation (3) can be solved by:
+
+
+                                             p̄(r) = Aeiϕ eik·r ,                                         (4)
+
+
+where A and ϕ represent amplitude and phase of a plane wave, and k is the wave propagation vector
+pointing normal to the wavefront, such that ∥k∥2 = k.
+  Any function of the form (4) solves the wave equation. Due to the linearity of the wave equation, the
+superposition of nray such plane-wave solutions (each associated with a ray) must also be a solution to
+the wave equation. Thus, the field at a location r can be expressed as the sum of terms given by (4):
+                                                   nray
+                                                   X
+                                         p̄(r) =          Am eiϕm eikm ·r ,                               (5)
+                                                   m=1
+
+
+where Am denotes the amplitude of mth arrival, ϕm refers to the corresponding phase term, and km = k k̂m
+for some unit vector k̂m .
+  This is the well-known ray solution to the acoustic wave equation [14], with Am eiϕm being the complex
+amplitude of the mth ray and k̂m being the direction of travel of that ray. Fig. 2 elaborates on the intuitve
+                                                                                                                                      9
+
+
+
+
+Fig. 3: The computation graph for computing total pressure amplitude as the sum of contributions from
+each ray as shown in (5) using the proposed RBNN framework. The trainable parameters T include all
+unknown RBNN model parameters yet to learn from data.
+
+
+interpretation behind (5) from a receiver point of view. The acoustic field at a receiver location r can
+be visualized as the superposition of nray multipath arrivals. Conventional ray models determine Am ,
+ϕm and km for all m, given detailed environmental knowledge. It is not generally possible to compute
+Am , ϕm and km if partial or no environmental knowledge is available. Fortunately, ML provides us the
+necessary tools to learn unknown parameters or functions from data. We can think of (5) as a function to
+be modeled using a specialized NN with each term in the summation playing the role of a neuron‡ (with
+parameters closely related to Am , ϕm and km ). The values of the parameters can be learned from data
+using a generalized backpropagation algorithm [53], [54] with automatic differentiation [55] applied to
+this NN. Various optimization algorithms such as ADAM [56], SGD [57], L-BFGS [58], etc., commonly
+used in ML, may be utilized for training (learning of the model parameters from data).
+   The functions that this NN can learn are guaranteed to solve the wave equation (1) by construction,
+hence incorporating the acoustic domain knowledge in the structure of the NN. We term this specialized
+NN as a ray basis neural network (RBNN), as the neurons in the network can be interpreted as acoustic
+plane waves arriving at a given receiver location as shown in Fig. 3.
+   It is worth noting that our model structure is determined by the governing physics and is conceptually
+different from a conventional PINN. Instead of imposing physical constraints using the loss function of
+a standard NN, we embed the constraints in the structure of the NN by making each neuron individually
+    ‡
+      The term neuron, while originally inspired by biological neurons, is now used in the ML literature to denote a trainable unit of
+computation in the NN. Layers of various types of neurons (e.g. fully connected layers, convolution layers, etc.) are commonly combined
+together to form a NN. Each term in (5) is a trainable computational unit and hence plays the role of a neuron, and the summation of all
+terms plays the role of a layer of neurons in a NN.
+                                                                                                          10
+
+
+
+obey the governing physics. We then use the same training strategies that standard NNs typically used to
+find the best-fitted values of the unknown parameters of the resulting model by continuously minimizing
+a loss function that measures the error between the model output and observed data. The dataset used in
+the model training stage is comprised of a set of measurement locations r train and corresponding acoustic
+field measurements y train . Furthermore, one can construct more sophisticated NNs with a mix of standard
+neurons and RBNN-neurons, as we shall show later. Such NNs can be useful in solving problems with
+partial environmental knowledge.
+  The formulation presented above forms a basic recipe to model high-frequency acoustic propagation
+using SciML. The exact calculations of Am , ϕm and km of each ray are application-dependent, since
+some of these terms may be calculated based on environmental knowledge, and others determined from
+parameters learned from data. In Sections II-B and II-C, we apply the recipe to generate models to
+handle three different application scenarios: plane wave (far-field propagation), spherical wave (near-field
+propagation) without knowledge of geometry, and spherical wave with knowledge of geometry. In each
+scenario, the exact details of RBNN-neurons change, but the overall RBNN structure and the training
+process remain the same.
+
+
+B. Plane wave RBNN
+
+  In the far-field of a point source, a ray arrival can be well approximated by a planar wavefront. So,
+if the AOI is sufficiently far from the source, we can use a plane wave formulation for the unknowns
+in (5). This formulation does not require any prior environmental knowledge, and is particularly helpful to
+model practical scenarios where the environment is largely unknown. The unknown terms Am and ϕm are
+treated as unknown model parameters to be determined during training. If the sound speed or frequency
+is unknown, k may also be treated as an unknown parameter. The unit vector k̂m is parametrized in terms
+of azimuthal angle θm and elevation angle ψm :
+                                                                
+                                              cos(θm ) sin(ψm )
+                                                                
+                                       k̂m =  sin(θm ) sin(ψm )  .                                     (6)
+                                                                
+                                                                
+                                                   cos(ψm )
+
+The set of trainable RBNN model parameters in the plane wave formulation therefore is:
+
+
+                                           Tp ≡ (A, ϕ, k, θ, ψ),                                         (7)
+                                                                                                                             11
+
+
+                                                                                                                      
+where A = A1 , A2 , . . . , Anray , ϕ = ϕ1 , ϕ2 , . . . , ϕnray , θ = θ1 , θ2 , . . . , θnray and ψ = ψ1 , ψ2 , . . . , ψnray .
+The complex pressure amplitude predicted at location r can be expressed as (5).
+  Since we do not assume detailed environmental information, the number of rays nray is unknown, but a
+conservative upper bound can often be estimated. Nevertheless, we find it better to think of nray as a model
+hyper-parameter to be tuned during training, with the tuning guided by an estimate, if available. Due to
+the strongly non-linear effect of parameters θm and ψm , the RBNN may get trapped in local minima or
+saddle points during training if nray is small. A large nray and uniformly distributed random initialization
+of θ and ψ ensure better convergence, but create potential for overfitting. A L1 -norm regularization on
+parameters A encourages sparsity, i.e., a trained model with only a small number of rays, and therefore
+avoids overfitting.
+  The loss function we minimize during the training is therefore the sum-square difference in predicted
+and measured pressure amplitudes at given receiver locations, combined with the L1 -norm regularization
+term to encourage sparsity:
+                                       Lp (r, y; Tp ) = (|p̄(r)| − y)2 + α ∥A∥1 ,                                          (8)
+
+
+where y is the observed pressure amplitude at location r, and α is a hyper-parameter that controls the
+regularization. While we write (8) for a single training data point, it is usually summed over a training
+mini-batch as per the standard practice in ML [59]. During validation and model evaluation, α in (8) is
+set to 0 to only calculate the prediction error term.
+
+
+C. Spherical wave RBNN
+
+  The acoustic propagation near a point source is best modeled using spherical waves. In a typical ocean
+environment, there are three key factors that contribute to the overall transmission loss: geometric spreading
+loss lg , volume absorption loss la and reflection loss lrc (net effect from all reflecting boundaries) [60]. In
+contrast to the plane wave formulation, the amplitude Ā and phase ϕ̄ of an arrival ray in our spherical wave
+formulation are functions of both source location r s and receiver location r. Therefore, (5) is re-written
+as [12], [61], [62]:
+
+
+                                                      nray
+                                                      X
+                                            p̄(r) =          Ām (r s , r)eiϕ̄m (rs ,r) ,                                  (9)
+                                                      m=1
+
+
+where
+                                                                                                             12
+
+
+
+
+                                  Ām (r s , r) = lgm (r s , r)lrcm (r s , r)lam (r s , r),              (10a)
+
+                                  ϕ̄m (r s , r) = ϕm                ¯
+                                                   rc (r s , r) + k dm (r s , r).                        (10b)
+
+
+Here, ϕm                                                                               th          ¯
+       rc (r s , r) is the overall reflection phase shift along the trajectory of the m ray, and k dm (r s , r)
+
+corresponds to the phase change for a propagation distance of d¯m (r s , r). The 3D spherical geometric
+spreading loss is [60]:
+                                                                    1
+                                                lgm (r s , r) = ¯            .                            (11)
+                                                                dm (r s , r)
+
+The volume absorption loss generally depends on the operating frequency, propagation distance and
+characteristics of the propagating medium. The widely used simplified expression of the attenuation per unit
+distance due to volume absorption is given in [63]. The attenuation and phase shift when sound interacts
+with scattering boundaries (e.g. seabed) can also be calculated if we know the angle of interaction and
+the properties and structure of the boundary [64].
+  The spherical wave formulation can incorporate varying degrees of environmental knowledge. The model
+parameters involved in the field prediction can be found through either data-driven learning strategies
+or numerical calculations, depending on the environmental knowledge provided. We next illustrate two
+examples that correspond to the scenarios with and without knowledge of the channel geometry:
+  1) Without knowledge of channel geometry: For the scenarios where the channel geometry is largely
+unknown, the trajectories of rays from the source to the receiver are unknown. However, applying the
+image source method (ISM) [65] to the problem, we can replace the unknown source location and channel
+geometry by a set of unknown image sources as illustrated in Fig. 4. The problem then reduces to finding
+the parameters of the unknown image sources to match with the training data.
+  Let r o be an arbitrary reference position within the AOI. We can parametrize each images source by a
+pressure amplitude Am , phase ϕm , a direction vector (corresponding to azimuthal angle θm and elevation
+angle ψm ) and distance dm from this reference position. In the case of an isovelocity environment, the
+pressure amplitude at a receiver location r is then given by:
+                                         nray
+                                         X           la (∥sm − r∥2 ) i(ϕm +k∥sm −r∥2 )
+                               p̄(r) =          Am                  e                  ,                  (12)
+                                         m=1
+                                                        ∥sm − r∥2
+                                                                                                           13
+
+
+
+
+Fig. 4: An illustration showing two image sources, s1 and s2 , corresponding to two reflected ray paths
+between the source rs and the receiver r.
+
+
+where:                                                                
+                                                     cos(θm ) sin(ψm )
+                                                                      
+                                     sm = r o − dm  sin(θm ) sin(ψm )                                 (13)
+                                                                      
+                                                                      
+                                                         cos(ψm )
+
+and la (·) is attenuation due to volume absorption as given in [63]. The complete set of trainable parameters
+for this model are:
+                                           Ts ≡ (k, θ, ψ, d, A, ϕ) ,                                    (14)
+
+                                
+where d = d1 , d2 , . . . , dnray . The loss function to be minimized is identical to (8).
+  2) With knowledge of channel geometry: If the channel geometry and associated reflecting boundaries
+are partially or completely known, we can incorporate available knowledge into our model. To illustrate
+the idea, let us assume that we know the source location and the channel geometry. We also assume that
+the sea surface is modeled well as a pressure-release boundary, but that we do not know the reflection
+coefficient for the seabed.
+  Given the source location and channel geometry, we can compute the incidence angle γm for each ray
+at the seabed. The reflection coefficient of the seabed is an unknown function of the incidence angle, and
+may be modeled using a simple 1-input 2-output (magnitude and phase) feedforward NN with a single
+hidden layer. We call this NN as the reflection coefficient neural network (RCNN). The same reflection
+coefficient function applies to all rays incident on the seabed, and hence the RCNN weights are shared
+across all the rays. The RCNN is implemented as an additional layer in the RBNN framework with shared
+weights, as illustrated in Fig. 5.
+  A ray may experience more than one reflections at the seabed. The overall reflection coefficient for mth
+                                                                                                         14
+
+
+
+
+Fig. 5: The computational graph for computing total pressure amplitude as the sum of contributions from
+each spherical ray as shown in (17). We insert an additional RCNN layer to learn the unknown reflection
+model.
+
+
+arrival ray is:
+                                                     m
+                                                    nb
+                                                    Y
+                                       lrcm (r) =         RCNNϵ (γim (r)),                            (15)
+                                                    i=1
+
+where nm                                                 m
+       b is the number of seabed reflections for ray m, γi (·) is the incidence angle for reflection i, and
+
+RCNNϵ (·) is the predicted reflection coefficient magnitude from the RCNN. The corresponding cumulative
+phase shift is:
+                                                           m
+                                                          nb
+                                                          X
+                                  ϕm         m
+                                   rc (r) = ns π +              RCNNκ (γim (r)),                      (16)
+                                                          i=1
+
+where RCNNκ (·) is the reflection phase shift predicted by the RCNN, and nm
+                                                                          s is the number of surface
+
+reflections for ray m. The phase change nm
+                                         s π is due to the pressure-release boundary assumption, and can
+
+easily be replaced by a more sophisticated surface reflection model, if desired.
+  As in the previous section, we choose to apply the ISM to replace the source with multiple image
+sources. This allows us to work with approximate knowledge of channel geometry and learn the exact
+locations of the image sources from data, as we illustrate later in this section. The resultant pressure
+amplitude can be expressed as:
+                                     nray m
+                                     X    l (r)la (∥sm − r∥ )             m
+                           p̄(r) =         rc                     2
+                                                                      ei(ϕrc (r)+k∥sm −r∥2 ) ,        (17)
+                                     m=1
+                                                ∥sm − r∥2
+                                                                                                             15
+
+
+
+where the ray trajectory necessary for the evaluation of lrcm (·) can be computed by geometric ray tracing.
+Since we are using a ray tracing model, it may be possible to extend the algorithm to non-isovelocity
+sound speed profiles by changing the Euclidean distances terms ∥sm − r∥2 in (17) to actual propagation
+distances along the curved ray paths.
+  The overall computation graph for (17) can be viewed as a NN with geometric ray tracer, RCNN layer
+and RBNN layer as shown in Fig. 5. The set of trainable RBNN parameters in this model are:
+
+
+                                                Tsg ≡ (k, θ, ψ, d, R) ,                                    (18)
+
+
+where R represents all trainable parameters in the RCNN layer.
+  The search spaces for θ and ψ span [0, 2π), and for d spans [0, ∞). The knowledge of geometry and the
+source location allows us to pre-calculate nominal arrival ray directions θ ′ , ψ ′ and propagation distances
+d′ prior to the model training stage. The calculated nominal directions and distances may deviate from
+reality due to limited knowledge or measurement error. We model this with appropriate error terms eθ ,
+eψ and ed :
+
+
+                                                        θ = θ ′ + eθ ,                                    (19a)
+
+                                                    ψ = ψ ′ + eψ ,                                        (19b)
+
+                                                        d = d′ + ed .                                     (19c)
+
+
+We then replace the trainable parameters θ, ψ, and d with the corresponding error terms, thus replac-
+ing (18) with:
+                                              Tsg ≡ (k, eθ , eψ , ed , R) .                                (20)
+
+
+  The amount of error allowed in eθ , eψ and ed reflect how confident we are about our knowledge of the
+channel geometry and source location. We impose L2 -norm penalty terms in the loss function to constrain
+values of eθ , eψ and ed learned during the training process. We also add a harsh penalty term to ensure
+that the upper bound of reflected energy learned by the RCNN obeys energy conservation. The resulting
+loss function is:
+
+                                        q                                       Z 0.5π                 
+                              2                                                                  2
+ Lsg (r, y; Tsg ) = (|p̄(r)| − y) + ζ       e2θ + e2ψ        + β ∥ed ∥2 + η max 0,      RCNNϵ (γ) dγ − 1 , (21)
+                                                         2                        0
+                                                                                                             16
+
+
+
+
+           Fig. 6: Summary of the application scenarios demonstrated via simulation studies.
+
+
+where ζ, β and η are hyper-parameters related to the three penalty terms. All elements in the hyper-
+parameters are set to 0 during the validation and model evaluation. In general, the image sources corre-
+sponding to higher-order reflections are assigned smaller penalty coefficients as angular errors are amplified
+with an increasing number of reflections.
+
+
+                                         III. S IMULATION S TUDIES
+
+  To study the effectiveness of our proposed method, we consider four common applications of ocean
+acoustic propagation models. These are summarized in Fig. 6.
+  All four applications considered use a profiling float equipped with a single hydrophone, collecting
+acoustic field measurements at a constant sampling rate. Such floats provide a cost-effective way of
+sparsely sampling acoustic fields. We assume that the profiling float can control its motion vertically, but
+not horizontally. The float freely drifts horizontally with ocean currents, thus following a zig-zag trajectory
+as it moves up and down through the water column.
+
+
+A. Far-field acoustic field prediction
+
+  The first application we shall consider is that of acoustic field prediction within an AOI at a long distance
+from an acoustic source. Suppose we have acoustic measurements from a profiling float along a zig-zag
+trajectory through the AOI with a known sound speed, but no other environmental knowledge. Conventional
+physics-based propagation models cannot be used for this application, as they require environmental
+knowledge as input. As discussed in Section II-B, RBNN parameters Tp can be learned without prior
+environmental knowledge, with acoustic field measurements as training data. We formulate our RBNN
+model primarily based on (5). With a sufficiently large distance between the acoustic source and the AOI,
+                                                                                                                                            17
+
+
+
+
+Fig. 7: Simulated environment for the far-field acoustic field prediction application. The trajectory of the
+profiling float can be seen in terms of the training data points. The ground truth field pattern within the
+AOI is also shown.
+
+
+we may expect that the curvature and path loss for all rays is similar. However, we find that modeling
+the curvature of the wavefront improves our field prediction accuracy. The set of trainable parameters is
+defined as:
+                                                           T ≡ (A, ϕ, θ, d),                                                             (22)
+
+
+where A and ϕ represent amplitudes and initial phase of rays, θ and d are used to model the wavefront
+curvatures of all rays. We use (8) as the loss function to train our RBNN model.
+   We simulate a profiling float performing 9 profiles through a 50 m × 30 m AOI at a distance of
+1,000 m from a 10 kHz source deployed at a depth of 5 m. The simulation setup is detailed in Table III
+and illustrated in Fig. 7. A total of 1,000 acoustic field measurements are collected along the trajectory
+of the float, of which 70% are used to train the models, and the remaining 30% are used for validation.
+We wish to predict the acoustic field in the entire AOI.
+   We benchmark the field estimation performance of the RBNN against two popular data-driven tech-
+niques – GPR and DNN. We use a GPR with a composite kernel of a squared exponential isotropic
+kernel and a Matérn 5/2 ARD kernel§ . The DNN model takes location data as input and outputs
+corresponding pressure amplitude. It has 3 fully-connected hidden layers with ReLU as the activate
+function. We try various initial learning rates and choose the one that yields the smallest validation
+error. The trainable model parameters in RBNN and DNN models are randomly initialized. We therefore
+     §
+       Among the several commonly used kernels we tried, this type of composite kernel yields minimal validation error for our field estimation
+problems. We optimized the hyperparameters of this composite kernel using the L-BFGS technique based on training data.
+                                                                                                             18
+
+
+  TABLE III: S IMULATED ENVIRONMENTAL SETUP FOR THE FAR - FIELD ACOUSTIC FIELD PREDICTION APPLICATION .
+
+
+                                Parameters                                       Value
+                                Environmental model                              2D
+                                Frequency                                        10 kHz
+                                Seabed                                           Sandy clay1
+                                Bathymetry                                       Range-dependent
+                                Source depth                                     5m
+                                Sound speed                                      1,541 m/s
+                                Distance between source and AOI                  1,000 m
+                                Dimensions of AOI                                50 m × 30 m
+                                Number of training data                          700
+                                Number of validation data                        300
+                                Number of test data in AOI                       601,601
+                                Number of rays in the RBNN layer                 60
+                            1
+                             Sandy clay seabed is characterized by a relative density of 1.147, a relative
+                            sound speed of 0.9849 and a dimensionless seabed absorption coefficient of
+                            0.00242 [66].
+
+TABLE IV: M ODEL COMPLEXITY AND RMS TEST ERROR OF THE THREE MODELS FOR FIELD PREDICTIONS WITHIN THE
+AOI.
+
+
+                                         Number of                      RMS test error (dB)
+                            Method
+                                         model parameters           Error-free data Noisy data
+                            RBNN1 60                                1.346                  1.678
+                            GPR   14002                             1.783                  1.637
+                            DNN   6421                              2.121                  2.180
+                        1
+                            Plane-wave RBNN.
+                        2
+                            Dimensionality of each data point × training data size.
+
+
+
+carry out 20 Monte Carlo simulations for the RBNN and DNN models and present the results of runs
+with the smallest validation errors. We implement early stopping [67] for RBNN and DNN model training
+to avoid overfitting.
+  We use the Bellhop model [68] to generate the 1,000 synthetic acoustic measurements along the profiler’s
+trajectory for training and validation. The high-frequency source produces a complex interference pattern.
+To evaluate the field prediction performance in simulation, we generate a dense test dataset of 601,601
+data points over a grid covering AOI, with a resolution of 0.05 m in depth and range. We also add a
+random position error of up to 0.1 m on each dimension of the measurement locations of the training and
+validation data to evaluate model robustness.
+                                                                                                           19
+
+
+
+
+Fig. 8: The estimated field patterns for the far-field acoustic field prediction application. Panel (a) shows
+the ground truth field pattern within the AOI, while panel (b) shows the ground truth field within a 50 m
+extended area on both sides of the AOI. Panels (c)–(e) show the estimated fields by RBNN, GPR and
+DNN. Panels (f)–(h) show the corresponding extrapolated field by RBNN, GPR and DNN in the extended
+region. Panels (i)–(k) show the estimated field when the training data have positional errors.
+                                                                                                               20
+
+
+
+  The root mean square (RMS) test error and the model complexity (number of model parameters) of the
+three models are reported in Table IV. The acoustic field patterns estimated by the three approaches are
+shown in Fig. 8. All three methods are able to learn key features of the acoustic field within the AOI. The
+RBNN model recovers most of the details in the AOI and extrapolates well in an extended region beyond
+the AOI. The GPR learns the field pattern well within the AOI where training data are available, but fails
+to extrapolate the field in the extended region. The field pattern reconstructed by the DNN has the lowest
+fidelity among the three approaches. The extrapolated field by the DNN also deviates significantly from
+the ground truth. The extrapolated field patterns shown in Fig. 8 (f), (g) and (h) highlight the unique
+ability of the RBNN to not only interpolate well, but also to extrapolate.
+  The field estimation performance of the GPR and the DNN, as quantified by RMS test error, is not
+significantly affected by position errors in the dataset. On the other hand, the field estimation accuracy of
+the plane wave RBNN was found to be vulnerable to position errors. The qualitative field patterns seen
+in Fig. 8 (i), (j) and (k) show that the RBNN captures the overall field pattern best.
+
+
+B. Near-field acoustic field prediction
+
+  We next consider an acoustic field prediction application within an AOI from a less distant source
+assuming that the channel geometry is known. Acoustic measurements are collected along a zig-zag
+trajectory within AOI using a profiling float. Since some of the environmental parameters (e.g. seabed
+properties) are unknown, we cannot employ physics-based propagation models for field prediction. We
+can, however, use the spherical wave RBNN from Section II-C2 with the knowledge of channel geometry.
+We can calculate the nominal arrival ray directions θ ′ , ψ ′ and propagation distances d′ prior to the training.
+This significantly reduces the training time and improves prediction accuracy.
+  For this application, we use a simple spherical wave RBNN model based on (17), without the RCNN
+layer. The overall effect of the reflections and absorption is modeled with a set of trainable parameters A,
+associated with the set of rays. To model geometrical measurement errors, we also add error parameters
+for nominal direction and propagation distance. The set of trainable parameters therefore is:
+
+
+                                            T ≡ (eθ , eψ , ed , A, ϕ).                                      (23)
+
+
+We use (21) as the loss function to train the trainable parameters and set η in (21) to 0 as we do not have
+RCNN as part of the network.
+                                                                                                         21
+
+
+
+
+Fig. 9: Simulated environment for the near-field acoustic field prediction application. The trajectory of
+the profiling float can be seen in terms of the training data points. The ground truth field pattern within
+the AOI is also shown.
+
+  TABLE V: S IMULATED ENVIRONMENTAL SETUP FOR THE NEAR - FIELD ACOUSTIC FIELD PREDICTION APPLICATION .
+
+
+                         Parameters                           Value
+                         Environmental model                  3D
+                         Frequency                            5 kHz
+                         Seabed                               Sandy clay
+                         Bathymetry                           Range-independent
+                         Water depth                          30 m
+                         Source depth                         15 m
+                         Sound speed                          1,541 m/s
+                         Distance between source and AOI      100 m
+                         Dimension of AOI                     50 m × 28 m
+                         Number of training data              116
+                         Number of validation data            51
+                         Number of test data in AOI           561,561
+                         Number of rays in RBNN               60
+
+
+  The setup of the simulated environment is shown in Fig. 9 and summarized in Table V. A profiling float
+performs 2 profiles across a 50 m × 28 m AOI at a distance of 100 m from a 5 kHz source deployed at a
+depth of 15 m to collect 167 acoustic field measurements. We use the Pekeris ray model [69] to generate
+synthetic data. We use 70% of the collected measurements to train the RBNN, and aim to estimate the
+acoustic field in the entire AOI. We benchmark the field estimation performance of the RBNN against
+GPR and DNN with the same model configurations as discussed in Section III-A.
+                                                                                                       22
+
+
+
+
+Fig. 10: The estimated field patterns for the near-field acoustic field prediction application. Panel (a)
+shows the ground truth field pattern within the AOI, while panel (b) shows the ground truth field within
+a 50 m extended area on both sides of the AOI. Panels (c)–(e) show the estimated fields by RBNN, GPR
+and DNN. Panels (f)–(h) show the corresponding extrapolated field by RBNN, GPR and DNN in the
+extended region. Panels (i)–(k) show the estimated field when the position and geometry measurements
+have random errors.
+                                                                                                           23
+
+
+          TABLE VI: RMS TEST ERROR FOR THE NEAR - FIELD ACOUSTIC FIELD PREDICTION APPLICATION .
+
+
+                                   Method        RMS test error (dB)
+                                             Error-free data Noisy data
+                                   RBNN      1.889             6.219
+                                   GPR       7.119             7.066
+                                   DNN       7.074             7.127
+
+
+  A dense test dataset of 561,561 data points on a 0.05 m spacing grid covering the AOI is generated to
+evaluate the field prediction performance. As RBNN and DNN may be sensitive to random initialization,
+we carry out 20 Monte Carlo simulations for each, and present the results with the best validation error.
+The initial values of hyper-parameters in the GPR kernel are tuned to yield the best validation error. We
+then use the L-BFGS technique to further optimize hyper-parameters by minimizing the training error
+of the GPR model. To evaluate model robustness, we add random measurement errors in the source
+location (0.3 m in horizontal directions, 0.1 m in depth), measurement locations (maximum of 0.4 m in
+all directions) and water depth (1 m) of AOI.
+  The RMS test errors of the estimated fields within the AOI by the three models are shown in Table VI.
+The acoustic field patterns within AOI estimated by the three approaches are shown in Fig. 10 (c), (d)
+and (e). Fig. 10 (f), (g) and (h) show extrapolated fields by the three models. The RBNN model is able
+to predict and extrapolate the spatially fast-varying field patterns well, even with a much smaller training
+dataset as compared to the far-field acoustic field prediction application in the previous section. However,
+the GPR and DNN show poor performance in terms of the estimated field pattern and RMS test error,
+for both interpolation and extrapolation of the acoustic field. The results highlight the data-efficiency of
+the RBNN model – the model can effectively incorporate knowledge of channel geometry and therefore
+train with very little data. The conventional GPR and DNN models, on the other hand, fail to predict field
+patterns as they do not benefit from partial environmental knowledge.
+  As one would expect, measurement noise worsens the prediction accuracy for the RBNN model. The
+sensitivity of field estimation to position errors is summarized in Table VII. However, the qualitative field
+pattern can still be recovered even with large measurement errors as seen in Fig. 10 (i).
+                                                                                                         24
+
+
+TABLE VII: S ENSITIVITY OF RMS TEST ERROR OF FIELD ESTIMATION TO RANDOM POSITION ERROR FOR THE NEAR -
+FIELD ACOUSTIC FIELD PREDICTION APPLICATION .
+
+
+                             Maximum position error1(m)           RMS test error (dB)
+                             0.0                                  1.889
+                                 √
+                             0.1 3                                3.401
+                                √
+                             0.2 3                                4.665
+                                √
+                             0.3 3                                5.423
+                                √
+                             0.4 3                                6.219
+                         1
+                                                                   √
+                             Maximum position error per dimension × 3.
+
+
+
+
+Fig. 11: Simulated environment for geo-acoustic inversion for seabed reflection model. The trajectory of
+the profiling float can be seen in terms of the training data points. The ground truth field pattern within
+the AOI is also shown.
+
+
+C. Geo-acoustic inversion for a seabed reflection model
+
+  The third application we demonstrate is to extract a seabed reflection model from acoustic measurements.
+While our proposed model primarily targets forward problems, it also has the potential to solve geo-
+acoustic inversion problems as a by-product.
+  Seabed reflection depends on the seabed structure and material properties, which are often unknown. In
+applications where multipath arrivals overlap and cannot be separated, we cannot measure the reflection
+coefficient directly. Our proposed recipe can, however, learn a reflection model from observed total
+transmission loss at a number of observation points. We use the RBNN model from Section II-C2 together
+with the RCNN layer, where the RCNN models the unknown reflection coefficient (as a function of
+reflection angle). By training the composite spherical wave model described in (17), we can recover a
+trained RCNN as a model for the seabed reflection.
+  We assume that the channel geometry and source location are known. A profiling float is employed to
+                                                                                                             25
+
+
+
+perform 12 profiles through a 300 m × 28 m AOI from a 5 kHz source deployed at a depth of 15 m. The
+simulation setup is illustrated in Fig. 11. A total of 1,112 acoustic field measurements are collected along
+the trajectory, and 70% of them are used to train the composite RBNN model. The environmental setup
+is similar to the near-field acoustic field prediction application in Section III-B, and the synthetic data are
+generated using the Pekeris ray model. We pre-calculate the nominal arrival directions and propagation
+distances, and use acoustic data to optimize the trainable model parameters T :
+
+
+                                                  T ≡ (R).                                                (24)
+
+
+We use (21) as the loss function to learn the reflection model.
+  In Table VIII, we present the inferred reflection coefficient curves and phase shift curves for various
+amounts of position measurement error. In an ideal scenario with no measurement errors, we can accurately
+recover the seabed reflection model. The modeling errors increase with the amount of position measurement
+error, with phase of the reflection coefficient being more sensitive to errors than its amplitude. The effect
+of measurement error can be partially mitigated by increasing the size of the training dataset.
+
+
+D. Geo-acoustic inversion for seabed properties
+
+  The last application we shall consider is a geo-acoustic inversion problem, where we wish to deter-
+mine geo-acoustic seabed properties from acoustical field measurements. We consider a simple Rayleigh
+reflection model to illustrate the idea. The complex Rayleigh reflection coefficient is given by [64]:
+                                                     q
+                                           ρr cos γ − ( cδ̄r )2 − sin γ 2
+                                       Γ=            q                    ,                            (25)
+                                           ρr cos γ + ( cδ̄r )2 − sin γ 2
+
+where
+
+
+                                                  δ̄ = 1 + iδ,                                           (26a)
+                                                     ρseabed
+                                                ρr =           ,                                         (26b)
+                                                     ρseawater
+                                                      cseabed
+                                                cr =           ,                                         (26c)
+                                                     cseawater
+
+where δ denotes dimensionless seabed absorption coefficient, ρr denotes relative density, cr represents
+relative sound speed. We assume ρr , cr and δ are unknown and to be determined from acoustic field
+measurements.
+                                                                                                      26
+
+
+          TABLE VIII: E FFECT OF MEASUREMENT POSITION ERROR ON THE SEABED REFLECTION MODEL .
+
+     Maximum position               Reflection coefficient               Reflection phase shift
+         error (m)
+
+
+
+
+             0.00
+
+
+
+
+               √
+           0.01 3
+
+
+
+
+               √
+           0.05 3
+
+
+
+
+               √
+           0.10 3
+
+
+
+
+  We assume that the source and receiver locations, as well as the channel geometry are known. An
+profiling float is employed to take 166 acoustic measurements over 100 m × 28 m AOI along a zig-zag
+trajectory from a 5 kHz acoustic source deployed at a depth of 15 m. As in previous applications, 70%
+of the measurements are used to train the RBNN model, while the balance 30% is used for validation.
+Fig. 12 depicts the simulated environment and the sampling trajectory of the profiling float.
+  In Section III-C, we modeled the angle-dependent complex reflection coefficient using a RCNN. While
+this is useful for acoustic propagation modeling, this approach does not yield estimates of geo-acoustic
+                                                                                                          27
+
+
+
+
+Fig. 12: Simulated environment for the geo-acoustic inversion of seabed properties. The trajectory of the
+profiling float can be seen in terms of the training data points. The ground truth field pattern within the
+AOI is also shown.
+
+
+properties such as ρr , cr and δ. We therefore replace the RCNN layer in (17) with the expression for
+complex reflection coefficient from (25), and train the resultant composite RBNN.
+  We use (8) as the loss function to learn the best-fitted geoacoustic parameters. The set of trainable
+parameters for this RBNN is:
+                                              T ≡ (ρr , cr , δ).                                       (27)
+
+
+  Table IX summarizes the estimated values and percentage error for the three unknown geo-acoustic
+parameters for various levels of position measurement errors. With accurate measurements, the model is
+effective in accurately determining the geo-acoustic parameters. In the presence of position errors, we need
+to increase the training data size to improve model robustness. The robustness of geo-acoustic inversion
+depends on the sensitivity of the acoustic field to each geo-acoustic parameter. In this example, ρr and cr
+affect the acoustic field more strongly than δ. Increasing training dataset size improves the robustness of
+the estimates of ρr and cr , but much less so for δ.
+
+
+                                    IV. E XPERIMENTAL VALIDATION
+
+  To further validate the acoustic field estimation performance of the proposed framework, we undertook a
+controlled experiment in a water tank. This allows us to make careful repeatable measurements to validate
+the method – something that is very difficult to do at sea due to time variability.
+  The tank environment is strongly reverberant and surprisingly complicated to model. While acoustic
+rays in the rectangular geometry can be modeled with a 3D ray-tracer, multiple reflections lead to
+strong sensitivity to minor geometrical irregularities of the tank wall. The tank walls are made of an
+                                                                                                           28
+
+
+   TABLE IX: E STIMATED SEABED PARAMETERS AS A FUNCTION OF MAXIMUM POSITION MEASUREMENT ERROR .
+
+
+                     Maximum        Training Distance       ρr        cr        log(δ) (dB)
+                     error (m)      data size travelled (m) [% error] [% error] [% error]
+                     0.00           167           100                 1.147      0.985     -2.616
+                                                                      [0.0%]     [0.0%]    [0.0%]
+                         √
+                     0.01 3         167           100                 1.125      0.989     -2.444
+                                                                      [-1.9%]    [0.4%]    [6.6%]
+                         √
+                     0.05 3         250           150                 1.036      0.998     -2.728
+                                                                      [-9.7%]    [1.3%]    [-4.3%]
+                         √
+                     0.10 3         334           200                 1.209      0.962     -1.485
+                                                                      [5.4%]     [-2.3%]   [43.2%]
+                         √
+                     0.20 3         375           250                 1.084      0.993     -2.742
+                                                                      [-5.5%]    [0.8%]    [-4.8%]
+                         √
+                     0.50 3         417           300                 1.249      0.962     -1.432
+                                                                      [8.9%]     [-2.3%]   [45.3%]
+
+
+inhomogeneous composite material (fiberglass) with complicated reflection properties. This provides us
+with a challenging acoustic propagation modeling problem to demonstrate our proposed method.
+  Before undertaking experimental validation, we developed a simplified simulation model of the tank
+to establish the feasibility of applying our method to the tank environment. The simulation results are
+presented in Section IV-A. Once we had established the feasibility and developed an understanding of
+what performance we might expect, we undertook experimental validation in the tank. The results from
+the experiment are presented in Section IV-B.
+
+
+A. Feasibility study
+
+  We simulate a 3D water tank environment with the dimension of 2.5 m × 1.2 m × 0.8 m and a 10 kHz
+CW signal source, as illustrated in Fig. 13. A 0.36 m × 0.9 m × 0.44 m AOI is located 0.5 m from the
+source. The sound speed is assumed to be 1, 505 m/s, in accordance with conductivity and temperature
+measurements in our tank. We split the AOI into non-overlapping training and test regions. The training
+and validation data (250 and 28 data points respectively) are obtained from the training region, whereas
+the test region is used to test (222 data points) how well the model extrapolates beyond the training region.
+We adopt the spherical wave formulation with the knowledge of geometry based on (17) and (20)¶ to
+   ¶
+       We assume k is known as sound speed c is measurable in this experiment.
+                                                                                                                                29
+
+
+
+
+                      (a) Side view                                               (b) Top view
+
+                                             Fig. 13: Tank experiment setup.
+
+
+predict the field in AOI. The loss function we minimize is (21).
+   We adopt a geometrical ray model to simulate the acoustic propagation in the tank environment, and
+generate synthetic acoustic measurements|| within the AOI. We assume the water-air interface to be a
+perfect reflector with a reflection coefficient of −1. We adopt a simple tank sidewall and bottom reflection
+model, and assume the reflection coefficient to be given by (25), with ρr = 1.5, cr = 0.9 and δ = 0.0.
+For benchmarking, we use GPR and DNN similar to those described in Section III-A. We generate a
+dense test dataset of 30, 303 points over the entire AOI with a resolution of 0.01 m in range and width,
+and 0.05 m in depth. It is not practical to collect such a dense dataset during the latter experiment, and
+so we also generate a sparse test dataset of 222 points in the test region for later benchmarking of the
+experimental results.
+   Since the measurement accuracy of tank dimensions and transducer locations in the tank is limited, we
+introduce measurement errors in the tank size, source location and measurement locations in simulation
+too. The simulated tank dimensions are mismatched from the geometrical knowledge available to our
+algorithm by 0.010 m, 0.015 m and 0.020 m in the three dimensions. The source location deviates by
+0.02 m from the location provided to the algorithm. Due to practical considerations, the measurement
+errors in shallower hydrophone locations in our tank are expected to be less than that for deeper locations.
+We therefore introduce a random error of up to 0.02 m per dimension for acoustic measurements with
+depths shallower than 0.36 m, and 0.04 m per dimension for deeper locations. We calculate the nominal
+incoming ray directions and propagation distances prior to the training. We allow our RBNN model to
+train the error to the nominal directions and propagation distances to cope with the erroneous source
+location and tank size measurements, as discussed in Section II-C2. To allow for a few measurement
+    ||
+      The acoustic measurements are shown in Volts, as we measure the pre-amplified output from the hydrophones in Volts during the
+experiment. These can be converted to µPa by multiplying by the gain-corrected acoustic sensitivity of the hydrophone.
+                                                                                                        30
+
+
+
+
+                                     (a) Ground truth field within the AOI
+
+
+
+
+                                     (b) RBNN field estimates within AOI
+
+
+
+
+                                      (c) GPR field estimates within AOI
+
+
+
+
+                                     (d) DNN field estimates within AOI
+
+
+Fig. 14: Ground truth and estimated acoustic field at four different depths. The depth of 0.45 m is in the
+test region, where no training data were made available to the three models. The other three depths are
+in the training region.
+                                                                                                31
+
+
+
+
+                         (a) Ground truth field in the AOI and extended region
+
+
+
+
+                              (b) RBNN extrapolated field estimates
+
+
+
+
+                               (c) GPR extrapolated field estimates
+
+
+
+
+                               (d) DNN extrapolated field estimates
+
+
+Fig. 15: Ground truth and extrapolated field within the entire tank at four different depths.
+                                                                                                          32
+
+
+               TABLE X: MATE OF THE ESTIMATED ACOUSTIC FIELD FOR THE FEASIBILITY STUDY.
+
+
+                                                        MATE (Vpp )
+                             Method
+                                              Sparse         Dense
+                             RBNN             0.351             0.292
+                             GPR              1.846             1.196
+                             DNN              1.426             0.919
+
+
+outliers during the experiment, we opt to minimize the mean absolute error in the training process, rather
+than the RMS error. This encourages the model to focus on fitting the majority of the training data well,
+and ignore a few outliers.
+  The rich multipath in the simulated water tank environment yields a complicated field pattern. Cross-
+sections of the ground truth field and the estimated field at four different depths within the AOI are shown
+in Fig. 14. Note that the estimated field at the depth of 0.45 m is extrapolated as none of the training
+data or validation data falls in this test region. We see that the RBNN model can recover and extrapolate
+the field reasonably well, whereas the GPR and RBNN methods fail to do so. The mean absolute test
+error (MATE) of the sparse and dense test datasets is shown in Table X. The sparse test error and dense
+test error are based on error-free measurements. The two types of test errors are in a similar range for all
+of the three models. This suggests that the sparse test error is a representable measure of field estimation
+performance. We also extrapolate the field to the entire water tank environment as shown in Fig. 15. Not
+surprisingly, the two classical data-driven techniques – GPR and DNN fail to extrapolate the field in the
+region away from the AOI, whereas the RBNN model can generalize well and predict the field in the
+entire water tank.
+
+
+B. Controlled experiment
+
+  With the feasibility established via simulation, we carried out an experimental validation in a water
+tank using the same setup described in Section IV-A. The equipment setup used in the experiment is
+shown in Fig. 16. We used a National Instruments Data Acquisition (NI-DAQ) system to transmit a CW
+signal at 10 kHz with an amplitude of 1 Vpp . A pair of TC4013 acoustic transducers were used as the
+transmitter and receiver. 500 acoustic measurements were collected at the same locations as the data
+generated in the feasibility study. Each acoustic transducer was attached to a fishing line, with a reel and
+sliding block mechanism to control the 3D position of the transducer as shown in Fig. 17. The water
+                                                                                                        33
+
+
+
+
+                        Fig. 16: Equipment setup for the controlled experiment.
+
+
+
+
+                         Fig. 17: Water tank used for the controlled experiment.
+
+
+tank was located outdoors and experienced a light breeze on occasion. This led to slight measurement
+errors due to small-scale oscillations of the source and receiver. The oscillations manifest themselves as
+fluctuations in the amplitude and phase of the recorded signal. We computed the average envelope over a
+40 s period to reduce the impact of oscillations on the measurement. We assign different weights to the
+500 measurements to capture the confidence levels of our measurements. The measurements with smaller
+standard deviations over the 40 s recorded signals weigh more. The RBNN model allows for errors in
+direction of arrival to be estimated during training.
+  In addition to angular errors, we also expect some errors (a few cm) in the measurement of the location
+of the transducers. We design a two-stage training strategy to deal with such location measurement errors.
+The first stage aims to optimize the trainable parameters T , specified in the designed RBNN model, using
+measured location data. We train our model using weighted MAE. We freeze the trained RBNN model
+                                                                                                                               34
+
+
+ TABLE XI: P ERFORMANCE EVALUATION OF THE ESTIMATED ACOUSTIC FIELD FROM THE CONTROLLED EXPERIMENT.
+
+                                            MATE MATE        Spearman’s
+                                     Method (Vpp ) (dB) correlation coefficient
+                                     RBNN         0.003        0.376                  0.961
+                                     GPR          0.021        3.764                 -0.021
+                                     DNN          0.031        5.316                 -0.207
+
+
+
+
+           Fig. 18: Trained absolute position error of the sparse test data using the RBNN model.
+
+
+at the end of this stage, and focus on estimating measurement errors in the second stage. We feed the
+corrected locations (measured locations offset by the estimated location errors in all dimensions) into the
+RBNN model to predict the acoustic field in this stage. A L2 -norm penalty term of absolute position errors
+is added in the loss function to constrain the range of position errors. By minimizing the loss function, the
+second stage aims to estimate the most appropriate location errors using the RBNN model parameterized
+by the parameters trained in the first training stage.
+   To benchmark the RBNN performance, we use a GPR model and a DNN model** as in the feasibility
+study. For each of the three methods, Figs. 19 and 20 show the estimated fields within the AOI and the
+extrapolated fields in the entire tank respectively. The field pattern extrapolated by the RBNN model looks
+reasonable in the sense that the region with the strongest pressure amplitude is consistent with the source
+location. The GPR and DNN fail to reconstruct any discernable field pattern in the tank. In line with this,
+the MATE of the RBNN model is significantly lower than that of the GPR and DNN models, as shown
+in Table XI. The absolute trained position errors for the 222 sparse test data points are shown in Fig. 18.
+Most errors are below 4 cm, as we would expect from our measurement procedure.
+    ** We found that the DNN performed better with experimental data if we replaced the ReLU activation function with a hyperbolic
+
+tangent (tanh) activation function, and therefore we present results for the tanh-activated DNN in this section.
+                                                                                                       35
+
+
+
+
+                                    (a) RBNN field estimates within AOI
+
+
+
+
+                                     (b) GPR field estimates within AOI
+
+
+
+
+                                     (c) DNN field estimates within AOI
+
+
+    Fig. 19: Estimated field patterns within AOI using the experimental data by the three models.
+
+
+  Fig. 21 shows the learned reflection coefficient for the water tank walls. While we do not have ground
+truth to validate the reflection coefficient curve, the learned model works well to estimate the acoustic
+field in the tank. We observe this in the good agreement between RBNN prediction and measured data
+in Fig. 22, and also as a Spearman’s correlation coefficient of 0.961 between the prediction and data in
+Table XI. On the other hand, the GPR and DNN simply learn to predict average values regardless of the
+measurement location. The results obtained from the controlled experiment thus validate the efficacy of
+our proposed method to model acoustic propagation in unknown or partially known environments.
+                                                                                                          36
+
+
+
+
+                                     (a) RBNN extrapolated field estimates
+
+
+
+
+                                      (b) GPR extrapolated field estimates
+
+
+
+
+                                      (c) DNN extrapolated field estimates
+
+
+Fig. 20: Extrapolated field patterns of the entire tank environment using the experimental data by the three
+models.
+
+
+                                              V. D ISCUSSION
+
+  If perfect environmental knowledge is available, one can use physics-based models for field estimation.
+In the absence of environmental knowledge and when field interpolation is of interest, data-driven methods
+can be employed to interpolate fields at unvisited locations. Our proposed method is particularly advanta-
+geous in practical scenarios where only partial environmental knowledge is available and extrapolation is
+required. It enables field interpolation and extrapolation using a limited number of acoustic observations
+by incorporating the available domain knowledge.
+  The RBNN framework offers a high-frequency physics-based acoustic propagation modeling approach
+                                                                                                      37
+
+
+
+
+  Fig. 21: Estimated reflection coefficient based on the trained RCNN layer of the composite RBNN.
+
+
+
+
+                     Fig. 22: Comparison between test data and model predictions
+
+
+that can incorporate known environmental information and be trained with observed data, making it
+suitable for solving acoustic modeling problems with limited data. The approach that we took to derive
+the RBNN from a high-frequency approximation to the solution of a wave equation can also be applied to
+other approximations. For example, applying the same approach to a normal-mode approximation yields
+normal-mode neural networks that may be used for low-frequency acoustic propagation problems [51].
+The RBNN framework could incorporate environmental complexities such as range-dependent bathymetry,
+non-isovelocity sound speed profiles, and various geo-acoustic models. When the physics is fully or
+partially known, explicit expressions can be included in the computational graph, with potentially some
+unknown parameters. On the other hand, when physics is unknown, NNs can be used as components of the
+computational graph to model arbitrary functions. The resulting computational graph can be automatically
+differentiated with respect to the model parameters, thus making it suitable for training with standard
+gradient-descent-based NN training algorithms.
+                                                                                                         38
+
+
+
+  The specific components that constitute RBNN trainable parameters are determined by the problem
+formulation. There are several factors that can affect the model training time, including the number of
+training epochs allowed, the size of training data and the size of trainable parameters. In general, on
+typical personal computers today, it takes at most a few minutes to train the three models for studies
+evaluated in this paper. For example, on a MacBook Air with an M2 chip and 16 GB RAM, it takes
+58.8 s, 2.23 ms and 31.9 s†† to train the RBNN model, GPR model and DNN model respectively for the
+near field estimation problem in Section III-B.
+  Our method is robust to noise, as the loss function minimizes noise regardless of its level. Our approach
+can be applied at various propagation ranges as we make no implicit assumptions about it. Typically field
+patterns become less complicated with range, and so become easier to model. The approach can be applied
+across a vast range of frequencies. However, we require more training data for higher frequencies, as the
+field structure becomes more intricate at smaller scales as frequencies increase.
+  In our current work, we assumed quasi-static environments. This assumption could lead to serious
+performance degradation in environments that undergo significant changes over the period during which
+acoustic observations are collected, particularly at high frequencies. One of the possible ways to address
+environmental dynamics is to incorporate the knowledge of environmental changes into the modeling. This
+would allow us to generate a time-varying physics-based data-aided propagation model. For example, if
+an environmental parameter undergoes a first-order linear change over time, one could model RBNN
+parameters as linear functions of time.
+
+
+                                                       VI. C ONCLUSIONS
+
+  Modeling acoustic propagation in underwater environments is particularly challenging in partially
+unknown environments. Physics-based acoustic propagation models have limited practical uses as they
+require accurate prior environmental knowledge to estimate acoustic fields in a given area. While classical
+ML techniques such as GPR and DNN can use data to approximate an unknown acoustic propagation
+model, they lack the ability to incorporate scientific domain knowledge (in our case, the acoustic wave
+equation) and environmental knowledge (e.g. known channel geometry). Without incorporating the domain
+or environmental knowledge, these techniques tend to be data-hungry during training, and extrapolate
+poorly. They can also make predictions that are physically unrealistic.
+   ††
+        We measure the minimum elapsed time during the benchmark for the three models.
+                                                                                                                                       39
+
+
+
+   To address the limitations in physics-based models and data-driven modeling techniques, we proposed
+a modeling recipe that embeds scientific domain knowledge into data-driven ML to leverage their com-
+plementary strengths. We showed that our RBNN method can learn from very little data, extrapolate
+well beyond the region where training data are available, and always make predictions that are consistent
+with physics. We demonstrated a few applications of the RBNN framework, highlighting the flexibility
+it provides in modeling acoustic propagation scenarios with varying degrees of environmental complexity
+and knowledge. We believe that the framework can be applied to solve a much wider variety of acoustic
+propagation problems.
+
+
+                                                            R EFERENCES
+
+ [1] K. R. James and D. R. Dowling, “A method for approximating acoustic-field-amplitude uncertainty caused by environmental
+     uncertainties,” The Journal of the Acoustical Society of America, vol. 124, no. 3, pp. 1465–1476, 2008.
+ [2] S. Gul, S. S. H. Zaidi, R. Khan, and A. B. Wala, “Underwater acoustic channel modeling using BELLHOP ray tracing method,” in
+     14th International Bhurban Conference on Applied Sciences and Technology (IBCAST), pp. 665–670, IEEE, 2017.
+ [3] J. Llor and M. P. Malumbres, “Underwater wireless sensor networks: How do acoustic propagation models impact the performance of
+     higher-level protocols?,” Sensors, vol. 12, no. 2, pp. 1312–1335, 2012.
+ [4] N. R. Chapman, “Inverse problems in underwater acoustics,” in Handbook of Signal Processing in Acoustics, pp. 1723–1735, Springer
+     New York, 2008.
+ [5] N. R. Chapman, S. Chin-Bing, D. King, and R. B. Evans, “Benchmarking geoacoustic inversion methods for range-dependent
+     waveguides,” IEEE journal of oceanic engineering, vol. 28, no. 3, pp. 320–330, 2003.
+ [6] S. Dosso, M. Yeremy, J. Ozard, and N. Chapman, “Estimation of ocean-bottom properties by matched-field inversion of acoustic field
+     data,” IEEE Journal of Oceanic Engineering, vol. 18, no. 3, pp. 232–239, 1993.
+ [7] J. Bonnel, B. Nicolas, J. I. Mars, and S. C. Walker, “Estimation of modal group velocities with a single receiver for geoacoustic
+     inversion in shallow water,” The Journal of the Acoustical Society of America, vol. 128, no. 2, pp. 719–727, 2010.
+ [8] M. Collins and W. Kuperman, “Inverse problems in ocean acoustics,” Inverse Problems, vol. 10, no. 5, p. 1023, 1994.
+ [9] A. Tolstoy, “Applications of matched-field processing to inverse problems in underwater acoustics,” Inverse Problems, vol. 16, no. 6,
+     p. 1655, 2000.
+[10] A. B. Baggeroer, W. Kuperman, and H. Schmidt, “Matched field processing: Source localization in correlated noise as an optimum
+     parameter estimation problem,” The Journal of the Acoustical Society of America, vol. 83, no. 2, pp. 571–587, 1988.
+[11] A. B. Baggeroer, W. A. Kuperman, and P. N. Mikhalevsky, “An overview of matched field methods in ocean acoustics,” IEEE Journal
+     of Oceanic Engineering, vol. 18, no. 4, pp. 401–424, 1993.
+[12] F. B. Jensen, W. A. Kuperman, M. B. Porter, and H. Schmidt, “Wave propagation theory,” in Computational Ocean Acoustics, pp. 65–
+     153, Springer New York, 2011.
+[13] T. C. A. Oliveira, Y.-T. Lin, and M. B. Porter, “Underwater sound propagation modeling in a complex shallow water environment,”
+     Frontiers in Marine Science, vol. 8, p. 1464, 2021.
+[14] F. B. Jensen, W. A. Kuperman, M. B. Porter, and H. Schmidt, “Ray methods,” in Computational Ocean Acoustics, pp. 155–232,
+     Springer New York, 2011.
+                                                                                                                                           40
+
+
+
+[15] F. B. Jensen, W. A. Kuperman, M. B. Porter, and H. Schmidt, “Normal modes,” in Computational Ocean Acoustics, pp. 337–455,
+     Springer New York, 2011.
+[16] F. B. Jensen, W. A. Kuperman, M. B. Porter, and H. Schmidt, “Parabolic equations,” in Computational Ocean Acoustics, pp. 457–529,
+     Springer New York, 2011.
+[17] F. B. Jensen, W. A. Kuperman, M. B. Porter, and H. Schmidt, “Wavenumber integration techniques,” in Computational Ocean Acoustics,
+     pp. 233–335, Springer New York, 2011.
+[18] P. R. Williamson and R. G. Pratt, “A critical review of acoustic wave modeling procedures in 2.5 dimensions,” Geophysics, vol. 60,
+     no. 2, pp. 591–595, 1995.
+[19] D. B. Reeder, L. Y. Chiu, and C.-F. Chen, “Experimental evidence of horizontal refraction by nonlinear internal waves of elevation in
+     shallow water in the south china sea: 3D versus Nx2D acoustic propagation modeling,” Journal of Computational Acoustics, vol. 18,
+     no. 03, pp. 267–278, 2010.
+[20] L. Wang, K. Heaney, T. Pangerc, P. Theobald, S. Robinson, and M. Ainslie, “Review of underwater acoustic propagation models,”
+     tech. rep., National Physical Laboratory, 2014.
+[21] F. R. DiNapoli and R. L. Deavenport, “Numerical models of underwater acoustic propagation,” in Ocean Acoustics, pp. 79–157, Springer
+     Berlin Heidelberg, 1979.
+[22] P. C. Etter, “Review of ocean-acoustic models,” in OCEANS 2009, pp. 1–6, 2009.
+[23] I. Goodfellow, Y. Bengio, and A. Courville, “Machine learning basics,” Deep learning, vol. 1, no. 7, pp. 96–160, 2016.
+[24] M. I. Jordan and T. M. Mitchell, “Machine learning: Trends, perspectives, and prospects,” Science, vol. 349, no. 6245, pp. 255–260,
+     2015.
+[25] D. Caviedes-Nozal, N. A. Riis, F. M. Heuchel, J. Brunskog, P. Gerstoft, and E. Fernandez-Grande, “Gaussian processes for sound field
+     reconstruction,” The Journal of the Acoustical Society of America, vol. 149, no. 2, pp. 1107–1119, 2021.
+[26] T. Kohlsche, S. Lippert, and O. von Estorff, “Gaussian process based surrogate modelling of acoustic systems,” Proceedings in Applied
+     Mathematics and Mechanics, vol. 19, no. 1, 2019.
+[27] B. M. Lee, J. R. Johnson, and D. R. Dowling, “Predicting acoustic transmission loss uncertainty in ocean environments with neural
+     networks,” Journal of Marine Science and Engineering, vol. 10, no. 10, p. 1548, 2022.
+[28] W. Mallik, R. K. Jaiman, and J. Jelovica, “Predicting transmission loss in underwater acoustics using convolutional recurrent autoencoder
+     network,” The Journal of the Acoustical Society of America, vol. 152, no. 3, pp. 1627–1638, 2022.
+[29] J. Bernardo, J. Berger, A. Dawid, A. Smith, et al., “Regression and classification using Gaussian process priors,” Bayesian statistics,
+     vol. 6, p. 475, 1998.
+[30] C. E. Rasmussen, “Gaussian processes in machine learning,” in Advanced Lectures on Machine Learning: ML Summer Schools, pp. 63–
+     71, 2004.
+[31] M. Seeger, “Gaussian processes for machine learning,” International journal of neural systems, vol. 14, no. 02, pp. 69–106, 2004.
+[32] K. P. Murphy, “Gaussian processes,” in Probabilistic machine learning: an introduction, pp. 515–542, MIT press, 2022.
+[33] H. Liu, Y.-S. Ong, X. Shen, and J. Cai, “When Gaussian process meets big data: A review of scalable GPs,” IEEE transactions on
+     neural networks and learning systems, vol. 31, no. 11, pp. 4405–4423, 2020.
+[34] K. Gurney, “Neural networks—an overview,” in An introduction to neural networks, pp. 1–4, CRC press, 2018.
+[35] K. Hornik, M. Stinchcombe, and H. White, “Multilayer feedforward networks are universal approximators,” Neural networks, vol. 2,
+     no. 5, pp. 359–366, 1989.
+[36] A. Karpatne, G. Atluri, J. H. Faghmous, M. Steinbach, A. Banerjee, A. Ganguly, S. Shekhar, N. Samatova, and V. Kumar, “Theory-
+                                                                                                                                          41
+
+
+
+     guided data science: A new paradigm for scientific discovery from data,” IEEE Transactions on Knowledge and Data Engineering,
+     vol. 29, pp. 2318–2331, Oct 2017.
+[37] N. Baker, F. Alexander, T. Bremer, A. Hagberg, Y. Kevrekidis, H. Najm, M. Parashar, A. Patra, J. Sethian, S. Wild, et al., “Workshop
+     report on basic research needs for scientific machine learning: Core technologies for artificial intelligence,” tech. rep., USDOE Office
+     of Science (SC), Washington, DC (United States), 2019.
+[38] M. Raissi and G. E. Karniadakis, “Hidden physics models: Machine learning of nonlinear partial differential equations,” Journal of
+     Computational Physics, vol. 357, pp. 125–141, 2018.
+[39] L. P. Swiler, M. Gulian, A. L. Frankel, C. Safta, and J. D. Jakeman, “A survey of constrained Gaussian process regression: Approaches
+     and implementation challenges,” Journal of Machine Learning for Modeling and Computing, vol. 1, no. 2, 2020.
+[40] J. Willard, X. Jia, S. Xu, M. Steinbach, and V. Kumar, “Integrating scientific knowledge with machine learning for engineering and
+     environmental systems,” 2021.
+[41] C. Rackauckas, Y. Ma, J. Martensen, C. Warner, K. Zubov, R. Supekar, D. Skinner, and A. J. Ramadhan, “Universal differential
+     equations for scientific machine learning,” CoRR, vol. abs/2001.04385, 2020.
+[42] J. S. Read, X. Jia, J. Willard, A. P. Appling, J. A. Zwart, S. K. Oliver, A. Karpatne, G. J. Hansen, P. C. Hanson, W. Watkins, et al.,
+     “Process-guided deep learning predictions of lake water temperature,” Water Resources Research, vol. 55, no. 11, pp. 9173–9190, 2019.
+[43] J. Sun, Z. Niu, K. A. Innanen, J. Li, and D. O. Trad, “A theory-guided deep learning formulation of seismic waveform inversion,” in
+     SEG Technical Program Expanded Abstracts 2019, pp. 2343–2347, Society of Exploration Geophysicists, 2019.
+[44] M. Raissi, P. Perdikaris, and G. E. Karniadakis, “Physics-informed neural networks: A deep learning framework for solving forward
+     and inverse problems involving nonlinear partial differential equations,” Journal of Computational Physics, vol. 378, pp. 686–707,
+     2019.
+[45] N. Borrel-Jensen, A. P. Engsig-Karup, and C.-H. Jeong, “Physics-informed neural networks for one-dimensional sound field predictions
+     with parameterized sources and impedance boundaries,” JASA Express Letters, vol. 1, no. 12, p. 122402, 2021.
+[46] B. Moseley, A. Markham, and T. Nissen-Meyer, “Solving the wave equation with physics-informed deep learning,” arXiv preprint
+     arXiv:2006.11894, 2020.
+[47] M. Rasht-Behesht, C. Huber, K. Shukla, and G. E. Karniadakis, “Physics-informed neural networks (PINNs) for wave propagation and
+     full waveform inversions,” arXiv preprint arXiv:2108.12035, 2021.
+[48] T. de Wolff, H. Carrillo, L. Martı́, and N. Sanchez-Pi, “Assessing physics informed neural networks in ocean modelling and climate
+     change applications,” in AI: Modeling Oceans and Climate Change Workshop at ICLR 2021, 2021.
+[49] T. de Wolff, H. Carrillo, L. Martı́, and N. Sanchez-Pi, “Towards optimally weighted physics-informed neural networks in ocean
+     modelling,” arXiv preprint arXiv:2106.08747, 2021.
+[50] K. Li and M. Chitre, “Ocean acoustic propagation modeling using scientific machine learning,” in OCEANS 2021: San Diego–Porto,
+     pp. 1–5, IEEE, 2021.
+[51] K. Li and M. A. Chitre, “Physics-aided data-driven modal ocean acoustic propagation modeling,” in 24th International Congress on
+     Acoustics (ICA), pp. 1–9, 2022.
+[52] J. M. Hovem, “Ray trace modeling of underwater sound propagation,” in Modeling and measurement methods for acoustic waves and
+     for acoustic microdevices, IntechOpen, 2013.
+[53] R. Hecht-Nielsen, “Theory of the backpropagation neural network,” in Neural networks for perception, pp. 65–93, Elsevier, 1992.
+[54] P. Werbos, “Beyond regression: New tools for prediction and analysis in the behavioral sciences,” PhD thesis, Committee on Applied
+     Mathematics, Harvard University, Cambridge, MA, 1974.
+                                                                                                                                           42
+
+
+
+[55] A. G. Baydin, B. A. Pearlmutter, A. A. Radul, and J. M. Siskind, “Automatic differentiation in machine learning: A survey,” Journal
+     of machine learning research, vol. 18, 2018.
+[56] D. P. Kingma and J. Ba, “Adam: A method for stochastic optimization,” CoRR, vol. abs/1412.6980, 2015.
+[57] N. Ketkar and N. Ketkar, “Stochastic gradient descent,” Deep learning with Python: A hands-on introduction, pp. 113–132, 2017.
+[58] A. S. Berahas, J. Nocedal, and M. Takác, “A multi-batch L-BFGS method for machine learning,” Advances in Neural Information
+     Processing Systems, vol. 29, 2016.
+[59] M. Li, T. Zhang, Y. Chen, and A. J. Smola, “Efficient mini-batch training for stochastic optimization,” in Proceedings of the 20th ACM
+     SIGKDD international conference on Knowledge discovery and data mining, pp. 661–670, 2014.
+[60] F. B. Jensen, W. A. Kuperman, M. B. Porter, and H. Schmidt, “Fundamentals of ocean acoustics,” in Computational Ocean Acoustics,
+     pp. 1–64, Springer New York, 2011.
+[61] A. Kistovich, K. Pokazeev, and T. Chaplina, “General properties and character types of sound waves,” in Ocean Acoustics, pp. 23–41,
+     Springer International Publishing, 2020.
+[62] P. M. Morse and K. U. Ingard, “The radiation of sound,” in Theoretical acoustics, pp. 306–394, Princeton university press, 1986.
+[63] F. Fisher and V. Simmons, “Sound absorption in sea water,” The Journal of the Acoustical Society of America, vol. 62, no. 3, pp. 558–564,
+     1977.
+[64] L. Brekhovskikh and Y. P. Lysanov, “Reflection of sound from the surface and bottom of the ocean: Plane waves,” in Fundamentals
+     of Ocean Acoustics, pp. 61–79, Springer New York, 2003.
+[65] J. B. Allen and D. A. Berkley, “Image method for efficiently simulating small-room acoustics,” The Journal of the Acoustical Society
+     of America, vol. 65, no. 4, pp. 943–950, 1979.
+[66] APL-UW, “Bottom,” in High-Frequency Ocean Environmental Acoustic Models Handbook, pp. 122–175, Washington Univ Seattle
+     Applied Physics Lab, 1994.
+[67] L. Prechelt, “Early stopping–but when?,” in Neural networks: tricks of the trade: second edition, pp. 53–67, Springer, 2012.
+[68] M. B. Porter, “The BELLHOP manual and user’s guide: Preliminary draft,” Heat, Light, and Sound Research, vol. 260, 2011.
+[69] M. Chitre, “Differentiable ocean acoustic propagation modeling,” in IEEE/MTS OCEANS Limerick, 2023.
+

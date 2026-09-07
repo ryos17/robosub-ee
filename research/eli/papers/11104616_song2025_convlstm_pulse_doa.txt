@@ -1,0 +1,437 @@
+                                                                                                      Robust Underwater Acoustic Pulse DOA Estimation
+                                                                                                            Based on Saliency-aware ConvLSTM
+                                                                                                                            1st Zhuheng Song                                                                  2nd Xingyu Chen
+                                                                                                       Deep-sea Information and Technology Laboratory, Institute of                      Department of Advanced Manufacturing and Robotics, College
+                                                                                                                    Deep-sea Science and Engineering                                                           of Engineering
+                                                                                                               University of Chinese Academy of Sciences                                                     Peking University
+                                                                                                                               Sanya, China                                                                    Beijing, China
+                                                                                                                          songzh@idsse.ac.cn                                                              chenxingyu@pku.edu.cn
+
+                                                                                                                           3rd Chuanxu Chen                                                                     4th Xinxin Guo
+                                                                                                       Deep-sea Geophysics and Resources Laboratory, Institute of                         Deep-sea Information and Technology Laboratory, Institute of
+                                                                                                                  Deep-sea Science and Engineering                                                     Deep-sea Science and Engineering
+                                                                                                               University of Chinese Academy of Sciences                                          University of Chinese Academy of Sciences
+                                                                                                                              Sanya, China                                                                       Sanya, China
+                                                                                                                          chencx@idsse.ac.cn                                                                guoxinxin@idsse.ac.cn
+
+                                                                                                                               5th Wen Xu
+                                                                                                       Deep-sea Geophysics and Resources Laboratory, Institute of
+                                                                                                                  Deep-sea Science and Engineering
+                                                                                                               University of Chinese Academy of Sciences
+                                                                                                                              Sanya, China
+                                                                                                                            wxu@idsse.ac.cn
+
+
+                                                                                                          Abstract—This paper presents a compact and efficient                        deployment on compact underwater vehicles, where size,
+                                                                                                      underwater locating device (ULD) localization system design                     power, and real-time constraints are critical.
+                                                                                                      tailored for deployment on compact underwater vehicles. The
+                                                                                                      proposed system features a three-element hydrophone array
+                                                                                                      and a low-power acquisition module, capable of operating in
+                                                                                                      deep-sea environments with limited energy and space budgets.
+                                                                                                      To address the challenge of direction-of-arrival (DOA)
+
+
+
+
+OCEANS 2025 Brest | 979-8-3315-3747-0/25/$31.00 ©2025 IEEE | DOI: 10.1109/OCEANS58557.2025.11104616
+                                                                                                      estimation under low signal-to-noise ratio (SNR) conditions, we
+                                                                                                      introduce a deep learning framework that combines saliency
+                                                                                                      prediction with a convolutional LSTM (ConvLSTM)
+                                                                                                      architecture. Phase difference features extracted from the array
+                                                                                                      signals are enhanced by a predicted saliency map, enabling the
+                                                                                                      network to suppress background noise and focus on weak,
+                                                                                                      transient ULD pulses. A total of 10,000 synthetic samples were
+                                                                                                      generated using a realistic simulation model, and the system was
+                                                                                                      further validated in lake trials using a commercial ULD.
+                                                                                                      Experimental results demonstrate that our method achieves
+                                                                                                      superior accuracy and robustness compared to traditional                          Fig. 1. 3D model of the underwater acoustic localization system,
+                                                                                                      cross-correlation-based approaches, with an average DOA                           showing the hydrophone array and the electronics chamber.
+                                                                                                      error of 4.97° under field testing conditions.
+                                                                                                                                                                                          Traditional DOA estimation techniques, such as
+                                                                                                         Keywords—Underwater acoustic beacon localization, saliency
+                                                                                                                                                                                      Generalized Cross-Correlation (GCC)[3], [4], Steered
+                                                                                                      prediction, ConvLSTM, compact underwater vehicles, triplet array
+                                                                                                                                                                                      Response Power with Phase Transform (SRP-PHAT)[5], [6],
+                                                                                                                              I. INTRODUCTION                                         and Multiple Signal Classification (MUSIC)[7], [8], suffer
+                                                                                                                                                                                      from several key limitations. These include the inability to
+                                                                                                          Underwater acoustic pulse direction-of-arrival (DOA)                        exploit rich temporal patterns from sequential pulses. Methods
+                                                                                                      estimation plays a vital role in maritime communication,                        like GCC may exhibit noticeable performance degradation
+                                                                                                      black-box recovery, and underwater search and rescue. ULDs                      under low SNR conditions, which is largely due to its reliance
+                                                                                                      (Underwater Locating Devices), such as those used in flight                     on assumptions such as on well-structured signals, often
+                                                                                                      data recorders, typically emit repetitive pulses within fixed                   violated in real-world underwater environments. Moreover,
+                                                                                                      frequency bands, allowing consistent identification. However,                   common pulse detection methods based on amplitude
+                                                                                                      accurately localizing these signals in noisy, unstructured                      thresholding require long sampling durations and struggle to
+                                                                                                      marine environments remains a significant challenge[1],                         adapt to changing noise profiles in real-world scenarios.
+                                                                                                      especially when relying on compact, mobile platforms.
+                                                                                                                                                                                          To address these challenges, we propose a robust DOA
+                                                                                                          Current practical solutions [2], such as the TPL-25 towed                   estimation system design for deployment on compact
+                                                                                                      pinger locator developed by the U.S. Navy, are limited in their                 underwater vehicles. Our system uses a three-element
+                                                                                                      localization capabilities. This highlights the pressing need for                hydrophone array and a data-driven framework that extracts
+                                                                                                      a near-range (0-100m) ULD localization system suitable for                      and enhances phase difference features using a saliency-
+
+
+
+                                                                                                      XXX-X-XXXX-XXXX-X/XX/$XX.00 ©20XX IEEE
+
+                                                                                                            Authorized licensed use limited to: Stanford University. Downloaded on September 07,2026 at 01:06:58 UTC from IEEE Xplore. Restrictions apply.
+
+                                                                                                             979-8-3315-3747-0/25/$31.00 ©2025 IEEE
+                                                    Fig. 2. Block diagram of the hardware system
+
+predicted ConvLSTM network. This architecture enables the
+model to suppress background noise, leverage temporal
+dependencies across pulses, and maintain high estimation                           The proposed system comprises two major components: a
+accuracy even under low SNR.                                                   hydrophone array for acoustic signal reception and an
+                                                                               electronics chamber that integrates signal acquisition, data
+   The main contributions of this paper are as follows:                        processing, and attitude measurement. A 3D model of the
+                                                                               system is shown in Fig. 1, illustrating the hydrophone
+   • We develop a compact and power-efficient hardware                         mounting and compact design.
+     system capable of near-range ULD localization using
+     only three hydrophones, suitable for compact                                  The electronics chamber is constructed from TC4 titanium
+     autonomous platforms.                                                     alloy, ensuring long-term durability under high-pressure deep-
+                                                                               sea conditions. It is pressure-rated for depths up to 6096m (≈
+   • We propose a saliency-predicted ConvLSTM network                          20,000ft) and has undergone cyclic pressure tests to verify its
+     that jointly exploits time-frequency spatial features                     structural integrity. To accommodate the power constraints of
+     and temporal pulse patterns for enhanced DOA                              small vehicles, the system operates with a maximum power
+     estimation.                                                               consumption of only 5W, and a standby power consumption
+   • We model the signal and noise characteristics of ULD                      of 0.8W. The system performance parameters are summarized
+     scenarios and develop a simulation pipeline to                            in Table 1.
+     efficiently generate diverse synthetic data.                              B. System Operation Principle
+     Furthermore, we apply the proposed method to a real-
+     world lake trial, which presents its practicality in real                     The system flowchart is outlined in Fig. 2, detailing the
+     underwater environments.                                                  signal flow from acoustic reception to data processing and
+                                                                               storage. The hydrophone array consists of three
+                        II. SYSTEM DESIGN                                      omnidirectional elements, each hydrophone is equipped with
+    To ensure accurate and efficient underwater acoustic                       a preamplifier module to enhance signal quality before
+beacon localization while meeting the constraints of compact                   digitization. The hydrophones are connected to the electronics
+autonomous platforms, we designed a lightweight, low-power                     chamber via waterproof cables, ensuring stable signal
+sonar system. The system consists of a three-element                           transmission in high-pressure underwater environments.
+hydrophone array, a signal acquisition module, an inertial                         The signal acquisition system digitizes the analog
+measurement unit (IMU), and an embedded computing unit,                        hydrophone signals using a multi-channel synchronous ADC
+all housed within a pressure-resistant titanium alloy chamber.                 module. These digitized signals are then stored in a TF card
+The hardware is optimized for operation in deep-sea                            array for real-time processing or post-mission analysis. The
+environments with low power consumption and high                               control unit, implemented as an AI edge inference device
+reliability.                                                                   (SOPHON X3-Pi), works in conjunction with a
+                                                                               microcontroller unit (MCU) and an IMU to ensure system
+A. System Overview
+                                                                               stability. The MCU is dedicated to data acquisition, while the
+       TABLE I.         HARDWARE PERFORMANCE PARAMETERS
+                                                                               control unit handles data processing and communication with
+                                                                               external devices. The IMU continuously tracks the system’s
+           Parameter                          Specification                    orientation and provides motion compensation, thereby
+  Operating Frequency               1kHz-100kHz                                enhancing localization accuracy in dynamic underwater
+                                                                               environments. The control unit processes each 1-second data
+  Operating Depth                   6096 m (≈20,000 ft)                        segment in approximately 0.8 seconds, supporting near real-
+  Maximum Power Consumption         5W                                         time operation. The processed data can be transmitted via
+                                                                               Ethernet to a host computer for visualization, further analysis,
+  Standby Power Consumption         0.8 W                                      or long-duration logging.
+                                    12.64 kg (chamber 9.28 kg,
+  Weight in Air                                                                C. Key Design Considerations
+                                    Hydrophones & Baffles 1.12 kg)
+  Weight in Water                   8.04kg                                        The system is specifically designed to meet the constraints
+                                    Height: 242 mm,                            of compact underwater platforms, addressing power
+  Chamber Dimensions
+                                    Diameter: 154 mm                           limitations, size constraints and the harsh deep-sea
+
+
+
+
+     Authorized licensed use limited to: Stanford University. Downloaded on September 07,2026 at 01:06:58 UTC from IEEE Xplore. Restrictions apply.
+                                                  Fig. 3. Processing pipeline for DOA estimation.
+
+
+
+
+                    Fig. 4. Phase difference extraction process, showing the transformation from STFT to phase difference maps.
+
+environment. A critical design choice was minimizing the                           1) Feature Extraction: The raw acoustic signals received
+number of hydrophones to only three, significantly reducing                    by the hydrophone array are individually transformed into
+power consumption and computational complexity while                           time-frequency representations using short-time Fourier
+maintaining sufficient localization accuracy. This design                      transform (STFT) [9]. The phase components are extracted
+ensures that the system remains suitable for deployment on
+                                                                               from each channel, and phase difference maps are computed
+vehicles with limited power availability.
+                                                                               between hydrophone pairs to capture the spatial phase
+    The baseline separation of 0.5m was carefully chosen to                    relationships induced by the signal’s direction.
+balance system compactness and localization accuracy. The                          2) Spatiotemporal Feature Encoding: The phase
+hydrophone array is configured in a uniform linear array                       difference maps are fed into a deep neural network composed
+(ULA), which simplifies processing and enables real-time                       of a multi-scale convolutional feature extractor and a
+localization using an optimized signal processing pipeline.
+                                                                               ConvLSTM module [10]. The convolutional layers capture
+   By optimizing power efficiency, material selection, and                     local and global time-frequency patterns through a pyramidal
+sensor configurations, the proposed system achieves a balance                  structure, while ConvLSTM models temporal dependencies
+between size, power consumption, and localization accuracy,                    across sequential frames. A saliency prediction mechanism
+making it well-suited for long-duration underwater search-                     further enhances relevant signal regions and suppresses
+and-rescue operations.
+                                                                               background noise, producing robust representations under
+                          III. METHOD                                          low SNR conditions.
+                                                                                   3) DOA and Frequency Estimation: The encoded feature
+    To achieve robust and accurate DOA estimation under
+noisy underwater conditions, we propose a deep learning-                       representations are passed to a regression head, which jointly
+based framework utilizing phase difference maps and a                          predicts the DOA angle and the dominant frequency of the
+saliency-aware ConvLSTM network. This section introduces                       signal source.
+the processing pipeline, feature extraction, neural network                        This three-stage pipeline is illustrated in Fig. 3, which
+architecture, and loss function.                                               provides a high-level view of the full DOA estimation process.
+A. Overview of the Processing Pipeline                                         B. Feature Extraction from Hydrophone Signals
+    The proposed system is designed to estimate the DOA of                         The core input feature for DOA estimation is the phase
+an underwater acoustic beacon transmitting a continuous                        difference map, which encodes the relative phase shifts
+wave (CW) pulse with specific central frequencies including                    between hydrophone pairs. Given the received signals
+37.5kHz and 42kHz, and duration of 10ms per second. The                        from hydrophones       1,2,3, we compute the STFT:
+signal processing pipeline consists of three main steps:
+
+
+
+
+     Authorized licensed use limited to: Stanford University. Downloaded on September 07,2026 at 01:06:58 UTC from IEEE Xplore. Restrictions apply.
+                                                          Fig. 5. Architecture of SP-ConvLSTM.
+
+
+                              ,     STFT
+                                                                                signals that are narrow in both time and frequency. This
+                                                                      (1)       structure ensures a large receptive field while preserving
+                                                                                sensitivity to small, transient features, which is crucial for
+where       , represents the time-frequency representation                      detecting short-duration pulses like those used by ULDs.
+of the received signal. The phase component is extracted as:
+                                                                                   Next, a ConvLSTM module models the temporal
+                              ,     arg        ,                      (2)       dynamics of the extracted features across sequential frames.
+                                                                                Given the pulse repetition pattern of the target signal,
+                                                                                ConvLSTM enables the network to integrate information over
+To construct the phase difference map, phase differences                        time and suppress short-term interference, such as random
+between hydrophone pairs are computed:                                          background noise or transient clutter.
+                Δ         ,               ,           ,               (3)           Finally, a saliency prediction module generates an
+                                                                                attention-like map that highlights regions of the input feature
+where     , ∈ 1,2 , 2,3 , 1,3 .These phase difference                           space the most relevant to DOA estimation. This predicted
+maps serve as the input to the deep learning model, enabling                    saliency map acts as a soft mask, enhancing informative
+the network to infer DOA based on spatiotemporal patterns in                    regions and reducing the influence of irrelevant or noisy inputs.
+the phase variations. The process to extract these phase                        By incorporating this mechanism, the network improves its
+difference maps is shown in Fig. 4.                                             robustness and accuracy under low SNR conditions.
+    Compared to traditional time difference of arrival (TDOA)                       The network ultimately outputs a compact representation,
+methods, which rely on group delay estimation using cross-                      which is passed to a regression head to estimate the DOA and
+spectral analysis, our approach avoids the limitation of                        frequency of the signal. Full model architecture is shown in
+baseline constraints (i.e., the requirement that hydrophone                     Fig. 5.
+spacing must be smaller than half the signal wavelength to                      D. Loss Function
+prevent phase wrapping). Instead, deep learning automatically
+learns robust phase features from multi-channel phase                              The network is trained using a composite loss function
+difference maps, allowing for better noise resilience and                       consisting of three terms:
+improved accuracy.                                                                  1) DOA estimation loss ℒ : To address the periodicity of
+C. SP-ConvLSTM for DOA Estimation                                               angle representations, the DOA angle is transformed into a
+   To effectively extract DOA-relevant information from the                     two-dimensional vector using its sine and cosine components
+phase difference maps, we propose a deep neural network                         [11]. The loss is computed as the squared L2 distance
+named Saliency-Predicted Convolutional Long Short-Term                          between the predicted and ground-truth vectors, where ! is
+Memory (SP-ConvLSTM). The architecture consists of three                        the regularization coefficient and " denotes the trainable
+core modules that work in conjunction to extract                                weights associated with the DOA estimation branch:
+spatiotemporal features and enhance signal robustness in
+                                                                                                              sin +
+                                                                                                                                    1
+noisy underwater environments.
+                                                                                                #                           sin
+                                                                                        ℒ           ∑$5# &'         .   /         0& 2 ! ‖" ‖11
+                                                                                                              cos +         cos
+                                                                                                                                                       (4)
+    First, a multi-scale convolutional feature extractor encodes                                $
+                                                                                                                                    1
+time-frequency features from the input phase difference maps.
+This backbone uses a pyramidal structure to capture both local                      2) Frequency Estimation Loss ℒ6 : The dominant signal
+and global patterns. By applying convolutional filters at
+                                                                                frequency is estimated via regression and optimized using
+different scales, the network can extract features from CW
+
+
+
+
+      Authorized licensed use limited to: Stanford University. Downloaded on September 07,2026 at 01:06:58 UTC from IEEE Xplore. Restrictions apply.
+                 Fig. 6. Simulated signal generation model including propagation delay and complex environmental noise synthesis.
+
+
+
+
+                             Fig. 7. Noise suppression effect of saliency mechanism on STFT phase difference features.
+
+mean squared error (MSE), where         is the ground truth                    where A, B, C are hyperparameters controlling the balance
+frequency, 7 is the predicted frequency, !6 is the                             between individual loss terms.
+regularization coefficient and "6 denotes the trainable
+                                                                                               IV. EXPERIMENTS AND RESULTS
+weights associated with the frequency estimation branch:
+                                                                                   This section presents both simulation-based and field test
+               ℒ6
+                      #
+                        ∑$5#    7        1
+                                             2 !6 8"6 8              (5)
+                                                                               evaluations of the proposed DOA estimation method. We
+                      $                                 #                      detail the dataset generation process, compare with traditional
+                                                                               methods, and demonstrate the robustness and accuracy of our
+    3) Saliency Map Loss ℒ9:; : To supervise the saliency                      model under various noise conditions and realistic underwater
+prediction module, binary cross-entropy loss is used between                   environments.
+the predicted saliency map <79 and the ground truth <9 , where                 A. Simulation Experiments
+  represents index of the four layer multi-scale feature maps,
+and = ∙ denotes the mean operation over all pixels:
+                                                                                   To create a realistic underwater acoustic dataset, we built
+                                                                               a custom simulation pipeline using CUDA and PyTorch to
+                 ∑@95# = <9 log <79 2 1                       <79
+                                                                               efficiently generate synthetic hydrophone array signals. The
+       ℒ9:;                                     <9 log 1             (6)       simulation     considers     signal    propagation      delays,
+                                                                               environmental noise, and signal attenuation.
+    The final objective function is a weighted combination of
+the three components:                                                              The simulated signal model is illustrated in Fig. 6, which
+                                                                               outlines the generation of array signals with realistic
+                     ℒ     Aℒ 2 Bℒ6 2 Cℒ9:;                          (7)       propagation characteristics and environmental noise
+                                                                               conditions. The propagation delay from the source to a
+                                                                               receiver at distance D is computed as          , D , ensuring
+
+
+
+
+     Authorized licensed use limited to: Stanford University. Downloaded on September 07,2026 at 01:06:58 UTC from IEEE Xplore. Restrictions apply.
+accurate time alignment for each sample index . The
+attenuation effect due to spreading loss is modeled by the
+               #
+scaling factor . The background noise FG: H;,:II J KH
+               E
+consists of both colored noise LM      (modeled using Wenz
+spectrum) and Perlin noise NHE;       [12] to reflect complex
+real-world underwater conditions. Near-field noise L#,        ,
+which is modeled as band-limited white noise with uniform
+energy distribution in the frequency range of interest is also
+introduced at the receiving element side to simulate local
+interference.
+    Each sample simulated a 50-second underwater trajectory,
+where a compact underwater vehicle equipped with the
+hydrophone array moved forward at a speed of 1 knot. Limited
+by the practical test beacon's performance constraints, the
+signal source emits a 42 kHz CW beacon pulse with a duration
+of 10ms per second, and the signal was sampled at 8 times the
+source frequency. In total, 10,000 samples were generated,
+with 80% for training, 10% for validation, and 10% for testing.
+   We evaluated the model using two metrics:
+   • Mean Absolute Error (MAE, in degrees): Measures the
+     average deviation between predicted and ground-truth                         Fig. 8. DOA estimation error sequences across azimuths under different
+     DOA angles.                                                                                                  SNR.
+
+   • Miss Detection Rate (MDR, in %): Percentage of                             characteristics of the CW beacon signal, which are not fully
+     beacon pulses with unrecognized or erroneous DOA                           utilized in traditional methods such as GCC.
+     estimates.                                                                     2) Azimuth-wise Accuracy: To evaluate accuracy across
+                                                                                different azimuths, we analyzed DOA error sequences over
+   We compare SP-ConvLSTM against the traditional
+  Generalized Cross-Correlation (GCC) method:                                   50 pulses per sample. SP-ConvLSTM maintains high
+                                                                                consistency even at low SNR, outperforming GCC as shown
+    1) Saliency Effectiveness: The saliency prediction                          in Fig. 8. This improvement is largely attributed to our
+module significantly enhances the phase difference features                     method’s ability to integrate temporal information across
+by suppressing background noise. As shown in Fig. 7, the                        sequential pulses, while GCC treats each pulse independently.
+saliency-enhanced features exhibit a clearer and more                           The proposed method thus yields more stable and accurate
+focused representation of the target signal, while noise-                       DOA estimates.
+dominant areas are effectively suppressed. Moreover, the                            3) Performance Comparison: The average MAE and
+model benefits from learning the temporal and spectral                          MDR at different SNR levels are reported in Table 2. Our
+                                                                                method achieved MAE of 3.0°@30 dB and 6.1°@10 dB, with
+
+
+
+
+                      Fig. 9. Sequence of estimated DOAs at representative test points (selected at roughly uniform DOA intervals)
+
+
+
+
+      Authorized licensed use limited to: Stanford University. Downloaded on September 07,2026 at 01:06:58 UTC from IEEE Xplore. Restrictions apply.
+MDR <1%, while GCC produced much higher errors,                                          reliance on idealized assumptions, such as zero-mean
+especially under low SNR.                                                                stationary white noise and strongly correlated signal
+                                                                                         structures, which do not hold in real-world or field test
+    TABLE II.        DOA ESTIMATION PERFORMANCE COMPARISON                               conditions. Furthermore, environmental interference
+                                                                                         from other active sonar sources during field tests
+              Method            MAE [°]           MDR [%]
+                                                                                         degrades GCC performance, while SP-ConvLSTM
+                              3.0@30dB          0.2@30dB
+            SP-ConvLSTM
+                              6.1@10dB          0.8@10dB                                 remains robust under such disturbances.
+                              11.6@30dB         2.1@30dB
+            GCC
+                              15.9@10dB         4.5@10dB                                                 V. CONCLUSIONS
+                                                                                    This paper presents a compact underwater DOA
+                                                                                estimation system design based on phase difference features
+B. Field Test                                                                   and a saliency-predicted ConvLSTM model. The system is
+    The field tests were conducted in a lake in Hubei Province,                 tailored for energy- and space-constrained platforms, using
+China, where the underwater environment provides good                           only three hydrophones while maintaining high accuracy and
+acoustical background with low noise, clear water and a                         robustness.
+maximum depth of 170 meters. The acoustic source was a
+PT9C-PROOF underwater locating device, placed at 20                                 We introduce a data-driven DOA estimation framework
+different azimuth angles, with diagonal distances ranging                       that extracts time-frequency phase difference features,
+from 80.03 m to 96.66 m from the receiver.                                      enhances them through saliency prediction, and leverages
+                                                                                temporal modeling to suppress background noise. Simulation
+   The hydrophone array system was fixed during data                            and lake trial results demonstrate that our method outperforms
+acquisition, while GPS positions the beacon deployed at was                     traditional cross-correlation techniques in both accuracy and
+marked. The estimated DOA results were compared against                         stability under noisy acoustic conditions. Notably, the model
+GPS-measured ground truth to compute angular errors.                            benefits from temporal context and signal pattern learning,
+   The estimated DOA values for six test points are shown in                    offering stable and precise DOA estimation even under real-
+Fig. 9, where most predictions closely follow the ground-truth                  world noise interference and low SNR scenarios.
+angles. Table 3 reports the MAE for each test point.                                Future work will explore several directions. First, we plan
+                                                                                to enhance the simulation fidelity by introducing more
+TABLE III.   MAE COMPARISON BETWEEN OUR METHOD AND GCC AT                       realistic signal propagation models and parameter diversity. In
+ REPRESENTATIVE TEST POINTS (SELECTED AT ROUGHLY UNIFORM DOA
+                          INTERVALS)                                            parallel, we aim to incorporate real-world acoustic recordings
+                                                                                to improve generalization. Second, we will conduct system-
+   Test       Ground Truth       SP-ConvLSTM MAE            GCC MAE             level integration and in-situ trials by deploying the system on
+ Position           [°]                 [°]                     [°]             compact underwater platforms in real beacon search missions.
+ 1            84.5               0.87                       1.55
+ 2            75.03              1.11                       2.25
+                                                                                Third, we intend to integrate inertial sensor data into the model
+ 3            65.26              1.28                       3.20                input, allowing the network to jointly learn spatiotemporal
+ 4            55.21              1.37                       4.29                representations from acoustic and motion cues in a
+ 5            45.53              2.74                       7.79                multimodal setting. Finally, we will explore replacing the
+ 6            27.01              6.29                       13.39               saliency prediction module with diffusion-based generative
+                                                                                models to recover weak signal components, potentially
+                                                                                improving robustness under extremely low SNR conditions.
+   Across all test positions, our method achieved an average
+MAE of 4.97°, significantly outperforming the GCC baseline                                               ACKNOWLEDGMENT
+(13.46°).
+                                                                                   This work is supported by the National Key Research and
+   Further analysis of the results reveals:                                     Development      Program     of    China     (Grant    No.
+                                                                                2022YFC2806003).
+   • Estimation accuracy degrades when the source
+     deviates from the front-facing direction (90°). The best                                                REFERENCES
+     performance is observed along the array’s forward axis,                    [1] R. Barmak, A. L. S. C. de Oliveira, P. S. Thiago, F. dos Santos, M. V.
+     and errors increase towards the sides. This behavior is                    R. Lopes, and G. Cernicchiaro, “Underwater Locator Beacon signal
+     consistent with the spatial response pattern of small-                     propagation on tropical waters,” in 2017 IEEE/OES Acoustics in Underwater
+     scale arrays.                                                              Geosciences Symposium (RIO Acoustics), Jul. 2017, pp. 1–4. doi:
+                                                                                10.1109/RIOAcoustics.2017.8349738.
+   • Our method consistently tracks the ground truth more                       [2] S. Sun, S. Qin, Y. Hao, G. Zhang, and C. Zhao, “Underwater acoustic
+     closely than GCC across all test positions. In addition,                   localization of the black box based on generalized second-order time
+     the integration of temporal information across multiple                    difference of arrival (GSTDOA),” IEEE Transactions on Geoscience and
+     sequential pulses provides more stable and accurate                        Remote Sensing, vol. 59, no. 9, pp. 7245–7255, Sep. 2021, doi:
+                                                                                10.1109/TGRS.2020.3032982.
+     DOA estimates, whereas GCC treats each pulse
+                                                                                [3] G. Carter, “Time delay estimation for passive sonar signal processing,”
+     independently, leading to larger variance.                                 IEEE Trans. Acoust., Speech, Signal Process., vol. 29, no. 3, pp. 463–470,
+                                                                                Jun. 1981, doi: 10.1109/TASSP.1981.1163560.
+   • Performance drops when testing at azimuths outside
+                                                                                [4] C. Knapp and G. Carter, “The generalized correlation method for
+     the model's training range (e.g., 27°), indicating a                       estimation of time delay,” IEEE Transactions on Acoustics, Speech, and
+     potential for further improvement through enhanced                         Signal Processing, vol. 24, no. 4, pp. 320–327, Aug. 1976, doi:
+     training data coverage.                                                    10.1109/TASSP.1976.1162830.
+                                                                                [5] D. Diaz-Guerra, A. Miguel, and J. R. Beltran, “Robust sound source
+   • GCC shows instability with extreme outliers and                            tracking using SRP-PHAT and 3D convolutional neural networks,”
+     missed detections. This may be attributed to its
+
+
+
+
+      Authorized licensed use limited to: Stanford University. Downloaded on September 07,2026 at 01:06:58 UTC from IEEE Xplore. Restrictions apply.
+IEEE/ACM Transactions on Audio, Speech, and Language Processing, vol.            [9] Y. Li, X. Ma, Y. Liu, L. Wang, X. Li, and D. Yuan, “Application of
+29, pp. 300–311, 2021, doi: 10.1109/TASLP.2020.3040031.                          deep object detection in underwater acoustic pulse interception,” in OCEANS
+[6] B. Yang, H. Liu, and X. Li, “SRP-DNN: Learning direct-path phase             2019       -      Marseille,     Jun.      2019,       pp.     1–7.     doi:
+difference for multiple moving sound source localization,” in ICASSP 2022        10.1109/OCEANSE.2019.8867085.
+- 2022 IEEE International Conference on Acoustics, Speech and Signal             [10] X. Chen, Z. Wu, and J. Yu, “TSSD: Temporal single-shot detector
+Processing      (ICASSP),     May      2022,      pp.    721–725.      doi:      based on attention and LSTM,” in 2018 IEEE/RSJ International Conference
+10.1109/ICASSP43922.2022.9746624.                                                on Intelligent Robots and Systems (IROS), Oct. 2018, pp. 1–9. doi:
+[7] F. Reed, P. Feintuch, and N. Bershad, “Time delay estimation using the       10.1109/IROS.2018.8593963.
+LMS adaptive filter–Static behavior,” IEEE Transactions on Acoustics,            [11] L. Perotin, A. Défossez, E. Vincent, R. Serizel, and A. Guérin,
+Speech, and Signal Processing, vol. 29, no. 3, pp. 561–571, Jun. 1981, doi:      “Regression versus classification for neural network based audio source
+10.1109/TASSP.1981.1163614.                                                      localization,” in 2019 IEEE Workshop on Applications of Signal Processing
+[8] D. Youn, N. Ahmed, and G. Carter, “On using the LMS algorithm for            to Audio and Acoustics (WASPAA), Oct. 2019, pp. 343–347. doi:
+time delay estimation,” IEEE Transactions on Acoustics, Speech, and Signal       10.1109/WASPAA.2019.8937277.
+Processing, vol. 30, no. 5, pp. 798–801, Oct. 1982, doi:                         [12] K. Perlin, “An image synthesizer,” SIGGRAPH Comput. Graph., vol.
+10.1109/TASSP.1982.1163961.                                                      19, no. 3, pp. 287–296, Jul. 1985, doi: 10.1145/325165.325247.
+
+
+
+
+       Authorized licensed use limited to: Stanford University. Downloaded on September 07,2026 at 01:06:58 UTC from IEEE Xplore. Restrictions apply.
+

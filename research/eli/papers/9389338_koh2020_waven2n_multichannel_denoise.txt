@@ -1,0 +1,401 @@
+                                                                                                                                        Underwater Signal Denoising Using Deep Learning
+                                                                                                                                                           Approach
+
+                                                                                                                                                   Shirong Koh                                         Chin Swee Chia                                          Bien Aik Tan
+                                                                                                                                             DSO National Laboratories                             DSO National Laboratories                             DSO National Laboratories
+                                                                                                                                                    Singapore                                             Singapore                                             Singapore
+                                                                                                                                               kshirong@dso.org.sg                                   cchinswe@dso.org.sg                                   tbienaik@dso.org.sg
+
+
+
+                                                                                                                                         Abstract— In this work, we adapt statistical reasoning applied              across the array are arbitrarily time-delayed source signal
+                                                                                                                                     previously on image noise removal shown in Noise2Noise for the                  distorted by different noise realizations and reverberation
+                                                                                                                                     task of underwater acoustic signal denoising. Hydrophone                        response, we can force a neural network to identify signal of
+                                                                                                                                     channels across an array experience similar signal observation yet              interest from noise and reverberation.
+                                                                                                                                     different noise realizations. In this context, we propose WaveN2N
+                                                                                                                                     that is able to learn noise removal and clean signal reconstruction
+                                                                                                                                                                                                                         In this work, we introduce a raw time domain end-to-end
+                                                                                                                                     from multi-channels array data in a self-supervised learning
+                                                                                                                                     setting. It can subsequently be used for practical signal                       self-supervised deep learning approach, to tackle challenging
+                                                                                                                                                                                                                     acoustic denoising tasks that were previously either too
+
+
+
+
+Global Oceans 2020: Singapore - U.S. Gulf Coast | 978-1-7281-5446-6/20/$31.00 ©2020 IEEE | DOI: 10.1109/IEEECONF38699.2020.9389338
+                                                                                                                                     enhancement for single hydrophone or shorter array
+                                                                                                                                     configuration. Experiment using a vertical line array dataset                   complicated to be modelled analytically or incapable of
+                                                                                                                                     showed that the trained model learnt to remove the water channel                handling real world effects that differ vastly from the model. We
+                                                                                                                                     response and ambient noise based on the reverberant and noisy                   show that an autoencoder network, WaveNoise2Noise
+                                                                                                                                     data. During testing, the model was able to achieve reverberation               (WaveN2N), is able to learn signal restoration by observing only
+                                                                                                                                     and noise reduction intelligently for single hydrophone signals.                the noisy measurements from different hydrophones in an array,
+                                                                                                                                                                                                                     via application of Noise2Noise during the training process.
+                                                                                                                                        Keywords—Noise2Noise, WaveN2N, noise removal
+                                                                                                                                                                                                                     Since the model is trained in a self-supervised learning setting,
+                                                                                                                                                             I. INTRODUCTION                                         the signal of interest does not have to be known beforehand.
+                                                                                                                                                                                                                     After the completion of training, the autoencoder can achieve
+                                                                                                                                         Acoustic measurement in underwater domain persistently
+                                                                                                                                                                                                                     intelligent denoising on both single hydrophone and array
+                                                                                                                                     faces degradation of signal quality due to distortion by self-noise
+                                                                                                                                                                                                                     measurements. Overall, our contributions in this paper can be
+                                                                                                                                     from acquisition systems, ambient noise and reverberation from
+                                                                                                                                                                                                                     summarized as follows:
+                                                                                                                                     multipath. Signal denoising in this paper refers to removing
+                                                                                                                                     these distortion noises, while retaining the important signal                   x    We proposed a method to exploit Noise2Noise approach
+                                                                                                                                     features.                                                                            specifically for array data.
+                                                                                                                                         Traditional denoising algorithms [1-3] depend on accurate
+                                                                                                                                                                                                                     x    We developed a spectral whitening pre-processing to
+                                                                                                                                     analytical modelling of signal and optimal fine-tuning of
+                                                                                                                                                                                                                          handle high dynamic range signals encountered in
+                                                                                                                                     parameters. On the other hand, the main challenges with
+                                                                                                                                                                                                                          underwater signal domain.
+                                                                                                                                     applying deep learning denoising techniques [4-7] in underwater
+                                                                                                                                     domain include (1) the lack of clean signals from real data and                 x    We introduced a log-scale Pearson correlation loss function
+                                                                                                                                     (2) the non-stationary nature of the underwater signal of interest,                  to mitigate the varied hydrophones’ sensitivity and also
+                                                                                                                                     e.g., marine mammal’s vocalizations and signals from                                 enable removal of non-zero mean yet de-correlated noises.
+                                                                                                                                     underwater acoustic communication. In addition, most deep
+                                                                                                                                     learning denoising techniques [8-10] used for speech and                        x    We showed the same cross-correlation function is able to
+                                                                                                                                     acoustic enhancements use magnitude spectrogram as input and                         handle signal time-delay differences amongst the
+                                                                                                                                     masking-based methods. Inversion of the processed magnitude                          hydrophones across the array.
+                                                                                                                                     spectrogram with the original phase leads to artefacts in the raw
+                                                                                                                                     time domain signals that will propagate to downstream                               This paper is composed of five sections. A brief overview of
+                                                                                                                                     processing such as beamforming or other forms of time-                          the relevant work is explained in section II. The developed
+                                                                                                                                     frequency decompositions.                                                       WaveN2N denoising approach and its implementation aspects
+                                                                                                                                                                                                                     are introduced in Section III. Followed by a description of a
+                                                                                                                                        Inspired by Noise2Noise [11], we adopt their statistical                     practical experiment, which consists of testing methodology and
+                                                                                                                                     reasoning approach for underwater signal restoration without                    results discussion in Section IV. Finally, the paper is concluded
+                                                                                                                                     explicit signal priors or likelihood noise models. Under the                    in Section V.
+                                                                                                                                     assumptions that acoustic signals received at each hydrophone
+
+
+
+
+                                                                                                                                           Authorized licensed use limited to: Stanford University. Downloaded on September 07,2026 at 01:06:08 UTC from IEEE Xplore. Restrictions apply.
+
+                                                                                                                                            978-1-7281-5446-6/20/$31.00 ©2020 IEEE
+                       II. RELATED WORK                                         supervised methods. It is more suited for domain adaptation
+                                                                                problem, where the network is pre-trained with known clean
+A. Multi-Scale Neural Network Architecture: Wave-U-Net                          signals, followed by fine-tuning with actual unknown field data.
+    Most deep learning audio denoising approaches operate on                    Nonetheless, their results are encouraging, as they showed that
+the magnitude spectrum and ignore phase information.                            Noisy2Noisy is able to achieve better performance than learning
+However, phase information is critical for hydrophone array                     from direct mapping from noisy to clean samples. Noise2Noise
+data to facilitate beamforming processing. Therefore, an end-to-                methodology introduces regularization during training and
+end time domain neural network is required. However, audio                      improves generalization during testing on unseen data.
+data and hydrophone acoustic data have high sampling rates.
+This makes it difficult for the network to accommodate a longer                     In their experiment, they used a directive microphone faced
+temporal input which provides more temporal contextual                          towards the source to record clean signal and a Bi-directional
+information for high quality denoising. [12] implemented the                    microphone to acquire background noise. Then, they used the
+Wave-U-Net architecture for end-to-end time domain audio                        clean signal and background noise to synthesize a pair of de-
+source separation. It achieves longer-term receptive field via                  correlated noisy signals. However, in a typical sonar application,
+better memory saving by using downsampled feature maps at                       the hydrophones in an array are Omni-directional and signals
+each layer of the network. Also, its adaptation of U-Net                        have been distorted by ambient noise. It is not possible to assume
+architecture [13] enables capturing of multi-scale features thus                the collection of clean acoustic data. Therefore, we require our
+retaining high frequency features, unlike other denoising                       approach to be truly self-supervised which operates on true
+autoencoders with bottleneck architecture.                                      noisy hydrophone acoustic signals.
+
+    Yet, the upsampling performed using stride transposed                           We used the Wave-U-Net architecture instead of the
+convolution in Wave-U-Net introduces undesirable aliasing                       conventional fully convolutional neural network in [15], in order
+effects in the output. In our implementation, we added a                        to allow for a larger receptive field and to capture more
+learnable post-processing filter after the output of Wave-U-Net                 contextual information. Also, we use a customized loss function
+as suggested by [14]. This filter layer provides a simple                       instead of         loss, to tackle the non-zero-mean noise
+mechanism to filter out undesirable frequencies due to the                      distribution encountered in our underwater acoustic application.
+checkboard artefacts.                                                                 III. DEVELOPED WAVEN2N DENOISING APPROACH
+B. Restoration without Clean Data Approach: Noise2Noise                         A. Self-Supervision Learning in WaveN2N
+    The Noise2Noise training approach first introduced in [11]                      The WaveN2N denoising approach is designed to exploit
+showed that a neural network can learn to clean noisy images                    array data that provides multiple simultaneous recordings of a
+when given only noisy data. In the training process of mapping                  single source transmission, each with different realization of
+a noisy image to another noisy image, the network slowly                        noise for Noise2Noise training. It handles real world noisy
+converges to an estimate of the clean version of the image. This                measurements for network training without the need for any
+powerful technique is more practical in real world applications                 supervised learning initialization which allows it to be truly self-
+as clean data is expensive and sometimes impossible to acquire.                 supervised. The assumptions are that the noise is de-correlated
+    In their work, they investigated several loss functions for                 among different hydrophones, while signals remain correlated
+different noise types. E.g. The use of          loss for additive               but are time and phase shifted. As the source is slow moving and
+Gaussian noise,       loss for mode seeking loss, customized                    thus Doppler differences at each hydrophones are negligible.
+masking loss for multiplicative Bernoulli noise, annealed                       The noisy signal ( ) at each hydrophone can be expressed as
+loss for random-valued impulsive noise and also relative                                                 ( )=          ( )+         ( )                (1)
+to handle high dynamic range signals. Still, they require the
+noise distribution present in the data to be zero-mean, such that               where ( ) and ( ) denote clean signal and additive noise at
+the noise content cancels out when training converges. These are                hydrophone channel       [1, ]. is the number of hydrophone
+not applicable for underwater hydrophone signals. The                           channels across the array. is the intensity of signal which is
+sensitivity across different hydrophones may vary, which affects                dependent on the sensitivity of the hydrophone, the distance
+the amplitude of signal and noise at each hydrophone. Therefore,                away from source and source level. is the intensity of noise,
+zero-mean noise is not guaranteed. Signal at each hydrophones                   which is dependent on the ambient noise and self-noise level due
+may also be time-delayed depending on the distance and the                      to acquisition apparatus. Each signal is segmented into smaller
+direction of the source. A direct application of              loss              frames as indicated by index . Then, an ideal denoising
+function may result in incorrect error measurement, if the signals              network that reconstructs an estimated clean signal frame based
+are out-of-phase. Thus, there is a need to explore a customized                 on the noisy input can be expressed as
+loss function for our application.
+                                                                                                               ,   =      ,                            (2)
+C. Noisy2Noisy
+                                                                                   In a supervised learning approach with clean signal data
+    Based on our knowledge, Noisy2Noisy [15] is the first                       available, the network parameters can be obtained by
+attempt to the adapt Noise2Noise technique to tackle audio
+speech denoising in the time domain, although their method                                            argmin ∑ ℒ              ,   =    , ,   ,         (3)
+requires initialization of their network via supervised training,
+which necessitates the availability of clean data. Their proposed
+hybrid method is a combination of supervised and self-
+
+
+
+
+      Authorized licensed use limited to: Stanford University. Downloaded on September 07,2026 at 01:06:08 UTC from IEEE Xplore. Restrictions apply.
+    In the self-supervised learning approach, sets of permuted                      The training process starts by segmenting hydrophone array
+channel input and target noisy pairs ( , , , , ) are presented                  recordings into smaller frames. These frames are then spectrally
+to the network during training. Here, each training pair consist                whitened and normalized independently before being fed into
+of two noisy realizations of the same signal, albeit they are time-             the network. The output is then cross-correlated with a different
+delayed and phase-shifted. I.e. , ( ) = ( ) + ( ) and                           hydrophone signal frame to compute the loss. The network is
+                          ( ). The parameters of the network are                fed with sets of different permutation pairs of hydrophone signal
+  , ( )= ( +∆ )+
+obtained by solving the following optimization problem                          frames. Each set consist of ( − 1) pairs. A few sets will form
+                                                                                a batch which will be fed to the network. The network trains
+          argmin ∑ ∑ , ℒ              ,       =   ,   ,       , ,       (4)     from random initialized weights till convergence. The overall
+                                                                                implementation pipeline is illustrated in Fig. 1.
+where ℒ(. ) denotes a customized loss function that is invariant
+to the time delay and phase shift between channel and .
+denotes the network parameters.
+    As the noise distribution in our application may not be zero-
+mean, the expected value of noisy signals cannot be
+approximated as clean signals ( [ ] ≇ ) , hence the
+Noise2Noise training in [11, 15] is not directly applicable.
+However, the assumption that the noise realizations are de-
+correlated and signals are correlated, is still valid. Therefore, we
+consider a correlation function, , within the loss function that
+allows the approximation of the expectation value for all cross-
+correlation values to be equal to the auto-correlation of clean
+signals [ ( , , , )] ≅ ( , ) . Hence, Eq. (4) can still
+                                                                                Fig. 1. Overall implementation for WaveN2N training for hydrophone array
+applied and we can still use the noisy signals as target to replace             data.
+clean target in the self-supervised learning.
+B. Log-Scale Pearson Correlation Coefficient for Loss                           D. Network Architecture
+    Function                                                                       The WaveN2N architecture builds upon both Wave-U-Net
+    Pearson correlation coefficient is often used to summarize                  [12] and the generator model from WaveGAN [14]. WaveN2N
+the strength of linear relationship between two variables. It is                uses the downsampling blocks (DS_blk) to iteratively extract
+calculated as the covariance of the two variables divided by the                higher level features on coarser time scales which are later
+product of the standard deviation of each variable. It has a value              combined with the high resolution features at the upsampling
+between +1 and -1. +1 indicate a full positive linear correlation,              blocks (US_blk) at their corresponding scales. This provides the
+0 indicates no linear correlation and -1 indicates a full negative              model with multi-scale features for the prediction.
+linear correlation. As it is normalized, it gives an interpretable                  The detailed architecture is shown in Table 1. Each
+score. Thus, it is used as a loss function in [16-18]. As the input             downsampling blocks consist of a 1-D convolutional layer with
+and target pair has signal with different time-delays and                       kernel size of 16, stride of 4 and zero padding of 6, followed by
+intensities, the translational and scale invariant properties of                a batch normalization layer and a LeakReLU activation. On the
+Pearson correlation coefficient are well-suited for our                         other hand, the upsampling block uses a 1d transposed
+application. The customized loss function is summarized as                      convolutional layer instead of the convolutional layer in the
+                                          (   (   )       ,    )
+                                                                                downsampling block. The Concat operation concatenates the
+          ∑     ∑     −                                             +   (5)     current, high level features with more local features from the
+                                                                                earlier downsampling blocks, while the tanh activation layer
+where      (. ) is the covariance function,    (. ) returns the                 ensures that the model returns predictions in the interval (-1, 1).
+maximum value and ∈ is the epsilon value introduced for                         The final convolutional layer is a learnable post-processing filter
+                                                                                to mitigate the artefacts caused by the transpose convolutions.
+stability. is the standard deviation of the data samples.
+                                                                                   The weights of the convolutional layers are first initialized
+    The intuition of using Pearson correlation loss function for
+                                                                                via Kaiming uniform initialization before training. We used
+the denoising network is that it gives incentive for the network
+                                                                                Adam optimization to train the network. The batch size is set to
+to reconstruct clean signal only. This is different from [11, 15],
+                                                                                15 sets of permutated input target pairs from an array of 8
+which attempts to cancel out noise, by penalizing the network
+                                                                                hydrophones an initial learning rate is set to 0.001.
+for reconstructing the noise when using         loss function.
+C. Implementation with Hydrophone Array data
+    Underwater acoustic signals are highly non-stationary and
+suffer more attenuation than speech signals. This means that
+underwater signals have a relatively larger dynamic range, and
+suffer more frequency fading effects than speech signals. Hence,
+it is important that spectral whitening and normalization by
+standard deviation have to be first performed on the signal.
+
+
+
+
+      Authorized licensed use limited to: Stanford University. Downloaded on September 07,2026 at 01:06:08 UTC from IEEE Xplore. Restrictions apply.
+          TABLE I.         WAVEN2N NETWORK ARCHITECTURE                          second duration upsweep chirp from 0.5–1.1 kHz, second LFM
+                   Downsampling Block, DS_blk ( )                                is a 0.1 seconds duration upsweep chirp from 0.5-3.5 kHz and
+      Operation        Kernel     Number      Stride             Padding         third LFM is a 0.5 second duration upsweep chirp from 1.8-3.6
+                         Size    of kernels                                      kHz. Due to surface wave motion, underwater current and
+       Conv1d           (1,16)                  4                    6           marine life, some hydrophones may experience an impulse
+    BatchNorm1d                                                                  response other than the reverberation and ambient noise.
+     LeakyReLU
+                     Upsampling Block US_blk (      )
+                                                                                     The long recordings are segmented to frames of 16384
+  ConvTranspose1d        (1,16)                         4            6
+                                                                                 samples each, which is about 1.6 seconds long with an overlap
+                                                                                 of 50%. The frames are then randomly split into 80% training
+   BatchNorm1d
+                                                                                 and 20% testing dataset which consist of 5280 and 1320 samples
+    LeakyReLU
+                                                                                 respectively. Since the WaveN2N is self-supervised, the data is
+                               WaveN2N
+                                                                                 randomly shuffled and there is no need to know what are the
+     Operation                   Input                      Output
+                                                                                 signal mixtures and content captured within the frames. As the
+     Input layer               (1,16384)                     ℎ                   loss converges during the training, the model learns to retain the
+    DS_blk (64)                    ℎ                         ℎ                   signal of interest and discard noises. Fig. 3 shows an example of
+    DS_blk (128)                   ℎ                         ℎ                   the inputs and denoised outputs of the model during training.
+    DS_blk (512)                   ℎ                         ℎ
+   DS_blk (1024)                   ℎ                         ℎ
+   DS_blk (2048)                   ℎ                         ℎ
+   US_blk (2048)                   ℎ                         ℎ
+   US_blk (1024)           Concat([ℎ , ℎ ])                  ℎ
+    US_blk (512)           Concat([ℎ , ℎ ])                  ℎ
+    US_blk (128)           Concat([ℎ , ℎ ])                  ℎ
+    US_blk (64)            Concat([ℎ , ℎ ])                  ℎ
+ Conv1dTranspose(1)
+  Kernel size=(1,15)              ℎ                          ℎ
+      stride=4
+     padding=6
+         tanh                     ℎ                          ℎ
+      Conv1d(1)
+  Kernel size=(1,511)             ℎ                         Output
+     padding=255
+                                                                                      x
+                                                                                 Fig. 2. Acoustic Oceanographic Buoy with vertical non-uniform linear array.
+
+
+                  IV. PRACTICAL EXPERIMENT
+    In our practical experiment, we used the acoustic dataset
+made available online by SiPLAB, it is collected during their
+Random Array of Drifting Acoustic Receivers (RADAR’07) sea
+trial [19]. In their trial, they setup a vertical non-uniform linear
+array (VLA) of 8 hydrophones (Fig. 2) to receive acoustic                        Fig. 3. Spectrograms of inputs (top) and their respective denoised outputs
+communication signals from diverse frequency bands. However,                     (bottom) of WaveN2N during training process. Other than the ambient noise,
+we only used the low frequency (LF) Lubell source that covers                    the impulsive noise appeared in the 5th hydrophone was showed to be removed
+the band of 500 to 4000 Hz for our study. The LF projector is                    by the model.
+deployed off a moving ship, at a depth of about 4-10 m and is at
+a distance 2-4 km away. It is also mentioned in [19] that LF                     B. Results and Discussion
+source deployed at such shallow depth will result in stronger                        We evaluated the model performance using LFMs which are
+multipath reverberations and hence their mid and high frequency                  structured signals for reverberation measurements. This is
+(MF/HF) acoustic communication sources are deployed at a                         because we can easily perform matched filtering to remove all
+greater depth. Conversely, we intentionally use the shallower                    uncorrelated noise from the measurements. Next, we used the
+source to study the denoising and reverberation removal                          radiated ship noise as the signal of interest to measure the noise
+performance of WaveN2N.                                                          level reduction.
+A. Hydrophone Array Dataset                                                          1) Reverberation Level Reduction
+    The hydrophones signals are first low-pass filtered and                          Since, the trained network can perform inference with a
+resampled to 10 kHz sampling rate. The dataset contains linear                   single hydrophone signal, we can denoise all hydrophones
+frequency modulated (LFM) pulses, multi-tones (MT) signals                       individually across the array, as shown in Fig. 4. A total of 110
+and the ship’s radiated noise. While these are all presented to                  LFM #1, 107 LFM #2 and 58 LFM #3 test frames were
+WaveN2N during training, we only studied and tested on 3 types                   denoised. Their signal-to-reverberation ratio (SRR) were
+of LFM pulses and the ship radiated noise. The first LFM is a 1                  measured and aggregated, shown in Fig. 5.
+
+
+
+
+       Authorized licensed use limited to: Stanford University. Downloaded on September 07,2026 at 01:06:08 UTC from IEEE Xplore. Restrictions apply.
+Fig. 4. Spectrograms of hydrophone inputs (top), individually denoised outputs (middle) and a comparison of matched filtering outputs before and after denoising
+(bottom).
+
+                                                                                         2) Noise Level Reduction
+                                                                                         We investigate WaveN2N noise level reduction
+                                                                                     performance using the radiated noise from the transmitter
+                                                                                     ship. Since the ship noise is unknown, matched filtering
+                                                                                     cannot be used to remove ambient noise. WaveN2N has to
+                                                                                     intelligently discriminate the signal of interest from ambient
+                                                                                     noise. The test frames are first band-pass filtered within the
+                                                                                     band of 0.05-1 kHz, to avoid the acoustic communication
+                                                                                     signal transmission frequency bands. Each of the hydrophone
+                                                                                     test frame are fed individually to model for denoising. Fig. 7
+                                                                                     shows the spectrograms of a single hydrophone signal before
+                                                                                     and after denoising. Overall, signals denoised by WaveN2N
+                                                                                     revealed more structure, implying that noise level has been
+                                                                                     reduced.
+Fig. 5. Aggregated measurement of SRR for different LFM types.
+
+    LFM #2 showed a nominal of 10 dB reverberation
+reduction, which is the highest compared to LFM #1 and #3.
+This is attributed by its wider bandwidth which gives finer
+matched filter resolution. A 1st order multipath simulation of
+a source 3 km away in Fig. 6, shows that the multipath arrivals
+from the sea surface and seabed are 0.2 m and 2.4 m apart from
+the direct path. This meant that LFM #2 signals were able to
+resolve multipath better than the other two LFMs. Therefore,                                          (a)                                  (b)
+the model was able to distinguish and subsequently remove
+more reverberation for LFM #2.                                                       Fig. 7. Spectrograms of a single hydrophone signal (a) before and (b) after
+                                                                                     WaveN2N denoising.
+
+                                                                                                                V. DISCUSSION
+                                                                                         A novel deep learning based approach for underwater
+                                                                                     acoustic signal denoising has been developed in this paper for
+                                                                                     the purpose of exploiting array type data for self-supervised
+                                                                                     learning. The model learns to discriminate noise from signal
+                                                                                     of interest by using only real-world noisy data without
+                                                                                     requiring any clean signal as the target. The model does not
+                                                                                     need to be first initialized with weights from supervised
+Fig. 6. 1st Order multipath simulation for source at a distance 3 km away.           learning using clean signals which are costly or sometimes
+
+
+
+
+        Authorized licensed use limited to: Stanford University. Downloaded on September 07,2026 at 01:06:08 UTC from IEEE Xplore. Restrictions apply.
+impossible to collect in the underwater domain. A correlation                       [16] A. Goy, K. Arthur, S. Li and G. Barbastathis, “Low photon count phase
+loss function was introduced to mitigate time-delay and                                  retrieval using deep learning,” Physics Review Letters, Vol. 121, no.
+                                                                                         24, pp. 243902-243907, 2018.
+intensity variance difference between the noisy signals across
+                                                                                    [17] J. Benesty, J. Chen, Y. Huang and I. Cohen, “Pearson correlation
+the hydrophone array. The effectiveness of this approach is                              coefficient. In: Noise reduction in speech processing,” Springer Topics
+demonstrated in a practical experiment using real-world data                             in Signal Processing, Vol. 2, Springer, Berlin, Heidelberg.
+collected via vertical line array. In summary, the developed                        [18] R. Saidi, W. Bouaguel, N. Essoussi, “Hybrid feature selection method
+approach is capable of achieving reverberation and noise                                 based on the genetic algorithm and Pearson correlation coefficient. In:
+reduction intelligently on single hydrophone signals without                             Hassanien A. (eds) Machine Learning Paradigms; Theory and
+requiring any prior knowledge or availability of clean signal.                           Application,” Studies in Computation Intelligence, Vol. 801, Springer,
+                                                                                         Cham.
+                         ACKNOWLEDGMENT                                             [19] C. Soares, S. M. Jesus, P. Hursky, T. Folegot, C. Martins, F. Zabel, L.
+                                                                                         Quaresma, D. S. Ko and E. F. Coelho, “Random array of drifting
+    We will like to express gratitude to SiPLAB for making                               acoustic receivers (RADAR’07),” University of Algarvae, Portugal,
+the acoustic data set available for the work presented in this                           04/07-SiPLAB, Dec 2007.
+paper.
+                              REFERENCES
+[1] G. Kalpana, V. Rajendran and S. S. Murugan, “Study of de-noising
+     techniques for SNR improvement for underwater acoustic
+     communication,” Journal of Marine Engnineering & Technology, vol.
+     13, no. 3, pp 29-35, 2014.
+[2] H. Krim, D. Tucker, S. Mallat and D. Donoho, "On denoising and best
+     signal representation," IEEE Transactions on Information Theory, vol.
+     45, no. 7, pp. 2225-2238, Nov. 1999, doi: 10.1109/18.796365.
+[3] M. Berouti, R. Schwartz and J. Makhoul, “Enhancement of speech
+     corrupted by acoustic noise,” Proceeding of IEEE International
+     conference on Acoustics, Speech and Signal Processing, vol. 4, pp 208-
+     211, 1979.
+[4] Y. Xu, J. Du, L. Dai and C. Lee, “An experimental study on speech
+     enhancement based on deep neural networks,” IEEE Signal Processing
+     Letters, Vol. 21, no. 1, pp. 65-68, Jan. 2014.
+[5] Y. Xu, J. Du, L. Dai and C. Lee, “A regression approach to speech
+     enhancement based on deep neural networks,” IEEE/ACM
+     Transactions on Audio, Speech, and Language Processing, Vol. 23, no.
+     1, pp 7-19, Jan. 2015.
+[6] S. Yu, J. Ma and W. Wang, “Deep learning for denoising,”
+     GEOPHYSICS 2019, Vol.84, no.6, 2019.
+[7] X. Mao, C. Shen, Y. Yang, “Image restoration using convolutional
+     auto-encoders with symmetric skip connections,” Proceeding of NIPS,
+     2016.
+[8] A. Jannsson, E. Humphrey, N. Montecchio, R. M. Bittner, A. Kumar
+     and T. Weyde, “ Singing voice separation with Deep U-Net
+     convolutional networks,” ISMIR, 2017.
+[9] E. M. Grais and M. D. Plumbley, “Single channel audio source
+     separation using convolutional denoising autoencoders,” IEEE Global
+     Conference on Signal and Information Processing, 2017, pp. 1265-
+     1269.
+[10] H. Purwins, B. Li, T. Virtanen, J. schlüter, S. Chang and T. Sainath,
+     “Deep learning for audio signal processing,” IEEE Journal of Selected
+     Topics in Signal Processing, Vol. 13, no. 2, pp. 206-219.
+[11] J. Lehtinen, J. Munkberg, J. Hasselgren, S. Laine, T. Karras, M. Aittala
+     and T. Aila, “Noise2Noise: Learning image restoration with clean
+     data,” arXiv preprint arXiv:1803.04189, 2018.
+[12] D. Stoller, S. Ewert and S. Dixon, “Wave-U-Net: A multi-scale neural
+     network for end-to-end audio source separation,” Proceedings of the
+     19th ISMIR conference, Sep. 2018.
+[13] O. Ronneberger, P. Fischer, and T. Brox, “U-net: Convolutional
+     networks for biomedical image segmentation,” International
+     Conference on Medical Image Computing and Computer-Assisted
+     Intervention, pp. 234-241, 2015.
+[14] C. Donahue, J. McAuley and M. Puckette, “Adversarial audio
+     synthesis,” ICLR, 2019.
+[15] N. Alamdari, A. Azarang and N. Kehtarnavaz, “Improving Deep
+     Speech Denoising by Noisy2Noisy Signal Mapping,” arXiv preprint
+     arXiv:1904.12069, 2019.
+
+
+
+
+        Authorized licensed use limited to: Stanford University. Downloaded on September 07,2026 at 01:06:08 UTC from IEEE Xplore. Restrictions apply.
+

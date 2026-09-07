@@ -1,0 +1,1143 @@
+IEEE/ACM TRANSACTIONS ON AUDIO, SPEECH, AND LANGUAGE PROCESSING, VOL. 30, 2022                                                                            2541
+
+
+
+
+                      Differentiable Artificial Reverberation
+                         Sungho Lee , Hyeong-Seok Choi , and Kyogu Lee , Senior Member, IEEE
+
+
+   Abstract—Artificial reverberation (AR) models play a central                  spatial characteristics. Therefore, adding an appropriate rever-
+role in various audio applications. Therefore, estimating the AR                 beration to a dry audio is desirable for plausible listening [1]–[3].
+model parameters (ARPs) of a reference reverberation is a cru-                   Artificial reverberation (AR), efficient digital filters that may be
+cial task. Although a few recent deep-learning-based approaches
+have shown promising performance, their non-end-to-end training                  used to mimic real-world reverberation, have been developed
+scheme prevents them from fully exploiting the potential of deep                 to achieve such auditory effects [4]–[6] and applied to room
+neural networks. This motivates the introduction of differentiable               acoustic enhancement [7], auditory scene generation [8], [9],
+artificial reverberation (DAR) models, allowing loss gradients to                post-production [10], and many more.
+be back-propagated end-to-end. However, implementing the AR                          Nevertheless, estimating the AR model parameters (ARPs)
+models with their difference equations “as is” in the deep learning
+framework severely bottlenecks the training speed when executed                  that match the reference reverberation remains challenging. This
+with a parallel processor like GPU due to their infinite impulse                 is because the mapping from the ARPs to the reverberation is
+response (IIR) components. We tackle this problem by replacing                   highly nontrivial. We refer to this task as analysis-synthesis when
+the IIR filters with finite impulse response (FIR) approximations                the reference is a room impulse response (room IR, RIR). When
+with the frequency-sampling method. Using this technique, we                     the reference is indirectly provided with a reverberant signal,
+implement three DAR models—differentiable Filtered Velvet Noise
+(FVN), Advanced Filtered Velvet Noise (AFVN), and Delay Net-                     i.e., an RIR convolved with a dry signal, we refer to this task
+work (DN). For each AR model, we train its ARP estimation                        as blind estimation. We limit the scope to reverberant speech
+networks for analysis-synthesis (RIR-to-ARP) and blind estimation                signals in this paper, yet the framework can easily be extended
+(reverberant-speech-to-ARP) task in an end-to-end manner with                    to other types of signals, such as musical ones.
+its DAR model counterpart. Experiment results show that the
+                                                                                     ARP estimation is a classical problem, and various attempts
+proposed method achieves consistent performance improvement
+over the non-end-to-end approaches in both objective metrics and                 have been made [11]–[14]. However, they are only applicable to
+subjective listening test results.                                               a specific AR model (AR-model-dependent) and the analysis-
+                                                                                 synthesis task (task-dependent). This inflexibility is problematic
+   Index    Terms—Digital        signal    processing,            acoustics,
+reverberation, artificial reverberation, deep learning.                          since every application has its own suitable AR models and
+                                                                                 reference forms (e.g., RIR and reverberant speech).
+                                                                                     We can overcome such limitations with differentiable ar-
+                           I. INTRODUCTION                                       tificial reverberation (DAR) models. Each DAR model takes
+                                                                                 ARPs as input and generates its corresponding AR model’s IR
+       EVERBERATION is ubiquitous in a real acoustic envi-
+R      ronment. It provides the listeners psychoacoustic cues for
+                                                                                 (see Fig. 1(a)). After computing a loss between the generated
+                                                                                 IR and the reference RIR, they allow the loss gradients to be
+                                                                                 back-propagated through themselves. As a result, we can train
+   Manuscript received 21 October 2021; revised 27 March 2022 and 10 June        a deep neural network (DNN) to match the reference RIR in
+2022; accepted 15 July 2022. Date of publication 22 July 2022; date of current   an end-to-end manner. By leveraging the DNN’s flexibility and
+version 5 August 2022. This work was supported by the Institute of Information
+& Communications Technology Planning & Evaluation (IITP), in part by the         expressiveness, we can train the network to perform any task
+Korean Government (MSIT) under Grant 2022-0-00641, and in part by the Na-        with any AR model with minimal architecture change.
+tional Research Foundation of Korea (NRF), in part by the Korean Government          Since the AR models are exactly or close to linear time-
+under Grant NRF-2018M3A7B4089670. The associate editor coordinating the
+review of this manuscript and approving it for publication was Prof. Stefania    invariant (LTI), we can implement them differentiably “as is”
+Cecchi. (Corresponding author: Kyogu Lee.)                                       with their difference equations [15]–[18]. However, this ap-
+   Sungho Lee is with the Department of Intelligence and Information, Seoul      proach has been impractical because the training speed is limited
+National University, Seoul 08826, South Korea (e-mail: sh-lee@snu.ac.kr).
+   Hyeong-Seok Choi was with the Department of Intelligence and Information,     by the recurrent sample generation of their IIR filter components
+Seoul National University, Seoul 08826, South Korea. He is now with the          when executed on a parallel processor, such as a GPU. In this
+Institute of New Media and Communications, Seoul National University, Seoul      context, we aim to modify the vanilla DAR models to sidestep the
+443-270, South Korea (e-mail: kekepa15@snu.ac.kr).
+   Kyogu Lee is with the Department of Intelligence and Information, Graduate    aforementioned problem. Inspired by recent works [19], [20],
+School of AI, and AI Institute, Seoul National University, Seoul 08826, South    we replace the IIR filters with finite impulse response (FIR)
+Korea (e-mail: kglee@snu.ac.kr).                                                 approximations using the frequency-sampling method [21]. This
+   This work involved human subjects or animals in its research. Approval
+of all ethical and experimental procedures and protocols was granted by the      way, each DAR model becomes an FIR filter whose IR can
+Institutional Review Board of Seoul National University (No. 2107/004-017).      be generated without any recurrent step. Using this technique,
+   Audio samples are available at https://sh-lee97.github.io/DAR-samples/        we present differentiable Filtered Velvet Noise (FVN) [13],
+   This article has supplementary downloadable material available at
+https://doi.org/10.1109/TASLP.2022.3193298, provided by the authors.             Advanced Filtered Velvet Noise (AFVN), and Delay Network
+   Digital Object Identifier 10.1109/TASLP.2022.3193298                          (DN) [22], [23]. Note that the AR-to-DAR conversion can be
+
+                         2329-9290 © 2022 IEEE. Personal use is permitted, but republication/redistribution requires IEEE permission.
+                                       See https://www.ieee.org/publications/rights/index.html for more information.
+
+
+         Authorized licensed use limited to: Stanford University. Downloaded on September 07,2026 at 01:05:50 UTC from IEEE Xplore. Restrictions apply.
+2542                                                                 IEEE/ACM TRANSACTIONS ON AUDIO, SPEECH, AND LANGUAGE PROCESSING, VOL. 30, 2022
+
+
+
+                                                                                     deep learning framework as a convolutional layer and recurrent
+                                                                                     layer, respectively [15]–[18]. Since the IIR filter, e.g., parametric
+                                                                                     equalizer (PEQ), bottlenecks the training speed, the frequency-
+                                                                                     sampling method [21] was utilized [19], [20]. Upon these works,
+                                                                                     we investigate the reliability of this technique, present a general
+                                                                                     differentiable IIR filter based on state-variable filter (SVF) [30],
+                                                                                     [31], and use it to implement the DAR models.
+
+
+                                                                                     B. ARP Estimation
+                                                                                        1) Analysis-Synthesis: Various methods have been proposed
+                                                                                     to systematically and automatically estimate ARPs that mimic
+                                                                                     certain characteristics of a given RIR. Some works first ex-
+                                                                                     tract perceptually relevant features from the RIR, then esti-
+                                                                                     mate the ARPs from them. For example, FDN parameters were
+Fig. 1. The proposed ARP estimation framework. (a) With the DAR models,              derived from the RIR’s energy decay relief (EDR) represen-
+loss gradients ∂L/∂P1 , . . . , ∂L/∂Pn can be back-propagated through the
+DAR models. Hence, the ARP estimation network can be trained in an end-to-end        tation which encodes the frequency-dependent reverberation
+manner. We can train the network to perform the analysis-synthesis (RIR h            decay [11]. Along with the FVN and AFVN, their parameter
+input), blind estimation (reverberant speech h ∗ x input), or even both. The         estimation algorithm based on linear prediction were proposed
+network has an AR-model-agnostic encoder so that using a different DAR model
+only requires changing the tiny projection layers Proj1 , . . . , Projn . (b) Each   together [13]. Another thread of work utilizes optimization. A
+DAR model generate an FIR approximation of its original AR model’s IIR.              genetic algorithm was proposed to find the FDN parameters that
+After the training, estimated ARPs can be plugged in to the AR model which is        achieve the desired “fitness” to the reference RIR [12]. Since all
+highly efficient and real-time controllable in CPU.
+                                                                                     these methods assume availability of the RIR, they cannot be
+                                                                                     applied to the blind estimation task.
+applied systematically to any other AR model with IIR compo-                            2) Blind Estimation: End-users (e.g., audio engineers) often
+nents. While the DAR models are not identical to their originals,                    interact with the AR models provided as audio plug-ins. As
+the differences are little in most cases, allowing us to train the                   a result, several attempts have been made to implement blind
+ARP estimation networks reliably with them. Furthermore, even                        estimation algorithms for the plug-ins. For example, a preset
+when differences exist, the benefits of the end-to-end learning                      recommendation method based on the Gaussian mixture model
+enabled by the DAR models outweigh them; we show that the                            was proposed [14]. More recently, DNNs were trained for the
+proposed approach brings consistent performance improvement                          plug-in parameter estimation and preset recommendation [10].
+over non-end-to-end baselines where the difference is only in the                       While these methods have shown promise, there is still room
+training scheme. After the training, we can revert to the original                   for improvement. First, they generated the training data using the
+AR models for efficient computation (see Fig. 1(b)).                                 plug-ins to train their models. However, this procedure may be
+                                                                                     time-consuming, and relying on data generated with a single
+                           II. RELATED WORKS                                         plug-in may increase the generalization error. Second, their
+                                                                                     training objectives could be suboptimal. When the task is defined
+A. Differentiable Digital Signal Processing
+                                                                                     as parameter regression [10], one must weigh each parameter’s
+   Digital signal processing (DSP) and deep learning are closely                     perceptual importance and apply it to the loss function design,
+related. For example, a temporal convolutional network [24]                          which is a highly challenging task. When the task is defined as
+is a stack of dilated one-dimensional convolutional layers with                      classification [10], [14], it could suffer from scalability prob-
+nonlinear activation layers and it has been used for modeling                        lems. Finally, most plug-ins provide only a few parameters, and
+dynamic range compression [25] and reverberation [26]. From                          each of them controls multiple internal ARPs simultaneously.
+the DSP viewpoint, it is FIR filter banks serially connected with                    This might limit the performance due to the reduced degree of
+memoryless nonlinearities, i.e., an extension of the classical                       freedom.
+Wiener-Hammerstein model [27].                                                          We tackle these problems with the DAR models as follows.
+   If we look for more explicit DSP-deep learning relationships,                     First, we can use a training objective that directly compares
+so-called “differentiable digital signal processing (DDSP)” ap-                      the estimated IR with ground-truth RIR. Therefore, we can use
+proaches exist which aim to import DSP components into deep                          any RIR for training and bypass the need to obtain the ground-
+learning frameworks as they provide strong structural priors and                     truth ARPs. Second, we replace the parameter-matching loss
+interpretable representations. For example, a harmonic-plus-                         with the end-to-end IR-matching loss and show that it improves
+noise model [28] was implemented in such a manner; then,                             the estimation performance by a large margin in both objective
+a DNN was trained to estimate its parameters to synthesize a                         metrics and subjective listening test scores. Finally, we estimate
+monophonic signal and used for various applications, including                       the ARPs directly instead of relying on the plug-in parameters.
+controllable synthesis and timbre transfer [29].                                        3) Two-Stage Approaches: Note that both analysis-synthesis
+   In the case of LTI filters, it is well-known that both an FIR and                 and blind estimation tasks can be divided into two subtasks. First,
+IIR filter are differentiable and can be directly imported into the                  we can obtain reverberation parameters, e.g., reverberation time,
+
+        Authorized licensed use limited to: Stanford University. Downloaded on September 07,2026 at 01:05:50 UTC from IEEE Xplore. Restrictions apply.
+LEE et al.: DIFFERENTIABLE ARTIFICIAL REVERBERATION                                                                                                       2543
+
+
+
+from a given reference (reference-to-reverberation parameters).
+We can directly compute the parameters from the RIR [32] for
+the analysis-synthesis case. For the blind estimation, various
+methods have been proposed [33]–[36]. Then, we can tune
+the ARPs to match the desired reverberation parameter values
+(reverberation parameters-to-ARPs) [37]–[39]. This two-stage
+approach can be a possible alternative to our single-stage end-to-
+end estimation method. However, perceptually different rever-
+berations can have the same reverberation parameters, resulting
+in information loss.
+
+C. Modeling Reverberation in the Deep Learning Framework
+                                                                                Fig. 2. The frequency-sampling method with a various number of sampling
+   An alternative to the proposed DAR approach could be using                   points N . Blue curves represent its magnitude response |H(ejω )| (top row) and
+existing deep learning modules to build another reverberation                   IR h[n] (bottom row). Red curves are the magnitude response and IR of the
+                                                                                frequency-sampled filter HN .
+model. The most simplest approach could be using a high-order
+FIR directly as an RIR model [29]. While it is viable when the
+objective is to learn a single RIR, training a DNN to generate                                 z_m = e**(-1j*angle*m).                                   (3b)
+various raw RIRs is highly challenging and inefficient.                         Then, we apply (2) to z_0, . . . , z_M with basic tensor operations
+   Instead, recent approaches either use a DNN as a reverberator                and obtain every sample of HN in parallel. A time-domain
+and control them via conditioning methods [26], [40] or design                  representation of HN is a length-N FIR hN [n], inverse discrete
+a differentiable RIR generator and use a DNN as a parameter                     Fourier transform (inverse DFT) of HN [k], i.e.,
+estimator [41]. Our method is closely related to the latter since
+                                                                                                         N −1
+the DAR model and the proposed ARP estimation network                                                1 
+                                                                                         hN [n] =        HN [k]ejωk n (u[n] − u[n − N ])                   (4)
+act in that way. However, the key difference is that our DAR                                         N
+                                                                                                         k=0
+models are direct imports of the AR models, which bring the
+following benefits. First, they are more directly interpretable and             where u[n] is a unit step function.
+controllable, allowing end-users to further tune the parameters.                    Therefore, using the frequency-sampling method, we can
+Second, their structure can prevent unexpected artifacts. Finally,              replace any IIR filter H that causes the bottleneck with an FIR
+they use sparse IIR and FIR filters, enabling efficient real-time               hN [n] whose convolution can be performed efficiently via Fast
+computation in CPU.                                                             Fourier Transform (FFT). In this paper, the “differentiable IIR”
+                                                                                filter refers to HN , which is in fact an FIR filter.
+ III. FREQUENCY-SAMPLING METHOD FOR DIFFERENTIABLE
+                     IIR FILTERS                                                A. Reliability of the Frequency-Sampling Method
+
+   For any real IIR filter H, its frequency response H(ejω ) is                    Every IIR filter’s frequency response has “infinite bandwidth”
+continuous, 2π-periodic, and conjugate symmetric. To obtain                     (in the time domain) so that the frequency-sampling causes time-
+its FIR approximation, we frequency-sample H(ejω ) at angular                   aliasing [42]. Specifically, the frequency-sampled IR hN [n] is
+frequencies ωk = 2πk/N where k = 0, . . . , N/2 [21]. We                      sum of length-N segments of the original IR h[n].
+denote the frequency-sampled filter with subscript N , i.e., HN .                                      ∞
+                                                                                                       
+                                                                                           hN [n] =          h[mN + n](u[n] − u[n − N ]).                  (5)
+                         HN [k] = H(ejωk ).                              (1)                           m=0
+
+Note that the frequency-sampling can also be defined on transfer                Since the energy of every stable IIR filter’s IR decays over time,
+functions, e.g., H(z) with z = ejωk .                                           more frequency-sampling points N give less time-aliasing, i.e.,
+   Since each sampling is independent, HN can be generated                      a closer approximation (see Fig. 2). Therefore, we can use the
+simultaneously with a parallel processor like GPU. Furthermore,                 differentiable filter HN in place of the original H to match
+the order of frequency-sampling (·)N and other basic arithmetic                 a reference response HRef . We elaborate this with following
+operations does not matter. Therefore, we can frequency-sample                  analytical results.
+an IIR filter by combining frequency-sampled m-sample delays                       1) Time-Aliasing Error: If H has M distinct poles where
+(z −m )N ∈ C N/2+1 as follows,                                                each of them νi ∈ C has multiplicity ri ∈ N, the time-aliasing
+                                      M                                     error asymptotically decreases as N increases as follows,
+                 M         −m                          −m
+                 m=0 βm z                   m=0 βm (z     )N [k]
+                                                                                                                     
+                                                                                                                     M
+ HN [k] = M                      [k] = M                       .
+                     α
+                 m=0 m   z −m
+                                N           m=0 mα  (z −m ) [k]
+                                                           N                                    H − HN 2 =               O(N ri −1 |νi |N ).             (6)
+                                                               (2)                                                   i=1
+Since (z −m )N [k] = e−j2πkm/N , using the widely-used deep                        2) Loss Error: The triangle inequality indicates that the loss
+learning libraries, we obtain (z −m )N as a tensor z_m by                       error is bounded to the time-aliasing error.
+                                                                                                                       
+          angle = 2*pi*arange(N//2+1)/N,                               (3a)            HRef − H22 − HRef − HN 22  ≤ H − HN 22 . (7)
+
+
+        Authorized licensed use limited to: Stanford University. Downloaded on September 07,2026 at 01:05:50 UTC from IEEE Xplore. Restrictions apply.
+2544                                                             IEEE/ACM TRANSACTIONS ON AUDIO, SPEECH, AND LANGUAGE PROCESSING, VOL. 30, 2022
+
+
+
+  3) Loss Gradient Error: The loss gradient error has similar
+asymptotic behavior to the time-aliasing error as follows,
+                                                   
+           ∂                                       
+            HRef − H22 − ∂ HRef − HN 22 
+            ∂p                 ∂p                  
+
+                 
+                 M
+             =         O(N 3ri −1 |νi |N )                               (8)
+                 i=1
+
+where p is a parameter of H. See Appendix C for the proofs.
+
+B. Differentiable Dense IIR Filter With State-Variable Filters
+   Since arbitrary IIR filter can be expressed as serially cascaded
+biquads (second-order IIR filters), we can obtain a differentiable
+IIR filter H̃ as a product of frequency-sampled biquads (Hi )N .
+                                                     
+                              2                −m
+                                       m=0 βi,m z
+  H̃[k] =       (Hi )N [k] =        2            −m
+                                                           [k]. (9)
+              i                i       m=0 αi,m z       N
+
+Moreover, we use the state variable filter (SVF) parameters
+fi , Ri , mLP   BP       HP
+           i , mi , and mi to express each biquad as follows,                   Fig. 3. Modified FVN, AVFN’s RIR approximation, and their differentiable
+                                                                                implementation strategy. FVN and AVFN divide a target RIR h[n] into segments
+                  βi,0 = fi2 mLP       BP    HP
+                              i + f i mi + m i ,                      (10a)     hi [n] and approximate each segment with a velvet noise vi filtered with an
+                                                                                allpass filter Ui and a coloration filter Ci . We obtain the differentiable FVN and
+                  βi,1 = 2fi2 mLP
+                               i − 2mi ,
+                                     HP
+                                                                      (10b)     AVFN by converting the IIR filters Ui and Ci into FIR filters ũi and (ci )N .
+                                                                                Each IIR filter is emphasized with a double border box.
+                  βi,2 = fi2 mLP
+                              i − f i mi + m i ,
+                                       BP    HP
+                                                                      (10c)
+                                                                                        H Peak (f, R, G) = H SVF (f, R, 1, 2RG, 1),                        (11b)
+                 αi,0 = fi2 + 2Ri fi + 1,                             (10d)
+                                                                                                                             √
+                 αi,1 = 2fi2 − 2,                                     (10e)              H HS (f, R, G) = H SVF (f, R, 1, 2R G, G).                         (11c)
+                                                                                Here, G is a new parameter that gives 20 log10 (G) dB gain. A
+                 αi,2 = fi2 − 2Ri fi + 1.                             (10f)
+                                                                                parametric equalizer (PEQ) is serial composition of such filters.
+  We prefer to use the SVF parameters rather than the biquad                    Following the recent works [19], [20], we use one low-shelving,
+coefficients due to the following reasons.                                      one high-shelving, and K − 2 peaking filters.
+   r Interpretability. Each SVF has lowpass H LP , bandpass
+                                                   i                                                                              
+                                                                                                                                  K−2
+     HiBP , and highpass filter HiHP . They share a resonance                                H PEQ (z) = H LS (z)H HS (z)                HiPeak (z).         (12)
+     Ri and cutoff parameter fi = tan(πωi /ωs ) where ωi is                                                                        i=1
+     their cutoff frequency and ωs is the sampling rate. The                    Same as the IIR filter case, frequency-sampling the components
+     filter outputs are multiplied with gains mLP    BP
+                                               i , mi , and mi
+                                                              HP
+                                                                                and multiplying them results in a differentiable PEQ HNPEQ
+                                                                                                                                           .
+     and then summed. This interpretability comes without any
+     generality loss since an SVF can express any biquad [31].
+   r Simple Activation Functions. The SVF parameters have                               IV. DIFFERENTIABLE ARTIFICIAL REVERBERATION
+     simpler stability conditions, Ri > 0 and fi > 0, than the                     In this section, we derive differentiable FVN, AFVN, and
+     biquad coefficients [18], which leads to simpler activation                DN. We first briefly review the original AR models. Then, we
+     function design. Refer to Section V-C for details.                         obtain their DAR counterparts by frequency-sampling the IIR
+   r Better Performance. We found that our ARP estimation                       components, replacing them with FIRs. Also, we slightly modify
+     networks performed better when they estimate the SVF                       the original models for efficient training, plausible reverberation,
+     parameters rather than the biquad coefficients. Refer to                   and better overall estimation performance.
+     Appendix A-B for the comparison results.
+  From now on, we denote each SVF-parameterized biquad                          A. Differentiable Filtered Velvet Noise
+with a superscript HiSVF and call it simply “SVF”.                                 1) Filtered Velvet Noise: One can divide an RIR h[n] into
+                                                                                S segments (see Fig. 3). As reverberation can be regarded as
+C. Differentiable Parametric Equalizer                                          mostly stochastic, we can model each length-Li segment hi [n]
+  A low-shelving H LS , peaking H Peak , and high-shelving filter               with a source noise signal si [n] “colored with” a filter Ci . When
+  HS
+H are widely used audio filters. Each of them can be obtained                   we use velvet noise for each source, this source-filter model
+using the SVF H SVF (f, R, mLP , mBP , mHP ) as follows [30],                   becomes Filtered Velvet Noise (FVN) [13], [43], [44]. The velvet
+                                            √                                   noise vi [n] is sparse; in every length-Ti interval, it contains a
+        H LS (f, R, G) = H SVF (f, R, G, 2R G, 1),        (11a)                 single nonzero sample ±1 with random sign/position such that
+
+       Authorized licensed use limited to: Stanford University. Downloaded on September 07,2026 at 01:05:50 UTC from IEEE Xplore. Restrictions apply.
+LEE et al.: DIFFERENTIABLE ARTIFICIAL REVERBERATION                                                                                                          2545
+
+
+
+its time-domain convolution is highly efficient. Moreover, an
+allpass filter Ui is introduced to smooth each source and make
+plausible sound. Finally, an deterministic (bypass) FIR ĥ0 [n]
+models the direct arrival and early reflection. Then, an IR of
+FVN ĥ[n] becomes
+                                         si [n−di ]
+                            S 
+                            
+          ĥ[n] = ĥ0 [n] +   vi [n − di ] ∗ ui [n] ∗ ci [n]           (13)
+                                             
+                              i=1
+                                              ĥi [n−di ]
+
+where each di is a delay for the segment alignment (d1 = 0). In
+practice, each allpass filter Ui is composed with Schroeder all-
+pass filters (SAPs), Ui,j SAP
+                              (z) = (1 + γi,j z −τi,j )/(γi,j + z −τi,j ),
+where τi,j is a delay-line length and γi,j is a feed-forward/back
+gain) for efficiency [45]. A low-order dense IIR filter is used as
+each coloration filter Ci .
+  2) Differentiable Implementation: We modify each FVN
+component to obtain differentiable FVN.
+   r Velvet filters. To batch the IR segments, we use the same                  Fig. 4. EDR of IRs generated by differentiable FVN, AFVN, their original
+                                                                                AR counterparts, and EDR errors introduced during the AR-to-DAR conversion
+      segment lengths L1 , . . . , LS and average pulse distance                process. Because the errors are small and mostly in the low-energy region, they
+      values T1 , . . . , TS for every reference RIR.                           are imperceptibly small (note that the z axis scale is different for the EDR plots
+   r Allpass filters. We tune and fix the allpass filter parameters             and the EDR error plots). We obtained the FVN/AFVN parameters with the
+                                                                                trained blind estimation networks discussed below.
+      jointly with the velvet filter parameters to avoid perceptual
+      artifacts, e.g., discontinuous and rough sound, while being
+      computationally efficient. Since we fixed the filter, instead
+      of the frequency-sampling method, we simply crop its IR                   Fig. 4(a) shows the EDRs and the EDR error. It reveals that
+      to obtain an FIR ũi [n].                                                 the error is small (at most 3dB) and mostly in the low-energy
+   r Coloration filters. We model Ci with K serial SVFs, i.e.,                  region (below −40dB). Also, there is little EDR error at the first
+      Ci (z) = K            SVF
+                   k=1 Ci,k (z). We frequency-sample each filter                time index, i.e., |E EDR [k, 0]|       1, indicating that the overall
+      Ci (z) and convert it into a length-N FIR (ci )N [n] so that              magnitude response remains the same during the conversion
+      we can train our network to estimate its parameters.                      process. In conclusion, the error is hardly noticeable, and the
+  Therefore, IR of the differentiable FVN h̃[n] becomes                         differentiable FVN can replace the original FVN for the training
+                                           s̃i [n]
+                                                                                (we use a loss function related to the EDR; see Section V-D).
+                                                                                  3) Modifications to the Original Model: FVN was initially
+  h̃[n] = ĥ0 [n] + overlap-add{vi [n] ∗ ũi [n] ∗(ci )N [n]}. (14)             designed for the analysis-synthesis of late reverberation; it used
+                                               
+                                                     h̃i [n]                    the direct arrival and early reflections cropped from the RIR
+                                                                                and modeled only the late part. However, we also aim to solve
+Since every component vi [n], ũi [n], and (ci )N [n] is an FIR,                the blind estimation problem where we must estimate the entire
+we can compute each segment h̃i [n] = vi [n] ∗ ũi [n] ∗ (ci )N [n]             RIR. To this end, we modify the original model as follows.
+efficiently by convolving the FIRs in the frequency domain, i.e.,                  r Finer segment gain. We divide each velvet segment vi [n]
+zero-padding followed by FFT, multiplication, then IFFT. Fi-                          into M smaller segments vi,1 [n], . . . , vi,M [n] multiplied
+nally, we overlap-add all the segments and add the deterministic                      with gains gi,1 , . . . , gi,M . Fig. 5(c) shows the resulting
+FIR ĥ0 [n] to obtain the full IR h̃[n]. The overlap-add can be                       velvet filter Vi in the time domain.
+implemented with a transposed convolution layer.                                   r Cumulative allpass. The original model smoothes every
+   While the modifications for the differentiable FVN introduce                       velvet noise with the same allpass filter. This is undesirable
+approximation error, it is negligible in practice. We explain this                    in our context since it could smear the direct arrival and
+with the EDR H EDR , a reverse cumulative sum of an IR’s short-                       early reflections. Instead, we gradually cascade the SAPs
+time Fourier transform (STFT) energy [11].                                            to obtain each allpass filter Ui (z) = ij=1 UjSAP (z) so the
+                                    ∞
+                                                                                     earlier segments are less smeared than the later ones. As
+                H EDR [k, n] =          |H STFT [k, m]|2 .             (15)           shown in Fig. 5(a), this modification can be implemented
+                                 m=n                                                  in the time domain by inserting each SAP UjSAP before the
+                                                                                      corresponding velvet filter Vj .
+By comparing the FVN’s EDR and its differentiable counterpart,                     r Shorter deterministic FIR. With the above changes, the
+we can analyze their differences in reverberation characteristics.
+Specifically, we obtain the EDR error E EDR by calculating the                        stochastic segments can fit the early RIR to some extent.
+difference between the two log-magnitude EDRs.                                        Therefore, we shorten the early deterministic FIR ĥ0 [n].
+                                                                                   Refer to Appendix A-A for the evaluation of the modifica-
+            E EDR = 10 log10 Ĥ EDR − 10 log10 H̃ EDR .                (16)     tions.
+
+        Authorized licensed use limited to: Stanford University. Downloaded on September 07,2026 at 01:05:50 UTC from IEEE Xplore. Restrictions apply.
+2546                                                                      IEEE/ACM TRANSACTIONS ON AUDIO, SPEECH, AND LANGUAGE PROCESSING, VOL. 30, 2022
+
+
+
+                                                                                           filter C1 cascaded with delta-coloration filters CΔ2 , . . . , CΔi .
+                                                                                                                                
+                                                                                                                                i
+                                                                                                              Ci (z) = C1 (z)         CΔj (z).              (17)
+                                                                                                                                j=2
+
+                                                                                           FVN with this modification is called Advanced Filtered Velvet
+                                                                                           Noise (AFVN) [13]. The delta filters’ orders ΔK2 , . . . , ΔKS
+                                                                                           are set lower than the initial filter’s K1 for the efficiency. See
+                                                                                           Fig. 5(b) for its time-domain implementation. We used K1 = 8
+                                                                                           and KΔ = KΔ2 = · · · = KΔS = 2 in the experiments. This
+                                                                                           results in a total of K̄ = K1 + (S − 1)KΔ = 46 SVFs. The
+                                                                                           other settings are the same as the FVN. This AFVN has 360
+                                                                                           ARPs to estimate and its time-domain model Ĥ requires 1511
+                                                                                           FLOPs. While order of the coloration filters are higher than the
+                                                                                           FVN’s counterparts, the introduced frequency-sampling error
+                                                                                           remains approximately the same in practice (see Fig. 4(b)).
+
+                                                                                           C. Differentiable Delay Network
+                                                                                              1) Delay Network: By interconnecting multiple delay lines
+                                                                                           in a recursive manner, one can obtain a Delay Network (DN) [22],
+                                                                                           [23] structure. A difference equation of the DN can be written
+                                                                                           in a general form as follows (we omit the bracket notation for
+                                                                                           the filtering),
+Fig. 5. Modifications to the original FVN and AFVN. (a) Modified FVN. To                                         y[n] = CT ȳ[n] + Ĥ0 x[n],              (18a)
+retain a sharp transient, we insert each SAP before its corresponding velvet filter.
+For each velvet filter Vi , the output denoted with a down arrow is a convolution                           ȳ[n + d] = Aȳ[n] + Bx[n].                   (18b)
+of the input and the velvet noise vi [n]. The other output denoted with a right
+arrow is a Li -sample-delayed input. Refer to [13] for more details. (b) The same
+modification is performed to the AVFN model. (c) For both FVN and AVFN, each
+                                                                                           That is, an input x[n] is distributed and filtered (or simply scaled)
+velvet filter Vi is divided into smaller filters Vi,1 , . . . , Vi,M assigned with gains   with B, then go through d-sample parallel delay lines which are
+gi,1 , . . . , gi,M . This modification is equivalent to dividing each velvet segment      recursively interconnected to themselves through a mixing filter
+vi [n] into smaller segments vi,1 [n], . . . , vi,M [n] and multiplying them with
+                                                                                           matrix A. The delay line outputs ȳ[n] are filtered and summed
+gi,1 , . . . , gi,M . (d) The ith coloration filter Ci in the time domain, which is
+serially connected SVFs Ci,1    SVF , . . . , C SVF .                                      with C. We add a bypass signal filtered with Ĥ0 , resulting in an
+                                               i,K
+                                                                                           output y[n]. Transfer function of the DN is
+
+    4) Model Configuration Details: Exact configurations of our                               Ĥ(z) = C(z)T (D−1 (z) − A(z))−1 B(z) + Ĥ0 (z).              (19)
+FVN used for the experiments are as follows.                                               Here, D(z) = diag(z −d ) is an M × M transfer function matrix
+    We generated 2.5 seconds of IR (48 kHz sampling rate, total                            for the delay lines, i.e., Dii (z) = z −di . B(z), C(z), and A(z)
+L = 120 k samples) with FVN. We used S = 20 non-uniform                                    are input, output, and feedback transfer function matrices of
+velvet segments whose lengths Li are L/40, L/20, and L/10                                  shape M × 1, 1 × M , and M × M , respectively.
+for 10, 5, and 5 segments, respectively, and their average pulse                              2) Differentiable Implementation: The DN components are
+distances were set to T = [10, 20, 35, 50, 65, 90, 120, 135,                               recursively interconnected such that one cannot divide its IR
+180, 220, 270, 320, 370, 420, 480, 540, 610, 680, 750, 820].                               into independent segments and generate them in parallel like
+The SAPs UjSAP were forced to have gains γj = 0.75 + 0.01j                                 we did with the FVN and AFVN. Instead, we frequency-sample
+and delay lengths τ = [23, 48, 79, 109, 113, 127, 163, 191,                                its entire transfer function to obtain differentiable DN, which is
+229, 251, 293, 337, 397, 421, 449, 509, 541, 601, 641, 691].                               equivalent to a composition of individually frequency-sampled
+Each velvet segment had M = 4 sub-segment gains and filtered                               transfer function matrices.
+with K = 8 SVFs. We frequency-sampled the coloration filters                                                                                        
+with N = 4k points. The length of the deterministic FIR h0 [n]                                 h̃[n] = IFFT CTN (D−1   N   − A N ) −1
+                                                                                                                                      B N + ( Ĥ 0 N .
+                                                                                                                                                  )      (20)
+was set to 50. We set the gain g ∈ RS×M , SVF parameters
+f , R, mLP , mBP , mHP ∈ RS×K , and the bypass FIR h0 ∈ RZ                                 Here, DN = diag((z −d )N ) ∈ C M ×M ×N/2+1 is a frequency-
+to estimation targets (total 930 ARPs). The time-domain FVN                                sampled version of the delay line transfer function matrix D, i.e.,
+Ĥ requires 2166 floating point operations per sample (FLOPs).                             (DN )ii = (z −di )N ∈ C N/2+1 . Likewise, we can frequency-
+                                                                                           sample the transfer function matrices B, C, and A to ob-
+                                                                                           tain their approximations BN , CN , and AN , respectively.
+B. Differentiable Advanced Filtered Velvet Noise
+                                                                                           Each frequency-sampled transfer function matrix is a batch of
+  Since frequency-dependent decay of reverberation is gradual,                             N/2 + 1 matrices, the matrix multiplications and inversions
+one can model each coloration filter Ci as an initial coloration                           of (20) can be performed in parallel.
+
+         Authorized licensed use limited to: Stanford University. Downloaded on September 07,2026 at 01:05:50 UTC from IEEE Xplore. Restrictions apply.
+LEE et al.: DIFFERENTIABLE ARTIFICIAL REVERBERATION                                                                                                         2547
+
+
+
+
+Fig. 6. Our DN in the time domain. We restrict the general filter matrices       Fig. 7. EDR of differentiable DN, its original DN with two versions (LTI
+to accelerate the training and obtain an efficient and controllable model. We    and time-varying), and EDR errors between those three. Same as the FVN and
+simplify the pre-filters B and the post-filters C to have only one coloration    AFVN, the frequency-sampling introduce little error, as shown in the upper right
+filter C1 and use the same CΔ for all feedback loops. A time-varying mixing      plot. However, rotating the mixing matrix introduces a considerable amount of
+matrix Qn and allpass filters U are introduced to use DN with small M (i.e.,     EDR error since it modulates the pole positions. The error is mostly in the
+fast training) with minimal quality loss.                                        low-frequency region, where the poles are sparsely located.
+
+
+                                                                                       [49]. Since the frequency-sampling method is only appli-
+   3) Restrictions to the General Model: The presented DN                              cable to LTI filters, we fix the mixing matrix to Q0 when
+structure is fully general and able to express many variants,                          obtaining the differentiable model.
+                                                                                    r Absorption Filters. Unlike the conventional FDN [46], we
+including the Feedback Delay Network (FDN) [46]. Therefore,
+we can also derive their differentiable versions following the                         use the same absorption filter CΔ for every channel. Since
+proposed method. However, when following the general practice                          the mixing matrix Qn is always unitary, our DN becomes
+that uses many delay lines (e.g., M = 16) for a high-quality re-                       stable when CΔ has magnitude response less than 1 [48].
+verberation, its differentiable model’s frequency-sampled trans-                       We achieve this by using a PEQ with additional constraints
+fer function matrices consume too much memory, and their                               (see Section V-C) as CΔ .
+                                                                                    r Bypass FIR. We use a length-Z FIR h0 [n] for the bypass.
+multiplications and inversions bottleneck the training speed. To
+tackle this, we reduce M and modify the components as follows                      We summarize the modifications. The difference equation of
+to make DN plausible with low M (see Fig. 6).                                    our time-varying DN ĤnTV is
+   r Pre and Post Filter Matrix. Following most previous
+                                                                                                        y[n] = C1 cT ȳ[n] + H0 x[n],                     (21a)
+      works [11], [47], [48], the pre filter matrix B is set to
+      a (constant) gain vector b. The post filter matrix C is a                                   ȳ[n + d] = Qn UCΔ ȳ[n] + bx[n].                       (21b)
+      combination of a gain vector c and a common filter C1 ,
+      i.e., C = C1 c. The common filter C1 is composed of serial                 The transfer function of its LTI approximation Ĥ(z) is given
+      KC1 SVFs.                                                                  as (19) with the restrictions B(z) = b, C(z) = C1 (z)c, and
+   r Feedback    Filter Matrix. While most DN model combines                     A(z) = Q0 diag(UN (z) CΔ (z)). Hence, the IFFT of
+      channel-wise parallel delta-coloration (absorption) filters                       (C1 )N cT (D−1
+                                                                                                    N − Q0 diag(UN                 (CΔ )N ))−1 b           (22)
+      CΔ and an inter-channel mixing matrix Q to compose the
+      feedback filter matrix A = QCΔ . Additionally, we insert                   summed with the bypass FIR ĥ0 [n] results in our differentiable
+      channel-wise allpass filters U and introduce time-variance                 DN’s IR h̃[n].
+      by modulating the mixing matrix Q. This results in the                        Fig. 7 shows the EDR errors between the three different DN
+      time-varying feedback filter matrix An = Qn UCΔ .                          modes, i.e., differentiable DN, original LTI, and the time-varying
+   r Allpass Filters. To achieve faster echo density build-up                    one. The only difference between the first two is the frequency-
+      without adding more delay lines, we insert serial KU                       sampling; unless the DN decays very slowly, there is little time-
+      SAPs in each feedback path. Unlike the FVN and AFVN                        aliasing and EDR error. However, due to the pole modulation, the
+      cases, we estimate the SAP gains γ ∈ RM ×KU with the                       EDR error increases significantly when the time-varying mixing
+      estimation network and frequency-sample the allpass filter                 matrix is applied. Despite this, we find that other perceptually
+      matrix U for the differentiable model.                                     important factors, such as reverberation time, remain largely
+   r Time-varying Mixing Matrix. We further reduce the audible                   unchanged (see Section VI-A).
+      “ringing” artifacts by modulating the stationary poles with                   4) Model Configuration Details: We used M = 6 delay lines
+      the time-varying mixing matrix, which is set to Qn =                       with delay lengths d = [233, 311, 421, 461, 587, 613] in sam-
+      Q0 Rn where Q0 is a Householder matrix and R is a tiny                     ples. We used KU = 4 SAPs for each delay line. We fixed the
+      rotational matrix constructed from a random matrix [48],                   SAP delay lengths to τ = [[131, 151, 337, 353], [103, 173, 331,
+
+         Authorized licensed use limited to: Stanford University. Downloaded on September 07,2026 at 01:05:50 UTC from IEEE Xplore. Restrictions apply.
+2548                                                                IEEE/ACM TRANSACTIONS ON AUDIO, SPEECH, AND LANGUAGE PROCESSING, VOL. 30, 2022
+
+
+
+                                                                                    A. AR-Model/Task-Agnostic Encoder
+                                                                                       We first transform the reference RIR or reverberant speech
+                                                                                    into a log-frequency log-magnitude spectrogram. Then, the
+                                                                                    spectrogram goes through five two-dimensional convolutional
+                                                                                    layers, each followed by a rectified linear unit (ReLU) activation.
+                                                                                    We apply gated recurrent unit (GRU) layers [50] along with
+                                                                                    the frequency axis regarding the channels as features and the
+                                                                                    time axis regarding the channels and frequencies as features,
+                                                                                    widening the receptive field. Finally, we apply two linear layers
+                                                                                    followed by layer normalization [51] and ReLU, resulting in the
+                                                                                    two-dimensional shared latent z. The detailed network config-
+                                                                                    urations are shown in Fig. 8, and the encoder has about 7.3M
+                                                                                    parameters.
+
+                                                                                    B. ARP-Groupwise Projection Layers
+                                                                                       Now we aim to transform the two-dimensional shared latent
+                                                                                    z into each ARP tensor Pi which is at most two-dimensional.
+                                                                                    To achieve this, we use two axis-by-axis linear layers. We first
+                                                                                    transpose and apply a linear layer to the latent to match the first
+                                                                                    axis shape. Then, another transposition and a linear layer match
+                                                                                    the other axis. This approach factorizes a single large layer into
+                                                                                    two smaller ones, reducing the number of parameters.
+
+                                                                                    C. Nonlinear Activation Functions and Bias Initialization
+                                                                                       Each ARP group has different stability conditions and desired
+Fig. 8. Architecture of the ARP estimation network. For each two-dimensional
+convolutional (Conv2D) layer, c, k, and s denote number of output channel,          distribution. To satisfy these, we attach a nonlinear activation to
+kernel size, and stride, respectively. For each gated reccurent unit (GRU) layer,   each projection layer and initialize the last linear layer’s bias as
+n and h denote number of layers and hidden features. Shape and size of the          follows. Here, x denotes a pre-activation element.
+intermediate output tensors are provided in the parentheses, where F , T , and C
+denote frequency, time, and channel axis, respectively. Z1, and Z2 denote each         1) Nonlinear Activation Functions:
+ARP tensor’s first and second axis. We omitted the batch axis.
+                                                                                       r For the resonance R of the SVF, we use a scaled softplus
+                                                                                          ζ(x) = log(1 + ex )/ log(2) to center the initial distribu-
+                                                                                          tion at 1 and satisfy the stability condition R > 0.
+373], [89, 181, 307, 401], [79, 197, 281, 419], [61, 211, 257,                         r For cutoff f we also have the same stability condition f >
+431], [47, 229, 251, 443]]. Note that the SAPs introduce addi-
+tional delays so that the effective delay lengths are [1205, 1291,                        0. However, instead of the softplus, we use tan(πσ(x)/2)
+1399, 1437, 1547, 1583] or about [25.1, 26.9, 29.1, 29.9, 32.2,                           where σ(x) = 1/(1 + e−x ) is a logistic sigmoid. With this
+33.0] in milliseconds. Our rotational matrix satisfies R30k = I                           activation, σ(x) = 0 and 1 represent cutoff frequency of
+                                                                                          0Hz and half of the sampling rate, respectively.
+so that the mixing matrix Qn has a period of 0.625 s. Both post                        r The delta-coloration PEQ CΔ inside the DN must satisfy
+C1 and absorption filter CΔ have KC1 = KcΔ = 8 components.
+We used N = 120k frequency-sampling points. The order of the                              the stability condition |CΔ (ejω )| < 1. To achieve this, we
+bypass FIR is Z = 100. The post filter parameters fC1 , RC1 ,                             use 10−ζ(x) for the component gain G. Also, √ the shelving
+                         1×KC1                                                            filters’ resonances should satisfy R > 2/2 to prevent
+mLPC1 , m C1 , m C1 ∈ R
+          BP     HP
+                                , feedback filter parameters fCΔ ,
+                                                                                          their magnitude
+                                                                                                   √         responses to “spike” over 1. Therefore,
+R C Δ , GC Δ ∈ R  KCΔ
+                       , pre and post gain vectors b, c ∈ RM ×1 ,
+                                                                                          we add 2/2 after the softplus activation.
+SAP gain vector γ ∈ RM ×KU , and the bypass FIR h0 ∈ RZ                                r For the feed-forward/back gains γ of channel-wise allpass
+are the estimation targets (total 200 ARPs). The resulting time-
+                                                                                          filters U inside the DN, we use sigmoid activation σ(x).
+domain model Ĥ and the time-varying model ĤnTV consume 889
+                                                                                       2) Bias Initialization:
+and 1285 FLOPs, respectively.                                                          r We initialize bias of the f projection layer to σ −1 (2ωk /ωs )
+                                                                                          where each ωk is desired initial cutoff frequency of k th
+   V. ARTIFICIAL REVERBERATION PARAMETER ESTIMATION                                       SVF. We set ωk = ωmin (ωmax /ωmin )(k−1)/(K−1) such that
+              WITH A DEEP NEURAL NETWORK                                                  the frequencies are equally spaced in the logarithmic scale
+   The details of our ARP estimation network are as follows.                              from ωmin = 40 Hz to ωmax = 12 kHz. To the SVFs inside
+As shown in Fig. 8, it transforms single channel audio input                              the AFVN’s initial and delta-coloration filters, we perform
+(either RIR or reverberant speech) into a shared latent z with the                        a random permutation to the frequency index k and obtain
+model/task-agnostic encoder. Then, each ARP-groupwise layer                               a new index k̄. This prevents SVFs for the latter segments
+projects the latent z into an ARP tensor Pi .                                             having higher initial cutoff frequencies.
+
+        Authorized licensed use limited to: Stanford University. Downloaded on September 07,2026 at 01:05:50 UTC from IEEE Xplore. Restrictions apply.
+LEE et al.: DIFFERENTIABLE ARTIFICIAL REVERBERATION                                                                                                      2549
+
+
+
+   r Decoder biases for the SVF mixing coefficients mLP , mBP ,
+     and mHP are initialized to 1, 2, and 1, respectively, so that
+     each SVF’s initial magnitude response slightly deviates
+     from 1. This prevents the coloration filters’ responses and
+     the estimation network loss gradients to vanish or explode.
+   r For the PEQ gains G of the DN’s delta-coloration filters,
+     we set each of their biases to −10 such that the initially
+     generated IRs have long enough reverberation time.
+
+D. Loss Function
+                                                                                               Fig. 9.   Baseline methods for the experiments.
+  1) Match Loss: We utilize a multi-scale spectral loss [29]
+and define a match loss as follows,                                             reflect various acoustic environments, we randomized simula-
+                             STFT
+                                                 
+                                                                               tion parameters for every RIR synthesis, which include room
+         LMATCH (h, h̃) =     |Hi | − |H̃iSTFT | .    (23)                    size, each wall’s frequency-dependent absorption coefficient,
+                                                              1
+                                i
+                                                                                and source/microphone positions. We tuned the randomization
+i denotes STFT with different FFT sizes. We use the FFT sizes                   scheme to match the training dataset to the validation set in terms
+of 256, 512, 1024, 2048, and 4096, hop sizes of 25% of the                      of reverberation parameter statistics.
+respective FFT sizes, and Hann windows. Each spectrogram’s                         In addition, we pre-processed each RIR as following.
+frequency axis is log-scaled like the encoder’s spectrogram.                        r We removed the pre-onset part of the RIR. We detected the
+   2) Regularization: We additionally apply a regularization                          onset by extracting a local energy envelope of the RIR then
+to reduce time-aliasing of the estimation. As shown in (6)                            finding its maximum point [56].
+and (8), pole radii of each SVF affects the reliability of the                      r Following the recent RIR augmentation method [57], we
+frequency-sampled one (hence DAR model) and its parameter                             multiplied random gain sampled from U (−12 dB, 3 dB) to
+estimator. Since each SVF’s IR (cSVF i,k )N [n] can be computed,                      the first 5 ms of each train RIR. This slightly reduces the
+we encourage reducing its pole radii by penalizing the IR’s                           average direct-to-reverberant ratio (DRR) of the training
+decreasing speed. Each decreasing speed γi,k is calculated by                         set and matches the validation set. At the evaluation/test,
+the ratio of the average amplitude of first and last n0 samples                       we omitted this procedure.
+of (cSVF
+     i,k )N [n]. We fix n0 to N/8. Then, each γi,k is weighted
+                                                                                    r Finally, we normalized the RIR to have the energy of 1.
+with a softmax function along the SVF-axis to penalize higher                      2) Reverberant Speech: We used VCTK [58] for dry speech.
+γi,k more. Sum of the weighted decreasing speed values results                  We split it into the train (61808), validation (21608), and test
+in the regularization loss LREG as follows,                                     (4912) set so that each set is composed of the speech recordings
+                         N                                                     from different speakers. We sampled an RIR and a dry speech
+                           n=N −n |(ci,k )N [n]|
+                                        SVF
+                 γi,k = n0 0 SVF                 ,        (24a)                sample from their respective datasets and convolved them to
+                             n=0 |(ci,k )N [n]|                                 generate reverberant speech. We random-cropped 2.5-second
+                        K γi,k eγi,k
+                        S                                                       segment from it for the input.
+                LREG =     k=1
+                            K
+                                        .                             (24b)
+                                   γi,j
+                       i=1   j=1 e                                              B. Training
+We omit the regularization loss for the DN networks since with                     We trained each network with every proposed DAR model
+DN the time-aliasing is inevitable to match the reference with re-              for the three tasks: analysis-synthesis, blind estimation, and
+verberation time longer than the number of frequency-sampling                   both tasks. For the both-performing ones, we fed an RIR or
+points N . Therefore, our full loss function L is                               reverberant speech in a 50-50% probability.
+            L(h, h̃) = LMATCH (h, h̃) + βLREG (cSVF                                We set the initial learning rate to 10−4 for FVN and AFVN and
+                                                N )                    (25)
+                                                                                   −5
+                                                                                10 for DN. We used Adam optimizer [59]. For DN, gradients
+where β = 1 for the FVN and AFVN and β = 0 for the DN.                          were clipped to ±10 for stable training. After 250k steps, we per-
+                                                                                formed the learning rate decay. We multiplied the learning rate
+                    VI. EXPERIMENTAL SETUP                                      by 10−0.2 and 10−0.1 every 50k step for the analysis-synthesis
+A. Data                                                                         networks and the others, respectively. We finished the training if
+                                                                                the validation loss did not improve after 50k steps, which took
+   1) Room Impulse Response: We collected 1835 real-world                       no more than 500k steps for the analysis-synthesis and 1M steps
+RIR measurements from various datasets including Ope-                           for the others.
+nAIR [52] and ACE Challenge [53]. The amount of the RIRs
+were insufficient for the training purpose, so we used them only
+for the validation and test (836 and 999 RIRs, respectively),                   C. Evaluation Metrics
+ensuring that each set consists of RIRs from different rooms.                     We evaluated our networks with the match loss LMATCH and
+   For the training, we synthesized 200k RIRs with shoebox                      EDR distance, defined as an average of the absolute EDR error.
+room simulations using the image-source method [54], [55]. To                   Furthermore, we evaluated reverberation parameter differences,
+
+        Authorized licensed use limited to: Stanford University. Downloaded on September 07,2026 at 01:05:50 UTC from IEEE Xplore. Restrictions apply.
+2550                                                              IEEE/ACM TRANSACTIONS ON AUDIO, SPEECH, AND LANGUAGE PROCESSING, VOL. 30, 2022
+
+
+
+
+                                                                                 Fig. 11. Reliability of the DAR models. Diff, LTI, and LTV denote the
+                                                                                 differentiable, original LTI, and the time-varying model, respectively. The
+                                                                                 hatched results are the same values of Fig. 10 (analysis-synthesis).
+
+
+
+                                                                                 D. Subjective Listening Test
+                                                                                    Following the previous researches [10], [41], we conducted a
+                                                                                 modified MUltiple Stimuli with Hidden Reference and Anchor
+                                                                                 (MUSHRA) test [66]. We asked subjects to score similarities
+                                                                                 of reverberation between a given reference reverberant speech
+Fig. 10. ARP estimation results on various tasks with the AR/DAR models.         h ∗ x and followings (h and x denote a test RIR and dry speech
+Here, AS and BE denote analysis-synthesis and blind estimation, respectively.
+The Full and Freq denote the full-band reverberation parameter difference        signal, respectively).
+and average of octave-band reverberation parameter differences, respectively.       r A hidden reference h ∗ x (exactly the same audio).
+Along with the proposed approaches and baselines, we additionally report the        r A lower anchor h ∗ x obtained by averaging the test set
+lower anchor’s evaluation results and the (hidden) reference’s MUSHRA score
+result. The both-performing networks’ performance are denoted as small dots            RIRs [41].
+in the figure.                                                                      r Another anchor h ∗ x obtained by random-sampling an
+                                                                                       RIR from the test set [10].
+                                                                                    r Estimations to evaluate Ĥ1 (x), . . . , Ĥn (x). We used the
+                                                                                       AR models Ĥ1 , . . . , Ĥn to obtain the reverberant speech.
+i.e., reverberation time T30 , DRR, and clarity C50 difference,                     The similarity score ranged from 0 to 100, where we provided
+denoted as ΔT30 , ΔDRR, and ΔC50 , respectively [32], [60]. We                   text descriptions for 5 equally-divided ranges (0-20: totally
+calculated both full-band differences and average of differences                 different, 20-40: considerably different, 40-60: slightly different,
+measured at octave bands of center frequencies of 125, 250, 500,                 60-80: noticeable, but not much, and 80-100: imperceptible).
+1k, 2k, 4k and 8kHz. Then, we obtained their respective median                   While we asked the participants to score both analysis-synthesis
+values.                                                                          and blind estimation results, we divided them into two separate
+   We can interpret the reverberation parameter differences by                   pages. As a result, a total of 10 stimulus (3 proposed models, 4
+comparing them with their respective just noticeable differ-                     baselines which we will explain in Section VI-E, 2 anchors, and
+ences [9]. Reported just noticeable differences of T30 from                      1 hidden reference) were scored for each task. We conducted the
+previous works vary from 5% [61] up to about 25% [62]. For                       test using the webMUSHRA API [67]. A total of 24 sets were
+C50 , 1 dB [63] and 1.1 dB [64] were reported. For DRR it differs                scored for each task, where the first 3 sets were used for training.
+for various range, e.g., 6 dB at −10 dB, 2 dB at 0 dB, 3 dB at                   A total of 12 people participated where 7 people were audio
+10 dB, and 8 dB at 20 dB [65].                                                   engineers and the others were instrument players. We discarded
+
+        Authorized licensed use limited to: Stanford University. Downloaded on September 07,2026 at 01:05:50 UTC from IEEE Xplore. Restrictions apply.
+LEE et al.: DIFFERENTIABLE ARTIFICIAL REVERBERATION                                                                                                       2551
+
+
+
+
+                                                                                 significant (all p < 10−5 ). Subjective listening test results also
+                                                                                 agreed with the objective metrics; median scores of the end-to-
+                                                                                 end approaches were from 70 to 80, showing close matches to the
+                                                                                 reference, while the parameter matching models scored less than
+                                                                                 60. Also, refer to Fig. 13 that visualizes each estimation result
+                                                                                 with an EDR and EDR error plots. This shows that the end-to-end
+                                                                                 learning enabled by the DAR models gives a huge performance
+                                                                                 gain relative to the non-end-to-end parameter-matching scheme.
+                                                                                    2) Advantage of the DSP Prior: Since the CNN baselines
+                                                                                 have more trainable parameters and complex architecture, they
+                                                                                 reach lower losses than the DAR-equipped networks. However,
+                                                                                 they produce audible artifacts. While being more restrictive, the
+                                                                                 AR models avoid such artifacts and achieve higher subjective
+                                                                                 listening scores than the CNN baselines. Again, these subjective
+                                                                                 score differences were statistically significant (all p < 10−5 ).
+
+Fig. 12. Magnitude responses of the coloration filters of the AR models. We      B. Reliability of the DAR Models
+used the proposed analysis-synthesis networks to obtain the filter parameters
+for this plot. Each AR model has a different approach to model the frequency-       We demonstrated in previous sections that each DAR model
+dependent characteristic of given reverberation.                                 is close to the original AR model, making them reliable to use
+                                                                                 as an alternative for the training. Here, we empirically validate
+1 subject’s results since he scored the hidden references lower                  this argument again. Fig. 11 summarizes the objective metrics
+than 90 for more than 15% of the entire sets.                                    calculated with the DAR and AR models. We used the trained
+                                                                                 analysis-synthesis network for this evaluation. First, metrics
+                                                                                 calculated between the AR model IR and the DAR model IR
+E. Baselines                                                                     were orders of magnitude smaller than the metrics calculated
+   We compared our framework with following baselines. Refer                     with the ground truth. DN was the only exception, showing more
+to Appendix B for further details.                                               deviation than the other AR models due to the time variance.
+   1) Parameter-Matching Networks: Assuming that the DAR                         Nevertheless, the reverberation parameter differences between
+models are not available, similar to the previous non-end-to-end                 the DN IR and differentiable model IR were less than the
+approach [10], we generated the training data (reference-and-                    just noticeable difference values (for example, ΔT30 < 3%).
+ARPs pair) with the DAR models and trained the same networks                     Second, as expected with (7), each metric difference was smaller
+with a ARP-matching loss (see Fig. 9(a)). Note that we used                      than the corresponding AR-to-DAR conversion error. As a result,
+the DAR models simply for the convenience of on-the-fly data                     overall evaluation results were very similar regardless of the
+generation in GPU, but the same procedure can be performed                       used model. In short, the DAR models are reliable for training
+with the AR models.                                                              in practice.
+   2) CNN Decoder: We trained the same estimation network
+but instead of the DAR model we attached a decoder composed                      C. Performance Difference Between target Tasks
+of one-dimensional transposed convolutional layers and TCNs.
+                                                                                    Without surprise, the analysis-synthesis networks performed
+With this decoder, the entire network resembles an autoencoder
+                                                                                 better in most metrics than the blind estimation networks since
+(see Fig. 9(b)). From now, we denote this model as CNN. We
+                                                                                 the reference reverberation is directly given, i.e., the former
+trained two CNNs, one for each of the two tasks.
+                                                                                 ones have fewer burdens than the latter. Likewise, the both-
+   Note that we did not compare the our methods with possible
+                                                                                 performing networks (shown as dots in Fig. 10) show slightly
+two-stage solutions [32]–[39] (see Section II-B3) since each
+                                                                                 degraded results than their single-task counterparts. Yet, the
+DAR model’s architecture became different from its original.
+                                                                                 reverberation parameter difference only slightly increased (less
+                                                                                 than the just noticeable differences), which hint at a possibility
+                     VII. EVALUATION RESULTS                                     of a universal reference-form-agnostic ARP estimation network.
+A. Comparison With the Baseline Models
+                                                                                 D. AR Model Efficiency and Estimation Performance
+   1) Advantage of the End-to-End Learning: Fig. 10 compares
+the proposed end-to-end approach with the baselines on objec-                       Each AR model approximates reference reverberation dif-
+tive metrics and subjective scores. By a large margin, the end-                  ferently, and consequently, its computational efficiency and its
+to-end model outperformed the non-end-to-end ARP-matching                        estimation networks’ performance varies.
+baselines. The baselines struggled to match the reverberation                       1) Filtered Velvet Noise: FVN filters each source segment
+decay, reporting noticeably large reverberation time differences                 independently (see Fig. 12). Such flexibility enables its param-
+ΔT30 ≥ 20%. A two-sided t-test for each AR/DAR model and                         eter estimators to perform better than the other AR models’
+task showed that the performance difference was statistically                    counterparts experimented in this paper. However, at the same
+
+         Authorized licensed use limited to: Stanford University. Downloaded on September 07,2026 at 01:05:50 UTC from IEEE Xplore. Restrictions apply.
+2552                                                              IEEE/ACM TRANSACTIONS ON AUDIO, SPEECH, AND LANGUAGE PROCESSING, VOL. 30, 2022
+
+
+
+
+Fig. 13. EDR plots of the reference RIRs and their estimations with the trained networks. For each reference, a total of twelve networks’ estimations and their
+errors are visualized where each network is trained for one of the three AR models (FVN, AFVN, and DN), one of the two tasks (analysis-synthesis and blind
+estimation), and one of the two training approaches (end-to-end learning with the proposed DAR models and the baseline non-end-to-end parameter-matching
+learning). The number provided above each plot is the EDR distance of the estimation.
+
+
+time, it also has the largest number of ARPs (930), which                        the AFVN networks could be more challenging to optimize
+makes it cumbersome to control manually. Also, it could be                       than the FVN’s since each segment’s coloration depends on
+computationally expensive to use multiple FVN instances in                       the previous ones’. Indeed, we empirically observed that their
+real-time (2546 FLOPs for each).                                                 training losses decreased slower than the FVN’s.
+   2) Advanced Filtered Velvet Noise: Instead, AVFN optimizes                       3) Delay Network: In DN, we simplified the filter structure
+each coloration filter by decomposing it into the initial coloration             even further by using a single absorption filter for each feedback
+and delta-coloration filters, making the model more controllable                 loop. Similar to the AVFN case, DN trade-offs its estimators’
+and efficient (360 ARPs and 1511 FLOPs) than the FVN. Such                       performance with its controllability and efficiency (200 ARPs
+simplification costs estimation performance since the underlying                 and 1285 FLOPs). Again, the estimation performance degra-
+assumption of the optimization that coloration of real-world                     dation comes from the DN’s restricted expressibility (forced
+RIRs changes gradually does not necessarily hold. In addition,                   exponential decay) and training difficulty.
+        Authorized licensed use limited to: Stanford University. Downloaded on September 07,2026 at 01:05:50 UTC from IEEE Xplore. Restrictions apply.
+LEE et al.: DIFFERENTIABLE ARTIFICIAL REVERBERATION                                                                                                      2553
+
+
+
+                         VIII. CONCLUSION                                                                     TABLE I
+                                                                                            ABLATION ON THE AR/DAR MODEL CONFIGURATIONS
+   We proposed differentiable artificial reverberation (DAR)
+models that can be integrated with deep neural networks
+(DNNs). Among numerous pre-existing artificial reverbera-
+tion (AR) models, we selectively implemented Filtered Velvet
+Noise (FVN), Advanced Filtered Velvet Noise (AFVN), and
+Delay Network (DN) differentiably. Nonetheless, the proposed
+method, which replaces the infinite impulse response (IIR)
+components with finite impulse response (FIR) approximations
+via frequency-sampling, is applicable to any other AR model.
+Then, using the DAR models, we trained the proposed artificial
+reverberation parameter (ARP) estimation networks end-to-end.
+The evaluation results showed that our networks captured the
+target reverberation accurately in both analysis-synthesis and
+blind estimation tasks. We showed, in particular, that the end-to-
+end training significantly improves the estimation performance
+at the tolerable cost of the approximation errors caused by
+the frequency-sampling. Additionally, we demonstrated that the
+structural priors of the AR models avoid perceptual artifacts                                               TABLE II
+that a DNN as a room impulse response (RIR) generator might                           DIFFERENTIABLE FVN WITH VARIOUS COLORATION FILTERS AND
+produce. Thus, our framework successfully combined powerful                                        PARAMETERIZATION APPROACHES
+and fully general deep learning techniques with well-established
+domain knowledge of reverberation.
+   Here, we outline the remaining challenges and future work.
+First, we used the shoe-box simulation to obtain a large amount
+of training data, which is slightly different from the real-world
+RIRs. Interestingly, energy decay relief (EDR) errors of the
+end-to-end models showed similar patterns regardless of the
+equipped AR/DAR model (see Fig. 13). This suggests that
+the data characteristics discrepancy might be the cause of the
+performance degradation. Therefore, collecting more real-world
+RIRs and using powerful augmentation methods could replace                      task since their performance differences remained the same
+the simulation-based data and improve the performance. Second,                  regardless of the task in our initial experiments.
+we only used the RIRs and the reverberant speech signals as                        Table I summarizes the results. FVN, AFVN, and DN denote
+references. However, other possible applications with different                 the proposed models. Ti = 10, Δli = L/S, −h0 [n], and M = 1
+reference types exist (for example, automatic mixing of musical                 denote the proposed FVN model without non-uniform pulse
+signals). Finally, we investigated how each AR model can be                     distance and allpass filters, non-uniform segmentation, a deter-
+compared in terms of its expressive power and difficulty of                     ministic FIR, and finer segment gains. Their results show that
+parameter optimization under the deep learning environment.                     the proposed modifications contribute to better performance. We
+The evaluation results revealed a trade-off relationship; when a                omitted the same ablations for the AFVN. Instead, we discarded
+more compact AR model is used, the estimation performance                       the initial filter C1 , delta filter ΔCj , or both. We also evaluated
+was upper-bounded by its limited expressive power. Also, the                    the DN without the initial filter C1 or delta filter CΔ . The results
+proposed modifications to the original AR models improved esti-                 reveal the importance of modelling the frequency-dependent
+mation performance and training speed. All of these indicate that               nature of reverberation.
+other than the presented AR models and estimation networks,                        For DN, −Qn , −U, and −U, Qn denote DN without the
+there may be more “deep-learning-friendly” models and “AR-                      time-varying mixing matrix Qn , the allpass filters U, and both,
+model-friendly” DNNs that yield better performance-efficiency                   respectively. While −U, Qn reports best evaluation metrics, its
+trade-offs, and seeking those is left as future work.                           low echo density produced unrealistic sound. Using both U and
+                                                                                Qn improved plausibility of reverberation with an acceptable
+                                                                                performance degradation. Refer to the provided audio samples.
+                             APPENDIX A
+                                                                                B. Comparisons on Different Coloration Filters
+  ABLATIONS AND COMPARISONS OF THE AR/DAR MODELS
+                                                                                  We compared different IIR/FIR filters and parameterization
+A. AR/DAR Model Ablations
+                                                                                approaches. We evaluated them with the analysis-synthesis task
+   We conducted ablation studies to verify that the modifications               using FVN. Table II summarizes the results. SSVF, PSVF, PEQ,
+to the original AR models improve the estimation performance.                   SBIQ, PBIQ, FIR, and LFIR denote serial SVF, parallel SVF,
+We evaluated the modified models with the analysis-synthesis                    PEQ, serial biquad, parallel biquad, FIR, and linear-phase FIR
+        Authorized licensed use limited to: Stanford University. Downloaded on September 07,2026 at 01:05:50 UTC from IEEE Xplore. Restrictions apply.
+2554                                                               IEEE/ACM TRANSACTIONS ON AUDIO, SPEECH, AND LANGUAGE PROCESSING, VOL. 30, 2022
+
+
+
+                            TABLE III                                           Here, the index i denotes a different ARP tensor, e.g., P0 = g
+ EFFECTS OF FREQUENCY-SAMPLING RESOLUTION AND REGULARIZATION ON
+                  THE MATCH LOSS LMATCH (×10−1 )
+                                                                                and P1 = h0 . fi (·) and αi are an elementwise function and a
+                                                                                constant, respectively. We set αi = 10 for the all DAR models’
+                                                                                bypass FIRs and the DN’s absorption filter parameters. We used
+                                                                                fi (x) = log10 (x) for the FVN and AFVN segment gains. We
+                                                                                chose fi (x) = x and αi = 1 otherwise.
+                                                                                   2) Network Architecture: We trained an almost identical net-
+                                                                                work to the proposed network for each model/task. The only
+                                                                                difference is that we added an activation 10−ζ(x)/20 to the g
+                                                                                decoders of FVN and AFVN to improve their performance.
+                                                                                   3) Data Generation: We tuned each DAR model’s ARP ran-
+                                                                                domization scheme to match the synthesized IRs’ reverberation
+from [29]. The order of every filter was set to 40. The activation
+                                                                                parameter statistics to the validation set. For the FVN baselines,
+functions and bias initialization for each filter’s decoder are as
+                                                                                we first sampled a reverberation time T30 ∼ Ulog [50 ms, 8 s)
+follows. PSVF has the same setting as SSVF. For SBIQ and
+                                                                                then generated the segment gains g that match the T30 . Here,
+PBIQ decoders, we used activations from [20], and their biases
+                                                                                Ulog [·, ·) denotes a uniform distribution in log scale. In this pro-
+are initialized to match that of SSVF and PSVF. For PEQ, unlike
+                                                                                cedure, we also compensated
+                                                                                                          √      the average pulse distance by di-
+DN, we used 10x for the activation of the gain G. FIR/LFIR have
+                                                                                viding each gain gi by Ti . For the initial coloration filter C1 , we
+no activation and custom bias initialization.
+                                                                                first generated PEQ parameters as ωi ∼ Ulog [40 Hz, 16 kHz),
+   In spite of having identical expressive power, SSVF/PSVF
+                                                                                Ri ∼ Ulog [0.2, 5), and Gi ∼ U [−18 dB, 18 dB) (we sorted the
+performed better than SBIQ/PBIQ by large margins. PEQ per-
+                                                                                cutoff frequencies after the sampling) and derived their SVF
+formed slightly worse than SSVF due to its restricted degree
+                                                                                parameters. After that, we perturbed each parameter’s value
+of freedom. FIR/LFIR also performs worse than SSVF/PSVF
+                                                                                slightly. This ARP generation method was motivated by the
+and PEQ because they cannot change their frequency responses
+                                                                                observation that the differentiable SVFs act like a relaxed PEQ
+radically as other IIR filters could.
+                                                                                (see Fig. 12). We gradually changed the parameters of C1 to
+                                                                                obtain C2 , . . . , CK , modeling the frequency-dependent decay.
+C. Effects of the Frequency-Sampling Resolution                                 Finally, we set h0 [n] as an uniform noise with a gain sampled
+    Table III demonstrates the effects of the frequency-sampling                from U [−24 dB, 0 dB). We followed similar procedures for the
+resolution and the regularization loss LREG . From the table, ×x                AFVN baselines. One difference is that the first delta filter CΔ2 is
+denotes the relative sampling resolution compared to the default                randomized and the delta filters afterwords are slight deviation of
+configuration, e.g., ×0.5 denotes N = 2k for the FVN and N =                    the first one. For the DN baselines, we sampled each absorption
+6k for the DN. For each resolution and regularization setup, we                 PEQ’s gain with Gi ∼ U [−2.8 dB, 0 dB).
+report match loss with the DAR and AR models. Results of the
+differentiable DNs with lower resolutions are omitted since they                B. DNN Decoder Models
+are calculated with shorter IRs.                                                   Regarding the first and second axis of the shared latent z as
+    As expected, higher sampling resolution led to smaller loss                 a time and channel axis, respectively, our decoder upsamples
+difference. Also, introducing the regularization term (β = 1)                   z with seven one-dimensional transposed convolution layers.
+reduced the difference further. As a result, the final differentiable           Configurations of these layers are as follows. Channels: 128,
+FVN model (with full resolution and regularization) showed                      128, 64, 64, 64, 64, then 64. Kernel sizes: 5, 5, 5, 5, 5, 5,
+little loss difference. Moreover, higher resolution led to bet-                 then 3. Strides: 3, 3, 3, 3, 3, 3, then 2. Furthermore, after each
+ter performance, which might be because increased resolution                    upsampling, we inserted a small temporal convolutional network
+helped each network to find better ARPs.                                        with configurations as follows. Channels: 128, 128, 64, 64, 64,
+                                                                                64, and 64. The number of layers: 3, 3, 2, 2, 2, 2, and 2. Kernel
+                              APPENDIX B                                        sizes: all 7. Finally, we added 1 × 1 convolution as the last layer
+                                                                                to mix all channels. We used the ReLU activation between the
+              DETAILS ON THE BASELINE METHODS
+                                                                                layers. This decoder has about 2.5M parameters.
+A. ARP Match Models
+   1) Training: We trained the ARP match baseline models as                                                     APPENDIX C
+follows. First, we randomized ARPs P1 , . . . , Pn and generated                        DETAILS ON THE FREQUENCY-SAMPLING METHOD
+an IR with using the DAR model. Then, each baseline network
+estimated ARPs P̂1 , . . . , P̂n from the given IR. We evaluated                A. Proof of (6)
+the estimation and trained the baseline using an ARP-match loss                    With (5), the time-aliasing error can be written as
+LARP defined as follows,
+                                                                                                                           2
+                                                                                                   
+                                                                                                      N −1  
+                                                                                                             ∞                 ∞
+                                                                                                                                
+                                                                                                                         
+         LARP (Pi , P̂i ) =      αi fi (Pi ) − fi (P̂i ) . (26)                 H − HN 22 =                   h[mN + n] +   |h[n]|2 . (27)
+                                                               1                                                           
+                                i                                                                     n=0 m=1                           n=N
+
+
+       Authorized licensed use limited to: Stanford University. Downloaded on September 07,2026 at 01:05:50 UTC from IEEE Xplore. Restrictions apply.
+LEE et al.: DIFFERENTIABLE ARTIFICIAL REVERBERATION                                                                                                                     2555
+
+
+
+
+With the triangle inequality and X22 ≤ X    2
+                                              1∞, we can upper-
+                                                                                         [5] V. Välimäki, J. Parker, L. Savioja, J. O. Smith, and J. Abel, “More than 50
+                   2          2                                                              years of artificial reverberation,” J. Audio Eng. Soc., Jan. 2016.
+bound H − HN 2 with 2SN where SN = n=N |h[n]| is an
+                                                                                         [6] J. Dattorro, “Effect design, Part 1: Reverberator and other filters,” J. Audio
+absolute sum of the tail of the original IR h[n] (n ≥ N ). Next,                             Eng. Soc., vol. 45, no. 9, pp. 660–684, 1997.
+we expand h[n] with partial fraction expansion [68], [69]. For                           [7] W. G. Gardner, “A real time multichannel room simulator,” J. Acoust. Soc.
+H(z) with M distinct poles where each of them νi ∈ C has                                     Amer., vol. 92, pp. 2395–2395, 1992.
+                                                                                         [8] E. De Sena, H. Hacıhabiboğlu, Z. Cvetković, and J. O. Smith, “Efficient
+multiplicity ri ∈ N, we can express h[n] as a sum of an FIR                                  synthesis of room acoustics via scattering delay networks,” IEEE/ACM
+hFIR [n] and IIRs hIIR
+                   i,k [n] where following holds,
+                                                                                             Trans. Audio, Speech, Lang. Process., vol. 23, no. 9, pp. 1478–1492,
+                                                                                             Sep. 2015.
+                            
+                            M 
+                              ri
+                                          ζi,k
+                                                                                         [9] N. Agus, H. Anderson, J.-M. Chen, S. Lui, and D. Herremans, “Minimally
+ H(z) = H FIR (z) +                                  . (ζi,k ∈ C) (28)                       simple binaural room modeling using a single feedback delay network,”
+                                     (1 − νi z −1 )k                                         J. Audio Eng. Soc., vol. 66, no. 10, pp. 791–807, Oct. 2018.
+                             i=1 k=1                                                   [10] A. Sarroff and R. Michaels, “Blind arbitrary reverb matching,” in Proc.
+                                             IIR (z)
+                                            Hi,k                                             23rd Int. Conf. Digit. Audio Effects, 2020, pp. 24–30.
+                                                                                        [11] J.-M. Jot, “An analysis/synthesis approach to real-time artificial reverber-
+Then, applying the triangle inequality to the summation gives                                ation,” in Proc. IEEE Int. Conf. Acoust., Speech, Signal Process., 1992,
+an upper bound UN , an absolute sum of the IIRs’ tails.                                      vol. 2, pp. 221–224.
+                                                                                        [12] J. Coggin and W. Pirkle, “Automatic design of feedback delay network
+                      
+                      M   ∞
+                        ri                                                                  reverb parameters for impulse response matching,” J. Audio Eng. Soc.,
+                              IIR 
+                 SN ≤        hi,k [n] = UN .                                 (29)          Sep. 2016.
+                                                                                        [13] V. Välimäki, B. Holm-Rasmussen, B. Alary, and H.-M. Lehtonen, “Late
+                           i=1 k=1 n=N                                                       reverberation synthesis using filtered velvet noise,” Appl. Sci., vol. 7, no. 5,
+From above equation, each IIR, first sum, and second sum show                                2017, Art. no. 483.
+                                                                                        [14] N. Peters, J. Choi, and H. Lei, “Matching artificial reverb settings to
+O(nk−1 |νi |n ), O(N k−1 |νi |N ), and O(N ri −1 |νi |N ) asymptotic                         unknown room recordings: A recommendation system for reverb plugins,”
+behavior, respectively [69]. We conclude the proof:                                          J. Audio Eng. Soc., Oct. 2012.
+                                                                                        [15] F. Gao and W. Snelgrove, “An adaptive backpropagation cascade IIR filter,”
+                         √     √      
+                                      M                                                      IEEE Trans. Circuits Syst. II. Analog Digit. Signal Process., vol. 39, no. 9,
+   H − HN 2 ≤           2SN ≤ 2UN =   O(N ri −1 |νi |N ).                                  pp. 606–610, Sep. 1992.
+                                                     i=1
+                                                                                        [16] A. D. Back and A. C. Tsoi, “FIR and IIR synapses, a new neural network
+                                                                               (30)          architecture for time series modeling,” Neural Computation, vol. 3, no. 3,
+                                                                                             pp. 375–385, 1991.
+                                                                                        [17] P. Campolucci, A. Uncini, and F. Piazza, “Fast adaptive IIR-MLP neural
+B. Proof of (8)                                                                              networks for signal processing applications,” in Proc. IEEE Int. Conf.
+                                                                                             Acoust., Speech, Signal Process., 1996, vol. 6, pp. 3529–3532.
+  We denote H(ejω ) and ∂X/∂p with H and X . XN denotes                                 [18] J. D. P. Boris Kuznetsov and F. Esqueda, “Differentiable IIR filters for
+(XN ) = (X )N . We upper-bound the gradient difference ΔG                                    machine learning application,” in Proc. 23rd Int. Conf. Digit. Audio Effects,
+                                                                                             2020, pp. 297–303.
+using integral inequalities as                                                          [19] S. Nercessian, “Neural parametric equalizer matching using differen-
+        2π                          2π                                                     tiable biquads,” in Proc. 23rd Int. Conf. Digit. Audio Effects, 2020,
+                               dω                      dω
+ΔG ≤        |HRef (H − HN )|      +      |HH − HN HN |                                       pp. 265–272.
+         0                      π    0                  π                               [20] S. Nercessian, A. Sarroff, and K. J. Werner, “Lightweight and interpretable
+                                                                                           neural modeling of an audio distortion effect using hyperconditioned
+               ≤2HRef 2 H−HN 2                     ≤2HH −HN HN 2                       differentiable biquads,” in Proc. IEEE Int. Conf. Acoust., Speech Signal
+                                                                   (31)                      Process., 2021, pp. 890–894.
+                                                                                        [21] L. Rabiner, B. Gold, and C. McGonegal, “An approach to the approxima-
+where the under-braced ones are the Cauchy-Schwartz inequal-                                 tion problem for nonrecursive digital filters,” IEEE Trans. Audio Electroa-
+ities. Considering the first integral’s upper bound, HRef 2 is a                           coust., vol. 18, no. 2, pp. 83–106, Jun. 1970.
+finite constant. In H − HN 2 , H is another stable LTI filter                         [22] J. Stautner and M. Puckette, “Designing multichannel reverberators,”
+                                                                                             Comput. Music J., vol. 3, pp. 569–582, 1989.
+if p is well-defined. If νi is a function of p, its multiplicity ri is                  [23] M. Gerzon, “Synthetic reverberation, Part I,” Studio Sound, vol. 13,
+doubled in H . In the   worst case, p controls every pole of H                              pp. 632–635, 1971.
+                                     2ri −1
+and H − HN 2 = M         i=1 O(N          |νi |N ) holds. Similarly,                  [24] S. Bai, J. Z. Kolter, and V. Koltun, “An empirical evaluation of generic
+                                                                                             convolutional and recurrent networks for sequence modeling,” 2018,
+the upper bound of the second integral consists an l2 distance be-
+                                                                                             arXiv:1803.01271.
+tween HH and HN HN . Since HH has 2ri or 3ri multiplicity
+                                                         3ri −1
+                                                                                        [25] C. J. Steinmetz and J. D. Reiss, “Efficient neural networks for real-time
+for each pole νi , HH − HN HN 2 = M            i=1 O(N         |νi |N )                    analog audio effect modeling,” J. Audio Eng. Soc., May 2022.
+                                                                                        [26] C. J. Steinmetz, J. Pons, S. Pascual, and J. Serrá, “Automatic multi-
+holds at the worst case, which concludes the proof.                                          track mixing with a differentiable mixing console of neural audio ef-
+                                                                                             fects,” in Proc. IEEE Int. Conf. Acoust., Speech Signal Process., 2021,
+                                    REFERENCES                                               pp. 71–75.
+                                                                                        [27] S. Billings and S. Fakhouri, “Identification of systems containing linear dy-
+ [1] J. W. Bayless, “Innovations in studio design and construction in the capitol            namic and static nonlinear elements,” Automatica, vol. 18, no. 1, pp. 15–26,
+     tower recording studios,” J. Audio Eng. Soc., vol. 5, no. 2, pp. 71–76,                 1982.
+     Apr. 1957.                                                                         [28] X. Serra and J. Smith, “Spectral modeling synthesis: A sound analy-
+ [2] B. A. Blesser, “An interdisciplinary synthesis of reverberation viewpoints,”            sis/synthesis based on a deterministic plus stochastic decomposition,”
+     J. Audio Eng. Soc., vol. 49, no. 10, pp. 867–903, Oct. 2001.                            Comput. Music J., vol. 14, pp. 12–24, 1990.
+ [3] J. Traer and J. H. McDermott, “Statistics of natural reverberation enable          [29] J. Engel, L. H. Hantrakul, C. Gu, and A. Roberts, “DDSP: Differentiable
+     perceptual separation of sound and space,” Proc. Nat. Acad. Sci. USA,                   digital signal processing,” in Proc. Int. Conf. Learn. Representations, 2020.
+     vol. 113, no. 48, pp. E7856–E7865, 2016.                                           [30] V. Zavalishin, The Art of VA Filter Des.. Berlin, Germany: Native Instru-
+ [4] V. Välimäki, J. D. Parker, L. Savioja, J. O. Smith, and J. S. Abel, “Fifty years        ments, 2020.
+     of artificial reverberation,” IEEE Trans. Audio, Speech, Lang. Process.,           [31] A. Wishnick, “Time-varying filters for musical applications,” in Proc. 17th
+     vol. 20, no. 5, pp. 1421–1448, Jul. 2012.                                               Int. Conf. Digit. Audio Effects, 2014, pp. 69–76.
+
+
+
+
+         Authorized licensed use limited to: Stanford University. Downloaded on September 07,2026 at 01:05:50 UTC from IEEE Xplore. Restrictions apply.
+2556                                                                 IEEE/ACM TRANSACTIONS ON AUDIO, SPEECH, AND LANGUAGE PROCESSING, VOL. 30, 2022
+
+
+
+[32] Acoust. – Meas. of Room Acoustic Parameters – Part 2: Reverberation             [59] D. P. Kingma and J. Ba, “Adam: A method for stochastic optimization,”
+     Time in Ordinary Rooms, International Organization for Standardization,              Int. Conf. Learn. Representations, Dec. 2015.
+     Geneva, CH, Switzerland, Standard ISO 3382-2:2008, Mar. 2008.                   [60] C. Hak, R. Wenmaekers, and L. Luxemburg, “Measuring room impulse re-
+[33] R. Ratnam, D. L. Jones, B. C. Wheeler, W. D. O’Brien, C. R. Lansing,                 sponses: Impact of the decay range on derived room acoustic parameters,”
+     and A. S. Feng, “Blind estimation of reverberation time,” J. Acoust. Soc.            Acta Acustica United Acustica, vol. 98, pp. 907–915, 2012.
+     Amer., vol. 114, no. 5, pp. 2877–2892, 2003.                                    [61] Z. Meng, F. Zhao, and M. He, “The just noticeable difference of noise
+[34] J. Y. C. Wen, E. A. P. Habets, and P. A. Naylor, “Blind estimation of                length and reverberation perception,” in Proc. Int. Symp. Commun. Inf.
+     reverberation time based on the distribution of signal decay rates,” in Proc.        Technol., 2006, pp. 418–421.
+     IEEE Int. Conf. Acoust., Speech Signal Process., 2008, pp. 329–332.             [62] M. G. Blevins, A. Buck, Z. E. Peng, and L. Wang, “Quantifying the
+[35] H. Gamper and I. J. Tashev, “Blind reverberation time estimation using               just noticeable difference of reverberation time with band-limited noise
+     a convolutional neural network,” in Proc. 16th Int. Workshop Acoustic                centered around 1000 Hz using a transformed up-down adaptive method,”
+     Signal Enhancement, 2018, pp. 136–140.                                               in Proc. Int. Symp. Room Acoust., Jun. 2013.
+[36] S. Li, R. Schlieper, and J. Peissig, “A hybrid method for blind estimation      [63] J. Bradley, R. Reich, and S. Norcross, “A just noticeable difference in C50
+     of frequency dependent reverberation time using speech signals,” in Proc.            for speech,” Appl. Acoust., vol. 58, no. 2, pp. 99–108, 1999.
+     IEEE Int. Conf. Acoust., Speech Signal Process., 2019, pp. 211–215.             [64] F. Martellotta, “The just noticeable difference of center time and clar-
+[37] S. Schlecht and E. Habets, “Accurate reverberation time control in feed-             ity index in large reverberant spaces,” J. Acoust. Soc. Amer., vol. 128,
+     back delay networks,” in Proc. 20th Int. Conf. Digit. Audio Effects, 2017,           pp. 654–63, 2010.
+     pp. 337–344.                                                                    [65] E. Larsen, N. Iyer, C. Lansing, and A. Feng, “On the minimum audible
+[38] K. Prawda, V. Välimäki, and S. Schlecht, “Improved reverberation time                difference in direct-to-reverberant energy ratio,” J. Acoust. Soc. Amer.,
+     control for feedback delay networks,” in Proc. 22nd Int. Conf. Digit. Audio          vol. 124, pp. 450–61, 2008.
+     Effects, 2019, pp. 1–7.                                                         [66] Method for the Subjective Assessment of Intermediate Quality Level of
+[39] E. T. Chourdakis and J. D. Reiss, “A machine-learning approach to appli-             Audio Systems, International Telecommunication Union Radio Commu-
+     cation of intelligent artificial reverberation,” J. Audio Eng. Soc., vol. 65,        nication Assembly, Geneva, CH, Switzerland, ITU Standard BS.1534,
+     no. 1/2, pp. 56–65, Jan. 2017.                                                       Mar. 2014.
+[40] A. Richard et al., “Neural synthesis of binaural speech,” in Proc. Int. Conf.   [67] M. Schoeffler et al., “webMUSHRA – A comprehensive framework for
+     Learn. Representations, 2021.                                                        web-based listening tests. journal of open research software,” J. Open Res.
+[41] C. J. Steinmetz, V. K. Ithapu, and P. Calamia, “Filtered noise shaping for           Softw., vol. 6, pp. 8–15, 2018.
+     time domain room impulse response estimation from reverberant speech,”          [68] J. Liski, B. Bank, J. Smith, and V. Välimäki, “Converting series biquad
+     in Proc. IEEE Workshop Appl. Signal Process. Audio Acoust., 2021,                    filters into delayed parallel form: Application to graphic equalizers,” IEEE
+     pp. 221–225.                                                                         Trans. Signal Process., vol. 67, no. 14, pp. 3785–3795, Jul. 2019.
+[42] J. O. Smith, Math. of the Discrete Fourier Transform (DFT). W3K Pub-            [69] J. O. Smith, Introduction to Digital Filters With Audio Applications. W3K
+     lishing, 2007. [Online]. Available: http://www.w3k.org/books/                        Publishing, 2007. [Online]. Available: http://www.w3k.org/books/
+[43] V. Välimäki, H.-M. Lehtonen, and M. Takanen, “A perceptual study on
+     velvet noise and its variants at different pulse densities,” IEEE Trans.
+     Audio, Speech, Lang. Process., vol. 21, no. 7, pp. 1481–1488, Jul. 2013.
+[44] H. Järveläinen and M. Karjalainen, “Reverberation modeling using velvet
+     noise,” J. Audio Eng. Soc., Mar. 2007.
+                                                                                                               Sungho Lee received the B.Sc. degree in creative IT
+[45] M. R. Schroeder and B. F. Logan, “‘Colorless’ artificial reverberation,” J.
+                                                                                                               engineering from the Pohang University of Science
+     Audio Eng. Soc., vol. 9, no. 3, pp. 192–197, Jul. 1961.
+                                                                                                               and Technology, Pohang, South Korea, in 2020. He is
+[46] J.-M. Jot and A. Chaigne, “Digital delay networks for designing artificial
+                                                                                                               currently working toward the Ph.D. degree in digital
+     reverberators,” J. Audio Eng. Soc., Feb. 1991.                                                            contents and information studies with the Music and
+[47] D. Rocchesso and J. O. Smith, “Circulant and elliptic feedback delay
+                                                                                                               Audio Research Group, Seoul National University,
+     networks for artificial reverberation,” IEEE Speech Audio Process., vol. 5,
+                                                                                                               Seoul, South Korea. His research interests include
+     no. 1, pp. 51–63, Jan. 1997.
+                                                                                                               deep learning methods for audio effects and speech
+[48] S. J. Schlecht and E. A. P. Habets, “Time-varying feedback matrices in                                    enhancement.
+     feedback delay networks and their application in artificial reverberation,”
+     J. Acoust. Soc. Amer., vol. 138, no. 3, pp. 1389–1398, 2015.
+[49] S. Schlecht, “FDNTB: The feedback delay network toolbox,” in Proc. 23rd
+     Int. Conf. Digit. Audio Effects, 2020, pp. 211–218.
+[50] J. Chung, C. Gulcehre, K. Cho, and Y. Bengio, “Empirical evaluation of
+     gated recurrent neural networks on sequence modeling,” in Proc. NIPS                                      Hyeong-Seok Choi received the B.Sc. degree in auto-
+     2014 Workshop Deep Learn., Dec. 2014.                                                                     motive engineering from Hanyang University, Seoul,
+[51] J. L. Ba, J. R. Kiros, and G. E. Hinton, “Layer normalization,” 2016,                                     South Korea, in 2016, and the Ph.D. degree in the
+     arXiv:1607.06450.                                                                                         digital contents and information studies from the
+[52] S. Shelley and D. Murphy, “OpenAir: An interactive auralization web                                       Music and Audio Research Group, Seoul National
+     resource and database,” in Proc. 129th Audio Eng. Soc. Conv., 2010, vol. 2,                               University, Seoul, South Korea, in 2022. He is cur-
+     pp. 1270–1278.                                                                                            rently a Researcher with the Institute of New Media
+[53] J. Eaton, N. D. Gaubitch, A. H. Moore, and P. A. Naylor, “Estimation of                                   and Communications, Seoul National University. His
+     room acoustic parameters: The ACE challenge,” IEEE/ACM Trans. Audio,                                      research interests include speech enhancement, gen-
+     Speech, Lang. Process., vol. 24, no. 10, pp. 1681–1693, Oct. 2016.                                        erative models for audio signal, and self-supervised
+[54] P. Svensson and U. R. Kristiansen, “Computational modelling and simu-                                     representation learning.
+     lation of acoutic spaces,” J. Audio Eng. Soc., Jun. 2002.
+[55] R. Scheibler, E. Bezzam, and I. Dokmanic, “PyroomAcoustics: A python
+     package for audio room simulations and array processing algorithms,”
+     IEEE Int. Conf. Acoust., Speech Signal Process., 2018, pp. 351–355,
+     doi: 10.1109/ICASSP.2018.8461310.                                                                         Kyogu Lee (Senior Member, IEEE) received the
+[56] G. Defrance, L. Daudet, and J.-D. Polack, “Finding the onset of a room                                    Ph.D. degree in computer-based music theory and
+     impulse response: Straightforward ?,” J. Acoust. Soc. Amer., vol. 124, no. 4,                             acoustics from Stanford University, Stanford, CA,
+     pp. E L248–EL254, 2008.                                                                                   USA. He is currently a Professor with the Department
+[57] N. J. Bryan, “Impulse response data augmentation and deep neural net-                                     of Intelligence and Information, Seoul National Uni-
+     works for blind room acoustic parameter estimation,” in Proc. IEEE Int.                                   versity, Seoul, South Korea, and leads the Music and
+     Conf. Acoust., Speech Signal Process., 2020, pp. 1–5.                                                     Audio Research Group. His research interests include
+[58] J. Yamagishi et al., “CSTR VCTK corpus: English multi-speaker corpus                                      signal processing and machine learning techniques
+     for CSTR voice cloning toolkit (Version 0.92),” University of Edinburgh,                                  applied to music, audio, and hearing.
+     The Centre for Speech Technology Research (CSTR), 2019.
+
+
+
+        Authorized licensed use limited to: Stanford University. Downloaded on September 07,2026 at 01:05:50 UTC from IEEE Xplore. Restrictions apply.
+
