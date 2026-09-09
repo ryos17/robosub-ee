@@ -1,0 +1,756 @@
+                          This CVPR paper is the Open Access version, provided by the Computer Vision Foundation.
+                                       Except for this watermark, it is identical to the accepted version;
+                                 the final published version of the proceedings is available on IEEE Xplore.
+
+
+
+
+                                         Hearing Anything Anywhere
+
+                           Mason Long Wang1 * Ryosuke Sawata1,2∗ Samuel Clarke1
+                                  Ruohan Gao1,3 Shangzhe Wu1 Jiajun Wu1
+                    1
+                      Stanford University 2 Sony AI 3 University of Maryland, College Park
+                                     masonlwang.com/hearinganythinganywhere
+
+
+
+                          Abstract                                 York City is visually beautiful, one cannot fully appreci-
+                                                                   ate the majesty of its design without experiencing a musical
+   Recent years have seen immense progress in 3D com-              performance in-person and hearing its unique acoustics.
+puter vision and computer graphics, with emerging tools                In this paper, our goal is to capture the acoustic intrinsics
+that can virtualize real-world 3D environments for numer-          of a real-world scene using a sparse set of measurements,
+ous Mixed Reality (XR) applications. However, alongside            in order to render arbitrary source audio at any location,
+immersive visual experiences, immersive auditory experi-           hence the name, “Hearing Anything Anywhere”. This is
+ences are equally vital to our holistic perception of an en-       analogous to the task of sparse-view novel view synthesis
+vironment. In this paper, we aim to reconstruct the spatial        (NVS) in computer vision and graphics [5, 34, 50].
+acoustic characteristics of an arbitrary environment given             However, there are two key differences between light
+only a sparse set of (roughly 12) room impulse response            and sound that make common approaches to visual NVS
+(RIR) recordings and a planar reconstruction of the scene,         inapplicable to audio. First, light is typically emitted from
+a setup that is easily achievable by ordinary users. To this       continuous sources and travels steadily and almost instantly
+end, we introduce D IFF RIR, a differentiable RIR rendering        through space, resulting in a largely stationary visual scene.
+framework with interpretable parametric models of salient          In contrast, sound signals are usually time-varying and
+acoustic features of the scene, including sound source di-         travel through space at a much slower pace, resulting in a
+rectivity and surface reflectivity. This allows us to syn-         constantly changing 4D acoustic field with both numerous
+thesize novel auditory experiences through the space with          early reflections and late reverberations. Second, a single
+any source audio. To evaluate our method, we collect a             camera captures millions of pixels in a split second, each
+dataset of RIR recordings and music in four diverse, real en-      recording a distinct light ray from a particular direction. In
+vironments. We show that our model outperforms state-of-           contrast, a typical microphone only records an amalgama-
+the-art baselines on rendering monaural and binaural RIRs          tion of sound waves arriving to a single location from all di-
+and music at unseen locations, and learns physically inter-        rections, with different times-of-arrival. Therefore, while it
+pretable parameters characterizing acoustic properties of          is possible to capture the appearance of a 3D scene by sim-
+the sound source and surfaces in the scene.                        ply walking through it with a camera, the same approach
+                                                                   falls short to record the entire 4D acoustic field.
+                                                                       Thus, capturing a fully immersive acoustic field often
+1. Introduction                                                    necessitates setting up hundreds of microphones densely
+                                                                   across the space [30, 38, 40, 45], which is impractical for
+Much of the impetus to realize immersive virtual reality
+                                                                   many consumer use cases. In this work, we attempt to cap-
+(VR) stems from the desire to recreate and share real scenes
+                                                                   ture real-world acoustic spaces with a basic hardware setup,
+and experiences. Motivated by this goal, recent progress in
+                                                                   e.g., 12 microphones, which can be easily scaled to arbitrary
+3D computer vision and computer graphics has led to tools
+                                                                   environments.
+that can virtualize real-world 3D environments using sim-
+ple consumer devices (e.g., cellphone cameras) for numer-              To capture the acoustic properties of the scene, we mea-
+ous Mixed Reality (XR) applications. Alongside immer-              sure a room impulse response (RIR) between the sound
+sive visual experiences, immersive auditory experiences are        source and each microphone location. An RIR is a time-
+equally vital to our holistic perception of an environment.        series signal that estimates how a perfect impulse emitted
+For instance, while the interior of Carnegie Hall in New           from the source, traveling and bouncing in the room, would
+                                                                   be perceived at the listener location. RIRs effectively cap-
+  * Equal contribution.                                            ture a room’s intrinsic acoustic properties between source
+
+
+
+                                                                11790
+and listener points, and are thus widely used in acoustic           2. Related Work
+simulation [3]. In order to simulate the sound of an arbi-
+trary source for a particular listener location in a room, the      Learning-Based Room Acoustics Prediction. While
+RIR associated with the source-listener pair is simply con-         many acoustical learning frameworks model room acoustics
+volved with the source audio [28].                                  implicitly, others explicitly interpolate and predict RIRs at
+                                                                    novel points. Frameworks that predict RIRs at novel points
+    We thus formulate our Hearing Anything Anywhere task            in a room vary not only in their underlying techniques, but
+as inferring RIRs and music at novel listener locations             also in their inputs. Some methods do not use vision or
+from a sparse set of RIRs measured between a single                 geometry to make their estimates, but instead learn to di-
+source and a small set of microphone locations spatially dis-       rectly approximate a function mapping spatial coordinates
+tributed within the scene. Towards this goal, we introduce a        to RIRs [38, 40]. These methods can require large train-
+fully differentiable impulse response rendering framework           ing set sizes on the order of 1,000 RIRs from a room to
+D IFF RIR that reasons about the individual contributions of        effectively interpolate RIRs to novel points within the same
+each acoustic reflection path between the source and the re-        room. Alternatively, some methods use geometric features
+ceiver, including the time delay and magnitude of the sound         of the scene [30], such as [45], which learns a diffuse re-
+on each path, as well as the influence of reflections from          flection model from a small subset of points in the mesh
+each surface in the scene.                                          of the environment, to achieve a performance improvement
+   By explicitly modeling the sound source location, the di-        over pure audio-based methods. Our method uses environ-
+rectivity map of the source, and the reflection properties of       ment geometry to explicitly model specular reflections on
+the surfaces in the scene in a fully differentiable audio ren-      each surface. To validate our approach, we compare against
+dering framework, we can characterize the parameters of             three baselines, including one audio-only method [40] and
+each model through an analysis-by-synthesis paradigm by             two methods that use scene geometry [30, 45].
+optimizing the output of D IFF RIR against the known sub-
+                                                                    Audio-Visual (AV) Room Acoustics Prediction. Other
+set of measured RIRs. After optimizing the interpretable
+                                                                    methods learn relationships between visual inputs and room
+parameters of our model, we can estimate the RIR from any
+                                                                    acoustics to perform tasks such as predicting the dereverber-
+unseen location in the scene.
+                                                                    ated signal from an audio recording and a panoramic im-
+   To validate our method, we collect a dataset that con-           age of the recording environment [12], or predicting how
+tains RIR measurements from four real-world environments            an input audio signal would sound in a target space based
+that represent a diverse range of room materials, shape, and        on an image of the space [9]. Many works use visual in-
+complexity. Through experiments comparing our frame-                puts to explicitly perform the novel view acoustic synthe-
+work with current state-of-the-art methods, D IFF RIR shows         sis (NVAS) task. For instance, Chen et al. [11] proposed
+greater robustness in real, data-limited scenarios. Moreover,       the Visually-Guided Acoustic Synthesis (ViGAS) network,
+with the explicit and interpretable models of source and sur-       which outputs the spatial audio of the speech of a human in
+face reflection properties, we can easily synthesize novel          corresponding visual frames. Furthermore, by using audio-
+auditory experiences with different speaker orientations and        visual features as well as geometric ones, Ahn et al. [1]
+locations, which can be useful in applications such as virtual      show that the important sub-tasks of NVAS, e.g., sound
+reality and acoustics-aware interior design. In addition, the       source localization, separation, and dereverberation, can be
+differentiable and interpretable models of our framework al-        jointly solved. AV-NeRF [29] improved the performance of
+low us to estimate acoustic parameters of the sound source          both NVS and NVAS tasks via multi-task training by using
+and surfaces in the room, which can be useful in applica-           an audio-based Neural Radiance Field (NeRF). Their au-
+tions like robotics and architectural design for acoustics.         dio NeRF estimates variations in the magnitudes of audio
+    Our contributions are threefold. First, we contribute           perceived from varying locations, whereas we explicitly es-
+D IFF RIR, a differentiable acoustic inverse rendering frame-       timate the RIR, a much more holistic characterization of the
+work that can recover the fully immersive acoustic field of         environment acoustic properties.
+a room from a set of 12 sparsely located RIR measure-                  Similar to our binaural prediction task, Garg et al. [19]
+ments. Second, we contribute a new dataset of real-world            predict binaural audio from an AV scene’s monaural au-
+RIRs measured from hundreds of locations in four different          dio and visual features extracted from the scene’s video
+real environments. Third, we compare our method to ex-              frames. Although AV approaches can sometimes outper-
+isting methods across various settings, demonstrating that          form uni-modal audio-only models at estimating environ-
+our method is more effective than existing methods on real          ment acoustics, collecting large enough datasets of synchro-
+data in our data-limited scenarios, predicting more accu-           nized audio-visual pairs for these models can be laborious.
+rate RIRs and music at unseen locations. Code and data              Perhaps for this reason, many such models, even one boast-
+are available at the project website.                               ing few-shot generalization [31], present results from eval-
+
+
+
+                                                                 11791
+uating exclusively on simulated data.                                audio source whose orientation and position are unknown.
+Geometry-Based RIR Simulation. Many of the afore-                    With this information, our goals are to simulate monoaural
+mentioned works use datasets of simulated RIRs generated             and binaural RIRs and music at arbitrary listener locations
+by the SoundSpaces framework [10], a fast acoustic sim-              and orientations in the room.
+ulator based on geometric acoustic methods. They sim-                3.2. The D IFF RIR Framework
+ulate the acoustics of virtualized versions of real rooms
+from datasets of meshes reconstructed from RGBD scans                To achieve this task, we design a differentiable RIR render-
+of real rooms in home and workplace environments, such               ing framework, dubbed D IFF RIR. As an overview of the
+as the Matterport3D dataset [8] or the Replica dataset [44].         D IFF RIR framework, we use the sound source and micro-
+The Geometric-Wave Acoustic (GWA) dataset uses a hybrid              phone location, along with the planar decomposition of the
+propagation algorithm combining wave-based methods [22]              environment, to trace all specular reflection paths between
+with geometric acoustic methods, intending to model low-             the source and a listener location, up to a certain number of
+frequency wave effects more accurately, albeit at the cost           reflections. We estimate the sound arriving to the listener
+of longer run-time. The input meshes are from a dataset              from each path using a series of parametric models for the
+of professionally designed virtual home layouts [18]. The            sound source directivity and impulse response, as well as
+Mesh2IR framework uses the GWA dataset to learn a con-               the acoustic reflection of each surface. Each model is fully
+ditional generative adversarial network (cGAN) to more               differentiable, with interpretable parameters. We compute
+quickly predict RIRs from meshes of rooms [39]. The au-              each RIR as the sum of contributions of the sound arriv-
+thors do not show how their cGAN’s estimates of RIRs                 ing from each path, combined with a learned residual. We
+compare to measured RIRs from real rooms.                            use these models in a differentiable audio renderer to opti-
+                                                                     mize parameters according to a loss function comparing our
+Differentiable Acoustics. The previously mentioned                   estimates to the known subset of ground-truth RIRs. We de-
+simulators are not differentiable, which precludes gradient-         scribe each model in detail below.
+based optimization techniques which can be used in solv-
+ing inverse problems. Differentiable audio rendering tech-
+                                                                     3.2.1   Characterizing the Sound Source
+niques have been used to solve such inverse problems esti-
+mating acoustic properties of musical instruments [17] and           Source Localization. We first estimate the location of the
+everyday objects [14], as well as the reverberation proper-          sound source for all subsequent steps. Based on the known
+ties of the environments they are in. The authors of [13]            subset of RIRs we use their locations and the timing of the
+implemented a differentiable acoustic ray tracer for inverse         first peak to localize the source using a traditional time-of-
+tasks in underwater acoustics, such as estimating the ab-            arrival method. More details are provided in Appendix E.
+sorption of the seabed on simulated 2D data. We use similar          Source Directivity. Most real sound sources do not radi-
+principles for estimating absorption parameters of surfaces          ate sound uniformly in all directions. For instance, a loud-
+in 3D environments from our real, airborne sound data.               speaker will usually be much louder from the front, and
+                                                                     human speakers also have distinct directivity patterns [37].
+3. Method                                                            The source’s directivity describes the way in which the
+We first lay out the definition of our task, and then introduce      source radiates sound differently in different directions and
+our proposed D IFF RIR framework to approach it.                     is generally frequency dependent. For example, a loud-
+                                                                     speaker will overall sound much louder from the front,
+3.1. Task Formulation                                                with the higher-frequency components radiating in espe-
+                                                                     cially narrow beams and lower-frequency components more
+To achieve our goal of virtualizing real acoustic spaces, our
+                                                                     omnidirectionally. The sound source’s directivity has a sig-
+method should require information about the room that is as
+                                                                     nificant impact on the acoustic field of the room and is there-
+easy as possible to obtain. With this objective in mind, we
+                                                                     fore important to model.
+show that our method produces accurate results, while only
+                                                                         We model the filtering effect of exiting the sound source
+requiring the following:
+                                                                     in any particular direction with the directivity response. Let
+1. A small set of omnidirectional RIR recordings captured
+                                                                     d⃗p be the absolute direction (given as a unit vector) in which
+    at sparse locations (e.g., 12), with the xyz coordinates at
+    which they were captured.                                        the sound path exits the speaker. Our goal is to fit D(d⃗p ),
+2. The room’s rough geometry, expressed as a small num-              a function mapping d⃗p to a magnitude frequency response
+    ber of planes.                                                   that accounts for the effect of exiting the speaker in the di-
+    RIRs can be easily captured by playing a sine sweep              rection of d⃗p . When a sound exits the speaker in the di-
+from the source location and recording it from a microphone          rection of d⃗p , the frequency content of the sound wave is
+at the listener location. In our setup, we assume a stationary       multiplied by D(d⃗p ).
+
+
+
+                                                                  11792
+                                                   Differentiable Path Tracing                                                                                           Source              Reflection                                                        Path Response
+                                                                                                                                                                        Response             Responses
+
+
+                                                                                                                                                                                      ×                  ×                                    =
+                                                                                                                                                                          𝑫𝑫(𝒅𝒅𝒑𝒑 )        𝑹𝑹𝟏𝟏                         𝑹𝑹𝟐𝟐
+
+
+
+                                                                                                                                                                             Source                                                                  Contribution to RIR
+                                                                                                                                                                         Directivity Map
+                                                                                                                                                                                                  Min. Phase
+                                                                                                                                                                                                  Transform
+
+                                                                                                                                                                                                                                   *
+                                                                                                                                                                                                     Source
+                                                                                                                                                                                                       IR
+
+
+
+Figure 1. Differentiable Room Impulse Response Rendering Framework (D IFF RIR). Our model renders the contribution to the RIR
+of a single traced reflection path. After computing a reflection path, we characterize it by the direction at which it exits the speaker, its
+length, and the surfaces on which it reflects. The sound source has a learned frequency response that depends on the outgoing direction,
+and each surface has a different learned frequency response. We multiply each of these responses to estimate the overall path response. To
+determine the reflection path’s time-domain contribution to the final RIR, we apply a minimum-phase inverse-Fourier transform to the path
+response, convolve it with the source impulse response, and then shift the result in time based on the path length and the speed of sound.
+
+
+   To model the direction-dependent frequency response,                                                                                                                    approximating the source’s response as a linear system [6]
+we fit F different heatmaps on unit spheres centered on the                                                                                                                and convolving it with our RIR.
+speaker, one heatmap for each of F octave-spaced center
+frequencies comprising vector f . To do this, we distribute
+                                                                                                                                                                           3.2.2      Modeling and Characterizing Reflections
+128 points evenly along the surface of the unit sphere, us-
+ing a Fibonacci lattice [23]. We denote this set of points                                                                                                                 We trace each specular reflection path and model the acous-
+L. Let A⃗x,fo be the log-amplitude gain for sound travel-                                                                                                                  tic effects of each reflection along the path, with unique re-
+ing out of the speaker in the direction of ⃗x at frequency fo .                                                                                                            flection parameters for each surface in the environment.
+To determine the log-amplitude gain at fo in direction d⃗p ,
+                                                                                                                                                                           Reflectivity. When a sound wave encounters a surface, a
+we interpolate between the points on the heatmap using a
+                                                                                                                                                                           fraction of the sound wave’s energy will be specularly re-
+spherical Gaussian weighting function, inspired by [49]:
+                                                                                                                                                                           flected, while the remaining energy will be absorbed, trans-
+                                                                                                                                                                           mitted, diffusely reflected, or diffracted. These effects vary
+               A_{\vec {d_p},f_o} = \frac {\sum _{x \in L} A_{x,f_o} e^{-\lambda (1-\vec {d_p}\cdot x)}}{ \sum _{x \in L} e^{-\lambda (1-\vec {d_p}\cdot x)}},    (1)      by frequency, depending on the texture and material prop-
+                                                                                                                                                                           erties of each surface.
+where λ is a fixed sharpness value shared across all                                                                                                                           For each surface s, we fit a vector Vs of F different
+heatmaps. In order to obtain the full frequency response                                                                                                                   values representing the magnitude of sound specularly re-
+for the direction d, we linearly interpolate between the log-                                                                                                              flected by the surface at each of F octave-spaced centered
+amplitude gains as in [24], and then exponentiate them to                                                                                                                  frequencies in vector f . We apply the sigmoid function to
+convert them to linear amplitude values:                                                                                                                                   these values to determine the energy reflection coefficients
+                                                                                                                                                                           (the proportion of specularly reflected sound energy) at each
+                                      D(\vec {d_p}, f_o) = \rm e^{ \ell (\mathbf {A_d}, \mathbf {f}, f_o)},                                                       (2)      frequency. Next, we determine the amplitude reflection co-
+                                                                                                                                                                           efficients (the amount that the surface attenuates the incom-
+where ℓ represents linear interpolation on the vector of deci-                                                                                                             ing sound at each frequency in terms of linear amplitude
+bel values Ad indexed by center frequencies f , based on                                                                                                                   gain) by taking the square root of the energy reflection co-
+query frequency fo .                                                                                                                                                       efficients [26]. Using the amplitude reflection coefficients
+Source Impulse Response. Since the room impulse re-                                                                                                                        at the F center frequencies, we obtain the amplitude gains
+sponse relates the source signal fed to the speaker to the                                                                                                                 for arbitrary frequencies through linear interpolation. This
+sound heard in the room, we must also account for the way                                                                                                                  gives us the reflection response Rs , a magnitude frequency
+that the source modifies the source signal being fed to it. For                                                                                                            response representing the surface’s effect on incoming au-
+instance, if the source is a loudspeaker, it may attenuate or                                                                                                              dio of different frequencies. Thus, the formula for Rs is:
+boost certain frequencies. We model these effects by learn-
+ing a source impulse response IRs in the time domain, thus                                                                                                                                          R_s(f_r) = \ell \left ( \sqrt {\sigma {(\mathbf {V_s})}}, \mathbf {f}, f_r \right ).    (3)
+
+
+
+                                                                                                                                                                        11793
+Here, σ denotes the sigmoid function, and ℓ is a linear in-            which we characterize by air absorption coefficient α [43].
+terpolation from the coefficients Vs based on the relation of             Thus, the function K that computes the time-domain
+the query frequency fr to the center frequencies f .                   contribution of each individual path is:
+Reflection Paths. Given the estimated source location
+Sxyz , a listener location Lxyz , and a planar representation of            \label {eqn:onepath} K(d_p, S_p, t_p) = \frac {\alpha ^{t_p}}{\cameraready {\rho }} \tau \left [\mathcal {M} \left (D(d_p) \odot \prod _{s \in S_p} R_s \right ) , t_p\right ], 
+the room’s geometry, we use the image-source method [2]
+to efficiently compute all of the specular reflection paths be-                                                                 (4)
+tween the source and listener in the room, up to a particular          where ⊙ is the element-wise product, ρ is the length of
+order N (e.g., 5). The method considers all permutations               the reflection path in meters, and τt is the time-shift op-
+from 1 to N of these surfaces with repetition and, for each            erator, which delays its input signal by tp seconds. M is a
+permutation, determines if there is a valid reflection path            minimum-phase inverse Fourier transform, which computes
+that travels from the source to the listener after reflecting          a time-domain filter from a magnitude frequency response,
+specularly off of each of the surfaces in order. For each              assuming minimum phase. The minimum phase assump-
+valid reflection path p from source to listener, we track the          tion can be used to approximate the phase of an acoustic re-
+length of the reflection path lp , the ordered list Sp of reflec-      flection given a desired magnitude frequency response [32].
+tion surfaces along the path, and the direction from which             More details are in Appendix E.
+the path exits the source d⃗p .
+                                                                       Modeling Residual Effects. For the purposes of gradient-
+    Rooms often contain parallel surfaces, which lead to
+                                                                       based optimization, we require a model that is fast, sim-
+prominent higher-order reflections. These reflections re-
+                                                                       ple, and differentiable. Consequently, we do not explicitly
+sult in “axial modes,” which are powerful room resonances
+                                                                       model many physical phenomena, including diffuse reflec-
+with especially long reverberation times [41]. Thus, in ad-
+                                                                       tion, diffraction, transmission, refraction, and higher-order
+dition to computing all N th -order reflection paths for all
+                                                                       specular reflections. Modeling all of these effects would in-
+possible orderings of surfaces, our image-source algorithm
+                                                                       crease our model’s computational footprint, impeding the
+also computes all valid reflection paths for pairs of parallel
+                                                                       iterative process of fitting to a real scene. Instead, we ap-
+walls, up to a much higher order, e.g., 50. This modifica-
+                                                                       proximate these effects as spatially uniform, with some the-
+tion, which we call axial boosting, improves the model’s
+                                                                       oretical justifications. As the reflection order increases, the
+performance (see Appendix D.4) in adversarial cases like
+                                                                       number of reflection paths grows exponentially, making in-
+the Hallway, with a computational overhead that scales lin-
+                                                                       dividual reflections less distinguishable. This comprises a
+early rather than exponentially with reflection order. We
+                                                                       sound field that, in real rooms, is approximately uniform
+discuss additional surface interactions, such as diffuse re-
+                                                                       and isotropic [25, 35, 36]. Diffuse reflections in particu-
+flection, in Section 3.2.3.
+                                                                       lar can contribute to the uniformity of the sound field [46].
+                                                                       We approximate the total effect of high-order specular re-
+3.2.3   Combining Models                                               flections, diffuse reflections and other effects as uniform,
+We combine these reflection and sound source models to                 modeling them with a spatially-invariant residual signal r.
+estimate the contribution of each reflection path. We then             Overall Formula. Given respective source and listener
+sum the contributions across all paths and add a residual to           locations Sxyz and Lxyz , we render the early-stage RIR by
+estimate the RIR for a given source and listener location.             summing the contributions from all reflection paths, then
+Contribution of a Single Reflection Path. In summary,                  convolve the result with the source’s impulse response IRs .
+for each individual reflection path p, the outgoing direction
+d⃗p from the source, the ordered list Sp of reflected surfaces,
+and the total path length lp each have distinct effects on               \label {eq:full_rir} \mbox {RIR}(S_{xyz}, L_{xyz}) = \gamma \left [IR_s \circledast \sum _{p \in P} K(d_p, S_p, t_p)\right ] + (1-\gamma )r 
+rendering the path’s contribution. D(d⃗p ) characterizes the
+frequency response of the source from the path’s outgoing                                                                         (5)
+direction. The reflection of each surface s ∈ Sp attenu-                  In this formula, ⊛ denotes convolution, and P is the set
+ates the amplitude of the sound in a frequency-dependent               of all paths between the source and listener locations. As
+fashion parameterized by Rs . The total reflection-based at-           r is intended to capture higher-order reflections, its effects
+tenuation is the product of the frequency response across all          are likely to become more dominant later in the impulse
+s ∈ Sp . Finally, we use the path length lp to compute the             response, whereas the traced paths are intended to char-
+time of arrival tp by dividing the path length lp by the speed         acterize the early-stage reflections. For this reason, we fit
+of sound. We also use lp to estimate the attenuation of the            16 points on a temporal spline γ that interpolates a relative
+amplitude due to spherical propagation, where the ampli-               weighting between the contributions of the late-stage resid-
+tude is inversely proportional to lp , as well as air absorption,      ual and those of explicitly computed reflection paths.
+
+
+
+                                                                    11794
+         (a) Classroom                 (b) Dampened Room                      (c) Hallway                    (d) Complex Room
+                  Figure 2. Photos of each room used for the D IFF RIR Dataset, each shown in its base configuration.
+
+
+3.2.4   Fitting and Inference                                            tables combined into three groups, a chalkboard, two
+                                                                         whiteboards, drywall walls, a carpeted floor, office tile
+We estimate the parameters of each acoustic model in the                 ceiling, and three doors. There is ventilation noise.
+environment in an iterative analysis-by-synthesis process.            2. Dampened Room. A semi-anechoic chamber with a
+Inspired by [14] and [17], we optimize according to a multi-             carpeted floor, all four walls covered with jagged acous-
+scale log-spectral loss comparing rendered RIR Ŵ with the               tic foam wedges, and specialty acoustic tile ceiling.
+ground-truth RIR W measured at the same location. The                 3. Hallway. A narrow, highly reverberant hallway, with
+specific loss formulation is in Eq. 6 in Appendix E.                     two wooden doors, a tile floor, and drywall ceiling and
+   For inference, we simply compute Equation 5 for a point               walls.
+at a novel location, computing all the specular paths below           4. Complex Room. A room with an irregular shape that
+the maximum order between the source and the novel loca-                 resembles a pentagonal prism. Portions of the side wall
+tion, etc., and using the parameters we determined from the              and ceiling are covered with acoustic panels. There are
+analysis-by-synthesis process.                                           three pillars in the middle of the room, one slanted diag-
+Binauralization. We train our model on single-channel                    onally. A portion of the rear wall is glass which is inter-
+RIRs recorded using omnidirectional microphones. How-                    nally covered with paper posters. There are 7 tables, one
+ever, immersive spatial audio requires binauralization - the             of which is in a figure-eight shape. There are exposed
+process of converting single-channel audio into left and                 air ducts, six hanging lights, water pipes, monitors, and
+right channels, in a way that mimics human perception. The               chairs, as well as various large objects, such as a shelf.
+shape of the head, the acoustic shadow it casts, and the dif-            There is significant ventilation noise.
+ferences in time-of-arrival between the left and right ears
+                                                                         To collect audio recordings, we place a QSC K8.2 Loud-
+all result in distinct perceptual cues that help place the lis-
+                                                                      speaker in a particular location and orientation in the room
+tener in the scene [20, 48]. These effects are typically mod-
+                                                                      and play sine sweeps to measure real RIRs in several hun-
+eled by head-related impulse responses (HRIRs). There is a
+                                                                      dred precisely-measured listener locations using a custom-
+different HRIR for each incoming audio direction. To ren-
+                                                                      built microphone array. In addition, we play and record
+der binaural audio, the incoming audio from each reflection
+                                                                      several 10-second music clips selected from the Free Mu-
+path is convolved with an HRIR sampled from the SADIE
+                                                                      sic Archive dataset [16] from the same listener and speaker
+II dataset [4] corresponding to its incoming direction. This
+                                                                      locations. The music and RIRs are recorded using multiple
+allows our model to approximate perceptually accurate bin-
+                                                                      time-synchronized Dayton Audio EMM6 omnidirectional
+aural audio, which captures the effects of the human head,
+                                                                      microphones, as well as a 3Dio FS XLR microphone, which
+with merely monaural supervision.
+                                                                      features ear-shaped silicone microphones to model human
+                                                                      hearing and captures binaural audio.
+4. The D IFF RIR Dataset
+                                                                      Additional Configurations. We also collect additional
+To evaluate methods of rendering and interpolating RIRs,              subdatasets in some rooms where we slightly modify each
+we collect a novel dataset of real monoaural and binaural             room configuration. In each such subdataset, we vary the
+RIRs and music data in four different rooms, as illustrated           location and/or orientation of the speaker, or the presence
+in Figure 2. Table 1 further summarizes the dimensions and            and location of standalone whiteboard panels in the room.
+reverberation time measurements of each room. In partic-              We use these additional configurations to evaluate zero-shot
+ular, we choose the following rooms to represent a wide               virtual speaker rotation and translation, and panel insertion
+range of room layouts, sizes, geometric complexities, and             and relocation. We include these evaluations and details on
+reverberation effects:                                                these configurations in Appendix C. While previous RIR
+1. Classroom. A standard classroom with 13 rectangular                datasets include varying room configurations [21, 33, 47]
+
+
+
+                                                                  11795
+   Room               Size (m)        RT60 (s)    # of Points                 2. Envelope Distance (ENV). The L1 distance between
+                                                                                 the log-energy envelopes of the ground-truth and ren-
+   Classroom     7.1 × 7.9 × 2.7        0.69         630
+   Dampened      4.9 × 5.2 × 2.7        0.14         768                         dered waveforms. Energy decay envelopes are used to
+   Hallway       1.5 × 18.1 × 2.8       1.41         936                         extract the decay curve of the RIR, which characterizes
+   Complex       8.4 × 13.0 × 6.1       0.78         672                         the room’s reverberant qualities [15]. We compute the
+                                                                                 signal’s energy envelope by taking the envelope of the
+Table 1. Characteristics of each room and corresponding sub-                     squared signal [7]. Satoh et al. [42] directly use this
+dataset. The last column is the number of distinct microphone-                   log-energy (squared) envelope of an RIR to measure the
+speaker location pairs for which both RIRs and music are                         room’s RT60 reverberation time, which is a common
+recorded, across all configurations. RT60 reverberation times are                way of characterizing the room’s acoustics [27].
+each room’s average across frequencies and sub-configurations.
+For the Complex room, the size of its bounding box is reported.               Analysis. Our results for the base monaural prediction
+                                                                              task are shown in Table 2. For the monaural prediction
+the D IFF RIR Dataset is the first to our knowledge that also                 task, our model significantly outperforms all baselines on
+includes monoaural and binaural music recordings.                             our metrics, across all rooms. Results for the binaural pre-
+                                                                              diction task are shown in Appendix D.1.
+5. Experiments
+                                                                              5.2. Interpretability
+For each room in our collected dataset, we evaluate our per-
+formance on the tasks of rendering both omnidirectional                       We show the physically interpretable parameters our model
+RIRs and music at unseen listener locations. In each room           63
+                                                                              learns for the source’s directivity and reflection coefficients.
+                                                                                       2000
+
+
+
+                                                                                                 Normal                  Normal
+                                                                                                 trace 2                 trace 2
+
+
+
+
+configuration, we select 12 omnidirectional RIRs to train                                        50
+                                                                                                                          3.5
+
+
+
+
+our model. We then use our model to render RIRs at unseen                                        40
+
+                                                                                                                       1.0
+                                                                                                                         3
+                                                                                                                                        Reflection Amplitudes
+locations in the test set, and compare our rendered RIRs to
+                                                                                                                         2.5
+
+
+                                                                                                                                                      Classroom Wall
+                                                                                                 30
+
+
+
+                                                                                                                       0.8
+                                                                                                                         2
+                                                                                                                                                      Classroom Floor
+the ground-truth RIRs using metrics we detail in Section                                                                                              Dampened Wall
+
+
+                                                                                                           Amplitude
+                                                                                                                       0.6
+                                                                                                                         1.5
+                                                                    8000               16000     20
+
+
+
+
+5.1. To simulate music playing in the room, we convolve                                          7
+                                                                                                 Normal
+                                                                                                 trace 2
+                                                                                                                         Normal
+                                                                                                                          0.7
+                                                                                                                         trace 2
+                                                                                                                          1
+
+
+
+
+                                                                                                                       0.4
+                                                                                                 10
+
+
+
+
+our rendered RIRs with five different source music files, and                      63 Hz       2000 Hz
+                                                                                                 6
+                                                                                                                         0.6
+                                                                                                                         0.5
+
+
+
+
+compare the result to real recordings of the same music files
+                                                                                                 5
+                                                                                                                         0.5
+
+
+
+
+being played in the room, across the same metrics.
+                                                                                                 4
+                                                                                                                       0.2
+                                                                                                                         0.4
+
+
+
+
+                                                                                                                       0.0
+                                                                                                 3                       0.3
+
+
+
+
+Baselines. We compare our method with nearest neighbor                                           2                       0.2
+
+                                                                                                                                   63     250    1k       4k      16k
+(NN) and linear interpolation baselines, which are widely                      8000 Hz         16000 Hz
+                                                                                                 1                       0.1               Frequency (Hz)
+used to interpolate RIRs [11, 30, 40]. We also compare
+with Deep Impulse Response (DeepIR) [40] and Neural                           Figure 3. Visualization of our model’s learned parameters. The
+                                                                              left images show sample spherical heatmaps that our model fits to
+Acoustic Fields (NAF) [30], which are both deep-neural-
+                                                                              the speaker’s directivity pattern when trained on 12 points from
+network-based (DNN-based) frameworks. DeepIR predicts
+                                                                              the Classroom subdataset. The green dot indicates the direction
+the monaural RIR at novel locations based only on the                         the speaker is facing, and the yellow regions indicate higher vol-
+location’s coordinates, while NAF uses the location com-                      ume. The right image shows reflection amplitude responses that
+bined with local geometric features to estimate the RIR.                      our model learns for various surfaces.
+In addition, NAF was originally designed for binaural ren-
+dering. Thus, we modify NAF to output monaural audio
+for the monaural RIR estimation task. We also compare                         Directivity Maps. The left side of Figure 3 shows the
+our method with Implicit Neural Representation for Audio                      source directivity heatmaps at various frequencies, learned
+Scenes (INRAS) [45], which uses a combination of DNNs                         from 12 training points in the Classroom subdataset. The
+to more explicitly model specular and diffuse reflections at                  area near the front of the speaker emits the loudest sound
+a subset of points in a scene’s 3D mesh.                                      across most frequencies, as expected. The figures also con-
+   Additional details on baselines and any necessary adjust-                  firm that higher frequencies are more directionally emitted
+ments we made to them are included in Appendix F.                             than lower ones, evident in the narrowing yellow directivity
+                                                                              “beam” with increasing frequency. Additionally, the fact
+5.1. Results                                                                  that higher frequencies are typically emitted by the loud-
+Metrics. We compare rendered audio to ground-truth au-                        speaker’s tweeter at the top front of the speaker, is reflected
+dio using two metrics:                                                        in our heatmaps, where the yellow regions appear above the
+1. Multiscale Log-Spectral L1 (Mag). A comparison of                          speaker’s center for higher frequencies.
+   rendered and GT waveforms in time-frequency domain                         Reflection Amplitude Responses. The right side of Fig-
+   at multiple temporal and frequency resolutions [14, 17].                   ure 3 shows the specular reflection amplitude responses that
+
+
+
+                                                                           11796
+                                Classroom                       Dampened Room                              Hallway                           Complex Room
+                          RIR               Music               RIR              Music             RIR                Music              RIR            Music
+                       Mag    ENV      Mag       ENV     Mag      ENV       Mag      ENV       Mag     ENV          Mag      ENV      Mag     ENV     Mag    ENV
+    NN                 5.99   1.10     2.95      1.42    1.36      0.61     1.99     1.36     10.14    3.04         2.62     1.32     5.52    0.99    2.39   1.42
+    Linear             6.44   1.52     3.34      1.82    1.55     0.652     2.43     1.66     11.63    4.49         3.11     1.75     6.03    1.43    2.74   1.74
+    DeepIR             9.23   2.81     3.15      1.65    3.09      3.41     3.39     2.22     15.71   10.34         2.97     1.47     8.08    2.80    2.62   1.65
+    NAF                6.36   1.38     3.32      1.75    2.00      0.73     3.38     1.54     12.26    3.82         3.13     1.46     6.10    1.31    2.87   1.71
+    INRAS              9.99   4.52     4.45      1.75    4.20      2.48     6.22     5.35     14.52    9.19         3.70     1.58     9.02    2.58    3.61   1.66
+    D IFF RIR (ours)   5.22   0.94     2.71      1.36    1.21     0.56      1.59     1.19     9.13     2.95         2.59     1.25     4.86    0.92    2.25   1.41
+
+Table 2. Experimental results on the task of predicting monaural RIRs and music at an unseen point. Lower is better for all metrics. Errors
+for RIRs are multiplied by 10.
+
+                                           Classroom                    Dampened Room                         Hallway                         Complex Room
+                                     RIR            Music             RIR            Music             RIR                 Music             RIR         Music
+                                Mag    ENV       Mag    ENV      Mag      ENV      Mag      ENV    Mag      ENV       Mag     ENV      Mag     ENV    Mag    ENV
+ D IFF RIR                      5.22   0.94      2.71   1.36     1.21     0.56     1.59     1.19   9.13      2.95     2.59     1.25    4.86    0.92   2.25   1.41
+  w/o Directivity Pattern       5.47   0.97      3.02   1.49     1.64     0.63     3.02     1.54   9.98      3.09     2.98     1.34    5.13    0.94   2.45   1.46
+  w/o Source IR                 5.39   0.99      2.79   1.48     1.36     0.63     1.73     1.45   9.38      3.04     2.76     1.38    5.07    0.96   2.38   1.49
+  w/o Residual Component        6.90   1.37      3.07   1.40     1.37     0.61     1.77     1.38   15.49     4.80     2.81     1.27    6.24    1.30   2.46   1.47
+
+Table 3. Ablation results. In each row, the ablated parameter is frozen to its initial value during training, i.e., the Source IR is assumed to
+be an ideal impulse, the Directivity Pattern is assumed to be uniform at all frequencies, and the Residual Component is assumed to be zero.
+
+
+our model fits to some surfaces in the Classroom and Damp-                           5.3. Ablation Study
+ened Room. Our model correctly infers that the carpeted
+                                                                                     We ablate three major components of our model (the resid-
+floor seems to be more absorptive than the wall, which con-
+                                                                                     ual, modeling the source’s directivity, and modeling the
+sists of more rigid and smooth materials. The wall in the
+                                                                                     source’s impulse response) to determine their individual
+Dampened Room is even more absorptive, as our model
+                                                                                     contributions. Table 3 shows our results. The results sug-
+predicts nearly no reflection above 2 kHz.
+                                                                                     gest that these components are all necessary for effectively
+                                                                                     rendering accurate RIRs at novel locations. More ablations
+5                        5                          5                                experiments are in Appendix D.4.
+
+                                                                                     5.4. Additional Experiments and Visualizations.
+                                                                                     Along with additional RIR loudness maps, Appendix B.2
+0                 4.5m 0                    4.5m 0                      4.5m
+                                                                                     shows that our model can reconstruct the modal structure of
+                                                                                     the soundfield at a low frequency. In Appendix D.2, we
+     (a) Base Model       (b) Virtual Rotation      (c) Virtual Translation          show that our model trained on 6 points outperforms all
+Figure 4. RIR loudness heatmaps generated from D IFF RIR                             baselines trained on 100 points. Appendix D shows that our
+trained on 12 points in the Dampened Room’s base subdataset.                         model is robust to geometric distortions and experiments
+                                                                                     with modeling the effects of transmission.
+
+Virtual Rotation and Translation. Since our model                                    6. Conclusions
+learns physically interpretable parameters, we can simulate
+changes to the room layout that are unseen in the training                           We presented D IFF RIR, a differentiable RIR renderer ca-
+data. In Figure 4, we train our model on the Dampened                                pable of accurately rendering the room’s acoustic impulse
+subdataset, and use it to simulate virtual speaker rotation                          response at new locations, given a small set of microphone
+and translation. We visualize these changes by plotting RIR                          recordings and the room geometry. Future work could fo-
+loudness heatmaps. Since the D IFF RIR Dataset also in-                              cus on modeling a room’s acoustics implicitly by recording
+cludes real data where the speaker is rotated or translated,                         natural audio, thus obviating the need to measure RIRs.
+we include quantitative evaluations on virtual speaker rota-                         Acknowledgments. The work is in part supported by
+tion and translation in the Appendix C.3, as well as evalua-                         NSF CCRI #2120095, RI #2211258, RI #2338203, ONR
+tions on virtual panel insertion and relocation.                                     MURI N00014-22-1-2740, Adobe, Amazon, and Sony.
+
+
+
+                                                                                 11797
+References                                                              [15] Simona De Cesaris, Dario D’Orazio, Federica Morandi, and
+                                                                             Massimo Garai. Extraction of the envelope from impulse re-
+ [1] Byeongjoo Ahn, Karren Yang, Brian Hamilton, Jonathan                    sponses using pre-processed energy detection for early decay
+     Sheaffer, Anurag Ranjan, Miguel Sarabia, Oncel Tuzel, and               estimation. The Journal of the Acoustical Society of Amer-
+     Jen-Hao Rick Chang. Novel-view acoustic synthesis from                  ica, 138(4):2513–2523, 2015. 7
+     3d reconstructed rooms, 2023. 2
+                                                                        [16] Michaël Defferrard, Kirell Benzi, Pierre Vandergheynst, and
+ [2] Jont B Allen and David A Berkley. Image method for effi-                Xavier Bresson. Fma: A dataset for music analysis. arXiv
+     ciently simulating small-room acoustics. The Journal of the             preprint arXiv:1612.01840, 2016. 6
+     Acoustical Society of America, 65(4):943–950, 1979. 5
+                                                                        [17] Jesse Engel, Lamtharn Hantrakul, Chenjie Gu, and Adam
+ [3] Adil Alpkocak and Kemal Sis. Computing impulse response
+                                                                             Roberts. Ddsp: Differentiable digital signal processing.
+     of room acoustics using the ray-tracing method in time do-
+                                                                             arXiv preprint arXiv:2001.04643, 2020. 3, 6, 7
+     main. Archives of Acoustics, 35, 2010. 2
+                                                                        [18] Huan Fu, Bowen Cai, Lin Gao, Ling-Xiao Zhang, Jiaming
+ [4] Cal Armstrong, Lewis Thresh, Damian Murphy, and Gavin
+                                                                             Wang, Cao Li, Qixun Zeng, Chengyue Sun, Rongfei Jia, Bin-
+     Kearney. A perceptual evaluation of individual and non-
+                                                                             qiang Zhao, et al. 3d-front: 3d furnished rooms with layouts
+     individual hrtfs: A case study of the sadie ii database. Ap-
+                                                                             and semantics. In Proceedings of the IEEE/CVF Interna-
+     plied Sciences, 8(11):2029, 2018. 6
+                                                                             tional Conference on Computer Vision, pages 10933–10942,
+ [5] Shai Avidan and Amnon Shashua. Novel view synthesis in
+                                                                             2021. 3
+     tensor space. In Proceedings of IEEE Computer Society Con-
+                                                                        [19] Rishabh Garg, Ruohan Gao, and Kristen Grauman. Visually-
+     ference on Computer Vision and Pattern Recognition, pages
+                                                                             guided audio spatialization in video with geometry-aware
+     1034–1040. IEEE, 1997. 1
+                                                                             multi-task learning. International Journal of Computer Vi-
+ [6] Alexis Benichoux, Laurent Simon, Emmanuel Vincent, and
+                                                                             sion, pages 1–15, 2023. 2
+     Remi Gribonval. Convex regularizations for the simultane-
+                                                                        [20] Michele Geronazzo, Erik Sikström, Jari Kleimola, Federico
+     ous recording of room impulse responses. Signal Processing,
+                                                                             Avanzini, Amalia De Götzen, and Stefania Serafin. The im-
+     IEEE Transactions on, 62:1976–1986, 2014. 4
+                                                                             pact of an accurate vertical localization with hrtfs on short
+ [7] Boualem Boashash. Time-frequency signal analysis and pro-
+                                                                             explorations of immersive virtual reality scenarios. In 2018
+     cessing: a comprehensive reference. Academic press, 2015.
+                                                                             IEEE International Symposium on Mixed and Augmented
+     7
+                                                                             Reality (ISMAR), pages 90–97. IEEE, 2018. 6
+ [8] Angel Chang, Angela Dai, Thomas Funkhouser, Maciej
+                                                                        [21] Georg Götz, Sebastian J Schlecht, and Ville Pulkki. A dataset
+     Halber, Matthias Niessner, Manolis Savva, Shuran Song,
+                                                                             of higher-order ambisonic room impulse responses and 3d
+     Andy Zeng, and Yinda Zhang. Matterport3d: Learning
+                                                                             models measured in a room with varying furniture. In 2021
+     from rgb-d data in indoor environments. arXiv preprint
+                                                                             Immersive and 3D Audio: from Architecture to Automotive
+     arXiv:1709.06158, 2017. 3
+                                                                             (I3DA), pages 1–8. IEEE, 2021. 6
+ [9] Changan Chen, Ruohan Gao, Paul Calamia, and Kristen
+     Grauman. Visual acoustic matching. In Proceedings of               [22] Brian      Hamilton.           Pffdtd     software,     2021.
+     the IEEE/CVF Conference on Computer Vision and Pattern                  https://github.com/bsxfun/pffdtd. 3
+     Recognition, pages 18858–18868, 2022. 2                            [23] D. P. Hardin, T. J. Michaels, and E. B. Saff. A comparison
+[10] Changan Chen, Carl Schissler, Sanchit Garg, Philip                      of popular point configurations on S2 , 2016. 4
+     Kobernik, Alexander Clegg, Paul Calamia, Dhruv Batra,              [24] Laszlo Hars. Frequency response compensation with dsp.
+     Philip W Robinson, and Kristen Grauman. Soundspaces                     Signal Processing Magazine, IEEE, 20:91– 95, 2003. 4
+     2.0: A simulation platform for visual-acoustic learning. In        [25] Cheol-Ho Jeong. Diffuse sound field: challenges and mis-
+     NeurIPS 2022 Datasets and Benchmarks Track, 2022. 3                     conceptions. Proceedings of 45th International Congress
+[11] Changan Chen, Alexander Richard, Roman Shapovalov,                      and Exposition on Noise Control Engineering, pages 1015–
+     Vamsi Krishna Ithapu, Natalia Neverova, Kristen Grauman,                1021, 2016. 5
+     and Andrea Vedaldi. Novel-view acoustic synthesis. In              [26] V.D. Landon. A study of the characteristics of noise. Pro-
+     CVPR, pages 6409–6419, 2023. 2, 7                                       ceedings of the Institute of Radio Engineers, 24(11):1514–
+[12] Changan Chen, Wei Sun, David Harwath, and Kristen Grau-                 1521, 1936. 4
+     man. Learning audio-visual dereverberation. In ICASSP              [27] Eric A. Lehmann and Anders M. Johansson. Prediction of
+     2023-2023 IEEE International Conference on Acoustics,                   energy decay in room impulse responses simulated with an
+     Speech and Signal Processing (ICASSP), pages 1–5. IEEE,                 image-source model. The Journal of the Acoustical Society
+     2023. 2                                                                 of America, 124(1):269–277, 2008. 7
+[13] Mandar Chitre. Differentiable ocean acoustic propagation           [28] Yan Li, Peter F. Driessen, George Tzanetakis, and Steve Bel-
+     modeling. In OCEANS 2023-Limerick, pages 1–8. IEEE,                     lamy. Spatial sound rendering using measured room impulse
+     2023. 3                                                                 responses. In 2006 IEEE International Symposium on Sig-
+[14] Samuel Clarke, Negin Heravi, Mark Rau, Ruohan Gao, Ji-                  nal Processing and Information Technology, pages 432–437,
+     ajun Wu, Doug James, and Jeannette Bohg. Diffimpact:                    2006. 2
+     Differentiable rendering and identification of impact sounds.      [29] Susan Liang, Chao Huang, Yapeng Tian, Anurag Kumar, and
+     In Conference on Robot Learning, pages 662–673. PMLR,                   Chenliang Xu. Av-nerf: Learning neural fields for real-world
+     2022. 3, 6, 7                                                           audio-visual scene synthesis, 2023. 2
+
+
+
+
+                                                                     11798
+[30] Andrew Luo, Yilun Du, Michael Tarr, Josh Tenenbaum, An-             [45] Kun Su, Mingfei Chen, and Eli Shlizerman. INRAS: Im-
+     tonio Torralba, and Chuang Gan. Learning neural acoustic                 plicit neural representation for audio scenes. In Advances in
+     fields. Advances in Neural Information Processing Systems,               Neural Information Processing Systems, 2022. 1, 2, 7
+     35:3165–3177, 2022. 1, 2, 7                                         [46] Chiara Visentin, Matteo Pellegatti, and Nicola Prodi. Effect
+[31] Sagnik Majumder, Changan Chen, Ziad Al-Halah, and Kris-                  of a single lateral diffuse reflection on spatial percepts and
+     ten Grauman. Few-shot audio-visual learning of environ-                  speech intelligibility. The Journal of the Acoustical Society
+     ment acoustics. Advances in Neural Information Processing                of America, 148(1):122–140, 2020. 5
+     Systems, 35:2522–2536, 2022. 2                                      [47] Mason Wang, Samuel Clarke, Jui-Hsien Wang, Ruohan Gao,
+[32] J. Gregory McDaniel and Cory L. Clarke. Interpretation and               and Jiajun Wu. Soundcam: A dataset for finding humans
+     identification of minimum phase reflection coefficients. The             using room acoustics. In Advances in Neural Informaion
+     Journal of the Acoustical Society of America, 110(6):3003–               Processing Systems, 2023. 6
+     3010, 2001. 5                                                       [48] Shu-Nung Yao. Headphone-based immersive audio for vir-
+[33] Thomas McKenzie, Leo McCormack, and Christoph Hold.                      tual reality headsets. IEEE Transactions on Consumer Elec-
+     Dataset of spatial room impulse responses in a variable                  tronics, 63(3):300–308, 2017. 6
+     acoustics room for six degrees-of-freedom rendering and             [49] Kai Zhang, Fujun Luan, Qianqian Wang, Kavita Bala, and
+     analysis. arXiv preprint arXiv:2111.11882, 2021. 6                       Noah Snavely. PhySG: Inverse rendering with spherical
+[34] Ben Mildenhall, Pratul P Srinivasan, Matthew Tancik,                     gaussians for physics-based material editing and relighting.
+     Jonathan T Barron, Ravi Ramamoorthi, and Ren Ng. Nerf:                   In The IEEE/CVF Conference on Computer Vision and Pat-
+     Representing scenes as neural radiance fields for view syn-              tern Recognition (CVPR), 2021. 4
+     thesis. In ECCV, 2020. 1                                            [50] Tinghui Zhou, Shubham Tulsiani, Weilun Sun, Jitendra Ma-
+[35] Mélanie Nolan, Marco Berzborn, and Efren Fernandez-                     lik, and Alexei A Efros. View synthesis by appearance flow.
+     Grande. Isotropy in decaying reverberant sound fieldsa). The             In Computer Vision–ECCV 2016: 14th European Confer-
+     Journal of the Acoustical Society of America, 148(2):1077–               ence, Amsterdam, The Netherlands, October 11–14, 2016,
+     1088, 2020. 5                                                            Proceedings, Part IV 14, pages 286–301. Springer, 2016. 1
+[36] Beth Paxton. Room acoustics, sixth ed., heinrich kuttruff. crc
+     press (2017). isbn: 978-1-4822-6043-4. Applied Acoustics,
+     126:90–91, 2017. 5
+[37] Christoph Pörschmann and Johannes M Arend. Analyzing
+     the directivity patterns of human speakers. Proceedings of
+     the 46th DAGA, pages 16–19, 2020. 3
+[38] Anton Ratnarajah, Zhenyu Tang, and Dinesh Manocha. IR-
+     GAN: Room Impulse Response Generator for Far-Field
+     Speech Recognition. In Proc. Interspeech 2021, pages 286–
+     290, 2021. 1, 2
+[39] Anton Ratnarajah, Zhenyu Tang, Rohith Aralikatti, and Di-
+     nesh Manocha. Mesh2ir: Neural acoustic impulse response
+     generator for complex 3d scenes. In Proceedings of the 30th
+     ACM International Conference on Multimedia, pages 924–
+     933, 2022. 3
+[40] Alexander Richard, Peter Dodds, and Vamsi Krishna Ithapu.
+     Deep impulse responses: Estimating and parameterizing fil-
+     ters with deep networks. In ICASSP, pages 3209–3213.
+     IEEE, 2022. 1, 2, 7
+[41] Jens Holger Rindel. Modal energy analysis of nearly rect-
+     angular rooms at low frequencies. Acta Acustica united with
+     Acustica, 101(6):1211–1221, 2015. 5
+[42] Furniaki Satoh, Yoshito Hidaka, and Hideki Tachibana. Re-
+     verberation time directly obtained from squared impulse re-
+     sponse envelope. In Proc. Int. Congr. Acoust, pages 2755–
+     2756, 1998. 7
+[43] Julius O. Smith. Physical Audio Signal Processing. https:
+     / / ccrma . stanford . edu / ˜jos / pasp/, accessed
+     2023. online book, 2010 edition. 5
+[44] Julian Straub, Thomas Whelan, Lingni Ma, Yufan Chen, Erik
+     Wijmans, Simon Green, Jakob J Engel, Raul Mur-Artal, Carl
+     Ren, Shobhit Verma, et al. The replica dataset: A digital
+     replica of indoor spaces. arXiv preprint arXiv:1906.05797,
+     2019. 3
+
+
+
+
+                                                                      11799
+

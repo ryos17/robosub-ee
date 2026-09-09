@@ -1,0 +1,696 @@
+                                                                                                          Robust Time-Difference-of-Arrival Localization
+                                                                                                              With Sensor Position Uncertainty Using
+                                                                                                          Ridge-Regularized Weighted Total Least Squares
+                                                                                                                                                           Zhenxing Zhou1,2,a , Deqing Wang1,2,b,*
+                                                                                                                                                1
+                                                                                                                                        School of Informatics, Xiamen University, Xiamen, China
+                                                                                                           2
+                                                                                                               Key Laboratory of Underwater Acoustic Communication and Marine Information Technology (Xiamen University),
+                                                                                                                                              Ministry of Education, Xiamen 361005, China
+                                                                                                                                          a
+                                                                                                                                            zhouzhenxing@stu.xmu.edu.cn, b deqing@xmu.edu.cn
+                                                                                                                                                  *
+                                                                                                                                                    Corresponding author: Deqing Wang
+
+
+
+                                                                                                         Abstract—Passive localization based on time-difference-of-                     iterative methods [9], and Chan-type closed-form or semi-
+                                                                                                      arrival (TDOA) is widely used in underwater acoustics because                     closed-form methods [10], [11]. These methods are effective
+                                                                                                      it enables source positioning without target cooperation and is                   when sensor positions are accurately known and measurement
+                                                                                                      well suited to distributed marine sensing. In practical underwater
+                                                                                                      deployments, however, sensor nodes are often affected by drift,                   noise is moderate.
+                                                                                                      mooring offsets, platform motion, and calibration errors, making                     In practical ocean deployments, however, sensor nodes are
+                                                                                                      sensor position uncertainty a non-negligible source of localization               subject to current-induced drift, anchoring offsets, platform
+                                                                                                      degradation. Under such conditions, the pseudo-linear TDOA                        motion, and calibration errors, so their actual positions may
+                                                                                                      model is more appropriately formulated as an errors-in-variables                  deviate from nominal values. Once sensor position uncertainty
+                                                                                                      (EIV) problem, in which perturbations simultaneously affect
+                                                                                                      the coefficient matrix and the observation vector. Conventional                   is taken into account, the perturbation affects not only the
+                                                                                                      weighted least squares (WLS) does not account for this structure,                 observation vector but also the coefficient matrix and the right-
+
+
+
+
+OCEANS 2026 Sanya | 979-8-3195-4364-6/26/$31.00 ©2026 IEEE | DOI: 10.1109/OCEANS66983.2026.11617090
+                                                                                                      while standard weighted total least squares (WTLS) may still                      hand side of the pseudo-linear localization equations. The
+                                                                                                      suffer from numerical instability, near-singular iterations, and                  resulting problem is therefore more appropriately described as
+                                                                                                      degraded accuracy under ill-conditioned geometry and strong                       an errors-in-variables (EIV) model [12]. In this setting, directly
+                                                                                                      noise. To address these issues, a two-step regularized weighted
+                                                                                                      total least squares method, termed TS-RWTLS, is proposed for                      applying LS or WLS leads to model mismatch, which may
+                                                                                                      underwater passive localization with sensor position uncertainty.                 cause substantial bias and performance degradation, especially
+                                                                                                      The first step introduces Tikhonov regularization into the WTLS                   under high noise, weak observability, or unfavorable array
+                                                                                                      iteration to improve conditioning and numerical robustness, and                   geometry.
+                                                                                                      the second step applies a geometric consistency correction to                        Weighted total least squares (WTLS) provides a more suit-
+                                                                                                      reduce the structural bias induced by the augmented pseudo-
+                                                                                                      linear formulation. Monte Carlo simulations show that the                         able framework for this class of localization problems because
+                                                                                                      proposed method achieves lower root-mean-square error (RMSE)                      it jointly accounts for perturbations in both the matrix and
+                                                                                                      and bias than WLS, RWLS, Taylor, and conventional WTLS,                           vector terms [13]–[15]. However, conventional WTLS remains
+                                                                                                      indicating improved accuracy and robustness in underwater                         inadequate in challenging underwater scenarios. On the one
+                                                                                                      localization scenarios.                                                           hand, the structured and correlated perturbations induced by
+                                                                                                         Index Terms—Underwater acoustics, time-difference-of-arrival
+                                                                                                      (TDOA), sensor position uncertainty, weighted total least squares                 TDOA measurement errors and sensor position errors compli-
+                                                                                                      (WTLS), numerical robustness                                                      cate weight design and iterative implementation. On the other
+                                                                                                                                                                                        hand, under ill-conditioned geometry or strong noise coupling,
+                                                                                                                                 I. I NTRODUCTION                                       the WTLS normal matrix may become nearly singular, making
+                                                                                                                                                                                        the solution highly sensitive to perturbations and numerical
+                                                                                                         Time-difference-of-arrival (TDOA) localization has been                        roundoff, and thereby causing oscillation, large bias, or even
+                                                                                                      widely applied in underwater target detection, acoustic moni-                     divergence. Moreover, the commonly used augmented pseudo-
+                                                                                                      toring, and cooperative sensing because it enables passive lo-                    linear formulation weakens the intrinsic geometric relationship
+                                                                                                      calization without target cooperation, requires relatively simple                 between the source position and the reference range, which
+                                                                                                      hardware, and is well suited to long-range marine sensing                         introduces additional consistency bias.
+                                                                                                      [1]–[5]. Under ideal array geometry, a variety of classical                          To address these issues, this paper proposes a two-step
+                                                                                                      TDOA solvers have been developed, including least squares                         regularized weighted total least squares method, termed TS-
+                                                                                                      (LS) [6], weighted least squares (WLS) [7], [8], Taylor-series                    RWTLS. The proposed method retains the EIV-based statis-
+                                                                                                                                                                                        tical modeling of WTLS while improving both numerical ro-
+                                                                                                        This work was supported by the National Natural Science Foundation of
+                                                                                                      China (Grant No. 62271427) and the Natural Science Foundation of Xiamen           bustness and geometric consistency. In the first step, Tikhonov
+                                                                                                      (Grant No. 3502Z20227177).                                                        regularization is incorporated into the WTLS iteration to alle-
+
+
+
+
+                                                                                                               Authorized licensed use limited to: Stanford University. Downloaded on September 09,2026 at 05:36:33 UTC from IEEE Xplore. Restrictions apply.
+
+                                                                                                            979-8-3195-4364-6/26/$31.00 ©2026 IEEE
+viate near-singularity, improve matrix conditioning, and stabi-                 The measured TDOA quantity is written as
+lize the estimation process [16]. In the second step, a geometric                                      o
+                                                                                                ri1 = ri1 + ni1 ,          i = 2, . . . , M,             (6)
+consistency bias correction is performed around the first-
+step solution to restore the physical relationship between the                  where ni1 denotes the measurement error.
+position parameters and the reference range parameter, thereby                    From the hyperbolic localization geometry,
+reducing the structural bias introduced by the augmented
+formulation [17], [18]. As a result, the proposed method                                         rio = ri1
+                                                                                                        o
+                                                                                                           + r1o ,        i = 2, . . . , M.              (7)
+achieves improved localization accuracy and robustness in the                   Squaring both sides and using r1o = ∥uo − so1 ∥ yields
+presence of sensor position uncertainty, measurement noise,
+and unfavorable geometry.                                                       2(soi −so1 )T uo +2ri1
+                                                                                                    o o
+                                                                                                       r1 = ∥soi ∥2 −∥so1 ∥2 −(ri1
+                                                                                                                                o 2
+                                                                                                                                   ) ,          i = 2, . . . , M.
+   The main contributions of this paper are as follows:                                                                                                   (8)
+                                                                                Introduce the augmented parameter vector
+   1) A pseudo-linear TDOA localization model with both
+                                                                                                                 T
+                                                                                                 z o = (uo )T r1o ∈ R3 .
+                                                                                                      
+       sensor position uncertainty and TDOA measurement                                                                                                  (9)
+       noise is formulated, and its EIV nature with structurally
+       correlated perturbations is clarified [19]–[22].                         Then (8) can be written compactly as
+   2) A regularized WTLS iterative solver is developed to                                                      Go z o = ho ,                            (10)
+       enhance numerical stability under ill-conditioned and
+       high-noise conditions.                                                   where
+                                                                                                       2(so2 − so1 )T                 o
+                                                                                                                                       
+                                                                                                                                  2r21
+   3) A second-step geometric consistency bias correction                                             2(so3 − so1 )T                 o 
+                                                                                                                                  2r31
+       strategy is derived, together with an associated weight                                     o
+                                                                                                  G =
+                                                                                                     
+                                                                                                             ..                     ..  ,
+                                                                                                                                        
+                                                                                                                                                        (11)
+       design based on error propagation [12].                                                               .                      . 
+   4) A residual-cost-based safeguard mechanism is intro-                                                    2(soM − so1 )T        o
+                                                                                                                                 2rM 1
+       duced to improve the reliability of the final estimate by
+                                                                                                       ∥so2 ∥2 − ∥so1 ∥2 − (r21
+                                                                                                                             o 2
+                                                                                                                                 
+                                                                                                                                )
+       balancing numerical stability, geometric feasibility, and                                      ∥so3 ∥2 − ∥so1 ∥2 − (r31
+                                                                                                                             o 2 
+                                                                                                                                ) 
+       residual consistency.                                                                    ho = 
+                                                                                                     
+                                                                                                                                  .                    (12)
+                                                                                                                    ..
+   The remainder of this paper is organized as follows. Section                                                     .            
+                                                                                                                                   2
+II presents the pseudo-linear TDOA model with sensor posi-                                               ∥soM ∥2 − ∥so1 ∥2 − (rM
+                                                                                                                               o
+                                                                                                                                 1)
+tion uncertainty and analyzes its EIV characteristics. Section                    In practice, the matrix and vector constructed from noisy
+III reviews the conventional WTLS formulation, discusses its                    observations are
+limitations, and develops the proposed TS-RWTLS method.
+                                                                                                      2(s2 − s1 )T
+                                                                                                                            
+                                                                                                                      2r21
+Section IV provides simulation results and comparative per-                                          2(s3 − s1 )T    2r31 
+formance evaluations. Section V concludes the paper.                                           G=                      ..  ,         (13)
+                                                                                                                            
+                                                                                                            ..
+                                                                                                            .           . 
+                       II. S YSTEM M ODEL                                                            2(sM − s1 )T 2rM 1
+  Consider a two-dimensional TDOA localization problem.
+                                                                                                     ∥s2 ∥2 − ∥s1 ∥2 − r212
+                                                                                                                             
+Let the unknown target position be                                                                  ∥s3 ∥2 − ∥s1 ∥2 − r312 
+                                                                                               h=                            .       (14)
+                                                                                                                             
+                           uo = [xo , y o ]T ,                          (1)                                    ..
+                                                                                                               .             
+                                                                                                    ∥sM ∥2 − ∥s1 ∥2 − rM  2
+                                                                                                                            1
+and suppose that there are M sensors, where sensor 1 is
+selected as the reference sensor. The true position of sensor i                 Let
+is denoted by                                                                                  G = Go + ∆G,                h = ho + ∆h,                 (15)
+
+             soi = [xoi , yio ]T ,      i = 1, 2, . . . , M,            (2)     so that
+                                                                                                      (G − ∆G)z o = h − ∆h.                             (16)
+while the observed sensor position is
+                                                                                Equation (16) shows that the perturbations affect not only the
+                           si = soi + ∆si ,                             (3)     right-hand side vector but also the coefficient matrix itself.
+                                                                                The pseudo-linear TDOA localization model is therefore an
+where ∆si is the sensor position error. The true distance                       EIV model rather than a standard linear model with additive
+between the target and sensor i is                                              output noise only.
+                          rio = ∥uo − soi ∥.                            (4)        The matrix perturbation can be expressed as
+                                                                                                     2(∆s2 − ∆s1 )T
+                                                                                                                              
+                                                                                                                         2n21
+Using sensor 1 as the reference, the true range difference at                                       2(∆s3 − ∆s1 )T      2n31 
+sensor i is                                                                                 ∆G = 
+                                                                                                   
+                                                                                                             ..            ..  ,
+                                                                                                                               
+                                                                                                                                          (17)
+                                                                                                             .             . 
+                o
+               ri1 = rio − r1o ,        i = 2, . . . , M.               (5)                                2(∆sM − ∆s1 )T           2nM 1
+
+
+
+
+       Authorized licensed use limited to: Stanford University. Downloaded on September 09,2026 at 05:36:33 UTC from IEEE Xplore. Restrictions apply.
+                                                                                 Define the parameter-dependent equivalent residual covariance
+                                                                                 matrix as
+                                                                                                Σe (z) ≜ Σh + (z T ⊗ I)ΣG (z ⊗ I).                       (25)
+                                                                                 Then
+                                                                                                        λ = −Σ−1
+                                                                                                              e (z)(h − Gz),                             (26)
+                                                                                 and the WTLS problem reduces to the nonlinear residual
+                                                                                 minimization
+
+Fig. 1. Geometric model of TDOA localization with sensor position uncer-                    JWTLS (z) = (h − Gz)T Σ−1
+                                                                                                                   e (z)(h − Gz).                        (27)
+tainty and measurement noise. The figure illustrates true sensor positions,
+observed sensor positions, position error vectors ∆si , and the measured          At iteration k, the equivalent covariance matrix and weight
+hyperbolic constraint.                                                           matrix are updated as
+                                                                                                                                                        −1
+                                                                                 Σ(k)
+                                                                                  e = Σh +((ẑ
+                                                                                               (k) T
+                                                                                                  ) ⊗I)ΣG (ẑ (k) ⊗I),                    We(k) = (Σ(k)
+                                                                                                                                                    e )    .
+                                                                                                                                                    (28)
+which is directly induced by both sensor position errors
+                                                                                 The parameter update is then given by
+and TDOA measurement errors. The ith entry of the vector                                                           −1
+perturbation ∆h satisfies                                                            ẑ (k+1) = GT We(k) G − Λ(k)       GT We(k) h,                      (29)
+ ∆hi = ∥si ∥2 − ∥s1 ∥2 − ri1
+                          2
+                               − ∥soi ∥2 − ∥so1 ∥2 − (ri1
+                                                       o 2
+                                                           
+                                                          )                      where Λ(k) is a bias-compensation term induced by the matrix
+       = 2(soi )T ∆si − 2(so1 )T ∆s1                                             perturbation structure.
+       + ∥∆si ∥2 − ∥∆s1 ∥2 − 2ri1 o
+                                    ni1 − n2i1 ,                                   The main difficulty is that the normal matrix
+                                                         (18)                                         M (k) ≜ GT We(k) G − Λ(k)                          (30)
+for i = 2, . . . , M . Under small-error conditions, ignoring
+second-order terms gives                                                         may become severely ill-conditioned when the sensor array
+                                                                                 is nearly collinear, the sensor position errors are large, or the
+∆hi ≈ 2(soi )T ∆si − 2(so1 )T ∆s1 − 2ri1
+                                      o
+                                         ni1 ,  i = 2, . . . , M.                TDOA noise is strong. In such cases, inverting M (k) amplifies
+                                                              (19)               perturbations and numerical roundoff errors, which may lead
+Hence, ∆G and ∆h are driven by the same underlying error                         to oscillation, bias inflation, or even divergence.
+sources {∆si } and {ni1 } and are therefore statistically corre-
+                                                                                 B. Two-Step Regularized Weighted Total Least Squares
+lated. This structure makes conventional LS/WLS inadequate,
+and motivates a unified EIV treatment.                                              To address both numerical instability and geometric incon-
+                                                                                 sistency, a two-step scheme is proposed.
+                     III. P ROPOSED M ETHOD                                         1) Step 1: Regularized WTLS Estimation: At iteration k,
+                                                                                 define the regularized normal matrix as
+A. Conventional WTLS Iteration and Its Numerical Difficulty                              (k)
+                                                                                        Mreg = GT We(k) G − Λ(k) + λI,                     λ > 0,        (31)
+  Based on the EIV model in (16), conventional WTLS jointly
+corrects G and h to obtain a statistically consistent estimate                   which yields the update
+                                                                                                                    −1
+of the unknown parameter vector. Let
+                                                                                             
+                                                                                  ẑ (k+1) = GT We(k) G − Λ(k) + λI     GT We(k) h. (32)
+   Σh = E[∆h∆hT ],          ΣG = E[vec(∆G)vec(∆G)T ],
+                                                                                 If the eigenvalues of M (k) are {µi }, then the eigenvalues of
+                                                        (20)
+                                                                                 the regularized matrix become {µi + λ}, and its condition
+where Σh and ΣG denote the covariance matrices of the vector
+                                                                                 number is improved to
+and matrix perturbations, respectively. The WTLS problem can
+then be formulated as                                                                                      (k)     µmax + λ
+                                                                                                     κ(Mreg    )=              .           (33)
+                                                                                                                   µmin + λ
+     min        ∆hT Σ−1            T −1
+                     h ∆h + vec(∆G) ΣG vec(∆G)
+  ∆G,∆h,z                                                               (21)     Thus, the first step primarily improves numerical stability
+         s.t.   (G − ∆G)z = h − ∆h.                                              along ill-conditioned directions.
+                                                                                    Let the converged first-step estimate be
+  Introducing the Lagrange multiplier vector λ and setting the                                                  
+                                                                                                                  ûstep1
+                                                                                                                           
+derivatives to zero yields                                                                            ẑstep1 = ˆ            .             (34)
+                                                                                                                  d1,step1
+                           ∆h = −Σh λ,                                  (22)     Although this estimate is numerically stable, it generally does
+                    vec(∆G) = −ΣG (z ⊗ I)λ.                             (23)     not strictly satisfy the intrinsic geometric relationship
+                                                                                                             d21 = ∥u − s1 ∥2 ,                          (35)
+Substituting these expressions into the constraint gives
+                        h                            i                           because the augmented pseudo-linear model temporarily treats
+  r(z) ≜ h − Gz = − Σh + (z T ⊗ I)ΣG (z ⊗ I) λ. (24)                             u and d1 as independent variables.
+
+
+
+
+        Authorized licensed use limited to: Stanford University. Downloaded on September 09,2026 at 05:36:33 UTC from IEEE Xplore. Restrictions apply.
+                                                                                 The second-step weight matrix is defined as
+                                                                                                                 W2 = Ψ†2 .                                (45)
+                                                                                 The correction is then obtained from the weighted least-
+                                                                                 squares problem
+                                                                                        ẑ2 = arg min(h2 − G2 z2 )T W2 (h2 − G2 z2 ),                      (46)
+                                                                                                     z2
+
+                                                                                 whose closed-form solution is
+                                                                                                     ẑ2 = (GT2 W2 G2 )† GT2 W2 h2 .                       (47)
+                                                                                 The corrected position is reconstructed as
+Fig. 2. Geometric interpretation of the second-step correction. The first-step                                                           p
+estimate may lie off the geometric consistency manifold, whereas the corrected                ûcorr = s1 + sgn(ûstep1 − s1 ) ⊙             |ẑ2 |,       (48)
+estimate is projected back toward the physically feasible set.
+                                                                                 and the corrected reference range is
+                                                                                                                 p
+   2) Step 2: Geometric Consistency Bias Correction: To                                                dˆ1,corr = 1T ẑ2 .                                 (49)
+recover this geometric relationship, a second-step correction                      Because the second-step correction is based on a local
+is introduced.                                                                   approximation, a safeguard mechanism is introduced. Define
+   For the two-dimensional case, let                                             the original nonlinear weighted residual cost as
+                                     
+                      ux                s
+                u=        ,     s1 = 1x .                (36)                                     M
+                                                                                                  X                                                    2
+                      uy                s1y                                           Jnl (u) =         wi [(∥u − si ∥ − ∥u − s1 ∥) − r̃i1 ] ,             (50)
+Then (35) becomes                                                                                 i=2
+
+                                                                                 where r̃i1 denotes the measured TDOA quantity and wi is its
+                  d21 = (ux − s1x )2 + (uy − s1y )2 .                    (37)
+                                                                                 weight. Compute
+Based on the first-step estimate, construct the observation
+                                                                                        Jstep1 = Jnl (ûstep1 ),          Jcorr = Jnl (ûcorr ).           (51)
+vector
+                       (ûstep1,x − s1x )2
+                                          
+                                                                                 If Jcorr ≤ Jstep1 , the corrected estimate is accepted; otherwise,
+               h2 = (ûstep1,y − s1y )2  ,           (38)                      the first-step estimate is retained, i.e.,
+                             dˆ2       1,step1                                                            (
+                                                                                                            ûcorr , Jcorr ≤ Jstep1 ,
+and define                                                                                      ûfinal =                                      (52)
+                               (ucorr,x − s1x )2
+                                                 
+                                                                                                            ûstep1 , Jcorr > Jstep1 .
+                      z2 =                          .                    (39)
+                                (ucorr,y − s1y )2
+                                                                                    3) Algorithm Summary: The proposed TS-RWTLS algo-
+The correction problem can then be written as                                    rithm is summarized in Algorithm 1.
+                               G2 z2 ≈ h2 ,                              (40)     IV. S IMULATION R ESULTS AND C OMPLEXITY A NALYSIS
+with                                                                              This section evaluates the localization performance and
+                                   1       0                                     computational characteristics of the proposed TS-RWTLS
+                             G2 = 0       1 .                          (41)    method through Monte Carlo simulations. The comparisons
+                                   1       1                                     include WLS, RWLS, Taylor, and standard WTLS. Two types
+This model seeks corrected squared geometric quantities that                     of uncertainty are examined: TDOA measurement errors and
+remain close to the first-step observations while satisfying                     sensor position errors. In addition, the influence of the number
+geometric consistency.                                                           of sensors is studied to reveal the role of array geometry.
+   The covariance of h2 is obtained by first-order error prop-
+                                                                                 A. Simulation Setup
+agation. Approximate the covariance of the first-step estimate
+by                                                                                 A two-dimensional localization scenario is considered,
+                                    last †
+                  cov(ẑstep1 ) ≈ (Mreg ) ,               (42)                   where the true target position is set to
+
+where (·)† denotes the Moore–Penrose pseudoinverse. Then                                                  utrue = [1000, 1000]T .                          (53)
+
+                       Ψ2 = J2 cov(ẑstep1 )J2T ,                        (43)    The sensors form a circular array with radius 500 m, and the
+                                                                                 default number of sensors is M = 8. In each experiment,
+where, for the 2-D case,                                                         the nominal sensor positions are generated from the circular
+                                                                                 geometry. Sensor position errors are modeled as independent
+                                                                   
+            ûstep1,x − s1x                0                0
+  J2 = 2           0              ûstep1,y − s1y          0       .   (44)    Gaussian perturbations, and TDOA measurement errors are
+                    0                      0            dˆ1,step1                also assumed to be Gaussian. The number of Monte Carlo
+
+
+
+
+        Authorized licensed use limited to: Stanford University. Downloaded on September 09,2026 at 05:36:33 UTC from IEEE Xplore. Restrictions apply.
+ Algorithm 1: TS-RWTLS for TDOA Localization                                     B. Performance Versus Measurement Error Variance
+  Input: Noisy TDOA measurements r̃, noisy sensor                                   Fig. 3 shows the localization performance as a function
+         positions si , reference position s1 , covariance                       of TDOA measurement error variance under different sensor
+         matrices Σh , ΣG , regularization parameter λ,                          position error levels.
+         maximum iteration Kmax , threshold ε                                       Overall, all methods behave similarly in the low-noise
+  Output: Final estimate ûfinal                                                 region, whereas their differences become increasingly visible
+1 Construct pseudo-linear EIV model                                              as varr grows. Across the tested settings, the proposed method
+   (G − ∆G)z = h − ∆h; initialize ẑ (0) and set k = 0                           exhibits a slower performance degradation and maintains lower
+2 while k < Kmax do                                                              error levels in the moderate-to-high noise regime.
+                   (k)         (k)
+3    Compute We = (Σe )−1                                                           When the sensor position error is negligible, as shown
+                   (k)             (k)
+4    Compute Mreg = GT We G − Λ(k) + λI                                          in Fig. 3(a), the curves are close for small varr . As the
+                (k+1)          (k) −1 T   (k)                                    measurement noise increases, WLS, RWLS, and Taylor de-
+5    Update ẑ          = (Mreg ) G We h
+6    if ∥ẑ (k+1) − ẑ (k) ∥2 < ε then                                           teriorate more rapidly. Standard WTLS is better matched
+7        break                                                                   to the underlying model, but it still becomes less stable in
+                                                                                 the high-noise regime. By comparison, the RMSE of TS-
+ 8     k ←k+1                                                                    RWTLS increases more gradually, suggesting that the regular-
+9  Set ẑstep1 = [ ûTstep1, dˆ1,step1]T                                      ized first step suppresses error amplification associated with
+                                          (ûstep1,x − s1x )2                    ill-conditioned directions in the WTLS normal matrix.
+                                                              
+                    1 0
+                                                            2
+10 Build G2 = 0 1, h2 =  (ûstep1,y − s1y )                                     A similar trend is observed in Fig. 3(b) when the sensor
+                    1 1                         ˆ2
+                                                d1,step1                         position error is small but nonzero. Under larger varr , the
+                                              T                  †               proposed method maintains lower RMSE and bias than stan-
+11 Compute Ψ2 = J2 cov(ẑstep1 ) J2 and W2 = Ψ2
+                     T
+12 Solve ẑ2 = (G2 W2 G2 ) G2 W2 h2
+                                   † T                                           dard WTLS and Taylor. This improvement can be attributed
+13 Recover ûcorr = s1 + sgn(ûstep1 − s1 ) ⊙
+                                                         p
+                                                           |ẑ2 |                not only to enhanced conditioning from regularization, but also
+14 Compute Jstep1 = Jnl (ûstep1 ) and Jcorr = Jnl (ûcorr )
+                                                                                 to the second-step correction, which reduces the inconsistency
+15 if Jcorr ≤ Jstep1 then
+                                                                                 bias introduced by the augmented pseudo-linear formulation.
+16     ûfinal = ûcorr                                                             As the sensor position error becomes larger, as shown
+17 else
+                                                                                 in Fig. 3(c) and Fig. 3(d), the benefit of combining EIV
+18     ûfinal = ûstep1                                                         modeling with numerical stabilization becomes more evident.
+                                                                                 WLS, RWLS, and Taylor suffer substantial degradation in
+                                                                                 the moderate-to-high noise region because they do not fully
+                                                                                 capture the coupled perturbations caused by sensor uncertainty
+trials is set to L = 2000, and the regularization parameter in                   and TDOA noise. Standard WTLS alleviates this mismatch,
+TS-RWTLS is chosen as λ = 10−8 .                                                 but remains vulnerable to ill-conditioning. In contrast, TS-
+   Two groups of variance-sweeping experiments are con-                          RWTLS maintains comparatively low RMSE and bias over
+ducted. In the first group, the sensor position error variance                   most of the high-noise range, indicating that regularized esti-
+vars is fixed while the TDOA measurement error variance varr                     mation and geometric consistency correction jointly improve
+is varied, corresponding to Fig. 3. In the second group, varr is                 robustness against both noise coupling and structural bias.
+fixed while vars is varied, corresponding to Fig. 4. The sweep
+ranges cover weak, moderate, and strong perturbation regimes.                    C. Performance Versus Sensor Position Error Variance
+In addition, a sensor-number experiment is conducted with                           Fig. 4 illustrates the localization performance as a function
+fixed varr = 2 and vars = 2, where the number of sensors                         of sensor position error variance under different TDOA mea-
+varies over M ∈ {4, 5, 6, 7, 8, 10, 12, 16}, corresponding to                    surement noise levels.
+Fig. 5.                                                                             Compared with the previous experiment, these results more
+   The performance metrics are RMSE and bias, defined as                         directly reveal the sensitivity of each method to sensor position
+                         v                                                       uncertainty and further highlight the importance of using an
+                         u
+                         u1 X  L                                                 EIV-consistent formulation.
+               RMSE = t           ∥û(ℓ) − utrue ∥22 ,     (54)                     When the TDOA noise is low, as shown in Fig. 4(a),
+                           L
+                                   ℓ=1                                           the difference among methods is limited in the low-vars
+and                                                                              region. As vars increases, however, WLS, RWLS, and Taylor
+                                  L                                              degrade steadily, and standard WTLS also exhibits a noticeable
+                              1 X (ℓ)                                            increase over part of the sweep. The proposed method retains
+                  Bias =         û − utrue                ,            (55)
+                              L                                                  a lower error level in the high-vars region, which indicates
+                                 ℓ=1                   2
+                                                                                 that modeling perturbations in both the coefficient matrix
+where û(ℓ) denotes the localization estimate in the ℓth Monte                   and observation vector becomes increasingly important once
+Carlo trial.                                                                     sensor position uncertainty dominates the error propagation.
+
+
+
+
+        Authorized licensed use limited to: Stanford University. Downloaded on September 09,2026 at 05:36:33 UTC from IEEE Xplore. Restrictions apply.
+                     Fig 1: No Sensor Error - RMSE (Smoothed)                                 Fig 1: No Sensor Error - Bias (Smoothed)                              Fig 2: Sensor Error 0.01 - RMSE (Smoothed)                                Fig 2: Sensor Error 0.01 - Bias (Smoothed)
+           350                                                                      120                                                                   350                                                                       120
+
+                         WLS                                                                      WLS                                                                    WLS                                                                      WLS
+                         RWLS                                                                     RWLS                                                                   RWLS                                                                     RWLS
+           300                                                                                                                                            300
+                         Taylor                                                     100           Taylor                                                                 Taylor                                                     100           Taylor
+                         WTLS(trad)                                                               WTLS(trad)                                                             WTLS(trad)                                                               WTLS(trad)
+                         TS_RWTLS                                                                 TS_RWTLS                                                               TS_RWTLS                                                                 TS_RWTLS
+           250                                                                                                                                            250
+                                                                                    80                                                                                                                                              80
+
+
+
+
+RMSE (m)                                                                                                                                       RMSE (m)
+           200                                                                                                                                            200
+
+                                                                         Bias (m)                                                                                                                                        Bias (m)
+                                                                                    60                                                                                                                                              60
+           150                                                                                                                                            150
+
+                                                                                    40                                                                                                                                              40
+           100                                                                                                                                            100
+
+
+                                                                                    20                                                                                                                                              20
+           50                                                                                                                                             50
+
+
+            0                                                                        0                                                                     0                                                                         0
+                 0         5             10           15           20                     0        5              10           15         20                    0         5              10          15            20                     0        5              10            15         20
+                                      Variance                                                                 Variance                                                               Variance                                                                 Variance
+
+                                                                 (a) vars = 0                                                                                                                              (b) vars = 0.01
+                     Fig 3: Sensor Error 0.5 - RMSE (Smoothed)                                Fig 3: Sensor Error 0.5 - Bias (Smoothed)                              Fig 4: Sensor Error 3 - RMSE (Smoothed)                                   Fig 4: Sensor Error 3 - Bias (Smoothed)
+           350                                                                      120                                                                   350                                                                       120
+
+                         WLS                                                                      WLS                                                                    WLS                                                                      WLS
+                         RWLS                                                                     RWLS                                                                   RWLS                                                                     RWLS
+           300                                                                                                                                            300
+                         Taylor                                                     100           Taylor                                                                 Taylor                                                     100           Taylor
+                         WTLS(trad)                                                               WTLS(trad)                                                             WTLS(trad)                                                               WTLS(trad)
+                         TS_RWTLS                                                                 TS_RWTLS                                                               TS_RWTLS                                                                 TS_RWTLS
+           250                                                                                                                                            250
+                                                                                    80                                                                                                                                              80
+
+
+
+
+RMSE (m)                                                                                                                                       RMSE (m)
+           200                                                                                                                                            200
+
+                                                                         Bias (m)                                                                                                                                        Bias (m)
+                                                                                    60                                                                                                                                              60
+           150                                                                                                                                            150
+
+                                                                                    40                                                                                                                                              40
+           100                                                                                                                                            100
+
+
+                                                                                    20                                                                                                                                              20
+           50                                                                                                                                             50
+
+
+            0                                                                        0                                                                     0                                                                         0
+                 0         5             10           15           20                     0        5              10           15         20                    0         5              10          15            20                     0        5              10            15         20
+                                      Variance                                                                 Variance                                                               Variance                                                                 Variance
+
+                                                             (c) vars = 0.5                                                                                                                                      (d) vars = 3
+                                        Fig. 3. Localization performance versus TDOA measurement error variance under different sensor position error levels.
+
+
+
+     When the TDOA noise rises to a moderate level, as shown in                                                                                in this extreme case, it remains comparatively more stable,
+  Fig. 4(b), the impact of sensor position uncertainty is further                                                                              suggesting that the regularized first step and the subsequent
+  amplified. In this case, TS-RWTLS preserves lower RMSE                                                                                       correction can partially alleviate severe ill-conditioning.
+  and bias over most of the sweep. This behavior is consistent                                                                                    As the number of sensors increases from 4 to 5 and 6, the
+  with the intended design of the method: the EIV formulation                                                                                  performance of all methods improves rapidly, which confirms
+  addresses the coupled error source, regularization improves                                                                                  the importance of geometric redundancy. In this range, the
+  numerical reliability, and the second-step correction mitigates                                                                              proposed method generally yields lower RMSE and bias than
+  residual geometric inconsistency.                                                                                                            WLS, RWLS, Taylor, and standard WTLS.
+     When the TDOA noise becomes strong, as shown in                                                                                              When the number of sensors increases further to 8 and be-
+  Fig. 4(c), the error coupling is most severe. In this regime,                                                                                yond, all methods continue to improve and gradually become
+  WLS, RWLS, Taylor, and even standard WTLS all show                                                                                           closer. Under sufficiently favorable geometry, TS-RWTLS
+  evident instability in the medium-to-high vars region. The                                                                                   remains competitive with the best baseline and is sometimes
+  proposed method remains comparatively stable, and its ad-                                                                                    slightly better. This indicates that the proposed stabilization
+  vantage becomes more pronounced as the sensor position                                                                                       and correction steps do not compromise performance when
+  uncertainty increases. This result indicates that the method                                                                                 the problem is well conditioned, while providing clear gains
+  is particularly effective when measurement perturbation and                                                                                  when the geometry is weak or the uncertainty is substantial.
+  geometry perturbation act simultaneously.
+                                                                                                                                                                                                     V. C ONCLUSION
+  D. Influence of the Number of Sensors
+                                                                                                                                                  Monte Carlo simulation results show that all compared
+    Fig. 5 presents the localization performance as the number                                                                                 methods can accomplish 2-D target localization, but their
+  of sensors varies, with fixed varr = 2 and vars = 2.                                                                                         estimation accuracy differs. WLS yields the largest RMSE
+    The number of sensors is a key factor in localization                                                                                      and bias, indicating relatively high sensitivity to the coupled
+  performance because it directly affects geometric redundancy                                                                                 effects of node position uncertainty and measurement noise.
+  and conditioning. When the sensor count is small, the array                                                                                  Taylor improves the results through iterative refinement, while
+  geometry is weak and the differences in algorithmic stability                                                                                traditional WTLS further reduces the error by accounting for
+  become most apparent.                                                                                                                        perturbations in both the coefficient matrix and the observation
+    In the small-sensor regime, all methods degrade noticeably.                                                                                vector. Overall, TS-RWTLS consistently achieves the best or
+  At N = 4, the RMSE of every method increases significantly,                                                                                  near-best performance across the tested scenarios. These re-
+  indicating that the geometry is insufficient when only a few                                                                                 sults indicate that the proposed regularization and second-step
+  sensors are available. Although TS-RWTLS also deteriorates                                                                                   geometric correction can effectively mitigate noise coupling,
+
+
+
+
+                      Authorized licensed use limited to: Stanford University. Downloaded on September 09,2026 at 05:36:33 UTC from IEEE Xplore. Restrictions apply.
+                             Fig 5: TDOA Error 0.01 - RMSE (Smoothed)                                         Fig 5: TDOA Error 0.01 - Bias (Smoothed)
+                 300                                                                               80
+                                                                                                                                                                           [3] F. Mandic, N. Mišković, and I. Loncar, “Underwater acoustic source
+                                   WLS                                                                              WLS
+
+                 250
+                                   RWLS
+                                   Taylor
+                                                                                                   70               RWLS
+                                                                                                                    Taylor
+                                                                                                                                                                               seeking using time-difference-of-arrival measurements,” IEEE J. Ocean.
+                                   WTLS(trad)
+                                   TS_RWTLS                                                        60
+                                                                                                                    WTLS(trad)
+                                                                                                                    TS_RWTLS
+                                                                                                                                                                               Eng., vol. 45, pp. 759–771, 2020.
+                 200                                                                                                                                                       [4] L. Zhang, T. Zhang, H.-S. Shin, and X. Xu, “Efficient underwater
+                                                                                                   50
+                                                                                                                                                                               acoustical localization method based on time difference and bearing
+      RMSE (m)                                                                          Bias (m)
+                 150                                                                               40                                                                          measurements,” IEEE Trans. Instrum. Meas., vol. 70, pp. 1–16, 2021.
+                                                                                                   30                                                                      [5] A. Abdullah, D. Blow, S. Rampazzi, and M. J. Islam, “Active
+                 100
+
+                                                                                                   20
+                                                                                                                                                                               localization of close-range adversarial acoustic sources for underwater
+                 50
+                                                                                                                                                                               data center surveillance,” arXiv preprint arXiv:2510.20122, 2025.
+                                                                                                   10
+                                                                                                                                                                               [Online]. Available: https://arxiv.org/abs/2510.20122
+                  0
+                       0            5              10           15              20
+                                                                                                    0
+                                                                                                        0            5              10            15            20
+                                                                                                                                                                           [6] P. Chen, Y. Li, Y. Su, X. Chen, and Y. Jiang, “Underwater terrain
+                                                Variance                                                                         Variance                                      positioning method based on least squares estimation for AUV,” China
+                                                                     (a) varr = 0.01                                                                                           Ocean Eng., vol. 29, no. 6, pp. 859–874, 2015.
+                                                                                                                                                                           [7] T. Yardibi, J. Li, P. Stoica, M. Xue, and A. B. Baggeroer, “Source
+                              Fig 6: TDOA Error 0.5 - RMSE (Smoothed)                                         Fig 6: TDOA Error 0.5 - Bias (Smoothed)
+                 300                                                                               90                                                                          localization and sensing: A nonparametric iterative adaptive approach
+                                   WLS
+                                   RWLS                                                            80
+                                                                                                                    WLS
+                                                                                                                    RWLS
+                                                                                                                                                                               based on weighted least squares,” IEEE Trans. Aerosp. Electron. Syst.,
+                 250               Taylor                                                                           Taylor
+                                   WTLS(trad)                                                      70               WTLS(trad)
+                                                                                                                                                                               vol. 46, no. 1, pp. 425–443, 2010.
+                                   TS_RWTLS                                                                         TS_RWTLS
+                                                                                                                                                                           [8] B. Jin, X. Xu, and T. Zhang, “Robust time-difference-of-arrival (TDOA)
+                 200                                                                               60
+                                                                                                                                                                               localization using weighted least squares with cone tangent plane
+      RMSE (m)
+                                                                                                   50
+
+                                                                                        Bias (m)
+                 150
+                                                                                                                                                                               constraint,” Sensors, vol. 18, no. 3, p. 778, 2018.
+                                                                                                   40
+                                                                                                                                                                           [9] L. Kovavisaruch and K. C. Ho, “Modified taylor-series method for
+                 100                                                                               30                                                                          source and receiver localization using TDOA measurements with er-
+                                                                                                   20                                                                          roneous receiver positions,” in Proc. IEEE Int. Symp. Circuits Syst.
+                 50
+                                                                                                   10                                                                          (ISCAS), 2005, pp. 2295–2298.
+                  0                                                                                 0
+                                                                                                                                                                          [10] L. Zang, C. Shen, K. Zhang, L. Xu, and Y. Chen, “Research on hybrid
+                       0            5              10           15              20                      0            5              10            15            20
+                                                Variance                                                                         Variance
+                                                                                                                                                                               algorithm based on TDOA,” in Proc. IEEE 20th Int. Conf. Commun.
+                                                                                                                                                                               Technol. (ICCT), 2020, pp. 539–542.
+                                                                      (b) varr = 0.5
+                                                                                                                                                                          [11] I. Kravets, O. Kapshii, O. Shuparskyy, and A. Luchechko, “A new
+                               Fig 7: TDOA Error 3 - RMSE (Smoothed)                                           Fig 7: TDOA Error 3 - Bias (Smoothed)                           parametric three-stage weighted least squares algorithm for TDOA-based
+                 300                                                                             100
+
+                                   WLS                                                                              WLS
+                                                                                                                                                                               localization,” IEEE Access, vol. 12, pp. 119 829–119 839, 2024.
+                                                                                                   90
+                                   RWLS                                                                             RWLS
+                 250               Taylor                                                                           Taylor                                                [12] B. Schaffrin and K. Snow, “Towards a more rigorous error propagation
+                                   WTLS(trad)                                                      80               WTLS(trad)
+                                   TS_RWTLS                                                                         TS_RWTLS                                                   within the errors-in-variables model for applications in geodetic net-
+                                                                                                   70
+                 200                                                                                                                                                           works,” in Proc. 4th Joint Int. Symp. Deformation Monitoring (JISDM),
+                                                                                                   60
+                                                                                                                                                                               2019, pp. 15–17.
+      RMSE (m)                                                                        Bias (m)
+                 150                                                                               50
+                                                                                                                                                                          [13] J.-H. Kim and D. Kim, “Weighted total least squares based online
+                                                                                                   40
+                 100
+                                                                                                                                                                               calibration method for RSS-based localization,” in Proc. IEEE/RSJ Int.
+                                                                                                   30
+                                                                                                                                                                               Conf. Intell. Robots Syst. (IROS), 2018, pp. 117–122.
+                                                                                                   20
+                 50                                                                                                                                                       [14] W. Ma and H. Zhu, “Source localization using TDOA with sensor
+                                                                                                   10
+                                                                                                                                                                               position errors based on constrained total least squares and ADMM,”
+                  0                                                                                 0
+                       0            5              10           15              20                      0            5              10            15            20             in Proc. 27th Int. Conf. Inf. Fusion (FUSION), 2024, pp. 1–8.
+                                                Variance                                                                         Variance
+                                                                                                                                                                          [15] L. Wang, X. Shen, Y. Kang, F. Hua, and H. Wang, “Least squares
+                                                                          (c) varr = 3                                                                                         estimation performance for TDOA target localization in underwater
+Fig. 4. Localization performance versus sensor position error variance under                                                                                                   acoustic sensor networks,” Acta Armamentarii, vol. 41, no. 3, p. 542,
+different TDOA measurement error levels.                                                                                                                                       2020.
+                                                                                                                                                                          [16] A. Beck and A. Ben-Tal, “On the solution of the tikhonov regularization
+                           RMSE vs Node Number (varr = 2.00, var s = 2.00)                                   Bias vs Node Number (var r = 2.00, var s = 2.00)
+                                                                                                                                                                               of the total least squares problem,” SIAM J. Optim., vol. 17, no. 1, pp.
+            1500                                                                                1400                                                                           98–118, 2006.
+                                                            WLS                                                                                WLS
+                                                            RWLS
+                                                                                                1200
+                                                                                                                                               RWLS                       [17] Z. Zhang, D. Wang, B. Yang, and L. Jiang, “A robust bias reduction
+                                                            Taylor                                                                             Taylor
+                                                            WTLS(traditional)                                                                  WTLS(traditional)               method with geometric constraint for TDOA-based localization,” Wire-
+                                                            TS_RWTLS                                                                           TS_RWTLS
+
+            1000
+                                                                                                1000                                                                           less Pers. Commun., vol. 138, pp. 945–971, 2024.
+                                                                                                                                                                          [18] L. Zhang, T. Zhang, and H.-S. Shin, “An efficient constrained weighted
+ RMSE (m)
+                                                                                                   800
+
+                                                                                     Bias (m)
+                                                                                                                                                                               least squares method with bias reduction for TDOA-based localization,”
+                                                                                                   600                                                                         IEEE Sensors J., vol. 21, pp. 10 122–10 131, 2021.
+             500
+                                                                                                   400
+                                                                                                                                                                          [19] Y. Kim, B. Lee, H. So, and S.-C. Kim, “Localization technique consider-
+                                                                                                                                                                               ing position uncertainty of reference nodes in wireless sensor networks,”
+                                                                                                   200                                                                         IEEE Sensors J., vol. 18, no. 3, pp. 1324–1332, 2017.
+                  0                                                                                 0
+                                                                                                                                                                          [20] F. Luan and C. Deng, “Passive sensor network localization using TDOA
+                      4        6        8         10       12        14         16                       4      6         8          10      12        14            16
+                                        Number of Sensors N                                                               Number of Sensors N
+                                                                                                                                                                               with sensor position errors,” J. Phys.: Conf. Ser., vol. 2999, no. 1, p.
+                                                                                                                                                                               012037, 2025.
+Fig. 5. Localization performance versus the number of sensors with varr = 2                                                                                               [21] Y. Liu, Y. Wang, and C. Chen, “Efficient underwater acoustical localiza-
+and vars = 2.                                                                                                                                                                  tion method based on TDOA with sensor position errors,” J. Mar. Sci.
+                                                                                                                                                                               Eng., vol. 11, no. 4, p. 861, 2023.
+                                                                                                                                                                          [22] Y. Liu, L. He, G. Fan, X. Wang, and Y. Zhang, “A co-localization
+                                                                                                                                                                               algorithm for underwater moving targets with an unknown constant
+numerical instability, and model mismatch, thereby improving                                                                                                                   signal propagation speed and platform errors,” Sensors, vol. 24, no. 10,
+localization accuracy and robustness.                                                                                                                                          p. 3127, 2024.
+
+                                                                     R EFERENCES
+ [1] X. Su, I. Ullah, X. Liu, and D. Choi, “A review of underwater
+     localization techniques, algorithms, and challenges,” J. Sens., vol. 2020,
+     no. 1, p. 6403161, 2020.
+ [2] T. Kundu, “Acoustic source localization,” Ultrasonics, vol. 54, no. 1,
+     pp. 25–38, 2014.
+
+
+
+
+                           Authorized licensed use limited to: Stanford University. Downloaded on September 09,2026 at 05:36:33 UTC from IEEE Xplore. Restrictions apply.
+

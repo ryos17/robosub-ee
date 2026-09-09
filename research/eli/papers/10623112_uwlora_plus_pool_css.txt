@@ -1,0 +1,473 @@
+                                              Combating Multi-path Interference to Improve
+                                             Chirp-based Underwater Acoustic Communication
+                                                         Wenjun Xie† , Enqi Zhang‡ , Lizhao You† , Deqing Wang† , Zhaorui Wang⋆ , and Liqun Fu†
+                                                                                    †
+                                                                                  School of Informatics, Xiamen University, China
+                                                                                    ‡
+                                                                                      School of Ocean, Fuzhou University, China
+                                                           ⋆
+                                                             School of Science and Engineering, The Chinese University of Hong Kong, Shenzhen, China
+                                                                                   Corresponding Email: lizhaoyou@xmu.edu.cn
+
+
+
+
+arXiv:2311.17624v1 [eess.SP] 29 Nov 2023
+                                              Abstract—Linear chirp-based underwater acoustic communi-          only encodes one bit. Ref. [5] uses the initial frequencies of
+                                           cation has been widely used due to its reliability and long-range    the chirp signal to encode bits. It divide the initial frequencies
+                                           transmission capability. However, unlike the counterpart chirp       into several parts, and let the gap between any two initial
+                                           technology in wireless – LoRa, its throughput is severely limited
+                                           by the number of modulated chirps in a symbol. The fundamental       frequencies be larger than the maximal path delay. In this way,
+                                           challenge lies in the underwater multi-path channel, where the       they can encode more bits.
+                                           delayed copied of one symbol may cause inter-symbol and intra-          The idea of encoding more bits in a chirp symbol has been
+                                           symbol interfere. In this paper, we present UWLoRa+, a system        used by the Long Range (LoRa) technology [1] in wireless
+                                           that realizes the same chirp modulation as LoRa with higher          communication. In particular, given a spreading factor (SF)
+                                           data rate, and enhances LoRa’s design to address the multi-
+                                           path challenge via the following designs: a) we replace the linear   number SF (SF ≥ 6), each LoRa symbol encodes SF
+                                           chirp used by LoRa with the non-linear chirp to reduce the signal    bits. Although the data rate is increased, it is non-trivial
+                                           interference range and the collision probability; b) we design an    to be applied to the underwater channel environment. The
+                                           algorithm that first demodulates each path and then combines         key challenge (more details in Section II-B) lies in that the
+                                           the demodulation results of detected paths; and c) we replace the    delayed copies of the previous symbol may interfere with
+                                           Hamming codes used by LoRa with the non-binary LDPC codes
+                                           to mitigate the impact of the inevitable collision. Experiment       the current symbol (i.e., inter-symbol interference), and the
+                                           results show that the new designs improve the bit error rate         delayed copies of the current symbol may also interfere with
+                                           (BER) by 3x, and the packet error rate (PER) significantly,          the current symbol (i.e., intra-symbol interference). Simply
+                                           compared with the LoRa’s naive design. Compared with an state-       using the strongest signal for decoding as in [6], [7] does
+                                           of-the-art system for decoding underwater LoRa chirp signal,         not work well since the introduced interference may make the
+                                           UWLoRa+ improves the throughput by up to 50 times.
+                                                                                                                strongest signal not a valid data.
+                                                                                                                   In this paper, we present UWLoRa+ that adopts the LoRa’s
+                                                                 I. I NTRODUCTION
+                                                                                                                dense chirp modulation, and enhances LoRa’s design to over-
+                                              Underwater activities have become more and more popular           come the challenging underwater multi-path channel. We first
+                                           in recent years, such as scuba diving or archaeological diving.      replace the linear chirp used by LoRa with the non-linear
+                                           One increasing demand is the reliable and high-rate com-             chirp for modulation. One advantage of the non-linear chirp
+                                           munication. For example, diving people under the water are           is that the energy of the interference signal gets spread if the
+                                           equipped with monitoring sensors, and their body status data         demodulation window is not aligned with the transmission
+                                           (e.g., oxygen level) is transmitted continuously to the gateway      window, and the inter-symbol and intra-symbol interference
+                                           near the sea level for safety monitoring. Video data that is         is greatly reduced. Then, given the non-linear chirp design,
+                                           captured by underwater cameras is expected to be streamed to         we treat each path independently, and align the demodulation
+                                           the gateway in a real-time manner.                                   window to each detected path for demodulation.
+                                              Chirp is a widely used technology for underwater acoustic            Although the signal collision probability is reduced, signal
+                                           communication (UAC). Compared with the alternative orthog-           collision may still be inevitable. To improve the demodulation
+                                           onal frequency division multiplexing (OFDM) technology, the          performance, we design a multi-path combination mechanism
+                                           chirp technology leverages the spread spectrum technique to          to merge demodulation results of each detected path. The
+                                           encode data, where the signal sweeps over a frequency range          intuition is that some detected paths may be less interfered
+                                           during transmission. It is more reliable and thus achieves           and can be fully utilized by combination. Another design is to
+                                           longer transmission range, well-suited for the above appli-          introduce advanced non-binary low-density parity-check (NB-
+                                           cations. There exist a few chirp-based UAC systems [3]–              LDPC) codes to combat the inevitable demodulation errors.
+                                           [7]. Refs. [3], [4] adopt binary orthogonal keying (BOK),            Compared with the binary Hamming codes used by LoRa that
+                                           where the up-chirp signal stands for 1 and the down-chirp            have a short block length, NB-LDPC not only matches the
+                                           signal stands for 0. BOK is robust to the challenging acoustic       M-ary chirp modulation, but also has a longer block length,
+                                           channel. However, it has a low data rate, where each symbol          more reliable to the demodulation errors.
+                                                                                                                                                         Amplitude
+                                                           500
+
+                                               Amplitude                                          Amplitude
+                                                                     (120, 512)                               500       (120, 512)                                   500 (115.5, 498)         (120, 512)
+                      Demodulation
+                        window
+                                                             0                                                 0                                                       0
+Path 1               Target symbol                           100      110     120     130   140                100      110     120          130   140                 100      110        120      130     140
+                                                                            FFT bin                                            FFT bin                                                    FFT bin
+
+
+                                                                                                                                                         Amplitude
+Path 2           Symbol1             Symbol2               500                                                                                                       500
+
+                                               Amplitude
+                                                                    (119, 519)                                         (120, 528)                                          (115.5, 522)
+                      Delay                                                                                                                                                                  (120, 520.7)
+                                                            0                                                                                                          0
+                                                            100       110    120      130   140                                                                        100      110        120      130     140
+                                                                            FFT bin                                                                                                       FFT bin
+
+
+                                                                   (b) Linear chirps with                            (c) Non-linear chirps with                              (d) Non-linear chirps with
+         (a) Simulation scenario (SF=8)
+                                                                     delay=45 samples                                     delay=45 samples                                        delay=0.5 sample
+
+Fig. 1: The peak collision examples. The above figures show their individual signals assuming the demodulation window of
+the target symbol. The below figures show the superimposed signals under the same window.
+
+
+   We perform experiments to collect real chirp signals in an                                      frequency shift f (s) = s· BW             n
+                                                                                                                              2n , s ∈ [0, 2 ), on C(t). The nCSK
+indoor pool, and evaluate the performance of our proposed                                          system [5] choose n to tolerate the maximal path delay. LoRa
+UWLoRa+. Experiment results show that 1) the non-linear                                            [1] chooses n = SF without considering multi-path.
+chirp reduces the symbol error rate (SER) by 2 times and                                              Then, given a signal with frequency shift f (s), the symbol
+the bit error rate (BER) by 3 times compared with the linear                                       frequency starts from f (s) − BW2 , increases linearly with time
+                                                                                                                                                               BW
+chirp for SNR≥-10dB; 2) the adoption of NB-LDPC makes                                              until it reaches BW2  at t =  tf old , and folds down to − 2 .
+PER=0 for SNR≥-5dB, while Hamming codes have PER=1                                                 That is, the transmitted signal of data symbol s is given by
+even for high SNRs (e.g., 10dB); and 3) the use of multi-                                                                      (
+                                                                                                                                     j2π( BW t+f (s)− BW )t
+                                                                                                                                   e      2T  s        2                   , 0 ≤ t ≤ tf old ,
+path combination combination outperforms the straightforward                                                         x(t) =          j2π( BW t+f (s)− 3BW )t
+                                                                                                                                   e      2T  s         2                   , tf old <t ≤ Ts .               (1)
+algorithm that adopts the strongest path for decoding by 0.3
+times to 50 times in terms of the throughput.
+   Overall, this paper makes the following contributions:                                            Linear chirps sweep the frequency linearly. Non-linear
+   1) We identify the multi-path interference problem, and                                         chirps sweep the frequency using a non-linear function, e.g.,
+      adopt the non-linear chirp and the multi-path combina-                                       polynomial, logarithmic, or exponential. For example, for the
+      tion methods for improved demodulation performance.                                          quadratic non-linear chirp, we can write the transmitted signal
+   2) We adopt NB-LDPC to match the M-ary chirp modula-                                            of data symbol s as
+      tion for improved decoding performance, and overcome                                                                           BW t+f (s)− BW )t
+                                                                                                                              ej2π( 3(T s )2      2
+                                                                                                                                                        , 0≤t≤t                               f old ,
+      the inevitable interference problem.                                                                          x(t) =               BW                      3BW )t
+   3) We perform extensive experiments in an indoor pool                                                                      ej2π( 3(Ts )2 t+f (s)−              2
+                                                                                                                                                                             , tf old <t ≤ Ts .              (2)
+      to evaluate our new designs, and show the throughput
+      improvement over the state-of-the-art system.
+                                                                                                      Received Signal. The underwater environment has severe
+                  II. BACKGROUND AND C HALLENGE                                                    multi-paths. For example, due to the slow sound speed under
+   This section presents the system model as background and                                        the water (i.e., around 1500m/s), a path difference of 2.5m
+illustrates the challenge to be tackled.                                                           for 6KHz signal generates a noticeable new path. Let h be
+                                                                                                   the channel, and y(t) be the received signal of x(t). Here
+A. System Model                                                                                    h is a vector, denoting a multi-path channel. In addition to
+   Transmitted Signal. Linear frequency modulation (LFM)                                           the distortion by channel, a carrier frequency offset (CFO) δ
+is the most commonly used chirp signal. The frequency of the                                       between the transmitter and the receiver rotates the phase of
+LFM signal linearly increase (i.e., upchirp) or decrease (i.e.,                                    the received signal. Thus, the received signal can be written
+downchirp). Let the system bandwidth be BW . The frequency                                         as
+of the upchirp ranges from − BW   2  to BW2 . Spreading factor                                                    y(t) = (h ∗ x(t)) · ej2πδt + w(t),         (3)
+(SF) defines the gradient of the frequency sweeping. A chirp
+                                                           2SF                                     where ∗ means convolution, and w is the additive white
+symbol contains N = 2SF samples with duration Ts = BW           .
+                                                                                                   Gaussian noise (AWGN) noise. Let Np be the number of paths.
+   The BOK system [3], [4] simply encodes bit 0 with the
+                                                                                                   The received signal can be re-written as
+upchirp, and bit 1 with the downchirp. Other systems [1],
+                                                                                                                                       Np
+[5]–[7] only use upchirp, and use the initial frequency to                                                                             X
+encode data bits. Let the base upchirp signal with initial                                                               y(t) =              hp · x(t − τp ) · ej2πδt + w(t),                                (4)
+                                               BW     BW
+frequency − BW 2   be written as C(t) = ej2π( 2Ts t− 2 )t . We                                                                         p=1
+
+can cyclically shift the base upchirp to encode more bits. In                                      where hp is the amplitude of the p-th path, and τp is the delay
+particular, we can encode n bits into signal x(t) with an initial                                  (time offset, TO) of the p-th path. Here τp may not be an
+integer multiple of 1/BW . Thus, oversampling is commonly                                           100
+used to increase the timing granularity of the receiver. In
+
+
+
+
+                                                                                Symbol Error Rate
+addition, since the carrier frequency of the acoustic signal is
+usually low (e.g., 20KHz-30KHz), the CFO δ is small and can                                         10-1
+be ignored in practice.
+   Demodulation. For the single-path channel, there are two
+                                                                                                    10-2                           linear
+common non-coherent approaches to demodulate y(t). The
+                                                                                                                                   non-linear
+first approach is to perform match filtering with respect to
+the transmission signals of data {f (0), · · · , f (2n − 1)}, and                                   10-3
+                                                                                                           2   3   4   5   6   7    8    9      10
+decide the element (and the corresponding data) that has the
+maximal correlation result. The other approach named dechirp                                                           Path Num
+is to multiple y(t) with the base downchirp C ∗ (t), and then       Fig. 2: The symbol collision probability with the different
+apply the discrete Fast Fourier Transform (FFT) to find the         number of paths for linear chirps and non-linear chirps.
+position that has the maximal value. The found peak position
+corresponds to the encoded data. Compared with the first            contrast, for the linear chirp, a tiny misalignment only reduces
+approach, the second approach has lower complexity, and is          the height a bit. The energy scattering effect of the non-linear
+the standard approach in demodulating the LoRa signal.              chirp makes it well-suited for handling multi-path collisions,
+B. Challenge                                                        where we can shift the demodulation window to align each
+                                                                    path without introducing much interference from other paths.
+   Although the above dechirp approach is effective for single-     Fig. 1(c) shows the effect of adopting non-linear chirps under
+path systems, the approach faces the peak collision problem         the same setup with Fig. 1(b). Due to the large path delay,
+when several paths exist in the system. In particular, given a      interference symbols have negligible peaks, and do not cause
+demodulation window, each path has a peak that is determined        a demodulation error.
+by the modulated data and the TO with respect to the window.           We also perform simulations to measure the peak collision
+The delayed copies of the previous symbol may collide with          probability with different number of paths. The simulation
+the current symbol if the positions of these peaks are close        scenario is the same with Fig. 1(a). We only focus on the
+(i.e., inter-symbol interference). The delayed copies of the        demodulation of the target symbol. We randomly generate
+current symbol may collide with the current symbol if the           the data of the target symbol and the previous symbol, and
+positions of these peaks are close (i.e., intra-symbol interfer-    randomly generate the path delays within the range the symbol
+ence). Both may lead to a wrong decision.                           duration (SF =8, BW =6KHz). Fig. 2 shows the symbol colli-
+   Fig. 1 shows the peak collision examples. We consider a          sion probability considering the linear chirp and the non-linear
+typical collision scenario where the current (target) symbol is     chirp, where a decision error is counted as a collision. We can
+interfered by the previous symbol (symbol1 ) and the delayed        find that the symbol error rate (SER) increases dramatically as
+copy of the current symbol (symbol2 ) with SF =8 as shown in        the number of paths increase, and is non-negligible (0.1) for
+Fig. 1(a). We assume no noise, and the oversampling rate is 2.      the linear chirp with four paths. Instead, adopting non-linear
+The demodulation window is aligned with the target symbol,          chirps reduces the SER by an order of magnitude.
+and misaligned with the two interference symbols. The above
+part of Fig. 1(b) shows their individual signals with path delay    B. Adopting Non-Binary LDPC
+45 samples, where there are one noticeable peak (i.e., the target      Although non-linear chirps can alleviate the peak collision
+symbol) and some small peaks (i.e., symbol1 and symbol2 ).          problem, they cannot completely remove the collision. For
+However, due to the multi-path interference, the peak position      example, in Fig. 1(d), the symbol error could also happen
+of the superimposed signal changes as shown in the below            if the path delay is small even with the non-linear chirp. We
+part of Fig. 1(b), leading to a demodulation error.                 leverage channel codes to overcome the errors. One simple
+                                                                    choice is the Hamming codes adopted by LoRa with coding
+                    III. S YSTEM D ESIGN                            rate CR ∈ { 45 , 46 , 47 , 84 }. Each block has at most 8 bits, and
+  This section provides two novel design in our system. Based       can correct at most 1 bit error.
+on these design, we present the overall algorithm.                     Although Hamming codes is very simple, its error protection
+                                                                    capability is pretty limited. If one block of a packet cannot
+A. Adopting Non-Linear Chirps                                       be corrected, the whole packet is erroneous. When facing the
+   Inspired by the algorithm [26] for decoding LoRa’s multi-        error pattern in the collision symbol, the Hamming codes could
+user collision signal, we first address the peak collision prob-    not correct packet errors, since each symbol encounters the
+lem through the non-linear chirp. The advantage of the non-         same multi-path interference and has the same error pattern.
+linear chirp is the energy scattering effect [26]: only when the    The experiment results in Section IV show that Hamming
+demodulation window is almost aligned with the target signal’s      codes have a high packet error rate under the multi-path chan-
+window, the dechirp operation shows a sharp peak; if there is       nel. A new channel codes with high error protection capability
+a tiny misalignment, the height of peaks is greatly reduced. In     and suitable implementation complexity is preferred.
+                              1                                                          UWA                               1. Packet and path detection                         2. Demodulation
+                                                      LDPC Soft
+                                                                                        Channel               ...
+                                                      LDPC Hard                                                                   Path            Start Positions                           Sliding
+                                                      NB-LDPC Hard                                                               Detector                                                   Window
+
+
+
+
+           Bit Error Rate
+                                                                          Transmitter                                                             ...
+                                                      NB-LDPC Soft                           Oversampling
+                                                                                                                                                                                            Dechirp
+                            10-1                      HAMMING                                  Receiver                                              ...
+
+                                                                                                                                                                                 peaks
+                                                                                        4. Packet decoding                 3. Multi-path combination
+
+                            10-2                                                                                                Path 1 Symbol 1           Path 2 Symbol 1               Demod Result
+                                                                                                   NB-LDPC                                                                                     ✔
+
+
+                                                                                                                    Amplitude                     Amplitude                     Amplitude
+                                                                                                    Decoder
+                                                                          Payload data                                                        +                             =
+                                                                                                                                   FFT bin                    FFT bin                        FFT bin
+
+
+                               -25   -20     -15       -10           -5       Fig. 4: The overall workflow of the UWLoRa+ system.
+                                           SNR (dB)
+Fig. 3: BER Performance of NB-LDPC, Binary-LDPC, Ham-                     LLR. The LLR of the j-th bin is defined as
+ming Codes assuming the LoRa chirp modulation with SF =
+8 under the AWGN channel.                                                                                     amp(i) − min(amp)
+                                                                                                  ampn (j) =                     ,
+                                                                                                            max(amp) − min(amp)
+                                                                                                                            
+                                                                                                                   ampn (i)
+                                                                                                   P r(j) = exp P              ,                                                                       (5)
+   We note that the advanced chirp modulation encodes several                                                       ampn (i)
+bits per symbol. It is similar to the high-order modulation                                                   
+                                                                                                                P r(j)
+                                                                                                                       
+such as quadrature amplitude modulation (QAM). Non-binary                                         LLR(j) = ln            ,
+                                                                                                                P r(0)
+channel codes that have a GF (q) finite field can achieve better
+performance with high-order modulations. Inspired by this                 where max(·) is the max function, min(·) is the min function,
+observation, we advocate the use of non-binary channel codes              and exp(·) is the exponential function.
+in our chirp system, since a chirp symbol also encodes several              Fig. 3 shows the preliminary study of adopting NB-LDPC
+bits. In particular, we adopt the non-binary LDPC codes with              codes in the chirp system under the AWGN channel. We
+GF (2SF ).                                                                compare the performance of NB-LDPC with that of Hamming
+                                                                          codes and binary LDPC codes, and find that NB-LDPC has
+   One disadvantage of using the non-binary channel codes
+                                                                          the best performance under the AWGN channel, making it
+is the high decoding complexity, since there are q elements
+                                                                          promising to work for the multi-path channel.
+whose probabilities are to be computed in the GF (q) field.
+However, such problem may not be an issue for our data                    C. The Overall Algorithm
+monitoring application, since i) there is only uplink traffic
+in our application, and ii) the encoding complexity (i.e., the               Fig. 4 illustrates the workflow of our system which involves
+finite field addition) can be negligible compared with the                four key steps, i.e., packet and path detection, demodulation,
+decoding complexity. Thus, the weak terminals underwater                  multi-path combination and packet decoding. We adopt the
+implement the encoder, and the strong gateway above the water             frame format similar to LoRa with preambles, Start Frame
+implements the decoder.                                                   Delimiters (SFD), and data symbols. Preambles and SFDs are
+                                                                          still modulated through the linear chirp, and data symbols are
+   The decoding of NB-LDPC is similar to the binary LDPC.                 modulated through the non-linear chirp. Each symbol encodes
+Given the tanner graph, we use the Q-ary sum product al-                  SF bits.
+gorithm (QSPA) [29] for decoding. The decoding probability                   We employ an over-sampling receiver with sliding windows
+messages are passed from the variable nodes to the check                  and cross correlation to detect the existence of a packet and
+nodes, and from the check nodes to the variable nodes, until              all paths. In particular, we first divide the signal into chunks,
+the algorithm converges. Instead of only passing probabil-                and measure the energy of each chunk. If the energy surpasses
+ities of bits (0, 1), QSPA passes the probabilities of bits               the threshold, the chunk may contain preambles of the packet.
+(0, 1, · · · , q − 1), and the check nodes generate the update            Then, we take each sample within the window as a potential
+equations based on the mod(q) operation. Since there are q                starting position, intercept a signal of the symbol length, and
+elements in the field, an update equation may involve with                perform cross correlation with the standard preamble. Samples
+q d−1 combinations for a check node with degree d, and thus               whose correlation results surpass the predefined threshold are
+QSPA has a high implementation complexity. We implement                   considered as starting indexes of paths. Note that to alleviate
+the Fast Fourier Transform-QSPA (FFT-QSPA) algorithm [29]                 the impact of sidelobes, we set a cancellation length to avoid
+to reduce the computation complexity.                                     considering samples that are within the cancellation range to
+   Another issue is how to derive the Log Likelihood Ratio                be the start of the possible paths.
+(LLR) probability for the NB-LDPC decoding, especially for                   After detecting all possible paths, we perform demodulation
+the chirp modulation. Given the spreading factor SF , there               for each path. In particular, we use a symbol length as the step
+are 2SF elements in the field. We adopt the dechirp approach,             size to sliding windows, multiply the windowed signal by the
+and assume the amplitude of the j-th bin in the demodulation              standard downchirp and then perform FFT to demodulate these
+window is ampj . The SoftMax approach is used to compute                  time-aligned signals. Then we preserve both the frequency
+                                                         0.4                                   packets, and let the receiver log the signal. The processing is
+
+
+
+
+                                  Normalized Amplitude
+                                                                                               on the logged signal. In each position, we randomly generate
+                                                         0.3
+                                                                                               100 packets. We measure 10 positions to sample different
+                                                         0.2                                   multi-path channel, and add the Gaussian noise to emulate
+                                                                                               different SNRs. We show the average results.
+                                                         0.1
+
+                                                          0
+                                                                                               B. Experiment Results
+                                                               0   10      20        30   40
+                                                                        Delay (ms)                Linear vs. Non-Linear. We first compare the demodulation
+              (a)                                                       (b)                    performance using linear chirps and non-linear chirps. In the
+                                                                                               same position, we try the linear chirps and the non-linear
+Fig. 5: (a) The experiment environment: an indoor pool; (b) a                                  chirps using the same data. Both have the multi-path combina-
+typical channel measured in the pool environment.                                              tion. Fig. 6(a) shows the symbol error rate (SER) and bit error
+                                                                                               rate (BER) results (before channel decoding, or RawBER) for
+and amplitude of the peaks that their amplitudes exceed the                                    these two schemes. Non-linear chirps outperform linear chirps
+threshold. The reason for not preserving the maximal peak                                      in both SER and BER. The improvement is 2x and 3x for
+only is that the target peak may be interfered by the multi-                                   SNR≥-10dB, respectively. These results confirm the benefit
+path signal and the sidelobes introduced by fractional TOs,                                    of using non-linear chirps to reduce peak collision. Thus, we
+and may not be the maximal one.                                                                adopt the non-linear chirp in the following experiments.
+   The preserved multiple peaks can also be used for the                                          Hamming vs. NB-LDPC. Although non-linear chirps are
+multi-path combination to leverage multi-path diversity. Note                                  adopted, a BER error floor of 10−1 still exists as shown in Fig.
+that some paths may be interfered so that the maximal peak                                     6(a). Channel codes are essential to remove the error floor.
+may not be the target peak, and some paths may not be                                          We compare Hamming codes and NB-LDPC. (4,8) Hamming
+interfered so that they have a clean window with correct peaks.                                codes are implemented. The generator matrix of NB-LDPC is
+Therefore, we add the amplitudes of these path windows with                                    generated as follows: we first generate the matrix for binary
+the same data, and retain the maximal peak of the new window.                                  LDPC, and then replace positions that have 1 with random
+In this way, interference peaks may be filtered out.                                           values within GF (28 ). Since the decoding results depend on
+   After the multi-path combination, we perform packet decod-                                  the interaction between modulated data and the channel, we
+ing. To address the unavoidable demodulation errors in each                                    apply the same demodulation error pattern to compare their
+symbol and match the M-ary chirp modulation, we adopt the                                      performance instead of using different error patterns.
+NB-LDPC channel codes. We follow the steps in Section III-B                                       Fig. 6(b) shows the packet error rate (PER) after applying
+to realize demodulation and decoding.                                                          Hamming codes and NB-LDPC codes. The Hamming codes
+                                                                                               with block 8 cannot deal with the bit errors, and thus has
+              IV. P ERFORMANCE E VALUATION                                                     PER=1 for almost all SNRs. Instead, the NB-LDPC codes
+  In this section, we present the experiment setup and the                                     have superior performance: PER becomes 0 when SNR≥-5
+experiment results.                                                                            dB. The results imply the NB-LDPC codes are suitable not
+                                                                                               only for the M-ary chirp modulation, but also for the multi-
+A. Experiment Setup                                                                            path interference scenario.
+   Fig. 5(a) shows the experiment environment – an indoor                                         UWLoRa+ vs. SOTA. Then, we compare the throughput
+pool full of water with length 4.6m, width 3.0m, and depth                                     of UWLoRa+ (i.e., Merge) with that of the state-of-the-art
+1.5m. We deploy two transducers, one transmitter and one                                       (SOTA) system [6] for decoding the underwater LoRa chirp
+receiver. Both are below the water 0.5m and have distance                                      signal. The SOTA system simply demodulates the strongest
+at least 3m. They can transmit and receive passband signals.                                   path ignoring all other paths (i.e., NoMerge). For fair com-
+The frequency range of the generated chirp signal is 22KHz                                     parison, we also adopt NB-LDPC for the SOTA system.
+to 28KHz with bandwidth 6KHz. The pool environment has                                         Fig. 6(c) shows their throughput. UWLoRa+ outperforms the
+the most challenging multi-paths due to wall reflections. Fig.                                 SOTA system by 30%-50% (≥0dB), 120% (-5dB) to 5000%
+5(b) shows a typical channel of the environment measured                                       (-10dB). The improvement is mainly due to the adoption of the
+using a known signal: there are many noticeable paths, and                                     multi-path combination mechanism. Meanwhile, UWLoRa+
+the amplitude of other paths may be larger than the first path.                                approaches the optimal throughput 93.75bps for SNR≥-5dB.
+UWLoRa+ adopts the quadratic non-linear chirp, SF = 8 and
+NB-LDPC with the coding rate 1/2. The source packet has                                                             V. R ELATED W ORK
+400 bits (i.e., 50 symbols). After channel coding, the packet                                    Chirp-based UAC: Chirp signal has been used in UAC.
+length is 800 bits (i.e., 100 symbols).                                                        Refs. [8], [9] use CSS signal for preamble synchronization.
+   Different from [6], [7] that use profiled channel for simu-                                 Refs. [3] and [4] use the BOK modulation. Ref. [5] extends the
+lation, we adopt the trace-driven approach to evaluate algo-                                   modulation to chirp-nCSK, where n is chosen to tolerate the
+rithms. In particular, we generate passband signals of these                                   maximal path delay. Ref. [6] is the first paper to advocate the
+packets, fix some positions, let the transmitter transmit several                              use of LoRa-like chirps, and further analysis is performed in
+                          1                                        1                                             1                                         100                                        100
+                                                                                                                                         HM PER (L)
+
+
+
+
+     Symbol Error Rate                                                                      Packet Error Rate                                                                      Throughput (bps)
+                                                                                                                                                                                                                  NoMerge
+                                                                                                                                         NB-LDPC PER (L)
+
+
+
+
+                                                                           Bit Error Rate                                                                         Bit Error Rate
+                         0.8                                                                                                             HM BER (R)                                                               Merge
+                                                                                                                                         NB-LDPC BER (R)                                                          Optimal
+                         0.6                                                                                    0.5                                        10-1                                       50
+
+                                 Linear CSS SER (L)
+                         0.4     NL CSS SER (L)                    0.1
+                                 Linear CSS RawBER (R)
+
+                                                                                                                                                         10-2
+                                 NL CSS RawBER (R)                                                                                                                                                     0
+                         0.2                                        0.05                                         0
+                           -25   -20   -15   -10     -5   0   5   10                                             -20   -15   -10   -5      0     5     10                                                   -20     -15   -10     -5   0   5   10
+                                             SNR (dB)                                                                          SNR (dB)                                                                                     SNR (dB)
+                                                   (a)                                                                             (b)                                                                                      (c)
+
+Fig. 6: (a) SER and RawBER results for adopting linear chirps and non-linear chirps; (b) PER and BER results for adopting
+Hamming codes and NB-LDPC codes; (c) throughput results of UWLoRa+ (Merge) and the SOTA system (NoMerge).
+
+[7]. However, the demodulation algorithm using the strongest                                                                        [2] Q. Wang, Non-linear chirp spread spectrum communication systems of
+path limits its performance. Our system improves the decoding                                                                           binary orthogonal keying mode. The University of Western Ontario
+                                                                                                                                        (Canada), 2015.
+performance via separating/merging each path and advanced                                                                           [3] W. Lei, D. Wang, Y. Xie, B. Chen, X. Hu, and H. Chen, “Implementation
+channel codes. Chirp modulation is also in combined use                                                                                 of a high reliable chirp underwater acoustic modem,” in Oceans 2012-
+with FSK [10], and is extended to the orthogonal chirp                                                                                  Yeosu. IEEE, 2012, pp. 1–5.
+division multiplexing (OCDM) modulation [11]. Our system                                                                            [4] J. A. Neasham, G. Goodfellow, and R. Sharphouse, “Development of
+                                                                                                                                        the “Seatrac” miniature acoustic modem and USBL positioning units
+is orthogonal to them, and can be extended to support them.                                                                             for subsea robotics and diver applications,” in OCEANS 2015-Genova.
+   Multi-Packet Reception for LoRa: Decoding multi-users’                                                                               IEEE, 2015, pp. 1–8.
+LoRa signal has been well studied recently. Different from the                                                                      [5] Z. Jia, W. Zheng, and F. Yuan, “A two-dimensional chirp-mfcsk mod-
+                                                                                                                                        ulation method for underwater LoRa system,” IEEE Internet of Things
+underwater multi-path channel, they assume the single-path                                                                              Journal, vol. 9, no. 23, pp. 24 388–24 397, 2022.
+channel, and decode each user’s data. Choir [21] leverages                                                                          [6] F. Steinmetz and B.-C. Renner, “Taking LoRa for a dive: CSS for low-
+the distinct frequency offsets to identify users, which does                                                                            power acoustic underwater communication,” in 2022 Sixth Underwater
+                                                                                                                                        Communications and Networking Conference (UComms). IEEE, 2022,
+not hold in the single-user scenario. FTrack [14], OCT [15],                                                                            pp. 1–5.
+Pyramid [19], AlignTrack [20], CIC [24], PCube [23], and                                                                            [7] A. Petroni, G. Scarano, R. Cusani, and M. Biagit, “Feasibility and
+CurvingLoRa [26] leverage the frequency, power and phase                                                                                performance analysis of underwater acoustic LoRa modulation,” in IEEE
+diversity to resolve collisions. However, they all cannot handle                                                                        ICC Workshops, 2023, pp. 709–714.
+                                                                                                                                    [8] F. Steinmetz, J. Heitmann, and C. Renner, “A practical guide to chirp
+the peak collision problem, especially the collision problem                                                                            spread spectrum for acoustic underwater communication in shallow
+under the multi-path channel. Our previous work LoRaPDA                                                                                 waters,” in ACM WUWNet, 2018, pp. 1–8.
+[25] solves the peak collision problem but assumes time-                                                                            [9] E. Coccolo, F. Campagnaro, D. Tronchin, A. Montanari, R. Francescon,
+synchronized transmissions. Our system does not have such                                                                               L. Vangelista, and M. Zorzi, “Underwater acoustic modem for a morph-
+                                                                                                                                        ing distributed autonomous underwater vehicle (MODA),” in OCEANS
+assumption, and studies non-linear chirps and advanced chan-                                                                            2022-Chennai. IEEE, 2022, pp. 1–8.
+nel codes to combat the peak collision problem, and designs a                                                                      [10] L. R. LeBlanc, M. Singer, P.-P. Beaujean, C. Boubli, and J. R. Alleyne,
+multi-path combining mechanism to enhance the performance.                                                                              “Improved chirp FSK modem for high reliability communications in
+                                                                                                                                        shallow water,” in OCEANS 2000. IEEE, 2000, pp. 601–603.
+                       VI. C ONCLUSION                                                                                             [11] X. Ouyang and J. Zhao, “Orthogonal chirp division multiplexing,” IEEE
+                                                                                                                                        Transactions on Communications, vol. 64, no. 9, pp. 3946–3957, 2016.
+   In this paper, we present a new system UWLoRa+ that                                                                             [12] ——, “Orthogonal chirp division multiplexing,” IEEE Transactions on
+enables LoRa’s dense chirp modulation for UAC and tackles                                                                               Communications, vol. 64, no. 9, pp. 3946–3957, 2016.
+the severe multi-path interference problem. UWLoRa+ adopts                                                                         [13] X. Wang, L. Kong, L. He, and G. Chen, “mLoRa: A multi-packet
+                                                                                                                                        reception protocol in LoRa networks,” in IEEE ICNP, 2019.
+three techniques: a) the non-linear chirp reduces the collision
+                                                                                                                                   [14] X. Xia, Y. Zheng, and T. Gu, “FTrack: Parallel decoding for LoRa
+probability significant compared with the linear chirp; b) the                                                                          transmissions,” in ACM SenSys, 2019, pp. 192–204.
+multi-path combination improves the demodulation perfor-                                                                           [15] Z. Wang, L. Kong, K. Xu, L. He, K. Wu, and G. Chen, “Online
+mance; and c) non-binary channel codes match the M-ary chirp                                                                            concurrent transmissions at LoRa gateway,” in IEEE INFOCOM, 2020,
+                                                                                                                                        pp. 2331–2340.
+modulation for improved performance, and remove the error
+                                                                                                                                   [16] S. Tong, Z. Xu, and J. Wang, “CoLoRa: Enabling multi-packet reception
+floor due to the inevitable signal collision. Experiment results                                                                        in LoRa,” in IEEE INFOCOM, 2020.
+confirm the benefit of these designs, and show at most 50                                                                          [17] S. Tong, J. Wang, and Y. Liu, “Combating packet collisions using non-
+times improvement over the SOTA system. In the future, we                                                                               stationary signal scaling in LPWANs,” in ACM MobiSys, 2020.
+                                                                                                                                   [18] Z. Xu, S. Tong, P. Xie, and J. Wang, “FlipLora: Resolving collisions
+will study the mobile scenario with the Doppler effect and                                                                              with up-down quasi-orthogonality,” in IEEE SECON, 2020.
+explore the random access scenario with multiple users.                                                                            [19] Z. Xu, P. Xie, and J. Wang, “Pyramid: Real-time LoRa collision
+                                                                                                                                        decoding with peak tracking,” in IEEE INFOCOM, 2021, pp. 1–9.
+                                                    R EFERENCES                                                                    [20] Q. Chen and J. Wang, “AlignTrack: Push the limit of LoRa collision
+ [1] J. C. Liando, A. Gamage, A. W. Tengourtius, and M. Li, “Known                                                                      decoding,” in IEEE ICNP, 2021, pp. 1–11.
+     and unknown facts of LoRa network: Experiences from a large-scale                                                             [21] R. Eletreby, D. Zhang, S. Kumar, and O. Yağan, “Empowering low-
+     measurement study,” ACM Transactions on Sensor Networks, vol. 15,                                                                  power wide area networks in urban settings,” in ACM SIGCOMM, 2017,
+     no. 2, pp. 1–35, 2019.                                                                                                             pp. 309–321.
+[22] B. Hu, Z. Yin, S. Wang, Z. Xu, and T. He, “SCLoRa: Leveraging
+     multi-dimensionality in decoding collided LoRa transmissions,” in IEEE
+     ICNP, 2020.
+[23] X. Xia, N. Hou, Y. Zheng, and T. Gu, “PCube: Scaling LoRa concurrent
+     transmissions with reception diversities,” in ACM MobiCom, 2021, pp.
+     670–683.
+[24] M. O. Shahid, M. Philipose, K. Chintalapudi, S. Banerjee, and B. Krish-
+     naswamy, “Concurrent interference cancellation: Decoding multi-packet
+     collisions in LoRa,” in ACM SIGCOMM, 2021, pp. 503–515.
+[25] Z. Tang, L. You, H. Dai, and L. Fu, “Quick and reliable physical-
+     layer data aggregation in LoRa through multi-packet reception,” in IEEE
+     SECON, 2022, pp. 118–126.
+[26] C. Li, X. Guo, L. Shangguan, Z. Cao, and K. Jamieson, “CurvingLoRa
+     to boost LoRa network throughput via concurrent transmission,” in
+     USENIX NSDI, 2022, pp. 879–895.
+[27] R. Rathi and Z. Zhang, “Tnb: resolving collisions in LoRa based on
+     the peak matching cost and block error correction,” in ACM CoNEXT,
+     2022, pp. 401–416.
+[28] Y. Wang, F. Zhang, X. Zheng, L. Liu, and H. Ma, “Decoding lora col-
+     lisions via parallel alignment,” ACM Transactions on Sensor Networks,
+     2022.
+[29] L. Barnault and D. Declercq, “Fast decoding algorithm for LDPC over
+     GF(2 power q),” in IEEE ITW, 2003, pp. 70–73.
+

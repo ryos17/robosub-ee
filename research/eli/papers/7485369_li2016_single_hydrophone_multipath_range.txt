@@ -1,0 +1,429 @@
+    Multipath-based Passive Source Range Localization with
+             a Single Hydrophone in Deep Ocean
+                            Hui Li, Kunde Yang*, Member, IEEE, Rui Duan, Qiulong Yang
+          School of Marine Science and Technology, Northwestern Polytechnical University, Xi’an 710072, China
+Key Laboratory of Ocean Acoustics and Sensing (Northwestern Polytechnical University), Ministry of Industry and Information
+                                       Technology, Xi’an 710072, Shaanxi, China
+
+   Abstract—This paper presents a single-hydrophone based                             range source localization[8]. A strong bottom bounce path was
+method for source range localization from information contained in                    detected in the bearing-time record (BTR) during the North
+the multipath propagation in the reliable acoustic path (RAP)                         Pacific Acoustic Laboratory Philippine Sea 2009 experiment[9].
+environment. The time delays between the direct (D) and the                                 In the deep ocean, besides the surface duct and the deep
+surface-reflected (SR) arrivals are obtained from the
+autocorrelation of the received signal and are compared with the D-
+                                                                                      sound channel, the RAP is another useful acoustic duct for
+SR time delays predicted by the acoustic model. Because of the high                   moderate sound propagation[10-12]. For a source near the
+bottom-reflection loss and uncertainty of bottom properties, only                     surface, a receiver below the critical depth, and ranges within
+the D-SR time delays are robust information for source localization.                  one-half a convergence zone (CZ), RAP is the direct (D) and
+If the source depth is assumed known, the D-SR time delays versus                     possibly surface-reflected (SR) path with no bottom interaction
+source range can be predicted by the acoustic model. Reliable                         [13]. A modified Fourier transform-based method for passive
+source track is then given through a family of measurements of the                    source depth estimation by exploiting the spatial structure
+estimated source range during a period of time. Experimental data                     resulting from the coherent addition of the D and SR paths was
+from a sea trial in South China Sea show that a sound source                          introduced by McCargar and Zurk[13]. Duan et al. [11] utilized
+emitting 700-1500 Hz LFM sweeps could effectively be located
+within a range of 13km. The proposed method may be of advantage
+                                                                                      the D-SR time delays extracted from the autocorrelation
+to source localization due to its simplicity.                                         functions for moving source localization.
+                                                                                            In the RAP environment, the reflection losses of bottom-
+   Keywords —RAP, Multipath time delays, single hydrophone,                           interacting arrivals are large, and only the D-SR time delays
+source ranging.                                                                      could be observed distinctly and exploited for source ranging.
+                                                                                      The method presented in this paper does not directly estimate D-
+                              I. INTRODUCTION                                         SR time delays from the autocorrelation function of the received
+      Ocean waveguide has many peculiar properties such as                            signal, but predicts the D-SR time delays spanned by the
+multipath propagation and broadband dispersion. The measured                          possible source range with acoustic model.
+multipath effects and dispersion phenomena can be used for                                This paper is organized as follows. Section II presents the
+source localization and geoacoustic inversion, etc. In shallow                        basic principle of autocorrelation function and the ray model-
+water, single hydrophone source localization was achieved by                          based source range tracking method. Section III shows the
+matching the subspace spanned by the delayed source signal                            results of source range tracking obtained in a South China Sea
+paths with the subspace spanned by the replicas provided by the                       experiment. Some application restrictions are discussed in
+model[1]. By designing neighboring constraints, Zhang et al.[2]                       Section IV. Finally, Section V draws some conclusions.
+proposed a robust localization method based on the
+autocorrelation function of wide-band signal of single                                                       II. THEORY AND SIMULATION
+hydrophone. Because dispersion carries information about the
+environment, modal group velocities could be estimated with a                         A. Autocorrelation Function
+single receiver by time-frequency warping transforming, and the                             The ocean is an acoustic waveguide limited above by the
+results were used for geoacoustic inversion[3, 4]. The acoustic                       sea surface and below by the seafloor. There exists a typical
+field interference striations caused by multipath and dispersion                      classification of ray paths in the ocean, which includes four
+were also used for source ranging[5] and geoacoustic                                  types of rays, i.e., D, SR, bottom-reflected (BR), and surface-
+inversion[6] with a single hydrophone. The interference                               bottom-reflected (SBR) paths. For a receiver point, the received
+striations could be explained through the variation of the                            signal is composed of all or part of the paths described above
+eigenray arrival times[7]. In deep ocean, the multipath effect and                    and each path has its arrival time. For a broadband source, the
+dispersion phenomena were also observed and used for long                             time delays between multipath arrivals can be observed from the
+                                                                                      received signal’s autocorrelation function, which is defined
+                                                                                      as[11]
+
+    *Corresponding Author. Email: ykdzym@nwpu.edu.cn
+
+
+
+
+            Authorized licensed use limited to: Stanford University. Downloaded on September 09,2026 at 05:35:26 UTC from IEEE Xplore. Restrictions apply.
+                         1     T W                                                                                    motivation of this paper is to present a method for locating
+                             ³
+                       T W t 0
+                                                R W
+                                    s(t  W ) s(t )dt ,    (1)                                                         source range only using the D-SR time delays.
+where T is the duration time of a selected time window, τ is the                                                       B. Ray Model-based Source Range Localization Method
+time delay, and s(t) is the received signal in the time window.                                                              For the RAP where the receiver is below the critical depth
+The normalized autocorrelation function is denoted as                                                                  while the source is near the surface, the arrival structure has
+                                                                  R(W )  j H ( R(W ))                                 special properties. For the same geometry in Fig. 1, the ray-
+                                                      R(W )                                     ,                (2)
+                                                                          R(0)                                         arrival times and amplitudes predicted with Bellhop[16] are
+where H(∙) is the Hilbert transform and | ∙ | is the absolute value,                                                   shown in Fig. 2. Fig. 2(a) shows four groups of arrivals with
+                                                                                                                       different bottom-bounce times. Due to the interaction with the
+the numerator is the envelope of R(τ), j equals -1 , and R(0) is                                                       bottom, the late arrivals are weak. Fig. 2(b) shows the details of
+the power of the received signal.                                                                                      the first group. Four arrivals are D, SR, BR, and SBR arrivals in
+      To show the properties of the multipath propagation in a                                                         sequence.
+RAP environment, a range-independent and noise-free
+environment with water depth 4400 m is assumed. A refracting
+
+
+                                                                                                                                   Normalized Amplitude
+                                                                                                                                                           1
+
+Munk[14] sound speed profile (SSP) is used. The bottom is                                                                                                                                                          (a)
+
+
+modeled by a half space with sound speed, density, and                                                                                                    0.5
+
+attenuation being 1600 m/s, 1.6 g/cm3, and 0.14 dB/λ,
+respectively. A broadband source at the depth of 29 m emits                                                                                                0
+                                                                                                                                                                5          10             15             20                25
+LFM sweep with duration being 1.5 s and frequency band from
+
+
+
+                                                                                                                                   Normalized Amplitude
+700 to 1500 Hz. A receiver at the depth of 4270 m is 7 km away                                                                                             1
+                                                                                                                                                                                                                   (b)
+from the source. The ray propagation model[15] is used. The                                                                                                         D      SR
+
+normalized autocorrelation function of the received signal is                                                                                             0.5
+                                                                                                                                                                                            BR                 SBR
+shown in Fig. 1. Four peaks due to the D and SR arrivals (D-SR
+peak), the D and BR arrivals (D-BR peak), the D and SBR                                                                                                    0
+                                                                                                                                                           5.3      5.35   5.4    5.45    5.5    5.55    5.6        5.65   5.7
+                                                                                                                                                                                     Time Delay (s)
+arrivals (D-SBR peak), and the SR and BR arrivals (SR-BR
+                                                                                                                        Fig. 2. Ray model-based predicted arrival structure on a receiver of 4270 m in
+peak) are labeled in Fig. 1. Since the source is close to the sea                                                               depth along with a source of 29 m in depth and 7 km in range.
+surface, the D-SR time delay is relatively short. Besides, for the                                                          In a real passive sonar system, the received signal is
+high reflection loss from the bottom, the peaks related to the BR                                                      discretely sampled. For the autocorrelation function, the time
+arrival are much weaker than the D-SR peak.                                                                            delay τ is displayed by the discrete-time index. Consequently,
+                                           1                                                                           the D-SR peak shown in Fig. 1 corresponds to a certain discrete-
+                                          0.9                                                                          time index, which is referred to as Delay Number, ND-SR, in this
+                                          0.8                                                                          paper. The Eq. (2) can be described as
+
+
+
+
+            Autocorrelation Coefficient
+                                          0.7                                                                                                                                    R(n)  j H ( R(n))
+                                                                                                                                                                    R n                                        ,                 (3)
+                                          0.6
+                                                      D-SR peak
+                                                                                                                                                                                          R(0)
+                                          0.5
+                                                                                                                       where n 0,1, N . Meanwhile, the D-SR time delays
+                                          0.4
+
+                                          0.3                           D-BR peak                                      calculated by Bellhop are also presented by Delay Number as
+                                          0.2
+                                                                                                                                        c (r, d ) W D-SR
+                                                                                                                                      ND-SR           c (r, d )* f s  1 ,       (4)
+                                                                                    D-SBR peak
+                                                                                                                                  c
+                                                           SR-BR peak
+                                          0.1                                                                          where ND-SR (r , d ) denotes a value from simulation.
+                                           0
+                                                0   0.05    0.1    0.15    0.2    0.25    0.3       0.35   0.4           c (r, d ) is the time delay between D and SR arrivals with
+                                                                                                                       W D-SR
+                                                                      Time Delay (s)
+Fig. 1. The simulated autocorrelation function. The source depth, receiver depth                                       source range/depth equal to r/d. fs is the sampling rate of the
+          and receiver range are 29 m, 4270 m and 7 km, respectively.                                                  measured data.
+      Although four peaks are clearly demonstrated in our                                                                   The approach proposed in this paper is matching the
+simulation, they are rather blurry in the observation in the real                                                      simulated Delay Numbers at possible source ranges, N cD-SR (r ) ,
+ocean and hard to be identified except for the D-SR peak[11].                                                          with the measured Delay Number, N D-SR , from the
+The relatively robust existence of the D-SR peak in the
+autocorrelation function of the received signal is due to the fact                                                     autocorrelation function instead of fitting the measured time
+that the two arrivals have little interaction with the bottom. On                                                      delays with their replicas. Besides, the source depth d is
+the other hand, the BR arrival suffers from the bottom reflection                                                      assumed to be known. The output of the proposed approach can
+loss, bottom scattering, and the waveform distortion due to the                                                        be expressed as
+complex frequency response of the bottom. Therefore, the                                                                                                  P(r )         R(n(r )),         n(r )          c (r ) ,
+                                                                                                                                                                                                        ND-SR                    (5)
+                                                                                                                       and the output in dB is given by
+
+
+
+
+           Authorized licensed use limited to: Stanford University. Downloaded on September 09,2026 at 05:35:26 UTC from IEEE Xplore. Restrictions apply.
+                                PdB (r ) 10lg[ P(r )]                    (6)                                               1
+
+
+
+
+                                                                                                  Normalized Output
+                          900
+                                                                                                                          0.5
+                          800
+
+                          700
+                                                                                                                           0
+                          600                                                                                                     5        10          15      20     25
+
+
+
+
+           Delay Number
+
+
+                                                                                                 Normalized Output (dB)
+                          500                                                                                              0
+
+                          400                                                                                             -20
+
+                          300                                                                                             -40
+
+                                                                                                                          -60
+                          200
+                                                                                                                          -80
+                          100                                                                                                     5        10           15     20     25
+                                                                                                                                                Range (km)
+                            0
+                                5     10           15
+                                           Range (km)
+                                                        20   25                                                                                 c (r ) with the
+                                                                                    Fig. 4. The estimated result by matching the Delay Number N D-SR
+                                  c (r ) versus source range. The source                                                        autocorrelation of received signal.
+ Fig. 3. Simulated Delay Number N D-SR
+       depth and the receiver depth are 29 m and 4270 m, respectively.
+   For example, under the environment for Fig. 1, the Delay
+         c
+Number N D-SR varying with source range is shown in Fig. 3,
+where the fs is 25 kHz. The source depth and the receiver depth
+are 29 m and 4270 m, respectively. The normalized matching
+results are shown in Fig. 4(a) and Fig. 4(b) with different
+expressions described by Eqs. (5) and (6), respectively. The
+dashed lines indicate the true source range. The localization
+result is quite accurate based upon the simulation data. The
+output peaks correspond to the D-SR peak in Fig. 1.
+                             c versus source range in Fig. 3 is a
+      It is noted that the N D-SR
+parabolic type. This implies that the range resolution increase                     Fig. 5. The simulated results of source range localization. The source depth and
+with the decrease of the source range. Consequently, the                                           receiver depth are 29 m and 4270 m, respectively.
+presented method is more effective at short range.
+                                                                                                                            III. EXPERIMENTAL DATA ANALYSIS
+      However, an estimation of source range from a single
+measurement can be dangerous when the signal-noise-ratio is                               The experiment was conducted in South China Sea, where
+low, resulting in the ambiguous peaks of the autocorrelation                        the ocean depth is about 4400 m. A bottom-moored circle array
+function. To solve this, we can take advantage of the                               was deployed at 4270 m depth. A 700-1500 Hz LFM sweep with
+measurements in a time interval. If the source moves for a range                    1.5 s duration repeated every 2 s was transmitted by a transducer
+                                             c at some points of
+interval at a fixed depth, a collection of N D-SR                                   hung on the experimental vessel during its floatation. The
+source range forms a vector. The simulated result of source                         transducer depth is 29 m. When the source range was 8.4 km,
+range localization is shown in Fig. 5. The Time Index indicates                     the received signal of a hydrophone is shown in Fig. 6. Fig. 6(a)
+the simulation times, and the range interval between adjacent                       is the filtered waveform and Fig. 6(b) is the corresponding
+times is 0.1km. The superimposed white solid line indicates the                     spectrogram.
+true source range. Figure 5 shows that, in the simulation, the
+source range can be correctly localized every time. Notice that
+the main lobes become wider with the increase of the range,
+which restricting the range resolution that will be discussed in
+Section IV.
+
+
+
+
+                                                                                    Fig. 6. The received signal of one hydrophone at 8.4 km range: (a) time series; (b)
+                                                                                                                   time-frequency plot.
+
+
+
+
+          Authorized licensed use limited to: Stanford University. Downloaded on September 09,2026 at 05:35:26 UTC from IEEE Xplore. Restrictions apply.
+             Autocorrelation Coefficient
+                                            1
+
+
+
+                                           0.5
+                                                           D-SR peak
+
+
+
+                                            0
+                                                 0       0.05       0.1       0.15    0.2    0.25   0.3   0.35   0.4
+                                                                                 Time Delay (s)
+
+
+
+
+            Normalized Output (dB)
+                                            0
+
+                                            -5
+
+                                           -10
+
+                                           -15
+
+                                           -20
+                                                     2          4         6      8    10    12       14    16    18
+                                                                                 Range (km)
+
+ Fig.7. The autocorrelation function of received signal and its result of source                                         Fig. 8. The results for source range localization based on real data. The white
+    range localization: (a) autocorrelation function; (b) the result of source                                         solid line indicates the true source movement track. The start time is defined as 0
+                                  localization.                                                                                                                min.
+      First, we want to show the performance of the method
+using a single measurement. The autocorrelation function of the                                                                      IV. RESTRICTION ON RANGE RESOLUTION
+signal in Fig. 6(a) is shown in the top pannel of Fig. 7. The D-                                                             In this section, the feasibility of proposed method is
+SR peak is obvious. In contrast, the other peaks cannot be                                                             discussed. As described in Sections II and III, the resolution of
+identified, which is consistent with our assumptions in Sect. II.A.                                                    the source range is restricted by the slopes of D-SR time delays.
+Because of the little influences of bottom bathymetry and                                                              The D-SR time delays are related to source-receiver
+geoacoustic parameters on the D-SR time delays, it is assumed                                                          configuration. The contour curves of the D-SR time delays on a
+in our simulation that the ocean bottom is flat and the                                                                hydrophone at 4270 m are displayed in Fig. 9. The simulation
+geoacoustic parameters are the same as that used in Sect. II.A.                                                        conditions are the same as that used in Section II.A. A key point
+During the experiment, the conductivity-temperature-depth                                                              of interest is to understand the relation between range resolution
+(CTD) measurement was made near the array location. The                                                                and the source depth. The slopes of the D-SR time delays shown
+measured SSP is used for our simulation. The result of source                                                          in Fig. 9 versus range become steeper with the increase of the
+range localization is shown in the bottom panel of Fig. 7, where                                                       source depth within in a certain distance. For example, when the
+the maximum value appears at 8.6 km range. The dashed line                                                             source is assumed to range from 5 km to 10 km, the difference
+indicates the true source range, and the estimation error is 0.2                                                       of D-SR time delays increases from about 0.0409 s at 115 m
+km.                                                                                                                    depth to about 0.0582 s at 165 m depth. The deeper the source is,
+      In our experiment, the first LFM sweep was emitted when                                                          the higher the range resolution is. Consequently, the range
+the source range was about 7.5 km. The speed of the                                                                    resolution increases with the increasing source depth. The range
+experimental vessel is about 2 knot and the time of source range                                                       resolution in this paper is about 13 km for the source depth of 29
+localization lasts about 110 min in this paper. The results of                                                         m. In another experiment, the D-SR time delays can be utilized
+source range localization are shown in Fig. 8. The superimposed                                                        when the source range is smaller than 22 km for the source
+white solid line indicates the true source movement track. When                                                        depth of 110 m [11].
+the source range is greater than 13 km (not shown), the results
+become unstable and blurry due to the restriction of the range
+resolution. Fig. 8 shows that the estimated results have small                                                                                 0.0182
+                                                                                                                                                 6
+                                                                                                                                            0.03
+discrepancies with the true values of the source range.                                                                                50
+                                                                                                                                             0.0
+                                                                                                                                                53 8
+                                                                                                                                                                                  0.01
+                                                                                                                                                                                      82
+
+Meanwhile, the movement track is clear. The experimental                                                                                         08
+                                                                                                                                                   94
+                                                                                                                                                             16             0.0
+                                                                                                                                                                               36
+                                                                                                                                              0.           07
+results demonstrate that the proposed method is feasible for                                                                          100               0.
+                                                                                                                                                                             38
+                                                                                                                                                                                                                0.0
+                                                                                                                                                                                                                   18 2
+
+                                                                                                                                                                           05
+source localization.                                                                                                                  150
+                                                                                                                                                                        0.
+                                                                                                                                                                                                           6
+                                                                                                                                                                                                         03
+      In addition, with the increase of the source range, the
+                                                                                                                                            0.1
+                                                                                                                                                                                                      0.
+                                                                                                                                            0.178 4
+                                                                                                                                                6
+                                                                                                                                             0.1 0 6
+                                                                                                                                                42
+                                                                                                                                             0.1 8
+                                                                                                                                                2
+                                                                                                                                             0.1 5                0.0
+                                                                                                                                                07                   89      0. 07
+differences between D-SR time delays become much smaller.
+                                                                                                                                                   2
+                                                                                                                                                                        4         16
+                                                                                                                                      200                                                             38
+                                                                                                                                                                                                    05
+                                                                                                                                                                                                 0.
+When the source range is farther than certain kilometers, the
+method presented above is invalid.                                                                                                    250   0.3
+                                                                                                                                            00.320 8
+                                                                                                                                               .0
+                                                                                                                                              0.22835 2
+                                                                                                                                              0.267 4
+                                                                                                                                               0.249 6
+                                                                                                                                                    3
+                                                                                                                                                0.2 1 8
+                                                                                                                                            0.1 4    1
+                                                                                                                                                 9
+                                                                                                                                            0.1 6 2
+                                                                                                                                                 7                                     0.0       0. 07                        3
+                                                                                                                                                                                                                          0.05
+                                                                                                                                             0.1 8 4
+                                                                                                                                                  60
+                                                                                                                                              0.1 6
+                                                                                                                                              0.1  42 8                                   89          16
+                                                                                                                                                                                             4
+                                                                                                                                               0.1 25
+                                                                                                                                                    07 2
+                                                                                                                                                        5              10                  15                  20           25
+
+
+                                                                                                                         Fig. 9. The distribution of D-SR time delays for different source ranges and
+                                                                                                                                             depths. The receiver depth is 4270 m.
+
+
+
+
+           Authorized licensed use limited to: Stanford University. Downloaded on September 09,2026 at 05:35:26 UTC from IEEE Xplore. Restrictions apply.
+      Besides source depth, the range resolution is also related to                 [3] Bonnel J, Gervaise C, Nicolas B, Mars JI. Single-receiver
+signal bandwidth and sampling rate of the received signal. The                           geoacoustic inversion using modal reversal. Journal of the
+wider the signal bandwidth is, the sharper the D-SR peak in the                          Acoustical Society of America. 2012;131:119-28.
+autocorrelation function of the received signal is. As a result, the                [4] Bonnel J, Nicolas B, Mars JI, Walker SC. Estimation of
+range resolution increases with the increasing signal bandwidth.                         modal group velocities with a single receiver for
+In addition, according to the Eq. (4), the D-SR time delays                              geoacoustic inversion in shallow water. Journal of the
+predicted by Bellhop need to be transformed into Delay Number.                           Acoustical Society of America. 2010;128:719-27.
+If the fs is high enough, the time resolution of the autocorrelation                [5] Cockrell KL, Schmidt H. Robust passive range estimation
+function can be quite accurate.                                                          using the waveguide invariant. Journal of the Acoustical
+    In summary, the performance of proposed method is closely                            Society of America. 2010;127:2780-9.
+related to the source depth, source range, signal bandwidth, and                    [6] Gervaise C, Kinda BG, Bonnel J, Stephan Y, Vallez S.
+the sampling rate of received signal. Although there are so many                         Passive geoacoustic inversion with a single hydrophone
+restrictions, the method is still a very promising alternative to                        using broadband ship noise. Journal of the Acoustical
+source localization to some extent.                                                      Society of America. 2012;131:1999-2010.
+                                                                                    [7] Harrison CH. The relation between the waveguide invariant,
+                           V. CONCLUSIONS                                                multipath impulse response, and ray cycles. Journal of the
+      A method based on the matching between the D-SR time                               Acoustical Society of America. 2011;129:2863-77.
+delays predicted by model and D-SR peak in the autocorrelation                      [8] Kuperman WA, D'Spain GL, Heaney KD. Long range
+function of the received signal is proposed for source range                             source localization from single hydrophone spectrograms.
+localization in this paper. Because of the high bottom-reflection                        Journal of the Acoustical Society of America.
+loss, especially for the rays with large grazing angles at the                           2001;109:1935-43.
+ocean bottom interface, the autocorrelation coefficients                            [9] Heaney KD, Campbell RL, Murray JJ, Baggeroer AB,
+corresponding to the bottom-interacting arrivals are small and                           Scheer EK, Stephen RA, et al. Deep water towed array
+blurry. Only the D-SR peaks are robust and can be used for                               measurements at close range. Journal of the Acoustical
+source localization. Every possible source range corresponds to                          Society of America. 2013;134:3230-41.
+an autocorrelation coefficient, and the estimated source range is                   [10] Duan R, Yang KD, Ma YL, Lei B. A reliable acoustic path:
+the peak of the output of autocorrelation coefficient. Obviously,                        Physical properties and a source localization method.
+the estimated results will be accurate if the peak locations are                         Chinese Physics B. 2012;21.
+correctly predicted. However, because of the model errors and                       [11] Duan R, Yang KD, Ma YL, Yang QL, Li H. Moving source
+distortion of received signal, single-point result of the source                         localization with a single hydrophone using multipath time
+range estimation is not convincing. That’s the reason why the                            delays in the deep ocean. Journal of the Acoustical Society
+method needs a family of measurements.                                                   of America. 2014;136:El159-El65.
+    The validity of the presented approach in dealing with source                   [12] Baggeroer AB, Scheer EK, Heaney K, D’Spain G,
+range localization has been verified in simulation and experiment.                       Worcester P, Dzieciuch M. Reliable acoustic path and
+Because of the method’s simplicity, there are so many drawbacks                          convergence zone bottom interaction in the Philippine Sea
+inevitably. But, the results obtained with real data show that the                       09 Experiment. Journal of the Acoustical Society of
+autocorrelation function has tremendous potential in source                              America. 2010;128:2385
+localization.                                                                       [13] McCargar R, Zurk LM. Depth-based signal separation with
+                                                                                         vertical line arrays in the deep ocean. Journal of the
+                        ACKNOWLEDGEMENT                                                  Acoustical Society of America. 2013;133:El320-El5.
+   This work was supported by the National Science                                  [14] Munk WH. Sound Channel in an Exponentially Stratified
+Foundation of China (Grant No. 11174235).                                                Ocean, with Application to Sofar. Journal of the Acoustical
+                                                                                         Society of America. 1974;55:220-6.
+                              REFERENCE                                             [15] Porter MB, Bucker HP. Gaussian-Beam Tracing for
+[1] [1] Jesus SM, Porter MB, Stephan Y, Demoulin X,                                      Computing Ocean Acoustic Fields. Journal of the
+    Rodriguez OC, Coelho EMMF. Single hydrophone source                                  Acoustical Society of America. 1987;82:1349-59.
+    localization. Ieee Journal of Oceanic Engineering.                              [16] Porter MB, Liu YC. Finite-element ray tracing. Theoretical
+    2000;25:337-46.                                                                      and Computational Acoustics. 1994;2:947-56.
+[2] Zhang TW, Yang KD, Ma YL, Wang Y. A robust
+    localization method for source localization based on the
+    auto-correlation function of wide-band signal. Acta Physica
+    Sinica. 2015;64.
+
+
+
+
+          Authorized licensed use limited to: Stanford University. Downloaded on September 09,2026 at 05:35:26 UTC from IEEE Xplore. Restrictions apply.
+

@@ -1,0 +1,289 @@
+                                                                                                                                                                                                                                                                              5.1
+
+
+                                                                                                                     Self-Noise Suppression for AUV without Clean Data:
+                                                                                                                                  a Noise2Noise Approach
+
+                                                                                                                                              Weiyang Zhou                                                                             Jianlong Li*
+                                                                                                                     College of Information Science and Electronic Engineering                            College of Information Science and Electronic Engineering
+                                                                                                                                        Zhejiang University                                                                  Zhejiang University
+                                                                                                                                               China                                                                                China
+                                                                                                                                       wyzhou@zju.edu.cn                                                                       jlli@zju.edu.cn
+
+
+
+
+2023 IEEE Underwater Technology (UT) | 979-8-3503-3175-2/23/$31.00 ©2023 IEEE | DOI: 10.1109/UT49729.2023.10103424
+                                                                                                                         Abstract—The passive detection performance of an
+                                                                                                                     autonomous underwater vehicle (AUV) is affected by various types
+                                                                                                                     of noise. One of the main components of the noise is the AUV’s
+                                                                                                                     self-noise. Inspired by the statistical reasoning shown in
+                                                                                                                     Noise2Noise, we propose a deep learning model for AUV’s self-
+                                                                                                                     noise suppression. It can learn the spectrum features of the noise
+                                                                                                                     from single-channel data in a self-supervised learning setting and
+                                                                                                                     reconstruct clean signals. The tests on South China Sea
+                                                                                                                     experimental dataset show that the model is able to intelligently
+                                                                                                                     suppress AUV’s self-noise for single hydrophone signals.
+
+                                                                                                                        Keywords—autonomous underwater vehicle; Noise2Noise; noise
+                                                                                                                     removal; self-noise
+
+                                                                                                                                             I. INTRODUCTION
+                                                                                                                         Autonomous underwater vehicles (AUVs) have powerful
+                                                                                                                     mobility and autonomy, which allows it to work over a large area
+                                                                                                                     without human intervention and collect detailed observation                         Fig. 1. Spectrograms of signals collected by the hydrophone array when
+                                                                                                                                                                                                         (a) the propeller is on and (b) the propeller is off.
+                                                                                                                     data. The AUV loaded with a hydrophone array involved in this
+                                                                                                                     work is used to perform passive detection tasks of underwater
+                                                                                                                     targets. In general, AUV’s self-noise is mainly composed of                       the log-power spectra (LPS) as the input and output of a model,
+                                                                                                                     mechanical noise, propeller noise and hydrodynamic noise[1].                      and masking-based methods, e.g.[5], [6], which estimate a mask
+                                                                                                                     The self-noise of the AUV used in this work is mainly caused by                   to carry out denoising.
+                                                                                                                     its propeller. Fig. 1 shows the spectrogram of the signals                            The requirement of deep learning methods for large amounts
+                                                                                                                     collected by the hydrophone array during the AUV propeller                        of clean data becomes particularly challenging in underwater
+                                                                                                                     startup and shutdown states. The frequency of the target signal                   signal denoising. In addition, the AUV involved in this work
+                                                                                                                     is 2 kHz. Comparing Fig. 1a and 1b, the AUV’s self-noise                          operates in a non-stationary ocean environment with a low
+                                                                                                                     produces significant interference in the target signal frequency                  signal-to-noise ratio (SNR). However, the pioneering work of
+                                                                                                                     band, and it is hard to identify the target signal in Fig. 1a.                    Lehtinen et al [7] shows that it is possible to train convolutional
+                                                                                                                     Therefore, it is important to study how to suppress the AUV’s                     neural networks to denoise images, without ever being shown
+                                                                                                                     self-noise to improve the detection performance of the                            clean images. Inspired by their study, we use statistical
+                                                                                                                     hydrophone array.                                                                 reasoning approach to suppress the self-noise of AUV without a
+                                                                                                                         Conventional signal denoising methods depend on accurate                      clean signal prior or likelihood noise model. Assuming that the
+                                                                                                                     analytical modeling of signal and optimal fine-tuning of                          acoustic signals received by one hydrophone carried by AUV
+                                                                                                                     parameters. These methods involve estimating the noise to                         are arbitrary time-delayed source signals distorted by the self-
+                                                                                                                     achieve denoising. Examples of these methods are spectral                         noise, we use neural networks to learn the noise spectral features
+                                                                                                                     subtraction and adaptive filtering. In the past, they played a key                and then suppress them using improved spectral subtraction.
+                                                                                                                     role in various signal denoising. But traditional methods still                      In this work, a deep signal denoising approach is introduced
+                                                                                                                     face many challenges in non-stationary environments. On the                       to suppress the self-noise of AUV without clean signals or
+                                                                                                                     other hand, deep learning methods have been widely used in                        multiple hydrophones. As a result, the introduced approach can
+                                                                                                                     speech denoising. These more recent methods leverage massive                      be deployed to achieve intelligent suppression of AUV’s self-
+                                                                                                                     amounts of data to model the nonlinear relationships between                      noise on both single hydrophone and array measurements.
+                                                                                                                     noisy and clean signals. Most deep learning denoising methods
+                                                                                                                     used for speech and acoustic enhancements can be divided into                         The rest of the paper is organized as follows: In section II, a
+                                                                                                                     two categories: mapping-based, e.g.[2]–[4], which mostly use                      brief overview of the relevant work is presented. In Section III,
+
+
+
+
+                                                                                                                     979-8-3503-3175-2/23/$31.00 ©2023 IEEE                                                                            2023 IEEE Underwater Technology (UT23)
+                                                                                                                                                                                                                                                 6-9 March 2023, Tokyo, Japan
+                                                                                                                             Authorized licensed use limited to: Stanford University. Downloaded on September 09,2026 at 05:35:06 UTC from IEEE Xplore. Restrictions apply.
+an overview of the datasets examined, and their implementation                        • Condition 2.1 The noises added to the input and target
+aspects are provided. A set of experimentations with two                                are sampled from zero-mean distributions and are
+different hydrophone arrays carried by the AUV and their results                        uncorrelated to the input.
+are then reported in Section IV. Finally, the paper is concluded
+in Section V.                                                                         • Condition 2.2 The correlation between the noise in the
+                                                                                        input and the target is close to zero.
+                II. BACKGROUND AND THEORY
+                                                                                      The first ensures that the median or mean of the target
+A. Fully Convolutional Network: UNet                                              distribution remains unchanged in the presence of noise. While
+    A deep encoder-decoder model called UNet is used as the                       the second ensures that the network does not learn to map one
+model for our work. UNet [8] is a well-known architecture in a                    type of noise to another, but rather learns to remove noise in a
+lot of applications of image processing since it has hierarchical                 robust and general way. As shown in Ref. [15], the authors
+feature maps to gain rich multi-scale contextual features. In                     demonstrate that it is available to apply Noise2Noise to mask-
+addition, it uses the skip connection between encoders and                        based speech noise reduction methods. And the authors also give
+decoders to enhance the reconstruction process of images.                         an inference that any loss function that aims to maximize the
+                                                                                  similarity between the input and the target is suitable for
+   UNet is widely used in many computer vision tasks like                         Noise2Noise based training if the signal satisfies the two
+segmentation and restoration. Furthermore, it has various                         conditions mentioned previously.
+improved versions like Res-UNet [9], Dense-UNet [10], and
+Attention UNet [11]. Due to the strong adaptive backbone, the                         Ref. [16] attempted to apply the Noise2Noise technique to
+UNet can be easily applied with different extractive blocks to                    the underwater signal noise reduction problem, and they
+enhance performance. Depending on how to expand the UNet                          proposed a self-supervised end-to-end noise reduction model.
+architecture, UNet could be utilized to perform tasks other than                  Although they eventually proved that the model could achieve
+segmentation[12].                                                                 noise reduction on single hydrophone signals, hydrophone array
+                                                                                  data are required in the model training stage to satisfy the basic
+    We choose the classical UNet structure to learn the noise                     conditions of the Noise2Noise. In their experiments, they used
+spectrum features. The first half of UNet implements feature                      an 8-element vertical array of hydrophones (with relatively large
+extraction (Encoder) and the second half implements                               array element spacing). The self-supervised training of the
+upsampling (Decoder). The encoder consists of the repeated                        model is then accomplished using the property that the signal is
+application of two 3x3 convolutions (unpadded convolutions),                      correlated between different channels while the noise is not.
+each followed by a rectified linear unit (ReLU) and a 2x2 max                     However, in many sonar applications, there are still many single-
+pooling operation with stride 2 for downsampling. At each                         channel hydrophones, or the hydrophones in the array have a
+downsampling step, we double the number of feature channels.                      short spacing. It is difficult to satisfy the requirement of noise
+And the decoder consists of an upsampling of the feature map                      uncorrelation between channels. Therefore, combined with the
+followed by a 2x2 convolution (“up-convolution”) that halves                      requirement of our task of passive detection using AUV, we try
+the number of feature channels, a concatenation with the                          to estimate noise features instead of direct denoising to make it
+correspondingly cropped feature map from the contracting path,                    easier to satisfy the basic condition of Noise2Noise. This allows
+and two 3x3 convolutions, each followed by a ReLU. The                            the model to be trained using only enough single-channel noise
+network has a total of 23 convolutional layers.                                   data.
+B. Conventional Denoising Method: Spectral Subtraction                                In this work, the Noise2Noise technique is applied to
+    The spectral subtraction method is a common technique used                    underwater data by converting signal samples into spectrograms.
+for speech denoising. It involves estimating the noise spectrum                   This allows the depth network to learn the self-noise spectral
+of the signal and then subtracting it from the original signal to                 features through self-supervised methods with single channel
+obtain a denoised version. This can be done by using a reference                  underwater signals.
+noise spectrum or by estimating the noise spectrum adaptively
+                                                                                                       III. EXPERIMENTAL SETUP
+from the signal itself. The key advantage of this approach is that
+it can effectively remove Gaussian noise without distorting the                   A. Datasets and Data Generation
+underlying signal. However, it is not as effective at removing                        In our practical experiment, we used the acoustic dataset
+non-Gaussian noise or noise with a strong tonal component.                        collected by the AUV from the 2020 South China Sea
+Therefore, we use deep learning methods to estimate the self-                     Experiment (SCSEx20). The SCSEx20 was conducted in July
+noise spectrum and apply an improved spectral subtraction                         2020 near the continental shelf of the northern part of the South
+method [13], [14] to achieve AUV’s self-noise suppression.                        China Sea. This work uses a simulated dataset synthesized from
+C. Restoration without Clean Data Approach: Noise2Noise                           noises and signals collected by AUV, and the actual received
+                                                                                  acoustic signals collected by two different types of arrays
+   The Noise2Noise training approach first introduced in [7]
+                                                                                  including both a 16-element hydrophone array and a 4-element
+showed that a neural network can learn to clean noisy images
+                                                                                  hydrophone array.
+when given only noisy data. The authors show that it is possible
+to denoise images using only noisy images as a reference,
+provided two key conditions hold.
+
+
+
+
+        Authorized licensed use limited to: Stanford University. Downloaded on September 09,2026 at 05:35:06 UTC from IEEE Xplore. Restrictions apply.
+    The data collected by the AUV with the 16-element                              B. Network Architecture
+hydrophone array (passive sonar) are sampled at 20 kHz and                             Because of the lack of corresponding clean data in the actual
+stored as binary files. The target signal is a sine wave, emitted                  dataset, we introduced the Noise2Noise to solve. To force the
+mainly at 2 kHz or 2.1 kHz, with a small portion at 800 Hz. The                    deep network to learn AVU self-noise spectral features with self-
+16-element hydrophone array dataset consisted of 340 valid data                    supervised training, we have to process the data appropriately to
+files, each containing 16 data channels, with a duration of 40                     satisfy the two conditions of Noise2Noise. We add different
+seconds per channel, for a total of about 60 hours.                                random sinusoidal signals to the “pure” noise data collected by
+                                                                                   hydrophone as the input and output of the model (the added
+                                                                                   signals all are zero-mean and uncorrelated) as if many different
+                                                                                   signals "interfere" with the noise. Consider a Deep Network with
+                                                                                   input , output       , and target . In addition, is the received
+                                                                                   target signal, is the received noise signal,             are the
+                                                                                   added zero-mean uncorrelated signals “interference”. Thus, the
+                                                                                   model input and output can be represented as follows:
+                                                                                                               Input:
+                                                                                               Training Stage                                        ,    1
+                                                                                                               Target:
+                                                                                                                 Input:                #     #
+                                                                                                   Testing Stage                                 ,        2
+                                                                                                                 Output:                    %#
+                                                                                   where % # represents the estimate of the noise signal # . Because
+                                                                                             and          are zero mean and uncorrelated with each
+                                                                                   other, the model can learn the ability to extract appropriate noise
+                                                                                   spectrum estimation according to the previous derivation.
+  Fig. 2. The Discovery-100 AUV and loaded 4-element hydrophone array                  After preprocessing the time domain waveform is converted
+                                                                                   into the time-frequency domain using the Short Time Fourier
+    The data collected by the Discovery-100 AUV with a 4-                          Transform (STFT). In our passive target detection experiments,
+element hydrophone array (Fig. 2) are sampled at 32 kHz and                        we apply an energy detection algorithm, which is mainly
+stored as binary files. The target signal is a sine wave, emitted at               influenced by the amplitude of the target signal and noise.
+2 kHz or 2.1 kHz. The 4-element hydrophone array dataset                           Because energy detector tends to be insensitive to phase, we
+consisted of 677 valid data files, each containing 4 data                          apply the LPS commonly used in speech noise reduction as
+channels, with a duration of 100 seconds per channel, for a total                  model inputs and outputs. Normalization is then carried out to
+of about 77 hours. According to the experimental logs, not every                   ensure compliance with Parseval’s energy-conservation
+copy of these data contained the target signal, and many of them                   property, meaning that the energy in the spectrogram equals the
+were simply noisy data including AUV’s self-noise.                                 energy in the original time domain waveform.
+    The noises used in the simulation dataset are from the pure                        We demonstrate the effectiveness of this Noise2Noise
+noise acoustic data collected from the above dataset, and the                      approach using the UNet architecture. The model receives the
+target signals are from the same. The simulation data are                          LPS of the signal as input and gives an estimate of the noise
+generated according to the different SNR values. The target                        spectrum after feature extraction and upsampling. The estimated
+signals used in the simulation dataset are from the acoustic data                  noise spectrum is subtracted from the original signal spectrum
+collected when the AUV propeller is turned off, which can be                       to obtain a clean signal spectrum, where the specific subtraction
+approximated as clean data after some processing.                                  coefficients are referenced to the improved spectral subtraction.
+                                                                                   An Inverse Short Time Fourier Transform (ISTFT) is then
+                                                                                   applied to convert the estimated time-frequency domain
+
+
+
+
+  Fig. 3. Overall implementation for our denoising for hydrophone array data. The encoder consists of multiple downsampled convolutional layers and decoder
+  consists of multiple upsampled convolutional layers, the detailed structure can be found in 2.
+
+
+
+
+         Authorized licensed use limited to: Stanford University. Downloaded on September 09,2026 at 05:35:06 UTC from IEEE Xplore. Restrictions apply.
+ Fig. 4. Spectrograms of hydrophone inputs (top) and their respective denoised outputs (bottom) of our model during testing process.
+
+
+enhanced spectrogram into its time domain waveform
+representation. The overall implementation pipeline is                                             TABLE I.              DENOISING PERFORMANCE RESULTS
+illustrated in Fig. 3.
+                                                                                       Target Signal
+                                                                                                                          SNRin (dB)            SNRout (dB)             ∆SNR (dB)
+                            IV. RESULTS                                                 Frequency
+                                                                                   800 Hz
+    We evaluated the model performance using single-channel                                                             15.49                  19.57                   4.07
+                                                                                   (Low frequency)
+signals acquired by the 4-element hydrophone array and the 16-                     2 kHz
+                                                                                                                        5.69                   9.17                    3.49
+element hydrophone array. Because it is difficult to get the
+complete actual signal to calculate the true SNR, we apply a                       2.1 kHz
+                                                                                                                        17.10                  18.71                   1.61
+band-pass filter and then use the noise power spectrum near the
+                                                                                   Overall performance of the dataset
+signal frequency to estimate the SNR.                                                                                                                                  3.89/-.0,
+                                                                                                                                                                           +,.-.
+                                                                                   acquired by the 16-element hydrophone arraya
+                                                                                   Overall performance of the dataset
+    The results shown in Fig. 4 are all using the actual single-                                                                                                       1.73/..,3
+                                                                                                                                                                           +#.02
+                                                                                   acquired by the 4-element hydrophone arraya
+channel hydrophone data, where the two on the left are
+                                                                                       a.
+processed on the 16-element hydrophone array dataset and the                                The data without target signals are excluded from the dataset when calculating the performance.
+
+two on the right are processed on the 4-element hydrophone
+                                                                                                                       V. CONCLUSION
+array dataset. The results show that the AUV’s self-noise in the
+low-frequency band of the original signal is significantly                            In this paper, a novel deep learning method for AUV’s self-
+suppressed, while the amplitude information of the signal is well                 noise suppression is developed. The model learns noise spectral
+retained in the target signal band.                                               features by using only a single channel of noisy data without any
+                                                                                  clean signal as a target. The model does not require multi-
+    Applying noise suppression to the entire experimental data                    channel array data nor clean signals as targets and can reduce the
+acquired by the 16-element hydrophone array, we obtain the                        cost of applying deep learning techniques in the underwater
+average increment of SNR is 3.9 dB, and the maximum                               domain. The effectiveness of this approach was demonstrated in
+increment of SNR can reach 8.4 dB. Table I gives the denoising                    a real experiment using data collected through the 4-element
+performance for target signals with different frequencies and the                 hydrophone array and a 16-element hydrophone array carried by
+overall performance of the model on two datasets. It shows that                   an AUV. In summary, the developed method can intelligently
+the denoising performance of the model is robust in a certain                     implement AUV’s self-noise suppression on a single
+target frequency range. Also, because the SNR of the 16-element                   hydrophone signal without any prior knowledge or availability
+array dataset is higher than that of the 4-element array dataset,                 of clean signals.
+the overall performance of the 16-element array dataset is better
+than that of the 4-element array dataset. The above calculations                                                      ACKNOWLEDGMENT
+of SNR only count the noise energy near the signal frequency.
+                                                                                      We would like to appreciate the efforts of our laboratory
+                                                                                  partners for acquisition of the acoustic dataset used in this paper.
+                                                                                  We would also like to thank Shenyang Institute Of Automation
+                                                                                  for providing the AUV. This work was funded by the National
+                                                                                  Key Research and Development Program of China (Grant
+                                                                                  No.2017YFC0305905).
+
+
+
+
+        Authorized licensed use limited to: Stanford University. Downloaded on September 09,2026 at 05:35:06 UTC from IEEE Xplore. Restrictions apply.
+                             REFERENCES                                                  Computing and Computer-Assisted Intervention – MICCAI 2015,
+                                                                                         Cham, 2015, pp. 234–241. doi: 10.1007/978-3-319-24574-4_28.
+[1]   S. J. Lyu, X. W. Zhang, C. L. Ding, and Y. F. Ding, “Research on the        [9]    F. I. Diakogiannis, F. Waldner, P. Caccetta, and C. Wu, “ResUNet-a: a
+      prediction method of hydrodynamic noise of underwater vehicles and                 deep learning framework for semantic segmentation of remotely sensed
+      its validation,” Shuidonglixue Yanjiu Yu JinzhanChinese J. Hydrodyn.               data,” ISPRS J. Photogramm. Remote Sens., vol. 162, pp. 94–114, Apr.
+      Ser A, vol. 34, no. 5, pp. 571–576, 2019, doi:                                     2020, doi: 10.1016/j.isprsjprs.2020.01.013.
+      10.16076/j.cnki.cjhd.2019.05.003.                                           [10]   S. Cai, Y. Tian, H. Lui, H. Zeng, Y. Wu, and G. Chen, “Dense-UNet: a
+[2]   J. M. Martin-Doñas, A. M. Gomez, J. A. Gonzalez, and A. M. Peinado,                novel multiphoton in vivo cellular image segmentation model based on
+      “A Deep Learning Loss Function Based on the Perceptual Evaluation                  a convolutional neural network,” Quant. Imaging Med. Surg., vol. 10,
+      of the Speech Quality,” IEEE Signal Process. Lett., vol. 25, no. 11, pp.           no. 6, pp. 1275285–1271285, Jun. 2020, doi: 10.21037/qims-19-1090.
+      1680–1684, Nov. 2018, doi: 10.1109/LSP.2018.2871419.                        [11]   O. Oktay et al., “Attention U-Net: Learning Where to Look for the
+[3]   K. Tan and D. Wang, “A Convolutional Recurrent Neural Network for                  Pancreas.” arXiv, May 20, 2018. doi: 10.48550/arXiv.1804.03999.
+      Real-Time Speech Enhancement,” in Interspeech 2018, Sep. 2018, pp.          [12]   R. Komatsu and T. Gonsalves, “Comparing U-Net Based Models for
+      3229–3233. doi: 10.21437/Interspeech.2018-1405.                                    Denoising Color Images,” AI, vol. 1, no. 4, Art. no. 4, Dec. 2020, doi:
+[4]   Y. Xu, J. Du, L. R. Dai, and C. H. Lee, “An experimental study on                  10.3390/ai1040029.
+      speech enhancement based on deep neural networks,” IEEE Signal              [13]   S. F. Boll, “Suppression of Acoustic Noise in Speech Using Spectral
+      Process. Lett., vol. 21, no. 1, pp. 65–68, 2014, doi:                              Subtraction,” IEEE Trans. Acoust. Speech Signal Process., vol. 27, no.
+      10.1109/LSP.2013.2291240.                                                          2, pp. 113–120, 1979, doi: 10.1109/TASSP.1979.1163209.
+[5]   A. Narayanan and D. Wang, “Ideal ratio mask estimation using deep           [14]   M. Berouti, R. Schwartz, and J. Makhoul, “Enhancement of speech
+      neural networks for robust speech recognition,” ICASSP IEEE Int.                   corrupted by acoustic noise,” in ICASSP ’79. IEEE International
+      Conf. Acoust. Speech Signal Process. - Proc., pp. 7092–7096, 2013,                 Conference on Acoustics, Speech, and Signal Processing, 1979, vol. 4,
+      doi: 10.1109/ICASSP.2013.6639038.                                                  no. May 1979, pp. 208–211. doi: 10.1109/ICASSP.1979.1170788.
+[6]   D. S. Williamson, Y. Wang, and D. Wang, “Complex ratio masking for          [15]   M. M. Kashyap, A. Tambwekar, K. Manohara, and S. Natarajan,
+      joint enhancement of magnitude and phase,” in 2016 IEEE                            “Speech Denoising Without Clean Training Data: A Noise2Noise
+      International Conference on Acoustics, Speech and Signal Processing                Approach,” in Interspeech 2021, Aug. 2021, pp. 2716–2720. doi:
+      (ICASSP), Shanghai, Mar. 2016, pp. 5220–5224. doi:                                 10.21437/Interspeech.2021-1130.
+      10.1109/ICASSP.2016.7472673.                                                [16]   S. Koh, C. S. Chia, and B. A. Tan, “Underwater Signal Denoising Using
+[7]   J. Lehtinen et al., “Noise2Noise: Learning Image Restoration without               Deep Learning Approach,” in Global Oceans 2020: Singapore – U.S.
+      Clean Data,” 35th Int. Conf. Mach. Learn. ICML 2018, vol. 7, no. 3, pp.            Gulf          Coast,         2020,        pp.         1–6.         doi:
+      4620–4631, Mar. 2018.                                                              10.1109/IEEECONF38699.2020.9389338.
+[8]   O. Ronneberger, P. Fischer, and T. Brox, “U-Net: Convolutional
+      Networks for Biomedical Image Segmentation,” in Medical Image
+
+
+
+
+        Authorized licensed use limited to: Stanford University. Downloaded on September 09,2026 at 05:35:06 UTC from IEEE Xplore. Restrictions apply.
+

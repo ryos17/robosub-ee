@@ -1,0 +1,351 @@
+                                                                                                                                                              Multipath Modeling under Tank Environment for
+                                                                                                                                                                   Underwater Acoustic Communication
+                                                                                                                                                               Sangram More                                             Prashant Bartakke                                         Monika Aggrawal
+
+
+
+
+2021 Advanced Communication Technologies and Signal Processing (ACTS) | 978-1-6654-2337-3/21/$31.00 ©2021 IEEE | DOI: 10.1109/ACTS53447.2021.9708257
+                                                                                                                                                               Dept. of E&TC                                             Dept. of E&TC                                                C.A.R.E.
+                                                                                                                                                         College of Engineering Pune                               College of Engineering Pune                          Indian Institute of Technology Delhi
+                                                                                                                                                                      &                                                ppb.extc@coep.ac.in                                 maggarwal@care.iitd.ernet.in
+                                                                                                                                                       SCTR’s Pune Institute of Computer
+                                                                                                                                                                 Technology
+                                                                                                                                                           sm18.extc@coep.ac.in
+                                                                                                                                                                                                                                       to showcase its reliability for dynamic channels. In order to
+                                                                                                                                                                                                                                       simulate acoustic signal transmission in the tank, multipath
+                                                                                                                                                           Abstract—For wireless acoustic communication, the tank is                   channel models are required. When we transmit an acoustic
+                                                                                                                                                       the most difficult channel to model due to the presence of                      signal from the projector, it propagates in all possible
+                                                                                                                                                       multipath effects. These multipath interference effects are                     directions and reaches the hydrophone. If the walls of the tank
+                                                                                                                                                       unique for a pair of a projector and hydrophone placed at a                     are perfectly smooth then all the energy transmitted normally
+                                                                                                                                                       specific depth in the tank. It has been suggested that existing                 would return back to the hydrophone and energy at other
+                                                                                                                                                       multipath models proposed for the sea are referred for
+                                                                                                                                                                                                                                       angles would reflect away. If the walls of the tank are not
+                                                                                                                                                       modelling multipath effects in the tank however a fresh
+                                                                                                                                                       investigation is desired because of different channel
+                                                                                                                                                                                                                                       completely flat then the fraction of transmitted energy is
+                                                                                                                                                       environment and boundary conditions. In this direction, we                      returned to the hydrophone. If walls are rough then more
+                                                                                                                                                       have proposed a multipath model: SWARA that estimates path                      energy will get scattered and hence very less part of the
+                                                                                                                                                       gain, delay using the chirp signaling method. The received                      transmitted energy is returned. As the shape of the tank
+                                                                                                                                                       signal is modeled using proposed multipath parameters.                          becomes smaller more contamination of backscattered energy
+                                                                                                                                                       Further the received signal is verified and validated with help                 with reflected energy is observed in the received signal [5].
+                                                                                                                                                       of the experimental data. The accuracy of the proposed                          Therefore, modelling multipath based signal transmission in-
+                                                                                                                                                       multipath channel model is measured by root mean square                         water tank becomes challenging. It requires a fresh
+                                                                                                                                                       error (RMSE) applied between modelled data and measured                         investigation due to varying boundary conditions and location
+                                                                                                                                                       data of received signal. We believe that the proposed approach                  specific environmental aspects of water (as a medium).
+                                                                                                                                                       will be used extensively to characterize chirp signal                               The underwater tank is considered as a bounded medium
+                                                                                                                                                       transmission in tank for long-range.                                            shallow depth channel. Various efforts have been made to
+                                                                                                                                                                                                                                       develop a good propagation models which can be used for
+                                                                                                                                                          Keywords—acoustic signal transmission, chirp signal,                         generating path gain and delay responses for given signal
+                                                                                                                                                       multipath gain, multipath delay, multipath channel model, water                 transmission between projector and hydrophone. Ray theory
+                                                                                                                                                       tank experiment                                                                 is used to model signal communication between a projector
+                                                                                                                                                                             I.INTRODUCTION                                            and a hydrophone placed a few distance apart (short and
+                                                                                                                                                                                                                                       medium). However, in order to study signal communication
+                                                                                                                                                           The development of channel modelling techniques in                          for a very short-range in the tank, no such specific model is
+                                                                                                                                                       underwater acoustics began in the1940s during World War II                      available. This urges us to make an attempt to propose a
+                                                                                                                                                       to improve the performance of sonar systems in support of                       multipath channel model that characterizes chirp signal
+                                                                                                                                                       naval operations. The acoustic channel model represents the                     communication in the water tank of a size of 3.85m (Long) X
+                                                                                                                                                       theoretical conceptualization of acoustic signal transmission                   2.4m (Wide) X 2m (Deep).
+                                                                                                                                                       in water medium. Existing acoustic channel models can be                            In this direction, we have developed and proposed a
+                                                                                                                                                       classified into 3 main categories, 1. Empirical models: these                   multipath channel model: Shallow Water Acoustics for
+                                                                                                                                                       models are designed based on the observed data [1][2], 2.                       Random Area (SWARA) that simulates received signal at 2m
+                                                                                                                                                       Numerical models: these models uses laws of physics to                          distance using multipath gain, delay and phase responses. The
+                                                                                                                                                       govern acoustic wave transmission in water [3], and 3.                          path gains are modelled using the proposed path loss
+                                                                                                                                                       Deterministic models: these models are applicable in                            expression given by [1, Eq. (1)]. The path delay and its phase
+                                                                                                                                                       controlled environment such as tank or aquarium which uses                      is modelled using cross-correlation method given by [11,12].
+                                                                                                                                                       appropriate scaling factors to model transmission losses at a                   The model accuracy is evaluated by comparing the absolute
+                                                                                                                                                       given distance [4]. Such channel models help us to                              difference between modelled and measured samples of
+                                                                                                                                                       understand the behaviour of acoustic signal transmission in a                   received chirp signal at 2m.
+                                                                                                                                                       particular environment. They play a crucial role in achieving                       This exercise is necessary to optimize the performance of
+                                                                                                                                                       link reliability for point to point node deployments.                           deployed underwater acoustic systems or autonomous
+                                                                                                                                                           Generally, in practice before attempting sea trials,                        underwater vehicles (AUVs) for in situ operations. We also
+                                                                                                                                                       acoustic experiments are performed in the tank. Initially, such                 hope that our study can be used to analyse chirp signal
+                                                                                                                                                       experiments will be demonstrated with help of simulation                        communication for long range in order to improve
+                                                                                                                                                       tools for different node placements and then followed by                        performance of nodes deployed in given sensor network.
+                                                                                                                                                       doing in a controlled environment (such as in water tank,                           The rest of the paper is organized as follows: In Section
+                                                                                                                                                       aquarium, or in the lake) and continuing till the designed                      II, we discussed related work on multipath modelling theory
+                                                                                                                                                       system is ready                                                                 and assumptions. In section III, we explained our approach
+                                                                                                                                                       978-1-6654-2337-3/21/$31.00 ©2021 IEEE                                          for multipath modelling. We discussed simulation of
+                                                                                                                                                                                                                                       modelled received signal at 2m using proposed multipath
+                                                                                                                                                             Authorized licensed use limited to: Stanford University. Downloaded on September 09,2026 at 05:36:55 UTC from IEEE Xplore. Restrictions apply.
+parameters followed by the experimentation in section IV                       III.MODELING MULTIPATH GAIN AND DELAY: OUR
+and V respectively. Further, we have evaluated proposed                                          APPROACH
+model accuracy and its validation in section VI. Section VII
+concludes this paper and discusses future work.                                     In our study, we have assumed that the tank environment
+                                                                                is time-invariant acoustic channel model. The path loss at
+   II.MULTIPATH MODELING IN WATER TANK :                                        hydrophone is considered as a function of transmission
+                RELATED WORK                                                    distance and signal frequency.
+    Underwater acoustic wave transmission is characterized                      A. Direct path attenuation:
+by laws of physics and fluid mechanics. Helmholtz derived 3-
+dimensional (3D) differential wave equation of acoustic wave                        In tank, the path loss experienced by a signal:   of
+propagating inside water medium. Many researchers have                          frequency: travelling over distance: is given by [1, Eq.
+defined standard methods to solve the proposed Helmholtz                        (1)] as
+wave equation to model acoustic wave transmission in water                                                  ,                                             (3)
+for different channel conditions. In literature, different
+theories are mentioned such as Ray theory, Normal mode,                             Where, is a scaling factor, is the separation between
+Wavenumber integration, and Parabolic equation to model                         projector and hydrophone in meters, is spherical spreading
+acoustic wave transmission inside seawater. The scope of                        factor. The attenuation      ,   is function of spreading
+applicability of such theories depends on location-specific                     losses, and absorption losses. Where the absorption loss is
+channel properties and system operating conditions.                             given by Thorp’s empirical formula [13, Chapter 1] and
+                                                                                expressed as below:
+    Tank is considered as bounded medium shallow water
+                                                                                                                $                     $&
+channel where signal transmission gets affected due to the                                           0.11            44                       2.75 , 10-( .
+                                                                                                            %$ &               (       %$ &
+presence of multipath. Multipath characteristics and their
+                                                                                                                                                       0.003
+effects are changing with tank shape, wall type, water                                                                                                    (4)
+physiochemical properties, and location-specific ambient
+noise conditions. Therefore, a fresh investigation is required                      Where,       denotes absorption loss coefficient obtained
+for proposing a multipath channel model that simulates the                      in decibels per meter. For decided placement of projector and
+signal reception in the tank. the channel is modelled as a                      hydrophone in tank, we have assumed         1, and =2.
+time-invariant system, where acoustic signal transmission                       B. Multipath attenuation:
+over a wireless channel is mathematically modelled using                            At hydrophone, propagation occurs over multiple paths as
+the proposed equation in [6-10] as below:                                       illustrated in figure 1 below:
+                           D       ∑                 D               (1)
+    Where        is the received signal,     is transmitted
+signal,       is ambient noise,     and D are direct path
+gain and delay,       and D are path gain and delay of the
+reflected signal, is the total number of paths (reflections)
+present in the received signal.
+    To estimate multipath delays from the received signal,
+cross-correlation is performed [11]. The output of cross-
+correlated data is referred to as the Klauder wavelet. Time
+delay and polarity of multipath are extracted from a peak of
+Klauder wavelets. Cross-correlation output of transmitted
+signal with received signal is described as follows:
+                     ∑                    D                          (2)           Fig. 1:Geometry of water channel is used to calculate path length and
+                                                                                                           angles of incidence
+           is auto-correlation between       , also called as
+the Klauder wavelet [12],               is cross-correlation                        The ith path is denoted by , 0 0,1,2, … , .Where, is
+between       and     , which means interference caused by                      the total number of (reflections) present in the received signal.
+                                                                                In multipath scenarios, the acoustic signal experiences path
+ambient noise. is time difference between transmitted signal
+                                                                                loss due to spreading, absorption and reflection. The
+    and reflected multipaths present in received signal.                        attenuation associated with 0 23 path is given by [1, Eq. (3)]
+                                                                                and modelled as
+                                                                                                                          45
+                                                                                                                                                          (5)
+                                                                                                                    675        5 ,$
+
+
+
+
+      Authorized licensed use limited to: Stanford University. Downloaded on September 09,2026 at 05:36:55 UTC from IEEE Xplore. Restrictions apply.
+     Where,       , is the path loss experienced by ith path,                   received signal at 2m is modelled and simulated using
+    is the cumulative reflection coefficient of ith path. In tank,              modelled multipath gain and delay information. Further the
+propagation occurs over multiple paths and therefore                            modelled received signal is compared with actual received
+cumulative reflection coefficient along 0 23 propagation path                   signal at 2m.
+is expressed as
+                                                                                    Total number of reflections (multipath): L, delay : D are
+                           9    ;              =
+                           8.   : .   8 <9 .   8 <9.                  (6)       modelled from number of Klauder wavelets present in cross-
+                                                                                correlation output and time arrival of central peaks of
+      8 : upper surface reflection coefficient,   : : bottom                    respective Klauder wavelets. From multipath arrival
+reflection coefficient,     8 <9   :sidewall 1 reflection                       information, using speed-distance relationship distance
+coefficient, and 8 <9. : sidewall 2 reflection coefficient.                     covered by each multipath:T is modelled. Using impedance
+Exponents >, ?, , @ A are number of times signal                                method, reflection coefficients for upper surface, bottom and
+reflected from upper surface layers, tank bottom, and                           sidewalls is modelled. Using frequency information of
+sidewalls. In our study, we have assumed that the tank walls                    transmitted (source) signal, Thorp’s absorption coefficient is
+are smooth and its reflection coefficient is given by [14,                      modelled. Number of bounces for every reflection (multipath)
+Chapter 1] and modelled as                                                      is modelled using simple geometric ray tracing technique.
+                                       BC D=8E5FG -BG D=8E5FG                       This path loss expression (3) is proposed on basis of its
+             :,   8 <9 ,   8 <9.       BC D=8E5FG %BG D=8E5FG
+                                                                      (7)
+                                                                                overall accuracy in signal reception and its performance is
+    Where, : is bottom reflection coefficient, 8 <9 is                          compared with other proposed attenuation models (referred in
+sidewall 1 reflection coefficient, 8 <9. is sidewall 2                          [6] and [8]) to validate its suitability.
+reflection coefficient, H< is acoustic impedance of water                           Received signal is modelled using principle of
+medium, HD is acoustic impedance of concrete, I D is                            superposition theorem and simulated using MATLAB 2020b
+incidence angle of ray. Similarly, for upper surface, reflection                with the modelled multipath characteristics inferred from
+coefficient is expressed as                                                     proposed path loss expression and estimated delay parameters
+                        BJ D=8E5FG -BC D=8E5FG                                  for known scenario of placement of projector and hydrophone
+                   8                                                  (8)       and assumed channel conditions. In order to simplify
+                        BJ D=8E5FG %BC D=8E5FG
+                                                                                implementation of simulation code following assumptions are
+    Where, 8 is upper surface reflection coefficient, HK is                     made about tank channel and its environment as stated below.
+acoustic impedance of air medium, H< is acoustic impedance
+of water medium, I D is incidence angle of ray. Each                            A. Assumptions about channel environment and boundary
+reflection coefficient is function of incidence angle. The                         conditions:
+incidence angle and number of surface, bottom and sidewall                                •     Water physiochemical properties (temperature,
+reflections are calculated using MATLAB code developed for                                      salinity) are assumed to be constant.
+given channel geometry. In our study, the acoustic impedance
+of concrete wall is given by [15] and assumed as                                          •     Only ambient noise effects are considered in the
+4.08 , 10M kg/m. s, Similarly for air medium it is given by                                     simulation.
+[16] and assumed as 353.29 kg/m. sand for water it is given
+by [16] and assumed as 1.48 , 10M kg/m. s.                                                •     Tank channel is assumed as time invariant
+                                                                                                (stationary) channel.
+C. Path delay:
+                                                                                          •     Speed of sound wave in water is assumed 1500
+    To model the path delays, cross correlation is performed
+                                                                                                m/s.
+between transmitted signal and measured received signal.
+From central lobe peak positions of Klauder wavelets, table                               •     Walls of tank are assumed as flat surface.
+of multipath delay is prepared. The respective phase is
+estimated from the polarity of peak of Klauder wavelet                                    •     Surface roughness and volume scattering effects
+extracted from output of cross correlation methods.                                             are not considered in the simulation.
+
+                  IV.MODEL SIMULATION                                                               V.EXPERIMENTATION
+   At hydrophone, the received signal is modelled as                            A. Experimental setup:
+function of transmitted signal and additive gaussian noise [7,                      To investigate multipath effects, we designed
+Eq. (21)] as below:                                                             5Uuntapered chirp signal sweeping linearly from 25 kHz to
+                           ∑                   D                      (9)       35 kHz. We transmitted this source signal from projector (ITC
+                                                                                1042) to hydrophone (Keltron) at decided scenario. At
+    The proposed approach is combination of two methods                         hydrophone, signal is acquired at sampling rate of 240 kHz
+where first method is used to model multipath gain using                        (through NI PCI 6110 DAQ) and is further processed using
+suitable path loss models referred from [7-10] and second                       LABVIEW & MATLAB simulation tools. To observe
+method is used to model multipath delays estimated using                        multipath effects, we kept source signal duration to be 100
+cross-correlation technique referred from [11,12]. The                          msec with silent period of 120ms added before and after
+
+
+
+
+      Authorized licensed use limited to: Stanford University. Downloaded on September 09,2026 at 05:36:55 UTC from IEEE Xplore. Restrictions apply.
+sweeping. We recorded echoes for 60 msec. The designed 25-                               •     Projector and hydrophone are kept stationary
+35kHz chirp signal is as shown in figure 2.                                                    while signal transmission and its reception.
+    In figure 3, photograph of test tank facility and                                    •     No obstacle (object) is present between projector
+experimental set up is shown. Projector and hydrophone are                                     and hydrophone.
+placed at depth of 0.3m and range between them is kept 2m.
+The placement of projector and hydrophone is kept at middle                    C. Noise characteristics:
+of tank of size 3.85m (Long) X 2.4m (Wide) X 2m (Deep).                           Presence of Additive White Gaussian Noise (AWGN)
+We used ITC 1042 as projector and Keltron 8240000001 as                        noise is witnessed with help of measurement using Keltron
+hydrophone to execute experiment. All instruments were
+                                                                               hydrophone. Same noise effects are considered in the
+calibrated before starting the experiment.
+                                                                               simulation.
+
+                                                                                                 VI.MODEL VALIDATION
+                                                                                   To validate results of multipath channel model, we have
+                                                                               conducted a tank experiment at 0.3 m depth and 2m
+                                                                               separation between projector and hydrophone. We have
+                                                                               simulated chirp signal transmission using modeled multipath
+                                                                               gain and delay. Further we have performed actual signal
+                                                                               transmission at decided scenario and collected received
+                                                                               signal data (samples) through hydrophone.
+
+
+
+
+      Fig. 2: Untapered 25-35kHz chirp signal (as source signal)
+
+
+
+
+                                                                                  Fig. 4: Comparision of simulated received signal signsl with measured
+                                                                                                             received signal
+
+                                                                                    The accuracy of proposed multipath channel model:
+                                                                               SWARA is measured in terms of root mean square error
+                                                                               (RMSE) metric between measured received signal samples
+                                                                               and simulated received signal samples. The investigation of
+                                                                               multipath effects is verified by comparing simulated output
+                      (a)                                  (b)                 of received signal with measured echoes shown in figure 4.
+                                                                               It is observed that amplitude of simulated received signal and
+        Fig. 3: (a) Water tank with projector and hydrophone and (b)           measured received signal ranges between ±0.3V.
+                             Experimental set up
+                                                                                   Simulated primary echo contains effects of specular
+   Figure 3 (a) and (b) represents a photograph of water tank                  reflections from tank upper surface, bottom and sidewalls. In
+with projector and hydrophone placed at 0.3m depth and                         measured primary echo, leading edge of echo is due to initial
+separated by 2m and an experimental set up.                                    reflections coming from upper surface and sidewalls.
+                                                                               Trailing edge of echo is due to multiple reflections from
+B. Environmental paramters:
+                                                                               upper surface, bottom and sidewalls.
+       • Tank is filled with drinking water up to 1.8m
+           height.                                                                 Total number of reflections (multipath): L, delay : D are
+                                                                               verified from number of Klauder wavelets present in cross-
+        •    Temperature of water is 26 C.
+                                                                               correlation output and time arrivals of central peaks of
+                                                                               respective Klauder wavelets. Distance covered by each
+
+
+
+
+     Authorized licensed use limited to: Stanford University. Downloaded on September 09,2026 at 05:36:55 UTC from IEEE Xplore. Restrictions apply.
+reflection (multipath):T is obtained using multipath arrival                   part of future work, extension of proposed model can be
+information and speed-distance relationship. Reflection                        investigated for long range acoustic communication.
+coefficients for upper surface, bottom and sidewalls are
+                                                                                                        ACKNOWLEDGMENT
+calculated using impedance method. Using frequency
+information of transmitted (source) signal, Absorption                         We would like to thank Dr. Shrinivas P. Mahajan, Head of
+coefficient is calculated. Number of bounces for every                         Department, E&TC, College of Engineering, Pune for
+reflection (multipath) are verified through simple geometric                   encouraging us to carry out the research work in underwater
+ray tracing output. The simulated received signal contains 48                  acoustics at the department. We would also like to thank Dr.
+number of reflections.                                                         Mukul S. Sutaone, Head of Center of Excellence in Signal
+    Proposed path loss expression is integrated with estimated                 and Image Processing (CoE-S&IP), College of Engineering,
+multipath delay (extracted from arrival time of Klauder                        Pune for providing the necessary resources for performing
+wavelets present in cross-correlation output) to simulate                      simulations for proposed research work. We are thankful to
+received signal at 2m.
+                                                                               the staff of UWAA lab, CARE, IIT Delhi for providing the
+A. Result discussions:                                                         necessary instruments for carrying tank experiments. The
+From measured experiment and simulated results, we observe                     authors would also like to thank the reviewers for their
+that:                                                                          valuable comments.
+
+    a.   Signal reception is modelled using proposed path                                                  REFERENCES
+         loss expression (3) have shown improvement in the
+                                                                                     [1]  P. Qarabaqi and M. Stojanovic, “Statistical modeling of a
+         signal reconstruction compared to signal modelled                                shallow water acoustic communication channel,” in Proc.
+         using path loss expression proposed in [6] and [8].                              Underwater Acoust. Meas. Conf., Nafplion, Greece, Jun. 2009,
+    b.   Accuracy of proposed SWARA multipath channel                                     pp. 1341–1350.
+         model is compared in terms of RMSE between                                  [2] M. Chitre, J. Potter, and S. H. Ong, “Underwater acoustic
+                                                                                          channel characterization for medium-range shallow water
+         modelled received signal and measured received                                   communications,” in Proc. Oceans 2004 (MTS/IEEE), Kobe,
+         signal at 2m. For SWARA multipath channel model,                                 Japan, 2004, pp. 40–45.
+         we have obtained RMSE of 0.11. For multipath                                [3] Etter P C. Advanced applications for underwater acoustic
+         channel model proposed in [6] and [8], we have                                   modeling[J]. Advances in Acoustics and Vibration, 2012, 2012.
+         obtained RMSE of 0.15 and 0.12 respectively.                                [4] Tri Budi Santoso, Endang Widjiati, Wirawan, Gamantyo
+                                                                                          Hendrantoro, “Parameter Measurement of Acoustic Propagation
+                                                                                          in The Shallow Water Environment”, accepted at CITEE 2012,
+Therefore, from the above observations, we propose that                                   Jogjakarta, Indonesia.
+SWARA multipath channel model can be used as a better                                [5] J. D. Penrose, P. J. W. Siwabessy, A. Gavrilov, I. Parnum, L. J.
+estimator for characterizing acoustic sweep signal                                        Hamilton, A. Bickers, B. Brooke, D. A. Ryan, and P. Kennedy,
+transmission in multipath scenarios under tank channel for                                “Acoustic techniques for seabed classification,” Cooperative
+point to point communication.                                                             Research Centre for Coastal Zone Estuary and Waterway
+                                                                                          Management, Technical Report 32, September 2005.
+      VII.CONCLUSION AND FUTURE WORK                                                 [6] J. B. Liu, , W.Y. Cai, and M. Zhang. "Decision fusion
+                                                                                          mechanism of oceanic sensor networks based on fading acoustic
+    In this paper, we have proposed multipath channel model:                              communication channel.", IEEE 3rd International Conference on
+Shallow Water Acoustics for Random Area (SWARA) which                                     Innovative Computing Information and Control, pp. 588-588.,
+                                                                                          2008.
+can be used as better estimator for characterizing acoustic
+                                                                                     [7] F. De Rango, F. Veltri, and P. Fazio, “A multipath fading channel
+sweep signal transmission in tank based multipath                                         model for underwater shallow acoustic communications,” in
+environment. Signal reception is modelled using principle of                              Proc. IEEE Int. Conf. Commun., Ottawa, ON, Canada, 2012, pp.
+superposition theorem. Multipath loss is modelled using                                   3811–3815.
+proposed Rayleigh, Cylindrical Spread and Thorp expression                           [8] M. Naderi, M. Pätzold, and A. G. Zajic, ‘‘A geometry-based
+(RCST) path loss expression and delay is modelled using                                   channel model for shallow underwater acoustic channels under
+cross correlation technique. To validate results of proposed                              rough surface and bottom scattering conditions,’’ in Proc. IEEE
+                                                                                          5th Int. Conf. Commun. Electron. (ICCE), pp. 112–117, Jul.
+multipath channel model, experiment is conducted. Accuracy                                2014.
+of proposed multipath channel model: SWARA is measured
+                                                                                     [9] M. C. Domingo, “Overview of channel models for underwater
+in terms of root mean square error (RMSE) metric between                                  wireless communication networks,” Elsevier J. Phys. Commun.,
+measured received signal samples and simulated received                                   vol. 1, no. 3, pp. 163–182, 2008.
+signal samples. The investigation of multipath effects is                            [10] D. V. Ha, V. D. Nguyen, “Methods of designing shallow
+verified by comparing simulated received signal with                                      underwater       acoustic     channel     simulators”, Acoustics
+measured received signal. Therefore, proposed SWARA                                       Australia, Vol.44,no.3, pp.439–448, 2016.
+model can be extended for optimizing performance of sensor                           [11] Z. Jiang, X. Qiu, J. Lin and Z. Chen, “ Extracting reflection with
+network operating for wireless acoustic applications. As a                                wavelet transform in vibroseis signal processing”, Journal of
+                                                                                          Geophysics and Engineering, Vol. 3,no. 3, pp.236-242, 2006.
+
+
+
+
+     Authorized licensed use limited to: Stanford University. Downloaded on September 09,2026 at 05:36:55 UTC from IEEE Xplore. Restrictions apply.
+[12] R. Geyer, “Vibroseis geophysics reprint series”, Tulsa: Society
+     of Exploration Geophysicists, 1989.
+[13] P.L.L.M. Brekhovskikh and Yu, “Fundamentals of Ocean
+     Acoustics”, third ed., Springer, 2003.
+[14] F. Jensen et al., “Computational Ocean Acoustics”, Springer
+     Verlag, 1994.
+[15] J. R. Leslie, & W. J.Cheesman,“ An ultrasonic method of
+     studying deterioration and cracking in concrete structures”,
+     Journal of the American Concrete Institute, Vol. 21, no. 1, pp.17-
+     36, 1949.
+[16] Y. H. Kim, “Sound Propagation: An Impedance Based
+     Approach”, New York: Wiley, 2010, pp. 100–103.
+
+
+
+
+ Authorized licensed use limited to: Stanford University. Downloaded on September 09,2026 at 05:36:55 UTC from IEEE Xplore. Restrictions apply.
+
