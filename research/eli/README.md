@@ -4,6 +4,8 @@ Research toward an OCEANS 2027 Aberdeen paper: underwater acoustic algorithm
 development running on the sub's Jetson AGX Orin, using the 4-hydrophone
 array + Ping360, validated in the pool.
 
+- `notes/04_research_gaps.md` — **start here**: the gaps we should study, in
+  plain terms, ranked, with evidence and the closest competitor group.
 - `notes/00_directions.md` — literature-driven survey of candidate directions.
 - `notes/01_critique.md` — adversarial critique; P1 narrowed to the headline
   paper (start here for the current plan).
@@ -11,6 +13,18 @@ array + Ping360, validated in the pool.
 - `src/` — differentiable pool channel model, fit, matched-field localizer,
   probe WAV generator. Synthetic tests pass; see `src/README.md`.
 - `papers/` — text extracts of key papers (arnumber-prefixed).
+
+## Status (2026-09-09)
+
+- Direction chosen: G1+G2 headline (walls as virtual array + self-calibrated
+  differentiable pool model + on-Orin matched-field localizer), with G3
+  ablation, G4 sonar validation, G5 Orin timing. G6 (self-localization from
+  own echoes) is the follow-on.
+- Code: synthetic pipeline passes (`src/README.md`). No real data yet.
+- Hardware decisions: record on the Zoom H8 (one clock), hydrophones + speaker
+  on a jig, Ping360 sweep per pose. Open: hydrophone variant, pool dimensions,
+  speaker model.
+- Abstract deadline ~7 Dec 2026. Pool session 1 target: first week of October.
 
 ## Target venue
 
