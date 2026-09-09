@@ -31,6 +31,7 @@ def test_vs_pra():
     m = PoolRenderer(Lx, Ly, D, C, n_hyd=1, order=1, fs=FS, n_fft=NFFT,
                      hyd_init=[[mic[0], mic[1], mic[2] - D]])
     m.surface_coef = r
+    m.images = [n for n in m.images if sum(map(abs, n)) <= 1]  # pra max_order=1 = total order, not per-axis
     for w in m.walls.values():
         with torch.no_grad():
             w.a.fill_(torch.logit(torch.tensor(r)).item()); w.log_fc.fill_(math.log(1e7))
@@ -61,10 +62,11 @@ def test_vs_pra():
 def make_truth():
     hyd = torch.tensor([[5.00, 6.00, -1.50], [5.06, 6.00, -1.50], [5.00, 6.06, -1.50], [5.06, 6.06, -1.50]])
     hyd = hyd + 0.01 * torch.randn(4, 3)
-    t = PoolRenderer(Lx, Ly, D, 1495.0, order=1, fs=FS, n_fft=NFFT, hyd_init=hyd, wall_r0=0.85, floor_r0=0.6)
+    t = PoolRenderer(Lx, Ly, D, 1495.0, order=1, order_z=3, fs=FS, n_fft=NFFT, hyd_init=hyd, wall_r0=0.55, floor_r0=0.4)
     with torch.no_grad():
         for k, w in t.walls.items():
             w.log_fc.fill_(math.log(6000.0 if k != "floor" else 3000.0))
+        t.clock_ppm.fill_(120.0)  # speaker DAC 120 ppm fast
     return t
 
 
@@ -86,8 +88,18 @@ def test_fit_and_localize():
         obs = [truth.render(q, p, max_delay) + 1e-3 * torch.randn(4, NFFT) for q in poses]
         obs_held = truth.render(held, p, max_delay)
 
-    m = PoolRenderer(Lx, Ly, D, C, order=1, fs=FS, n_fft=NFFT)  # nominal init (6 cm square, c=1480, r=0.9/0.7)
+    m = PoolRenderer(Lx, Ly, D, C, order=1, order_z=3, fs=FS, n_fft=NFFT)  # nominal init (6 cm square, c=1480, r=0.5)
+    m.set_priors(hyd_sigma=0.02, L_sigma=0.05, depth_sigma=0.03, c_sigma=10.0)
     hyd_err0 = (m.hyd - truth.hyd).norm(dim=1).mean().item()
+    # clock ppm: 1-D pre-scan on the low band (gradient through resampling is too weak to pull 100+ ppm)
+    # Speaker/recorder clock ratio is NOT observable from one 50 ms chirp (120 ppm = 6 us stretch,
+    # buried under geometry mismatch; a loss scan over ppm returned -274 for truth 120). It is
+    # observable from the arrival-time drift between chirps over the 90 s pose block
+    # (120 ppm x 90 s = 10.8 ms). That estimate belongs to the alignment stage; here we
+    # emulate it with the true value +-2 ppm and keep the parameter frozen in the fit.
+    with torch.no_grad():
+        m.clock_ppm.fill_(120.0 + 2.0)
+    m.clock_ppm.requires_grad_(False)
     opt = torch.optim.Adam([
         {"params": [m.hyd], "lr": 1e-3},
         {"params": [m.log_c], "lr": 1e-3},
@@ -101,11 +113,12 @@ def test_fit_and_localize():
         for _ in range(n):
             opt.zero_grad()
             loss = sum(multires_stft_loss(bandlimit(m.render(q, p, max_delay), FS, f_lo, f_hi), o) for q, o in zip(poses, obs_b)) / len(poses)
+            loss = loss + 1e-3 * m.prior_loss()
             loss.backward(); opt.step(); it += 1
             if it % 50 == 0:
                 print(f"[fit] it {it} band<{f_hi:.0f} loss {loss.item():.4f} hyd err {(m.hyd - truth.hyd).norm(dim=1).mean().item()*100:.2f} cm c {m.c.item():.1f}")
     hyd_err = (m.hyd - truth.hyd).norm(dim=1).mean().item()
-    print(f"[fit] {time.time()-t0:.1f}s; hyd err {hyd_err0*100:.2f} -> {hyd_err*100:.2f} cm; c {C} -> {m.c.item():.1f} (truth 1495)")
+    print(f"[fit] {time.time()-t0:.1f}s; hyd err {hyd_err0*100:.2f} -> {hyd_err*100:.2f} cm; c {C} -> {m.c.item():.1f} (truth 1495); clock {m.clock_ppm.item():.0f} ppm (truth 120)")
     for k in m.walls:
         print(f"[fit] wall {k}: r {torch.sigmoid(m.walls[k].a).item():.3f} fc {torch.exp(m.walls[k].log_fc).item():.0f}")
 
@@ -118,7 +131,7 @@ def test_fit_and_localize():
     err = (est - held).norm().item()
     print(f"[loc] est {est.numpy().round(2)} truth {held.numpy()} err {err*100:.1f} cm score {score:.3f} ({time.time()-t0:.1f}s CPU)")
     # baseline: nominal (unfitted) model
-    m0 = PoolRenderer(Lx, Ly, D, C, order=1, fs=FS, n_fft=NFFT)
+    m0 = PoolRenderer(Lx, Ly, D, C, order=1, order_z=3, fs=FS, n_fft=NFFT)
     est0, _ = localize(m0, O, bounds=((1, 24), (1, 11.5), (-1.9, -0.1)), max_delay=max_delay)
     print(f"[loc] nominal-model est {est0.numpy().round(2)} err {(est0-held).norm().item()*100:.1f} cm")
 

@@ -20,14 +20,19 @@ import torch.nn as nn
 WALLS = ("x0", "x1", "y0", "y1", "floor", "surface")
 
 
-def image_sources(order: int):
-    """Enumerate image indices (nx, ny, nz) with |nx|+|ny|+|nz| <= order.
-    Returns list of (nx, ny, nz). Reflection counts per wall follow from signs.
+def image_sources(order: int, order_z: int | None = None):
+    """Enumerate image indices (nx, ny, nz) with |nx|+|ny| <= order and |nz| <= order_z
+    (default order_z = order). "Axial boosting" (DiffRIR): the surface/floor pair is
+    only ~2 m apart in a pool, so vertical images of high order still land inside the
+    early window while side-wall images of order 2 are already tens of ms late.
     """
+    if order_z is None:
+        order_z = order
     out = []
     r = range(-order, order + 1)
-    for nx, ny, nz in itertools.product(r, r, r):
-        if abs(nx) + abs(ny) + abs(nz) <= order:
+    rz = range(-order_z, order_z + 1)
+    for nx, ny, nz in itertools.product(r, r, rz):
+        if abs(nx) + abs(ny) <= order:
             out.append((nx, ny, nz))
     return out
 
@@ -88,10 +93,13 @@ class WallFilter(nn.Module):
 
 
 class PoolRenderer(nn.Module):
-    def __init__(self, Lx=25.0, Ly=12.5, depth=2.0, c=1480.0, n_hyd=4, order=1,
-                 fs=96000, n_fft=8192, hyd_init=None, wall_r0=0.9, floor_r0=0.7):
+    def __init__(self, Lx=25.0, Ly=12.5, depth=2.0, c=1480.0, n_hyd=4, order=1, order_z=None,
+                 fs=96000, n_fft=8192, hyd_init=None, wall_r0=0.5, floor_r0=0.5, taper_ms=1.0):
+        """wall_r0/floor_r0 default 0.5: concrete/water normal-incidence |R| ~0.47 (More 2021).
+        taper_ms: width of the soft time gate at max_delay (differentiable, replaces a hard cut)."""
         super().__init__()
         self.fs, self.n_fft, self.order = fs, n_fft, order
+        self.taper = taper_ms * 1e-3
         self.L = nn.Parameter(torch.tensor([Lx, Ly]))
         self.depth = nn.Parameter(torch.tensor(float(depth)))
         self.log_c = nn.Parameter(torch.log(torch.tensor(float(c))))
@@ -107,9 +115,26 @@ class PoolRenderer(nn.Module):
         })
         # source response: log-magnitude on a coarse frequency grid, interpolated
         self.src_logmag_knots = nn.Parameter(torch.zeros(16))
-        self.images = image_sources(order)
+        # speaker DAC clock vs recorder ADC clock: probe is played at (1+ppm*1e-6) x nominal rate
+        self.clock_ppm = nn.Parameter(torch.zeros(()))
+        self.images = image_sources(order, order_z)
         self.surface_coef = -1.0  # pressure-release surface; set to +r for validation vs pyroomacoustics
         self.register_buffer("f", torch.fft.rfftfreq(n_fft, 1.0 / fs))
+
+    def set_priors(self, hyd_sigma=0.02, L_sigma=0.05, depth_sigma=0.03, c_sigma=5.0):
+        """Gaussian priors on surveyed geometry (Chitre 2023 error-term penalties)."""
+        self.register_buffer("hyd0", self.hyd.detach().clone())
+        self.register_buffer("L0", self.L.detach().clone())
+        self.register_buffer("depth0", self.depth.detach().clone())
+        self.register_buffer("c0", self.c.detach().clone())
+        self.prior_sigmas = (hyd_sigma, L_sigma, depth_sigma, c_sigma)
+
+    def prior_loss(self):
+        if not hasattr(self, "hyd0"):
+            return torch.zeros((), device=self.f.device)
+        hs, Ls, ds, cs = self.prior_sigmas
+        return (((self.hyd - self.hyd0) / hs) ** 2).mean() + (((self.L - self.L0) / Ls) ** 2).mean() \
+            + ((self.depth - self.depth0) / ds) ** 2 + ((self.c - self.c0) / cs) ** 2
 
     @property
     def c(self):
@@ -136,7 +161,8 @@ class PoolRenderer(nn.Module):
             pos = image_position(src, n, self.L, self.depth)          # (3,)
             d = torch.linalg.norm(self.hyd - pos, dim=-1)              # (n_hyd,)
             tau = d / self.c + self.ch_delay_us * 1e-6                  # (n_hyd,)
-            if max_delay is not None and bool((tau.min() > max_delay).item()):
+            gate = torch.sigmoid((max_delay - tau) / self.taper) if max_delay is not None else torch.ones_like(tau)
+            if max_delay is not None and bool((gate.max() < 1e-3).item()):
                 continue
             counts = wall_counts(n)
             R = torch.ones_like(f, dtype=torch.complex64)
@@ -147,7 +173,7 @@ class PoolRenderer(nn.Module):
                     R = R * (self.surface_coef ** cnt)
                 else:
                     R = R * wall_R[k] ** cnt
-            amp = torch.exp(self.ch_gain)[:, None] / d[:, None]
+            amp = torch.exp(self.ch_gain)[:, None] / d[:, None] * gate[:, None]
             H = H + amp * R[None, :] * srcr[None, :] * torch.exp(-2j * math.pi * f[None, :] * tau[:, None])
         return H
 
@@ -172,19 +198,27 @@ class PoolRenderer(nn.Module):
                 pos = image_position(S, n, self.L, self.depth)          # (n,3)
                 d = torch.linalg.norm(self.hyd[None] - pos[:, None], dim=-1)   # (n, n_hyd)
                 tau = d / self.c + self.ch_delay_us[None] * 1e-6
-                if max_delay is not None:
-                    keep = (tau.min(dim=1).values <= max_delay).to(d.dtype)[:, None]  # per-candidate gate
-                else:
-                    keep = 1.0
-                amp = torch.exp(self.ch_gain)[None] / d * keep
+                gate = torch.sigmoid((max_delay - tau) / self.taper) if max_delay is not None else 1.0
+                amp = torch.exp(self.ch_gain)[None] / d * gate
                 H = H + amp[..., None] * R[None, None] * torch.exp(-2j * math.pi * f[None, None] * tau[..., None])
             outs.append(H)
         return torch.cat(outs)
 
+    def timescale(self, x, ratio):
+        """Resample 1-D x so it plays `ratio` times faster (ratio>1 -> shorter). Differentiable in ratio."""
+        n = x.shape[-1]
+        t = torch.arange(n, device=x.device, dtype=torch.float32) * ratio   # source-sample positions
+        i0 = torch.clamp(t.floor().long(), 0, n - 2)
+        w = t - i0.to(t.dtype)
+        y = x[i0] * (1 - w) + x[i0 + 1] * w
+        return y * (t < n - 1).to(y.dtype)
+
     def render(self, src, probe, max_delay=None):
         """Convolve probe (n_fft-length or shorter, 1-D) with the rendered CIRs.
         Returns (n_hyd, n_fft) time signals (circular; keep probe + tail < n_fft).
+        The probe is time-scaled by the learnable speaker/recorder clock ratio.
         """
+        probe = self.timescale(probe, 1.0 + self.clock_ppm * 1e-6)
         P = torch.fft.rfft(probe, n=self.n_fft)
         H = self.transfer(src, max_delay)
         return torch.fft.irfft(H * P[None, :], n=self.n_fft)
