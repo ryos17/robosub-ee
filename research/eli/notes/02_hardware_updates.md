@@ -1,5 +1,8 @@
 # Hardware updates after the critique (2026-09-06)
 
+> Current rig and protocol live in `05_experiment_plan.md`; this note keeps the reasoning
+> and the Ping360 software details.
+
 ## Clock sync: solved by the Zoom H8
 
 The critique's biggest risk (two Daisy boards, no shared sample clock,

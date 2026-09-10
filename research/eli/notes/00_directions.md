@@ -1,5 +1,10 @@
 # Research directions: underwater acoustics on the sub's Orin, for OCEANS 2027 Aberdeen
 
+> **Superseded (2026-09-09).** This is the original survey. The directions below were
+> critiqued in `01_critique.md`, narrowed there, and restated as plain-language gaps in
+> `04_research_gaps.md`. Start at `../README.md`. Kept for the literature map and the
+> dropped ideas.
+
 Literature survey, 2026-09-06. Source: 46 IEEE Xplore searches (2016+), ~390
 unique records, abstracts reviewed in four theme clusters (localization/DOA,
 comms, edge/sonar, DAFx-style DSP/ML). Paper IDs below are IEEE Xplore

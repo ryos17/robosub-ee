@@ -3,7 +3,7 @@
 Each entry: the intuition, why it is a genuine gap (evidence), why it is
 reasonable for us, and the risk. Ranked. Evidence comes from the ~400-record
 IEEE sweep (notes 00-01), full-text reads (notes 03), and targeted checks on
-2026-09-09 (Semantic Scholar, Google Scholar, arXiv; IEEE session had expired).
+2026-09-09 (Google Scholar, arXiv, and an IEEE Xplore cross-check, see the end).
 Paper ids are IEEE arnumbers unless a DOI/arXiv id is given.
 
 Closest competitor group, read before writing anything: Singer / Weiss /

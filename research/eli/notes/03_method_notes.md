@@ -1,5 +1,8 @@
 # Method notes mined from the key papers (2026-09-08)
 
+> Ranked code changes at the end are the to-do list for `../src/poolsim`. Items done so far:
+> concrete reflection init, axial z-boosting, soft time gate, geometry priors, envelope coarse score.
+
 What to copy, what to differ from, and measured tank/pool facts, for the P1 channel model and localizer in `../src/poolsim`. Produced by a full-text read of the eight papers listed; ranked code changes at the end.
 
 **Report: 8 papers vs src/poolsim (P1 fit + MFP localizer)**
