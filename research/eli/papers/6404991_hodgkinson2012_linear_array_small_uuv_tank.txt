@@ -1,0 +1,548 @@
+          Acoustic Source Localization System Using A
+           Linear Arrangement of Receivers for Small
+                 Unmanned Underwater Vehicles
+                                    Bobby Hodgkinson1,3 , David Shyu2,3 , and Kamran Mohseni1,2,3
+                                          1
+                                              Department of Mechanical and Aerospace Engineering
+                                              2
+                                                Department of Electrical and Computer Engineering
+                                                  3
+                                                    Institute for Networked Autonomous Systems
+                                                                  University of Florida
+                                                                 Gainesville, FL 32611
+
+
+      Abstract—An acoustic localization system using a linear hy-                  underwater vehicles [5]. Unfortunately for small (1 meter in
+   drophone array is presented which has been designed to provide                  length) autonomous underwater vehicle designers, the majority
+   three dimensional positioning information relative to a signal                  of commercially available systems focus on applications re-
+   source for testing in confined environments such as swimming
+   pools or water tanks. The system is designed to fit within the size,            garding relatively large vehicles in the open ocean. Adaptation
+   power, and computational limitations of resource constrained                    of commercially available systems would require significant
+   small underwater vehicles. The feasibility of the technique                     modification in order to fit within the size, power, and pro-
+   was demonstrated in a confined test environment with severe                     cessing limitations of small underwater vehicles.
+   multipath signals. Experimental test results in a 8 m diameter,                    For the purposes of small autonomous underwater vehicles
+   4.5 m deep steel tank show localization errors of less than 5% of
+   the slant range which is comparable to commercially available                   (AUVs) it is more desirable for the vehicles to position
+   systems designed for large vehicles in the open ocean.                          themselves relative to a known location than to have a moth-
+                                                                                   ership relay the vehicle’s position relative to the mothership
+                            I. I NTRODUCTION                                       [6]. Furthermore, for underwater vehicle testing in confined
+      A great deal of successful work has been done over the                       environments multipath and the acoustic reverberation time
+   last several decades in underwater acoustic communication                       are major concerns. In these confined environments the time
+   systems and localization systems. Milne [1] categorizes un-                     required for an acoustic signal to decay below the noise
+   derwater positioning system into three main classes. The long                   threshold can be on the order of several tens of milliseconds
+   baseline (LBL) systems uses multiple transmitters or receivers                  [7], [8]. With these concerns in mind there exists a niche for a
+   spaced several meters apart. Simple geometry and the round                      small, passive localization device that is able to fit within the
+   trip travel time of an acoustic signal can be used to locate a                  limitations of resource constrained vehicles tested in confined
+   submersible relative to the baseline array. Ultra-short baseline                environments such as swimming pools and small tanks. To
+   (USBL) systems use a tightly packed array of receivers to de-                   the author’s knowledge there does not exist a commercially
+   termine the angle at which a signal arrives based on the phase                  available localization system capable of satisfying the strict
+   difference of the signal at each of the receivers. Combined                     size requirements of small AUVs such as the Cephalobot
+   with the round trip travel time of the signal the location of                   vehicle [9]. Moreover, the amount of multipath present in
+   the submersible can be determined accurately. Short baseline                    confined testing environments such as swimming pools and
+   systems (SBL) use an array of multiple receivers and geometry                   water tanks warrants a robust processing scheme.
+   similar to the LBL technique to unique position a submersible.                     This article builds upon work by the authors regarding a low
+      In many applications the receiver array of these systems                     cost in-house developed (iUSBL) system for small unmanned
+   is typically housed on a large mothership [2], [3]. A sim-                      submersibles. The previous arrangement was comprised of a
+   ple transponder is placed on the submersible to allow the                       triangular array of hydrophones and an acoustic projector on
+   mothership to position the submersible with respect to the                      the underside of the vehicle similar to systems employed on
+   mothership. Variations of these techniques have also been                       large scale ships [7], [9]. The primary improvement to the
+   widely demonstrated where the submersible positions itself                      system is a more advanced signal processing scheme which
+   relative to the mothership. The convention is to simply place                   provides increased localization accuracy and precision.
+   the word ‘inverted’ in front of the categorization such as                         The remainder of this paper is organized as follows: section
+   ‘inverted Ultra-short baseline’ or iUSBL [4].                                   II provides an outline of the primary motivation for this work,
+      Several companies exist that manufacture and sell high-                      section III derives the localization technique using geometry
+   quality, reliable underwater wireless positioning systems for                   and time difference of arrival, section IV details the signal
+
+
+978-1-4673-0831-1/12/$31.00 ©2012 IEEE
+          Authorized licensed use limited to: Stanford University. Downloaded on September 10,2026 at 05:09:34 UTC from IEEE Xplore. Restrictions apply.
+                                                                                                         III. M ETHODOLOGY
+                                                                                A. Algorithm derivation
+                                                                                   Figure 2 provides a schematic of the variables used in
+                                                                                the derivation of the linear array localization algorithm. The
+                                                                                algorithm is developed for i total sensors but it will be shown
+                                                                                that 3 sensors is sufficient to accomplish the positioning goals
+                                                                                of the system. Obviously a larger number of sensors would
+                                                                                introduce redundancy and potentially reduce the localization
+Fig. 1: The Cephalobot vehicle is a 1 meter long, 0.15 meter                    error. The sensors are defined as 1, 2, · · · , i and the signal
+diameter autonomous underwater vehicle equipped with squid                      source defined as element 0. The inter-element spacing di(i+1)
+inspired vortex ring thrusters [9]. The vehicle is equipped with                is constrained to the x-axis which is defined along the length
+a National Instruments sbRIO 9632 main processor, wireless                      of the elements. Assuming a constant speed of propagation
+antenna for surface communication, forward and downward                         (us ) let d0i denote the distance between the source and the
+looking cameras, and a VectorNAV VN-100 IMU/digital com-                        ith element and ti = du0is is the time when the signal reaches
+pass.                                                                           the ith element. The time difference τi of the received signal
+                                                                                at consecutive receivers is simply the difference between ti
+                                                                                and ti+1 . Using geometry it can be shown that the location of
+processing scheme used to verify the feasibility of the local-                  the source in the x-direction x0 and the distance d01 can be
+ization technique using experimental data and analyzes the                      written as:
+results of field experiments. Finally section V provides several                                               A(e − b)
+                                                                                                       x0 =                  ,                          (1)
+options to improve the technique and supporting simulations                                                 c(e − b) − (bf )
+and experiments of these improvements.                                                                   f x0 + g − e2 + b2
+                                                                                                   d01 =                      ,                         (2)
+                          II. M OTIVATION                                                                      2e − 2b
+   The primary motivation for this work is to provide a                         where
+localization system for small unmanned underwater vehicles
+                                                                                                   b = us τ1 ,
+used as experimental testbeds in confined pools or water tanks.
+The vehicles will be tested in a shallow (4.5 meter deep)                                          c = −2d12 ,
+environment making multipath a significant concern.                                                d = d212 ,
+   The strict bandwidth limitations of the underwater environ-                                     e   = us (τ1 + τ2 ),
+ment make it less desirable to transmit positioning information
+                                                                                                  f    = −2d23 ,
+when that same information can be obtained using the signal
+itself [6]. In the proposed system localization and communica-                                     g   = d23 (d23 + 2d12 ),
+tion can be conducted using the same acoustic signal. The first                                          bg − be2 − b3
+                                                                                                  A    =                + b2 − d.
+portion of the signal is used to determine the time difference                                                e−b
+of arrival at receivers and the later portion of the signal can
+                                                                                   With knowledge of the difference in vehicle depth and signal
+be used to encode data. The focus of this article is on the
+                                                                                source depth (z0 ) the y-component of the source location can
+localization scheme and the communication scheme will be a
+                                                                                be found as equation 3. This equation has two solutions but
+focus of future work.
+                                                                                only one solution is realized in practical applications since
+   In the author’s previous work an array of hydrophones
+                                                                                the receivers are assumed to receive signals only in the +y-
+spaced 3 cm apart in an iUSBL arrangement and a pro-
+                                                                                direction due to the location on the vehicle.
+jector were placed on the underside of the vehicle. It was
+experimentally determined that an increased spacing of the                                                y02 = d201 − x20 − z02                        (3)
+hydrophones would yield increased positional accuracy. The
+increased hydrophone spacing would require a decrease of
+signal frequency to maintain the 21 wavelength requirement of                   B. Signal Processing
+iUSBL systems. Unfortunately, it was experimentally observed                       The time delay of arrival of the signal from the projector
+that a lower signal frequency increases the effects of multipath                at each of the receivers and the difference in depth between
+rendering a low frequency iUSBL system impractical for a                        the projector and receiver array are the only unknowns re-
+confined test environment. These considerations lead to the                     quired to uniquely determine the location of the signal source.
+arrangement of small hydrophones placed in a linear fashion                     For experimental demonstration the depth of the projector
+and a signal projector placed in the nose as shown in Figure                    remained at a constant 1 m below the receiver array. In future
+1 on the 1 meter long Cephalobot vehicle. Figure 1 shows                        deployments the depth of the signal source will be encoded
+the port side hydrophones and the starboard side would be                       in the signal immediately after the localization portion of
+mirrored.                                                                       the signal. The depth of the array will be known from the
+
+
+
+       Authorized licensed use limited to: Stanford University. Downloaded on September 10,2026 at 05:09:34 UTC from IEEE Xplore. Restrictions apply.
+                                                                                                     IV. E XPERIMENT R ESULTS
+
+                                                                                   The technique was tested in a 8 meter diameter, 4.5 meter
+                                                                                deep steel tank shown in Figure 3. Three Reson 4013 hy-
+                                                                                drophones were placed 0.5 meter apart and held stationary
+                                                                                throughout the test at a depth of 0.3 m. An in house developed
+                                                                                projector was constructed by potting a cylindrical piezo-
+                                                                                ceramic in Clear-Flex 95 epoxy using a similar method as
+                                                                                in [13]. The projector was placed at different locations in the
+Fig. 2: Linear array definition. ~x direction along length of                   testing tank at a depth of 1.3 m. The signal supplied to the
+array, ~y perpendicular to ~x in the horizontal plane, z~ completes             projector was a set of two linear chirps played back to back
+right hand rule.                                                                sweeping between 25kHz and 18kHz each lasting 500 µs for
+                                                                                a total signal duration of 1 ms. The signal was amplified to
+                                                                                approximately ±90 V by a ×10 voltage amplifier in order to
+                                                                                obtain a noticeable signal at the hydrophone output.
+                                                                                   The signal was repeated at 1 Hz to allow multipath signals
+                                                                                to decrease well beneath the noise floor. The received signals
+                                                                                were captured and stored using an oscilloscope with a sample
+                                                                                rate of 1MS/s per channel. The supply signal to the projector
+                                                                                was used to trigger the data capture of the scope as a way
+                                                                                to synchronize the data between experiments. This triggering
+                                                                                scheme was employed in order to simplify the post processing
+                                                                                and to eliminate the potential of capturing multipath signals
+                                                                                instead of the projector signal.
+                                                                                   The signals for a typical test are shown in Figure 4. The
+                                                                                upper three plots show the output voltage from the three
+                                                                                hydrophones. The lower plot shows the signal supplied to the
+                                                                                projector to provide a reference as to the signal start time.
+                                                                                For this particular test, the separation between the projector
+                                                                                and the receiver array was measured to be 4.5 m. The signal
+Fig. 3: 8 m diameter, 4.5 m deep underwater vehicle testing                     arrives at the hydrophones approximately 3 ms after it is
+tank located at the University of Florida.                                      sent from the projector which is consistent with the acoustic
+                                                                                speed of propagation in water. The most notable feature
+                                                                                of the signals shown in Figure 4 is the multipath signals
+                                                                                present approximately 2 ms after the initial signal arrival.
+                                                                                The precise source of this multipath is difficult to identify
+vehicle’s depth sensor thus transforming 3D localization to its                 but the most likely source is from the tank wall. For this
+2D counterpart similar to [10].                                                 particular experiment, the separation between the projector
+   Several options are available to filter and determine the                    and the tank wall was approximately 1.5 m which would add
+time difference of multiple signals. Here, we employ an                         an additional 2 ms of signal travel time consistent with the
+easy approach by using an inverse FFT lowpass filter to                         multipath observation.
+eliminate frequencies greater than 35kHz and cross correlation                     Due to the high amount of multi-path experienced in the
+to determine the time offset of the signals which is similar to                 experiments the cross correlation of the entire filtered signal
+the approach in [11]. Since the time offset of the signals is                   often yields incorrect results. The lag time associated with the
+determined by finding the lag corresponding to the maximum                      maximum amplitude of the cross correlation corresponds to the
+peak in the cross correlation spectrum it is desirable to                       time difference between the two signals. Figure 5 shows the
+use a signal that has a single peak in the cross correlation                    cross correlation spectrum of the filtered data shown in Figure
+spectrum. Using a similar processing technique [12] showed                      4. The solid line is the cross correlation of the upper two plots
+promising experimental results using several different types                    in Figure 4 (hydrophone signals 1 and 2) and the dashed line
+of signals including: pseudo-random binary sequence, linear                     is the cross correlation of the middle two plots (hydrophone
+chip, logarithmic chip, etc. We have chosen to implement                        signals 2 and 3). The cross correlation of hydrophone signals
+a linear chirp due to the desirable properties in the cross                     2 and 3 does not yield a well defined dominant peak but the
+correlation spectrum. In order for the technique to function                    cross correlation of hydrophone signals 1 and 2 does. For
+well the assumption that the signal level is greater than any                   this particular test the cross correlation method yields a time
+multipath signal within the cross correlation data set must be                  difference of 0.3 ms between signals 1 and 2 and -0.25 ms
+made.                                                                           between signals 2 and 3 which corresponds to an incorrect
+
+
+
+       Authorized licensed use limited to: Stanford University. Downloaded on September 10,2026 at 05:09:34 UTC from IEEE Xplore. Restrictions apply.
+                                      −3                                                                                                   −7
+                               x 10
+                       3                                                                                                            x 10
+                                                                                                                         1.5
+                       2                                                                                                                                                      xcorr 12
+                                                                                                                                                                              xcorr 23
+                       1
+                                                                                                                               1
+                       0
+
+
+
+  Amplitude [V]
+                  −1
+                                                                                                                         0.5
+
+
+                                                                                                            Amplitude
+                  −2
+
+                  −3
+                                                                                                                               0
+                  −4
+
+                  −5
+                                                                                                                        −0.5
+                  −6
+                           0                    0.002    0.004           0.006    0.008         0.01
+                                                                  Time [s]
+                                           −3
+                                                                                                                           −1
+                                x 10
+                           8
+
+                           6
+                                                                                                                        −1.5
+                           4
+                                                                                                                               −5                     0                                    5
+                                                                                                                                                  Lag time [s]                 x 10
+                                                                                                                                                                                      −4
+                           2
+
+
+
+Amplitude [V]
+                           0                                                                                Fig. 5: The cross correlation spectrum of hydrophone signals
+                   −2
+                                                                                                            1 and 2 (solid line) and signals 2 and 3 (dashed line) for
+                                                                                                            the signals shown in Figure 4. The signals were filtered using
+                   −4
+                                                                                                            an inverse FFT filter set at 35 kHz. The lag time associated
+                    −6
+                                                                                                            with the maximum amplitude represents the estimated time
+                       −8                                                                                   difference of arrival between the respective hydrophones using
+                  −10
+                               0                 0.002    0.004          0.006    0.008         0.01
+                                                                                                            the entire signal (multipath included). This results in a time
+                                                                  Time [s]                                  difference of 0.3 ms between signals 1 and 2 and -0.25 ms
+                   4
+                           x 10
+                                      −3
+                                                                                                            between signals 2 and 3 which is incorrect due to the multipath
+                                                                                                            signal.
+                       3
+
+                   2
+
+                   1
+
+
+
+Amplitude [V]
+                                                                                                            location of approximately (0.46, 0.28)m.
+                   0
+                                                                                                               In order to eliminate the multi-path signals the experimental
+                  −1
+                                                                                                            data was passed through a window function which eliminated
+                  −2
+                                                                                                            all the data after a specified sample number. Figure 6 shows the
+                  −3                                                                                        cross correlation for the aforementioned signals after eliminat-
+                  −4                                                                                        ing all data after a time of 0.006 s. For both cross correlations
+                  −5                                                                                        there now exists a clear maximum. The lag time corresponding
+                           0                    0.002    0.004           0.006    0.008        0.01
+                                                                  Time [s]                                  to these maximums correspond to a time difference of 0.05
+                                                                                                            ms and 0.085 ms for signals 1 and 2 and signals 2 and 3
+                   15
+                                                                                                            respectively. These time differences correspond to an estimated
+                                                                                                            signal location of (1.75, 4.75) m.
+                   10
+                                                                                                               Figure 7 shows the results of the calculated position (blue
+                                                                                                            markers) in the horizontal plane with the independently mea-
+
+Amplitude [V]
+                           5
+                                                                                                            sured position of the projector (red marker) and the outline
+                                                                                                            of the testing tank (blue circular outline). The projector was
+                           0
+                                                                                                            placed at 6 different locations in the testing tank. The first
+                                                                                                            location (2.5, 2) m is indicated by a large red . The smaller
+                    −5
+                                                                                                            blue s indicated the calculated projector location based on
+                                                                                                            the time difference of arrival for 5 separate data sets with
+                  −10
+                               0                 0.002    0.004          0.006
+                                                                  Time [s]
+                                                                                  0.008         0.01        the projector at (2.5, 2)m. The projector was then moved
+                                                                                                            to (2.5, 2.75)m (indicated as a large red 4) and 5 samples
+Fig. 4: Voltage levels versus time for three hydrophones (top three figures)                                were gathered. Smaller blue 4 indicate the calculated location
+and for the signal supplied to the projector (bottom figure) during a typical
+experiment. The supply signal was a set of two linear chirps from 25 kHz to 18                              of the signal source with the projector at (2.5, 2.75)m. The
+kHz each lasting 500 µs for a total signal duration of 1 ms. The signal arrives                             experiment was then repeated at the locations indicated by
+at each of the three hydrophones after approximately 3 ms. Multipath signals                                the ., ◦, +, and × in that order. Black • represent the
+arrive at the receivers approximately 2 ms after the signal from the projector.
+The source of the multipath signal is most likely from the steel wall of the                                individual hydrophone locations with hydrophone 1 at (0, 0).
+tank. The distance between the projector and the wall was approximately 1.5
+meter which would add approximately 2 ms of signal propagation time to the
+signal. Furthermore the multipath signal is at times greater than the projector
+signal making signal processing difficult.
+                                   Authorized licensed use limited to: Stanford University. Downloaded on September 10,2026 at 05:09:34 UTC from IEEE Xplore. Restrictions apply.
+                            −8
+                     x 10
+             4
+                                                                              xcorr 12
+                                                                              xcorr 23                             6
+                 3
+
+             2                                                                                                     5
+
+             1                                                                                                     4
+
+
+Amplitude
+             0
+
+                                                                                                      y [meter]
+                                                                                                                   3
+            −1
+                                                                                                                   2
+            −2
+                                                                                                                   1
+            −3
+                                                                                                                   0
+            −4
+             −5                                    0                                       5
+                                               Lag time [s]                    x 10
+                                                                                      −4
+                                                                                                                  −1
+Fig. 6: The cross correlation spectrum of hydrophone signals                                                             −2            0              2               4
+1 and 2 (solid line) and signals 2 and 3 (dashed line) for the                                                                         x [meter]
+signals shown in Figure 4. The signals were filtered using an
+inverse FFT filter set at 35 kHz and a window function to elim-
+inate all signals after 6 ms. The lag time associated with the                                 Fig. 7: The calculated locations of the source based on the
+maximum amplitude represents the estimated time difference                                     signal time difference or arrival. The projector was placed
+of arrival between the respective hydrophones using this signal                                at 6 different locations in the testing tank. The first location
+(multipath excluded). This results in a time difference of 0.05                                (2.5, 2) m is indicated by a large red . The smaller blue s
+ms between signals 1 and 2 and 0.085 ms between signals                                        indicated the calculated projector location based on the time
+2 and 3. The time of arrival estimate yields a positioning                                     difference of arrival for 5 separate data sets with the projector
+estimate of the projector in reference to the hydrophone array                                 at (2.5, 2)m. The projector was then moved to (2.5, 2.75)m
+within 2.5 cm in the x-direction and 12.5 cm in the y-direction                                (indicated as a large red 4) and 5 samples were gathered.
+of the measured location.                                                                      Smaller blue 4 indicate the calculated location of the signal
+                                                                                               source with the projector at (2.5, 2.75)m. The experiment was
+                                                                                               then repeated at the locations indicated by the ., ◦, +, and
+                                                                                               × in that order. Black • represent the individual hydrophone
+Close groupings of similar blue markers with the larger red
+                                                                                               locations with hydrophone 1 at (0, 0). Close groupings of
+markers indicate high precision and accuracy of the technique.
+                                                                                               similar blue markers with the larger red markers indicate high
+Figure 8 shows the calculated time differences (τ1 and τ2 )
+                                                                                               precision and accuracy of the technique. The sample voltages
+of the signals received for different projector locations. Close
+                                                                                               shown in Figure 4 corresponds to an experiment shown here
+groupings of signals indicate a high level of repeatability in
+                                                                                               as a ◦.
+the technique. The markers correspond to the locations shown
+in Figure 7.
+   Figure 7 shows consistency between data sets but does
+provide a quantifiable comparison between similar systems.                                     and
+A common standard of underwater positioning systems is to                                                                            yerror
+report the accuracy in reference to the slant range between the                                                        yaccuracy =          ∗ 100%.                       (6)
+                                                                                                                                       R
+source and receiver. The independently measured location of
+the projector is used to calculate the reference slant range R
+as                                                                                                The results shown in Figure 7 exhibit an xaccuracy of ±
+                                                                                               2% and a yaccuracy of ±5% which is of the same order of
+                             q                                                                 accuracy of commercially available systems [14]. The results
+                       R=        x2projector + yprojector
+                                                2            2
+                                                          + zprojector                 (4)     experimentally validate the methodology derived in section III
+                                                                                               and also demonstrate the use of iFFT and cross correlation to
+   Let xerror denote the error in the x-direction defined as the
+                                                                                               determine a time difference of arrival of underwater acoustic
+difference between the calculated x-location and the measured
+                                                                                               signals in an environment with severe multipath. Nevertheless
+xprojector (likewise for yerror ). This yields an x and y
+                                                                                               the signal processing scheme requires improvement prior to
+accuracy in reference to slant range as
+                                                                                               implementation on an underwater vehicle. In the following
+                                                  xerror                                       we present one possible approach and supporting experimental
+                                 xaccuracy =             ∗ 100%,                       (5)     results.
+                                                    R
+
+
+
+                     Authorized licensed use limited to: Stanford University. Downloaded on September 10,2026 at 05:09:34 UTC from IEEE Xplore. Restrictions apply.
+                                                     −4
+                                              x 10                                                                                                     1.4
+                                         2
+                                                                                                                                                                               Channel 1
+                                                                                                                                                                               Channel 2
+                                   1.5                                                                                                                 1.2                     Channel 3
+
+
+
+
+                                                                                                                       22kHz frequency bin amplitude
+                                         1
+                                                                                                                                                             1
+
+
+
+
+    time difference 2 to 3 [s]
+                                   0.5
+                                                                                                                                                       0.8
+                                         0
+                                                                                                                                                       0.6
+                                 −0.5
+                                                                                                                                                       0.4
+                                     −1
+
+                                 −1.5                                                                                                                  0.2
+
+                                     −2                                                                                                                      0
+                                                                                                                                                                 0   5000          10000
+                                 −2.5                                                                                                                                Samples
+                                         −4               −2                   0                   2
+                                                          time difference 1 to 2 [s]       x 10
+                                                                                                  −4
+
+                                                                                                          Fig. 9: SDFT sample result for a typical test case with the
+                                                                                                          source approximately in line with hydrophone 2 at a separation
+Fig. 8: The calculated time difference of signals for different
+                                                                                                          of approximately 2 meters. Hydrophone signal 1 is shown as
+projector locations. At each projector location 5 data sets
+                                                                                                          the black dash/dot line, signal 2 as the blue solid line and
+were gathered and close groupings of markers indicate high
+                                                                                                          signal 3 as the red dashed line. The multiple local maximums
+repeatability in the processing scheme. The sample voltages
+                                                                                                          in the SDFT are an undesirable result of extra cycles present
+shown in Figure 4 corresponds to an experiment shown here as
+                                                                                                          in the signal. Due to this phenomenon a threshold crossing
+a ◦. Markers correspond to the test locations shown in Figure
+                                                                                                          scheme was employed which found the time associated when
+7.
+                                                                                                          the SDFT magnitude crosses 0.05 to calculate the time delay
+                                                                                                          of the signal arrival.
+                                    V. S IGNAL P ROCESSING I MPROVEMENTS
+   The aforementioned processing scheme is able to yield                                                  and 14 cycles and was not consistent between data sets. This
+localization results which are comparable to commercially                                                 phenomenon yielded multiple peaks after taking the SDFT and
+available systems. However, the technique is not yet feasible                                             the maximum peak often yielded incorrect time differences.
+for deployment on an autonomous underwater vehicle primar-                                                   Figure 9 shows the SDFT results for a sample test case
+ily due to the inability of the scheme to eliminate multipath                                             where the source was approximately in line with the center
+effects prior to cross correlation. Recently a Sliding Discrete                                           hydrophone (channel 2). Channel 2 is expected to have the
+Fourier Transform (SDFT) was demonstrated to determine the                                                earliest maximum and channels 1 and 3 would have roughly
+time difference between acoustic signals in real time [15].                                               equivalent maximum locations. However, depending on the
+The SDFT is a common way of analyzing short instances of                                                  amplitudes of the extra cycles, the calculated maximum could
+a signal in the frequency domain. In our application as in                                                be delayed from the expected maximum. Further observation
+[15] we keep track of the magnitude of a specific frequency                                               revealed that the SDFT of the channel that should arrive
+bin throughout the signal duration. In [15] the duration of                                               first began increasing first regardless of extra cycles in the
+the signal was used as the number of samples for the SDFT.                                                signal and even multipath. Using a simple threshold value
+This method produces a well defined peak in the frequency                                                 and identifying the sample where each channel crossed the
+versus time relationship assuming the signal is not longer                                                threshold value, relatively consistent time differences were
+than expected. The times associated with these peaks for                                                  extracted. Figure 10 shows the measured location of the source
+two different signals can then be used to determine the time                                              and the estimated locations from the time difference of arrival
+difference of arrival.                                                                                    using the SDFT threshold crossing method.
+   In this experiment, the same hydrophone array was used;                                                   The resulting xaccuracy and yaccuracy using the SDFT
+however, the source was not a linear chirp. Instead a regular                                             threshold method were calculated to be 1.5% and 5% respec-
+sine wave of 5 cycles at 22kHz was used in order to yield                                                 tively. Despite the fact that an offset was observed between
+a more ideal signal for the DFT. Ideally, the SDFT uses the                                               the calculated locations and the measured projector locations,
+location of the maximum amplitude of the desired frequency                                                the positioning results using SDFT are as precise as the cross
+to calculate delays. However, in the experimental setup, the lo-                                          correlation method. Nevertheless, the SDFT method is well
+cation of the maximum was affected by the projector resonant                                              suited for real time signal processing and is computationally
+frequency and other environmental effects. Specifically it was                                            inexpensive enough to run in real time aboard a resource
+noted that the received signal was anywhere between 7 cycles                                              constrained small underwater vehicle.
+
+
+
+                                 Authorized licensed use limited to: Stanford University. Downloaded on September 10,2026 at 05:09:34 UTC from IEEE Xplore. Restrictions apply.
+             6                                                                                          VII. ACKNOWLEDGMENTS
+                                                                                        The authors would like to acknowledge the Office of Naval
+             5                                                                        Research (ONR) for funding support of this project.
+                                                                                                                     R EFERENCES
+             4                                                                         [1] P. Milne, “Underwater acoustic positioning systems,” 1983.
+                                                                                       [2] M. Audric, “Gaps, a new concept for usbl [global acoustic position-
+                                                                                           ing system for ultra short base line positioning],” in OCEANS’04.
+
+
+y [meter]
+             3                                                                             MTTS/IEEE TECHNO-OCEAN’04, vol. 2. IEEE, 2004, pp. 786–788.
+                                                                                       [3] K. Vickery, “Acoustic positioning systems. a practical overview of
+                                                                                           current systems,” in Autonomous Underwater Vehicles, 1998. AUV’98.
+             2                                                                             Proceedings Of The 1998 Workshop on. IEEE, 1998, pp. 5–17.
+                                                                                       [4] T. Bennetts, “Applications of iusbl technology overview.”
+                                                                                       [5] C. Bussman, R. Burns, C. Knight, M. Ventura, C. Covey, R. Conward,
+             1                                                                             J. Ortega, A. Barsotti, and S. Ingle Owen, “Sea technology buyers guide
+                                                                                           directory 2012.”
+                                                                                       [6] H. Tan, R. Diamant, W. Seah, and M. Waldmeyer, “A survey of tech-
+             0                                                                             niques and challenges in underwater localization,” Ocean Engineering,
+                                                                                           vol. 38, no. 14, pp. 1663–1676, 2011.
+            −1                                                                         [7] D. Ambrosio, R. D. Gizzi, B. Hodgkinson, J. Kirkpatrick, C. Miller,
+                                                                                           J. Price, and T. Thomas, “Cuboat: Colorado underwater buoyant oceanic
+                                                                                           acoustic network,” in 49th Aerospace Science Meeting Including the New
+                      −2                 0         2                       4               Horizons and Aerospace Exposition, January 2011.
+                                         x [meter]                                     [8] G. Curtis, “Reverberation characteristics of 4 khz and 20 khz tone bursts
+                                                                                           in a water filled tank and their effect on experimental design,” Acoustics,
+                                                                                           Speech and Signal Processing, IEEE Transactions on, vol. 28, no. 3, pp.
+                                                                                           324–327, 1980.
+Fig. 10: Locations of the signal source based on time differ-                          [9] M. Krieg, P. Klein, R. Hodgkinson, and K. Mohseni, “A hybrid class
+ence of arrival calculations using the SDFT signal processing                              underwater vehicle: Bioinspired propulsion, embedded system, and
+method. The projector was placed at 5 different location in the                            acoustic communication and localization system,” Marine Technology
+                                                                                           Society, pp. 153–164.
+testing tank. The first location (0, 2)m is indicated by a large                      [10] W. Cheng, A. Teymorian, L. Ma, X. Cheng, X. Lu, and Z. Lu,
+red ∗. Smaller blue ∗ indicate the calculated projector location                           “Underwater localization in sparse 3d acoustic sensor networks,” in
+based on the time difference of arrival for 5 separate data sets                           INFOCOM 2008. The 27th Conference on Computer Communications.
+                                                                                           IEEE. Ieee, 2008, pp. 236–240.
+with the projector at (0, 2)m. The projector was then moved to                        [11] M. Morgado, P. Oliveira, and C. Silvestre, “Experimental evaluation of a
+the locations indicated by the •, , 4, and the × in that order.                           usbl underwater positioning system,” in ELMAR, 2010 PROCEEDINGS.
+5 data sets were recorded at each projector location. The close                            IEEE, 2010, pp. 485–488.
+                                                                                      [12] N. Kottege and U. Zimmer, “Underwater acoustic localization for small
+groupings of respective blue markers are of the precision as                               submersibles,” Journal of Field Robotics, vol. 28, no. 1, pp. 40–69, 2011.
+Figure 7 indicating similar positioning performance as to the                         [13] B. Benson, “Design of a low-cost underwater acoustic modem for short-
+cross correlation method.                                                                  range sensor networks,” Ph.D. dissertation, University of California, San
+                                                                                           Diego, 2010.
+                                                                                      [14] “Evologics usbl-series underwater acoustic device product information.”
+                                                                                      [15] S. Assous and L. Linnett, “High resolution time delay estimation using
+                                                                                           sliding discrete fourier transform,” Digital Signal Processing, 2012.
+                               VI. C ONCLUSION
+
+
+   This paper presents an underwater acoustic localization
+technique that is well suited for resource constrained vehicles
+in confined testing environments such as swimming pools
+and water tanks. The initial signal processing scheme yielded
+position errors on the order of 5% of the slant range between
+source and receiver array. This error is comparable to com-
+mercially available systems but the initial processing scheme
+required manual elimination of multipath effects on the signal.
+   A Sliding Discrete Fourier Transform (SDFT) was experi-
+mentally determined to provide similar positioning precision.
+The SDFT adds the potential for real time signal processing
+and a combined approach of cross correlation and SDFT will
+be a focus of future work. Additional future work will include
+designing hydrophone signal amplification and conditioning
+circuitry as well as embedded processing software. These ad-
+vancements will allow for the implementation of the technique
+on an autonomous underwater vehicle.
+
+
+
+             Authorized licensed use limited to: Stanford University. Downloaded on September 10,2026 at 05:09:34 UTC from IEEE Xplore. Restrictions apply.
+

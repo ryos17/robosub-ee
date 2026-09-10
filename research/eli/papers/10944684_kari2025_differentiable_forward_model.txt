@@ -1,0 +1,385 @@
+                                                                                                                                                         Mismatch-Robust Underwater Acoustic Localization
+                                                                                                                                                          Using A Differentiable Modular Forward Model
+                                                                                                                                                                                 Dariush Kari                                     Yongjie Zhuang                             Andrew C. Singer
+
+
+
+
+2025 59th Annual Conference on Information Sciences and Systems (CISS) | 979-8-3315-1326-9/25/$31.00 ©2025 IEEE | DOI: 10.1109/CISS64860.2025.10944684
+                                                                                                                                                                 University of Illinois Urbana-Champaign                      Stony Brook University                      Stony Brook University
+                                                                                                                                                                            Urbana, IL, USA                                  Stony Brook, NY, USA                        Stony Brook, NY, USA
+                                                                                                                                                                           dkari2@illinois.edu                                yongjie.zg@gmail.com                   andrew.c.singer@stonybrook.edu
+
+
+
+                                                                                                                                                            Abstract—In this paper, we study the underwater acoustic                     non-stationary nature of underwater environments hinders the
+                                                                                                                                                         localization in the presence of environmental mismatch. Espe-                   practicality of such approaches. Nevertheless, a promising
+                                                                                                                                                         cially, we exploit a pre-trained neural network for the acoustic                alternative is the test-time adaptation [16], where the model
+                                                                                                                                                         wave propagation in a gradient-based optimization framework to
+                                                                                                                                                         estimate the source location. To alleviate the effect of mismatch               will be adapted to a new environment without any supervised
+                                                                                                                                                         between the training data and the test data, we simultaneously                  training over the samples from the test environment.
+                                                                                                                                                         optimize over the network weights at the inference time, and                       Test-time domain adaptation [16] can be interpreted as the
+                                                                                                                                                         provide conditions under which this method is effective. More-                  procedure of adapting a pre-trained model to a test environ-
+                                                                                                                                                         over, we introduce a physics-inspired modularity in the forward                 ment using some prior belief about the test data distribution
+                                                                                                                                                         model that enables us to learn the path lengths of the multipath
+                                                                                                                                                         structure in an end-to-end training manner without access to the                or a prior knowledge about the features of the data that can
+                                                                                                                                                         specific path labels. We investigate the validity of the assumptions            be obtained in an unsupervised manner. For instance, inverse
+                                                                                                                                                         in a simple yet illustrative environment model.                                 models that take the received signal and output the source
+                                                                                                                                                            Index Terms—underwater acoustic, mismatch, physics-inspired                  location, can be adapted to a new environment by implicitly
+                                                                                                                                                         modeling, test time adaptation, forward modeling, few-shot                      inferring the source characteristics or imposing constraints on
+                                                                                                                                                         adaptation
+                                                                                                                                                                                                                                         the outputs to follow an a priori distribution [17]. Nevertheless,
+                                                                                                                                                                                  I. I NTRODUCTION                                       such methods usually require a significant amount of unlabeled
+                                                                                                                                                                                                                                         data, which is not always available. An alternative approach
+                                                                                                                                                            Underwater acoustic (UWA) localization can be performed                      can leverage physics-based priors [18] incorporated into a
+                                                                                                                                                         using physics-based or learning-based approaches. Physics-                      forward model (which is not straightforward to be incorporated
+                                                                                                                                                         based methods usually rely on prior knowledge about the en-                     in inverse models) that maps the source location to the received
+                                                                                                                                                         vironment such as the sound speed profile and bathymetry [1],                   signal. The localization can then be performed by optimization
+                                                                                                                                                         which is rarely available in practice. On the contrary, learning-               over the inputs of the forward model [19], [20]. To exploit
+                                                                                                                                                         based methods [2]–[6] do not require a priori knowledge about                   this characteristic of forward modeling, we propose a modular
+                                                                                                                                                         the environment but usually require a significant amount of                     network based on acoustic ray propagation [21].
+                                                                                                                                                         training data to implicitly learn the environment and become                       Off-the-shelf neural network architectures are capable of
+                                                                                                                                                         operational, which is (usually prohibitively) expensive. As a                   end-to-end training, at the expense of poor transferability,
+                                                                                                                                                         result, there is a need to build more data-efficient learning-                  interpretability, and ignoring the multipath structure. On the
+                                                                                                                                                         based algorithms for the UWA localization task. This paper                      other hand, training directly over the path parameters such as
+                                                                                                                                                         seeks a model that can be trained on an environment and then                    the time/amplitude-of-arrivals instead of an end-to-end training
+                                                                                                                                                         be adapted to a test environment with access to few unlabeled                   is usually a cumbersome task as it needs path labeling. There-
+                                                                                                                                                         data and no access to the training data.                                        fore, we propose a modular structure that respects physics
+                                                                                                                                                            UWA localization using deep learning algorithms often gen-                   and supports end-to-end training. Modularity increases the
+                                                                                                                                                         eralizes poorly to new environments [7]. Strategies to address                  interpretability of the network as each module in the network is
+                                                                                                                                                         this issue include transfer learning [8]–[10], data augmentation                responsible for a specific task. In addition, it leverages physics
+                                                                                                                                                         [11], [12], and domain adaptation [7], [13]. Transfer learning                  because the interaction between different modules is based on
+                                                                                                                                                         involves training a deep learning model on a synthetic dataset,                 physics and the network does not need to learn them. These
+                                                                                                                                                         e.g., a dataset created using UWA propagation models like                       features enable us to train the model in an end-to-end fashion,
+                                                                                                                                                         Bellhop [14] or Kraken [15], and fine-tuning parts of the model                 without the need for labeled paths. Furthermore, to use the
+                                                                                                                                                         to the small labeled dataset available from the test environment                model in a new environment, we do not need to retrain (adapt)
+                                                                                                                                                         for real-world applications. Alternatively, one might augment                   the whole model; it is sufficient to retrain only the modules
+                                                                                                                                                         those labeled test data to create a larger dataset that can                     that are known to be different in the new environment.
+                                                                                                                                                         be used for training. However, the data-deprived and highly                        There are optimization-based solutions for inverse problems
+                                                                                                                                                           This work has been supported by the Office of Naval Research (ONR)            [22], which can leverage the merits of gradient-based (GB)
+                                                                                                                                                         under grant N00014-19-1-2662.                                                   optimization whenever the forward model is differentiable.
+
+
+
+
+                                                                                                                                                                Authorized licensed use limited to: Stanford University. Downloaded on September 10,2026 at 05:10:40 UTC from IEEE Xplore. Restrictions apply.
+Our forward model is a deep learning-based structure and                        parametric form of it to be optimized or another network for its
+thus differentiable. With GB optimization over the input, we                    implicit representation [26]. Similarly, our modular structure
+can address the UWA localization problem [23]. Nevertheless,                    allows us to optimize over the sound speed as well as the PLN
+to mitigate performance degradation caused by mismatches                        weights.
+between the training and testing environments, we propose                          The input to the PLN consists of 5 scalars: 2 source
+optimizing not only over the inputs but also over the network                   coordinates xs and zs and one receiver coordinate zr (note
+parameters, effectively enabling test time adaptation.                          that we assume xr = 0 as the reference), and 2 integer
+   Notation: Bold letters denote vectors or matrices. A sub-                    variables Ns and Nb , which indicate the number of surface
+script s or r, respectively, refers to the source or receiver. The              reflections and bottom reflections along the path, respectively.
+i-th entry of a vector a is denoted by [a]i . The vector p denotes              Note that in the three-ray environment that we use, these
+a Cartesian location. Moreover, all-one vector is denoted by                    variables can distinguish different paths, however, for more
+1.                                                                              complex scenarios that involve higher order reflections, one
+                                                                                may use another representation of the paths (e.g., the departure
+       II. G RADIENT-BASED L OCALIZATION (GBL)
+                                                                                angle of each path as used in Bellhop [14]).
+   Localization methods relying solely on times-of-arrival                         The training loss function is defined as
+(TOA) are not always optimal [19]. Therefore, we propose a
+                                                                                                    Ntr Z T                          2
+maximum likelihood estimator (MLE; under the white Gaus-                                        1 X
+                                                                                    Ltr (w) =                 r(k) (t) − fw (t, p(k) ) dt,   (2)
+sian noise assumption) for determining the location directly,                                  Ntr       0
+                                                                                                       k=1
+rather than the TOAs. However, due to the lack of a closed-
+form solution, numerical optimization methods are necessary.                    where Ntr is the size of the training set and the training dataset
+To mitigate the high computational costs associated with                        is {(p(k) , r(k) (.))}N tr
+                                                                                                      k=1 . The pre-trained model is then
+global optimization techniques, we exploit GB optimization
+                                                                                                        wtr = arg min Ltr (w).                          (3)
+[19]. Nonetheless, to initialize the GBL, we use the TOA-                                                              w
+based method of [19] as a form of convex relaxation [24],                          Note that we do not use a regularization term here, since the
+[25]. GBL requires a differentiable model for acoustic wave                     physics-based modular network provides a ray-based solution
+propagation and is appropriate when the gradient vanishes                       to the Helmholtz equation [21]. As shown in Fig. 1, the
+at the loss minimum [19]. In this paper, we use a modular                       network learns to estimate the path lengths `i , which are
+model fw , which includes a parametric representation of the                    ultimately combined with physical priors (here in the form of
+source signal and a neural network for the geometry extraction                  ρi ) to make αi and τi consistent with the underlying physics.
+(parameterized by w ∈ Rnw ), all of which are differentiable.
+Assuming additive white Gaussian noise (AWGN), the maxi-
+mum likelihood estimator for the source location is
+                          Z T
+           p̂ = arg min       (r(t) − fw (t, p))2 dt,      (1)
+                        p       0
+
+where r(t) is the received signal and the fw (t, p) is the model
+output for the hypothetical source location p ∈ Rnp , and T is
+the observation length.                                                         Fig. 1: The module for path length computation is a fully
+                                                                                connected network. Each path i is identified by its number of
+                   III. M ODULAR N ETWORK                                       surface and bottom reflections, Ns and Nb . Also, ρi indicates
+   To leverage the known ray propagation laws in our problem,                   the reflection coefficient experienced during the i-th path.
+we use a hybrid model as shown in Fig. 1, where the Path                        Here, ρi = (−1)Ns (i)
+Length Network (PLN) is a fully connected neural network.
+The network outputs the path lengths based on source and
+receiver locations and the number of surface and bottom                                      IV. A DAPTING T O T HE E NVIRONMENT
+reflections, denoted respectively by Ns and Nb . However, the                      To overcome the challenges posed by mismatches between
+training is implicit, i.e., the network seeks to minimize the                   the training and testing environments, as shown in Fig. 2, we
+squared error between the observed received signal r(t) and                     optimize simultaneously over the model input (source location)
+the reconstructed signal r̂(t), as opposed to being directly                    and the model parameters. In this section, we show sufficient
+supervised with the path lengths. However, since the network                    conditions (Assumptions 1-4) under which the proposed adap-
+is modular, this procedure yields learning of the multipath                     tation method achieves a bounded error for localization in
+structure.                                                                      the mismatched environment. For representation simplicity, we
+   The modules in our model include a source signal module                      assume a known and fixed source location in this section.
+that assumes a known waveform s(t), a sound speed parameter                        Assumption 1 (Nature Representability):
+c, the PLN, and a module that converts the path length `i to                    The received signal corresponding to the source location
+αi and τi . Note that if the signal is not known, one may use a                 ps ∈ Rnp can be represented as r(t) = A(e, ps , t), where
+
+
+
+
+       Authorized licensed use limited to: Stanford University. Downloaded on September 10,2026 at 05:10:40 UTC from IEEE Xplore. Restrictions apply.
+                                                                                   Definition 1: A cube Cσ (a) is an `∞ -neighborhood of a ∈
+                                                                                 Rna defined by
+                                                                                        Cσ (a) = {b : [b − a]i ≤ σ, ∀i ∈ {1, 2, ..., na }}.
+                                                                                   Assumption 2 (L-Lipschitz gradient G):
+                                                                                 G is assumed to be L-Lipschitz [28] with respect to e, i.e.,
+
+Fig. 2: Block diagram of forward domain adaptation. During                                   kG(v, e + , ps ) − G(v, e, ps )k ≤ Lkk.                   (7)
+the adaptation, the loss minimization is performed with respect                     Assumption 3 (λ-Strong Convexity of L):
+to both p and w.
+                                                                                   LDA is a λ-strongly convex [28] function of v = [wT , pT ]T
+                                                                                 on a cube Cσ around v0 . Therefore,
+e ∈ Rne denotes the environmental parameters (e.g., sound
+speed profile and bathymetry, among other parameters), and
+                                                                                LDA (e, ps , v) ≥ LDA (e, ps , v0 )+
+A : Rne +np +1 → R is a scalar function of a multivariate
+                                                                                                                                λ
+input.                                                                                   ∇v LDA (e, ps , v0 )T (v − v0 ) + kv − v0 k2 . (8)
+   To account for the environmental mismatch, instead of (1),                                                                    2
+we solve (ŵ, p̂) = arg min(w,p) LDA (e, ps , w, p), where                      It is useful to define a parameterized directional gradient
+                       Z T                                                   vector g : R → Rnw +np by
+                                                         γ
+LDA (e, ps , w, p) =         (r(t) − fw (t, p))2 dt + kw − wtr k2 ,                        g(κ) = G(v0 + κH(v0 )−1 1, etr , ps ),                  (9)
+                          0                              2
+                                                                         (4)
+                                                                             where v0 is a root of G that is the output of Γ and we define
+and wtr ∈ Rnw is the pre-trained model parameters,γ ≥ 0 is a H(v) , ∇v G = ∇2v LDA (e, ps , v) as the Hessian of the
+regularization hyper-parameter determined based on our prior loss. Because of the λ-strong convexity, H(v) ≥ λI, hence,
+belief about the amount of mismatch between the training and H(v)−1 exists. Observe that g(0) = G(v0 , etr , ps ) = 0 and
+the test environments, and LDA : Rnw +ne +2np → R≥0 is g0 (0) = H(v0 )H(v0 )−1 1 = 1.
+the domain adaptation loss. Our proposed Domain Adaptive                        Assumption 4 (Continuity and Twice Differentiability of G):
+GBL (DA-GBL) algorithm takes the parameter wtr , γ, r(t)
+for t ∈ [0, T ], and an initial estimate p̂0 and generates an The loss gradient G is continuous and differentiable over
+estimate p̂ using a GB optimization over the loss LDA . We its domain, and g is twice differentiable. This is a valid
+denote this algorithm concisely by v̂ = Γ(wtr , γ, p̂0 , r(.)), assumption as we have control over the model fw . As a result,
+where v̂ = [ŵT , p̂T ]T , and r(.) denotes the received signal g can be expanded by Taylor series as
+r(t) for t ∈ [0, T ]. The initial estimate p̂0 can be obtained from
+                                                                                                                      g00 (z) 2
+a TOA method based on a simple model of the environment                                           g(κ) = g0 (0)κ +            κ ,
+(which is not necessary an accurate model of the environment).                                                           2
+If the model has been trained using the data corresponding for any κ ∈ [0, σ] and some z ∈ [0, κ], where g0 and g00 denote
+to the environment etr , but it is used for localization in the the first- and second-order derivatives of g(κ) with respect to
+environment etest = etr + , we want to bound the following κ. We also assume that g00 (z) is bounded for any z ∈ [0, σ].
+term                                                                            Let us define the element-wise supremum ξi as ξi =
+                                                                             maxz∈[0,σ] |[g00 (z)]i |, and ξ = maxi ξi . From these defini-
+ kΓ(wtr , γ, p̂0 , A(etr , ps , .)) − Γ(wtr , γ, p̂0 , A(etest , ps , .))k.  tions, we see that
+                                                                         (5)                              [g00 (z)]i
+   Since the output of Γ is a stationary point of the gradient                                                       ≤ 1.                         (10)
+                                                                                                               ξ
+of LDA , it suffices that we bound the perturbations of the
+stationary points of the gradient when there is a perturbation                  Theorem 1 (Perturbation in The Solution v0 ): Suppose
+ in e. The gradient of LDA with respect to v = [w , p ]          T     T T  that   v0 = Γ(wtr , γ, p̂0 , A(etr , ps , .)). If the Assumptions
+is a function G : R   nw +ne +2np
+                                     →R  nw +np
+                                                    defined as               1,  2,  3, and 4 hold, for a given environmental parameter
+                                                                             etr and a source location ps , for any perturbation  that
+                 G(v, e, ps ) = ∇v LDA (e, ps , v).                      (6) kk ≤ θ , where θ = min{σ, 1/ξ}, the perturbed loss
+                                                                                        2L
+                                                                             function LDA (etr + , ps , v) has a local minimum   √       in the cube
+   Note: In the AWGN case, if fw faithfully represents the
+                                                                             Cρ (v0 ), where ρ = kθH(v0 )−1 1]k∞ ≤ θ/ λ. This implies
+noiseless received signal, then Pr(r(t)|e, ps ) is Gaussian with
+                                                                             that
+the mean fw , hence, G becomes proportional to the Fisher
+score function [27]. The assumption in that case would be that
+                                                                                kΓ(wtr , γ, p̂0 , A(etr , ps , .))−Γ(wtr , γ, p̂0 , A(etr +, ps , .))k
+the forward model can exactly recover the noiseless signal.                                                                          r
+   The following assumptions provide sufficient conditions for                                                                         nw + np
+                                                                                                                                ≤θ                 .
+G and LDA so that we can bound (5).                                                                                                          λ
+
+
+
+
+        Authorized licensed use limited to: Stanford University. Downloaded on September 10,2026 at 05:10:40 UTC from IEEE Xplore. Restrictions apply.
+   Definition 2 (Positive or Negative Vector): We refer to                      where σmax ((H(v0 )−1 )) denotes the largest singular value of
+a vector x as “positive” (“negative”) if all of its entries                     H(v0 )−1 . Because of the λ-strong√convexity of H(v0 ), we
+are positive (negative), or equivalently, diag(x) is positive                   have that σmax ((H(v0 )−1 )) ≤ 1/ λ. Moreover, since ρ is
+(negative) definite.                                                            the upper bound on the element-wise perturbation of the vector
+   Outline of the proof: We show that by strong convexity                       v0 ∈ Rnw +np , the norm of the perturbation vector is bounded
+                                                                                     √
+of the loss function, there exist a positive and a negative                     by ρ nw + np , which in turn yields
+gradient vector close to the v0 . Then by Lipschitz continuity,
+we show that under the small perturbation in the environment,                      kΓ(wtr , γ, p̂0 , A(etr , ps , .))−Γ(wtr , γ, p̂0 , A(etr +, ps , .))k
+the positive (negative) vector will remain positive (negative).                                                                         r
+                                                                                                                                          nw + np
+Finally, using the Poincaré-Miranda theorem [29], we can                                                                          ≤θ                 .
+prove that the gradient will vanish at a point close to v0 , i.e.,                                                                            λ
+a local minimum.
+     Proof: We inspect g(κ) element-wise to show that in                          Corollary 1: The implication of Theorem 1 is that given
+the training environment, there exists a point with a strictly                  a proper forward model (that satisfies the assumptions),
+positive gradient and a point with a strictly negative gradient.                equipped with a GB optimization method, the algorithm can
+Suppose that 0 < κ ≤ min{σ, 1/ξ}. We have                                       be adapted (i.e., incur a bounded error) to a new environment
+                                       [g00 (z)]i 2                             by jointly optimizing over the model parameters w as well as
+             [g(κ)]i = [g0 (0)]i κ +                κ
+                                            2                                   the input p during the inference.
+                                           00
+                                       |[g (z)]i | 2
+                       ≥ [g0 (0)]i κ −               κ
+                                              2                                                     V. E MPIRICAL E VALUATION
+                                               00
+                                                        
+                       (a)
+                                0         |[g (z)]i | 1
+                       ≥ κ [g (0)]i −
+                                                  2    ξ                             Setup: We have generated training data corresponding to
+                       (b)
+                           
+                                          1
+                                              (c)
+                                                     κ                          an environment of depth 200 m and a constant sound speed of
+                       ≥ κ [g0 (0)]i −          ≥ ,                    (11)     c = 1500 m/s and an observation time of T = 2 s. The receiver
+                                          2          2
+                                                                                is a single hydrophone at depth 120 m, while the source is
+where (a) holds because 0 < κ ≤ 1/ξ, (b) holds because                          at depth 20 m and at a horizontal range of   R T 610    m from the
+of (10), and (c) holds because g0 (0) = 1. By substitut-                                                                         r 2 (t)dt
+                                                                                receiver. Moreover, the SNR is defined as BN0 , where B
+                                                                                                                              0
+ing κ = θ = min{σ, 1/ξ} in (11), we see that the gra-
+                                                                                is the source pulse bandwidth and N0 is the one-sided noise
+dient at v+ = v0 + θH(v0 )−1 1 is strictly positive and
+                                                                                power spectral density. Also, all results are averaged over 500
+[G(v+ , etr , ps )]i ≥ θ/2. Using a similar approach and setting
+                                                                                Monte Carlo noise realizations.
+0 > κ ≥ max{−σ, −1/ξ}, we can also show the existence of
+                                                                                   Figures 3 and 4 provide the simulation results for the 3-ray
+a point with a negative gradient at v− = v0 − θH(v0 )−1 1
+                                                                                environment. According to Fig. 3a, when there is no mismatch
+and [G(v− , etr , ps )]i ≤ −θ/2.
+   Now we show that G = G(v, etr + , ps ) also has a                          between the training and test environments, the GB approach
+negative and a positive vector at v− = v0 − θH(v0 )−1 1 and                     gets closer to the Cramer-Rao Lower Bound (CRLB) as the
+v+ = v0 + θH(v0 )−1 1, respectively.                                            SNR increases. Figure 3a shows how a model that has full
+                                                                                knowledge of the environment and uses the GBL method can
+           G(v+ , etr + , ps ) i − G(v+ , etr , ps ) i
+                                                  
+                                                                                reach CRLB at SNR= 20 dB. However, after SNR= 20 dB,
+             ≤ kG(v+ , etr + , ps ) − G(v+ , etr , ps )k                       the decrease in root mean squared error (RMSE) of the GBL-
+             (a)    (b)                                                         NN, which has learned the environment from the training data,
+             ≤ Lkk ≤ θ/2 ≤ G(v+ , etr , ps ) i ,
+                                                 
+                                                                       (12)     is negligible. This might be due to the training procedure of
+                                                                                the PLN, i.e., the accuracy of the localization is limited by the
+where (a) is due to Assumption 2 and (b) is according to the
+                                                                                accuracy of the pre-trained PLN.
+assumption in Theorem 1. We define G+ = G(v+ , etr , ps )
+                                                                                   Furthermore, Fig. 3b shows that when the test environment
+and G+         +
+      = G(v , etr + , ps ). Since
+          +                                                                   has a depth of 198 m, the ordinary GBL performs poorly
+          G i = G+ i − G+ i − G+
+                                  
+                                                                                due to the −2 m mismatch between the training and test
+                                       i
+                ≥ G+ i − G+ i − G+                                              environment depths. Nevertheless, the proposed DA-GBL is
+                           
+                                         i ≥ 0,
+                                                                                able to significantly improve the result in this scenario.
+we deduce that G(v+ , etr + , ps ) is a positive vector. Simi-                    Figures 4a and 4b investigate the effects of small and
+larly, one can show that G(v− , etr +, ps ) is a negative vector.              large mismatches respectively. Under large mismatches, the
+Consequently, using the Poincaré-Miranda theorem [29], we                      proposed adaptation mechanism will be ineffective, whereas
+conclude that G has a root in the `∞ -neighborhood Cρ (v0 ),                   under small mismatches, the proposed method usually reduces
+where                                                                           the error significantly. Also, Figure 4a shows how using a
+          ρ = max |[θH(v0 )−1 1]i |                                             larger γ yields a superior performance at smaller mismatches.
+                  i
+                                                                                This is because the algorithm resists changing the pre-trained
+            = kθH(v0 )−1 1k∞ ≤ θσmax (H(v0 )−1 ).                               weights of the model.
+
+
+
+
+       Authorized licensed use limited to: Stanford University. Downloaded on September 10,2026 at 05:10:40 UTC from IEEE Xplore. Restrictions apply.
+            (a) Training depth and the true depth are both 200 m. The          (b) Training depth is 200 m and the true depth is 198 m.
+            GBL-matched model has full knowledge of the model                  This result shows how adaptation can improve the local-
+            that created the data, while the GBL-NN model tries to             ization performance in this mismatched environment.
+            learn the environment using the neural network model in
+            Fig. 1.
+                                          Fig. 3: RMSE performance under different SNR values.
+
+
+
+
+            (a) Small mismatches. The adaptation mechanism can                 (b) Large mismatches. The adaptation mechanism is not
+            overcome small mismatches.                                         guaranteed to work under large mismatches.
+           Fig. 4: RMSE performance under different mismatch values. Training depth is 200 m and SNR = 20 dB.
+
+
+                       VI. C ONCLUSION                                           [2] H. Niu, X. Li, Y. Zhang, and J. Xu, “Advances and applications of ma-
+                                                                                     chine learning in underwater acoustics,” Intelligent Marine Technology
+   We have shown that by using a GB optimization along with                          and Systems, vol. 1, no. 1, p. 8, 2023.
+a pre-trained forward model, we can provide a robust UWA                         [3] H. Niu, E. Reeves, and P. Gerstoft, “Source localization in an ocean
+localization algorithm by simultaneous optimization over both                        waveguide using supervised machine learning,” The Journal of the
+                                                                                     Acoustical Society of America, vol. 142, no. 3, pp. 1176–1188, 2017.
+the input (location) and the model parameters. Although the                      [4] J. Yangzhou, Z. Ma, and X. Huang, “A deep neural network approach
+theoretical derivations do not guarantee that the model adapts                       to acoustic source localization in a shallow water tank experiment,” The
+to the new environment with a single unlabeled observation,                          Journal of the Acoustical Society of America, vol. 146, no. 6, pp. 4802–
+                                                                                     4811, 2019.
+they show that under small mismatches, the algorithm is                          [5] R. Chen and H. Schmidt, “Model-based convolutional neural network
+robust. Furthermore, we have removed the need for peak                               approach to underwater source-range estimation,” The Journal of the
+labeling by enforcing the governing physical laws into the                           Acoustical Society of America, vol. 149, no. 1, pp. 405–420, 2021.
+                                                                                 [6] Y. Wang and H. Peng, “Underwater acoustic source localization using
+architecture of the network, which enables the learning of                           generalized regression neural network,” The Journal of the Acoustical
+the peak labels implicitly. While this architecture can be used                      Society of America, vol. 143, no. 4, pp. 2321–2331, 2018.
+straightforwardly in similar problems such as room acoustics,                    [7] Y. Liu, H. Niu, Z. Li, and D. Zhai, “Unsupervised domain adaptation
+                                                                                     for source localization using ships of opportunity with a deep vertical
+to exploit it in ocean acoustics, one needs to tailor it to the                      line array,” IEEE Journal of Oceanic Engineering, 2023.
+non-constant sound speed nature of the environment.                              [8] F.-X. Ge, Y. Bai, M. Li, G. Zhu, and J. Yin, “Label distribution-guided
+                                                                                     transfer learning for underwater source localization,” The Journal of the
+                            R EFERENCES                                              Acoustical Society of America, vol. 151, no. 6, pp. 4140–4149, 2022.
+[1] A. B. Baggeroer, W. Kuperman, and H. Schmidt, “Matched field pro-            [9] W. Wang, H. Ni, L. Su, T. Hu, Q. Ren, P. Gerstoft, and L. Ma, “Deep
+    cessing: Source localization in correlated noise as an optimum parameter         transfer learning for source ranging: Deep-sea experiment results,” The
+    estimation problem,” The Journal of the Acoustical Society of America,           Journal of the Acoustical Society of America, vol. 146, no. 4, pp. EL317–
+    vol. 83, no. 2, pp. 571–587, 1988.                                               EL322, 2019.
+
+
+
+
+       Authorized licensed use limited to: Stanford University. Downloaded on September 10,2026 at 05:10:40 UTC from IEEE Xplore. Restrictions apply.
+[10] J. Yosinski, J. Clune, Y. Bengio, and H. Lipson, “How transferable               2023.
+     are features in deep neural networks?” Advances in neural information       [20] M. Chitre, “Differentiable ocean acoustic propagation modeling,” in
+     processing systems, vol. 27, 2014.                                               OCEANS 2023-Limerick. IEEE, 2023, pp. 1–8.
+[11] Y. Liu, H. Niu, Z. Li, and M. Wang, “Deep-learning source localization      [21] F. B. Jensen, W. A. Kuperman, M. B. Porter, and H. Schmidt, Compu-
+     using autocorrelation functions from a single hydrophone in deep ocean,”         tational ocean acoustics. Springer Science & Business Media, 2011.
+     JASA Express Letters, vol. 1, no. 3, 2021.                                  [22] S. Arridge, P. Maass, O. Öktem, and C.-B. Schönlieb, “Solving inverse
+[12] J. Castro-Correa, M. Badiey, T. Neilsen, D. Knobles, and W. Hodgkiss,            problems using data-driven models,” Acta Numerica, vol. 28, pp. 1–174,
+     “Impact of data augmentation on supervised learning for a moving mid-            2019.
+     frequency source,” The Journal of the Acoustical Society of America,        [23] D. Kari and A. C. Singer, “Underwater acoustic localization using
+     vol. 150, no. 5, pp. 3914–3928, 2021.                                            a modular differentiable model for acoustic wave propagation,” The
+[13] R. Long, J. Zhou, N. Liang, Y. Yang, and H. Shen, “Deep unsupervised             Journal of the Acoustical Society of America, vol. 151, no. 4, pp. A234–
+     adversarial domain adaptation for underwater source range estimation,”           A234, 2022.
+     The Journal of the Acoustical Society of America, vol. 154, no. 5, pp.      [24] G. Naddafzadeh-Shirazi, M. B. Shenouda, and L. Lampe, “Second order
+     3125–3144, 2023.                                                                 cone programming for sensor network localization with anchor position
+[14] M. B. Porter, “The bellhop manual and user’s guide: Preliminary draft,”          uncertainty,” IEEE transactions on wireless communications, vol. 13,
+     Heat, Light, and Sound Research, Inc., La Jolla, CA, USA, Tech. Rep,             no. 2, pp. 749–763, 2013.
+     vol. 260, 2011.                                                             [25] A. Papalia, J. Morales, K. J. Doherty, D. M. Rosen, and J. J. Leonard,
+[15] ——, “The kraken normal mode program,” Naval Research Lab Wash-                   “Score: A second-order conic initialization for range-aided slam,” in
+     ington DC, Tech. Rep., 1992.                                                     2023 IEEE International Conference on Robotics and Automation
+[16] D. Wang, E. Shelhamer, S. Liu, B. Olshausen, and T. Darrell, “Tent:              (ICRA). IEEE, 2023, pp. 10 637–10 644.
+     Fully test-time adaptation by entropy minimization,” arXiv preprint         [26] V. Sitzmann, J. Martel, A. Bergman, D. Lindell, and G. Wetzstein,
+     arXiv:2006.10726, 2020.                                                          “Implicit neural representations with periodic activation functions,”
+[17] D. Kari and A. C. Singer, “Joint source-environment adaptation for               Advances in Neural Information Processing Systems, vol. 33, 2020.
+     deep learning-based underwater acoustic source ranging,” in 2024 58th       [27] P. Moulin and V. V. Veeravalli, Statistical Inference for Engineers and
+     Asilomar Conference on Signals, Systems, and Computers. IEEE, 2024.              Data Scientists. Cambridge University Press, 2018.
+[18] K. Li and M. Chitre, “Data-aided underwater acoustic ray propagation        [28] S. Shalev-Shwartz and S. Ben-David, Understanding machine learning:
+     modeling,” IEEE Journal of Oceanic Engineering, 2023.                            From theory to algorithms. Cambridge university press, 2014.
+[19] D. Kari, A. C. Singer, H. Vishnu, and A. Weiss, “A gradient-based           [29] W. Kulpa, “The poincaré-miranda theorem,” The American
+     optimization approach for underwater acoustic source localization,” in           Mathematical Monthly, vol. 104, no. 6, pp. 545–550, 1997. [Online].
+     Proceedings of Meetings on Acoustics, vol. 51, no. 1. AIP Publishing,            Available: http://www.jstor.org/stable/2975081
+
+
+
+
+        Authorized licensed use limited to: Stanford University. Downloaded on September 10,2026 at 05:10:40 UTC from IEEE Xplore. Restrictions apply.
+

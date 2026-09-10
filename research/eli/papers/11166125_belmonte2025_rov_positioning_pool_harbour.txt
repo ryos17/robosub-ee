@@ -1,0 +1,449 @@
+                                                                                                                                                                                     Architecture for ROVs detection and positioning
+                                                                                                                                                                                               based on hydrophone arrays
+                                                                                                                                                                                     Alberto Belmonte-Hernández                                Anaida Fernández García                                 César Antonio Ortiz-Toro
+                                                                                                                                                                                         Grupo de Aplicación de                                 Grupo de Aplicación de                               Escuela Técnica Superior de
+
+
+
+
+2025 6th International Conference in Electronic Engineering & Information Technology (EEITE) | 979-8-3315-4419-5/25/$31.00 ©2025 IEEE | DOI: 10.1109/EEITE65381.2025.11166125
+                                                                                                                                                                                Telecomunicaciones visuales (GATV)                     Telecomunicaciones visuales (GATV)                          Ingenieros de Telecomunicación
+                                                                                                                                                                                  Universidad Politécnica de Madrid                      Universidad Politécnica de Madrid                       Universidad Politécnica de Madrid
+                                                                                                                                                                                              Madrid, Spain                                          Madrid, Spain                                           Madrid, Spain
+                                                                                                                                                                                https://orcid.org/0000-0002-4009-2662                  https://orcid.org/0000-0002-6102-3121                   https://orcid.org/0000-0002-7245-6328
+
+                                                                                                                                                                                        Francisco Pérez Carrasco                             Vicente Negro-Valdecantos                                 Álvaro Gutiérrez Martín
+                                                                                                                                                                                  FAV Innovation and Technologies                      Escuela Técnica Superior de Ingenieros                        Escuela Técnica Superior de
+                                                                                                                                                                                                 Coop.V                                    de Caminos, Canales y Puertos                           Ingenieros de Telecomunicación
+                                                                                                                                                                                  Universitat Politècnica de València,                   Universidad Politécnica de Madrid                       Universidad Politécnica de Madrid
+                                                                                                                                                                                                  Spain                                              Madrid, Spain                                           Madrid, Spain
+                                                                                                                                                                                https://orcid.org/0000-0001-9254-9962                  https://orcid.org/0000-0002-5110-0891                   https://orcid.org/0000-0001-8926-5328
+
+
+                                                                                                                                                                                    Abstract— This paper presents an integrated architecture                    Ultra-Short Baseline (USBL) setups bring the hydrophones
+                                                                                                                                                                                for detecting and positioning Remotely Operated Vehicles                        closer together, enabling more compact arrays that are simpler
+                                                                                                                                                                                (ROVs) using strategically placed hydrophone arrays. We                         to handle yet may suffer from decreased positional accuracy
+                                                                                                                                                                                introduce two types of hydrophones with distinct sensitivity and                or more complicated geometry when signals arrive at steep
+                                                                                                                                                                                bandwidth characteristics, deployed in both controlled                          angles [2], [3], [4]. In harbor or shallow-water scenarios,
+                                                                                                                                                                                (swimming pool) and semi-controlled (harbor) environments.                      arrays are often deployed in a planar configuration, whereas
+                                                                                                                                                                                The proposed system leverages frequency-domain (Discrete                        for deep-sea exploration, three-dimensional (3D) geometry
+                                                                                                                                                                                Fourier Transform, DFT) and time-frequency (Short-Time                          with vertical spacing can improve depth estimation at the cost
+                                                                                                                                                                                Fourier Transform, STFT) analyses to highlight key acoustic
+                                                                                                                                                                                                                                                                of higher deployment complexity [5], [6]. In each case,
+                                                                                                                                                                                signatures, such as characteristic motor and propeller
+                                                                                                                                                                                                                                                                considerations such as the number of hydrophones, the
+                                                                                                                                                                                frequencies, enabling reliable ROV detection under variable
+                                                                                                                                                                                noise conditions. We then incorporate propagation modeling                      available infrastructure, and the frequency range of interest
+                                                                                                                                                                                and multi-hydrophone geometry to estimate the vehicle’s                         play critical roles in determining the optimal layout.
+                                                                                                                                                                                position, drawing on both amplitude- and time-based                                 Various real-world studies have explored hydrophone
+                                                                                                                                                                                techniques. The experimental results demonstrate robust                         deployment strategies, balancing coverage, resolution,
+                                                                                                                                                                                performance in different aquatic settings, confirming the utility               portability, and cost. For instance, a seabed-mounted network
+                                                                                                                                                                                of high-sensitivity hydrophones and carefully selected signal
+                                                                                                                                                                                                                                                                in a busy harbor enabled vessel and marine fauna monitoring
+                                                                                                                                                                                processing parameters for enhanced detection and localization.
+                                                                                                                                                                                                                                                                but required frequent maintenance [7]. To address acoustic
+                                                                                                                                                                                Our findings emphasize how combining versatile hardware,
+                                                                                                                                                                                advanced acoustic processing, and adaptive array
+                                                                                                                                                                                                                                                                blind spots near the South Georgia Islands, a six-unit
+                                                                                                                                                                                configurations can address the challenges posed by complex                      autonomous array was deployed in the Scotia Sea in 2008,
+                                                                                                                                                                                underwater environments, laying the groundwork for broader                      enhancing signal detection in the Antarctic Convergence Zone
+                                                                                                                                                                                applications such as harbor security, environmental monitoring,                 [8]. Ocean Networks Canada (ONC) collaborates with coastal
+                                                                                                                                                                                and maritime traffic management.                                                communities to deploy cabled and autonomous hydrophone
+                                                                                                                                                                                                                                                                systems, integrating icListen hydrophones in boat-based,
+                                                                                                                                                                                   Keywords—Hydrophones, System Architecture,                     Vessels       buoy, and fixed observatories for long-term marine
+                                                                                                                                                                                Detection, Positioning, Acoustic processing.                                    monitoring [9]. These varied approaches reflect trade-offs
+                                                                                                                                                                                                                                                                between coverage, resolution, portability, and cost in
+                                                                                                                                                                                                         I.    INTRODUCTION                                     hydrophone placement strategies. Recent research on
+                                                                                                                                                                                    Underwater acoustic sensing has become an essential                         detecting vessels and propeller noise using hydrophones has
+                                                                                                                                                                                feature in a wide range of maritime applications, from                          employed a variety of signal processing and machine learning
+                                                                                                                                                                                environmental monitoring and marine mammal tracking to                          techniques. For example, spectral signature analysis and
+                                                                                                                                                                                subsea navigation and autonomous underwater vehicle (AUV)                       matched filtering have been used to identify the characteristic
+                                                                                                                                                                                localization. Central to these applications is the strategic                    tonal frequencies of a rotating propeller in real-time
+                                                                                                                                                                                placement and configuration of hydrophone arrays, which                         monitoring systems [10]. Classification algorithms that
+                                                                                                                                                                                serve as underwater microphones tuned to pick up sound                          exploit spectrograms as input to Deep Learning methods is an
+                                                                                                                                                                                waves propagating through the water column. Depending on                        actual research solution which shows very promising results
+                                                                                                                                                                                the sensing objective—be it passive listening for marine life,                  in several existing datasets [11], [12]. Additionally, for vessels
+                                                                                                                                                                                active acoustic imaging, or high-precision positioning—                         positioning/tracking TDOA solutions and propagation model-
+                                                                                                                                                                                hydrophones can be arranged in various geometries that each                     based solutions have been widely adopted [13], [14].
+                                                                                                                                                                                exhibit unique advantages, drawbacks, and technical                                 This work explores the deployment of two hydrophone
+                                                                                                                                                                                constraints.                                                                    types in controlled (swimming pool) and semi-controlled
+                                                                                                                                                                                    A variety of baseline configurations exist to facilitate                    (harbor) environments for underwater robot detection and
+                                                                                                                                                                                acoustic localization and navigation. For instance, Long                        localization. By analyzing frequency response, sensitivity,
+                                                                                                                                                                                Baseline (LBL) systems typically involve multiple fixed                         and placement geometry, we demonstrate how the chosen
+                                                                                                                                                                                transmitters anchored in known locations, providing robust                      array effectively captures the robot’s propulsion sound
+                                                                                                                                                                                positioning over large regions but often requiring laborious                    signatures, ensuring reliable position estimation even in
+                                                                                                                                                                                deployment and calibration [1]. Short Baseline (SBL) and                        challenging acoustic conditions.
+
+
+
+                                                                                                                                                                                979-8-3315-4419-5/25/$31.00 ©2025 IEEE
+
+                                                                                                                                                                                      Authorized licensed use limited to: Stanford University. Downloaded on September 10,2026 at 05:09:50 UTC from IEEE Xplore. Restrictions apply.
+                 II.    PROPOSED ARCHITECTURE
+A. Remotely Operated Vehicle (ROV) details
+    The Remotely Operated Vehicle (ROV) used in our test is
+the popular BlueROV2 [15] in its heavy configuration (Fig.
+1). The BlueROV2 is a versatile, affordable, and powerful
+underwater vehicle designed for inspection and research
+missions. This compact and powerful ROV (457 x 338 x 254
+mm, approx. 11-12 kg) is equipped with a robust frame,
+batteries, and high lumen lights for improved visibility of HD
+video feeds. This ROV uses four thrusters for horizontal
+locomotion and four thrusters for vertical locomotion,
+providing six degrees of freedom. The BlueROV2 supports
+operations to depths of 100 meters (extendable to 300 meters                               Fig. 2. Main system architecture and its components.
+with modifications), achieves a maximum forward speed of                           Step 3: The AI-powered acoustic detection module,
+1.5m/s and can handle payloads of up to 1.4kg, depending on                     implemented in Python, subscribes to a broker to retrieve
+configuration.                                                                  audio files, then processes them to detect and classify vessel
+    This ROV is controlled by a Raspberry Pi and integrates                     types, assign confidence scores, and estimate their relative
+an Inertial measurement unit (IMU), magnetometer and                            position based on hydrophone data.
+pressure sensor on an external expansion board. Using the                           Step 4: The acoustic detection module sends the detection
+open source ArduSub software, the BlueROV2 allows for                           information to the broker. An example of the JSON structured
+autonomous capabilities and extensive customization,                            file is shown in the bottom left corner of Figure 2.
+working with a variety of hardware including sonar sensors,
+cameras, and an inertial navigation system. While typically                        Step 5: The database deployed with MongoDB stores all
+tethered, the open-source code allows for the development of                    broker messages for future analysis and inquiry.
+a potential conversion to a ROV. In addition to the basic                           Step 6: The control panel receives the detection
+sensor configuration, each vehicle is equipped with an echo-                    information or retrieve the historical one from the broker and
+sounder and mechanical scanning sonar for navigation and                        the MongoDB to display the processed results in a user-
+imaging. For the purposes of these tests, the control and                       friendly way.
+management of the ROVs was performed using NAUSIM
+simulator [16].                                                                     The proposed architecture for acoustic detection is based
+                                                                                on Figure 3, where a processing unit, an acquisition system
+                                                                                and hydrophones are the basic components. Passive-acoustic
+                                                                                sensors, i.e. hydrophones, gather information from the
+                                                                                surroundings. This information is captured by a multi-input
+                                                                                acquisition system, which provides a synchronized output
+                                                                                that will be analyzed by a processing unit. One of the
+                                                                                preliminary conditions for the system is that it must be
+                                                                                modular and portable, being able to be placed and configured
+    Fig. 1. Photography of the BlueROV2 in its heavy configuration.             to different use case scenarios. Consequently, each
+                                                                                component of the system must be lightweight, autonomous
+B. General data collection and processing architecture
+                                                                                and robust.
+    Figure 2 shows the underwater acoustic detection system,
+which combines hardware and software to capture, process,
+and analyze underwater sounds. Hydrophones placed near
+maritime traffic continuously record acoustic signals, which
+are digitized and sent to Raspberry Pi 4b units. These devices
+segment the audio into 3-second WAV files for analysis. Data
+is transmitted efficiently via 5G or Ethernet, and results are
+displayed through a user-friendly control panel.
+    Step 1: The recorded audio files are stored in a cloud-
+based MinIO file storage system by the processing units. This
+storage solution allows the system to efficiently manage large                                  Fig. 3. Acoustic detection network system.
+amounts of audio data while ensuring quick access for
+                                                                                To capture underwater acoustic signals across a broad
+analysis.
+                                                                                frequency and depth range, we used two hydrophone models
+    Step 2: The processing units send a message to the broker                   with complementary features: the ASF-1 and the AS-1. Their
+notifying that a file has been uploaded to the MinIO server.                    detailed specifications are summarized in Table 1. While both
+The message includes the timestamp, metadata about the                          cover similar frequency ranges (up to 100 kHz), the ASF-1
+audio file, and the location of the file in the server. The broker              offers higher sensitivity (−192 dB re 1 μPa), making it better
+is deployed with RedPanda framework, and it manages                             suited for detecting subtle mechanical signals without
+communication between most components, enabling message                         requiring an additional pre-amplifier. Its heavier, more robust
+reception and topic subscription through different protocols                    building also provided greater stability in dynamic
+such as ampq, mqtt and Kafka compatibility.                                     environments such as harbors. In contrast, the AS-1 is lighter
+
+
+
+
+      Authorized licensed use limited to: Stanford University. Downloaded on September 10,2026 at 05:09:50 UTC from IEEE Xplore. Restrictions apply.
+and rated for deeper operation (up to 200 m) but requires an                    frequency content. Meanwhile, for the Short-Time Fourier
+external PA6 pre-amplifier with 48V phantom power. Given                        Transform (STFT), we choose an FFT size of            = 1024
+the context of our experiments—in swimming pools and                            and a hop length of 512 . These values strike a balance
+near-shore waters—the ASF-1’s superior sensitivity and                          between frequency and time resolution. Specifically, with
+mechanical robustness offered notable advantages.                                    = 1024 at 94 kHz, the frequency resolution is
+                                                                                approximately ∆ ≈       ≈ 91.8 , which is sufficiently fine to
+         Table 1. Hydrophones specifications comparison.
+                                                                                isolate dominant tonal components from the robot’s motors.
+    Specification             Aquarian AS-1           Ambient ASF-1 MKII
+                                                                                The hop length of 512 samples corresponds to a time step of
+                                                      7Hz - 100 kHz   ±2              ≈ 5.45 ms. This partial overlap (50%) between
+ Frequency Response        1 Hz - 100 kHz ±2 dB
+                                                              dB                consecutive frames captures transient events without
+     Sensitivity            -208 dB re 1V/µPa          -192dB re 1V/μPa         sacrificing frequency discrimination. We also employ a
+    Polar pattern            Omnidirectional            Omnidirectional         logarithmic frequency axis in the spectrogram to better
+                                                                                visualize both low-frequency and higher-frequency
+    Depth Rating                  200 m                     100 m
+                                                                                components that may arise from the robot’s mechanical or
+                         Requires high-impedance                                propulsive elements. Overall, these parameter settings provide
+ Power Requirement                                   +48V phantom power
+                                amplifier
+                                                                                an appropriate compromise for time-frequency analysis at the
+  Housing material       Polyurethane encapsulant       Aluminum-brass
+                                                                                given sampling rate.
+      Weight                 8g + 150g extra                 270g
+                                                                                    Figure 4 represents the results of a recording lasting
+                                                                                approximately 12 minutes, during which the underwater robot
+    Moving into the data acquisition (DAQ) system, the audio                    performed multiple trajectories and remained stationary for
+interface Zoom AMS-44 was chosen providing USB data                             extended periods. These recordings were captured using the
+transfer for real-time processing, and 4 XLR/TRS inputs                         hydrophones ASF-1, and the AS-1. The ASF-1, with its
+enabling phantom power through them, which is a 48V                             broader frequency response and higher sensitivity captures
+passive supply through the hydrophone’s connectors pre-                         finer details of the acoustic signal, while the AS-1, although
+amplifiers. It also provides the option of operating                            less sensitive, still provides adequate performance for
+autonomously without external power supply, just with                           identifying key acoustic features. The DFT analysis reveals
+batteries or connected by the USB data port to a computer,                      distinct frequency components generated by the robot’s
+which is convenient for the port scenario where having                          propulsion system. The ASF-1 shows clear peaks at multiple
+external power supply is not assured. The integrated pre-amp                    frequencies, particularly in the low and mid-frequency ranges,
+equivalent input noise (EIN) is –121 dB and the resolution in                   where motor and propeller harmonics dominate. These peaks
+bits per sample 24-bits/s, and maximum sampling frequency                       are sharper and of higher magnitude compared to the AS-1,
+94 kHz, which allows a maximum recorded frequency of 47                         highlighting the ASF-1’s superior sensitivity. Nonetheless, the
+kHz. These specifications cover the needs of our application.                   AS-1 also captures the fundamental frequencies and
+    The processing unit has low computational requirements,                     harmonics, confirming its utility for detecting key features of
+as its role is mainly to collect sensory data and interface with                the robot’s acoustic signature. The spectrograms provide a
+the rest of the system. A Raspberry Pi 4b is used for this                      time-frequency view of the recordings, showing both the
+purpose due to its portability, efficiency, and versatility. Key                temporal variations and frequency content. The ASF-1
+specs include a Broadcom BCM2711 64-bit SoC @ 1.5 GHz,                          captures more detailed structures, including distinct horizontal
+up to 8 GB RAM, wireless LAN, Gigabit Ethernet, 4 USB                           bands corresponding to motor and propeller noise, and periods
+ports (2x3.0, 2x2.0), operating range of 0–50 ºC, and 5 V 3 A                   of reduced spectral energy during the robot's extended stops.
+power input via USB-C. It is the only device requiring external                 The AS-1, while less detailed, still captures the main acoustic
+power and also supplies power to the DAQ via USB. Audio is                      features, including the same extended stops and movement
+recorded using arecord with ALSA drivers, capturing multi-                      phases.
+track wav files (24 bit, 94 kHz, 3 s) from each hydrophone                          Key frequencies observed in the analysis include low
+channel. A Python service uploads each file to a MinIO server,                  frequencies (<1000 Hz), likely related to the primary motor
+notifies the broker with metadata, and deletes the local file to                operations, and mid frequencies (1000–10,000 Hz), where
+manage limited storage.                                                         propeller harmonics are most prominent. These frequencies
+                                                                                are critical for tracking the robot's movement and identifying
+           III.      DATA COLLECTION AND PROCESSING
+                                                                                its operating states. Higher frequencies (>10,000 Hz) are
+A. Analysis of recorded sounds by hydrophones                                   better captured by the ASF-1 and provide finer details about
+    We are particularly interested in identifying distinct                      mechanical noise or turbulence, though these components are
+frequency components in the recorded data, such as those                        less pronounced in the AS-1 recordings. To enhance detection
+produced by the motors or propellers of the underwater robot.                   and tracking, the audio was segmented into 3-second intervals.
+By examining both the frequency-domain representation (via                      This duration provides a balance between capturing key
+the DFT) and the time-frequency representation (via the                         acoustic features, such as motor harmonics and transient
+STFT, which produces spectrograms), we can highlight the                        events, while enabling efficient processing for real-time
+dominant frequency bands where most of the robot’s acoustic                     applications. Short segments allow the system to adapt
+energy is concentrated. These analyses also help us to see                      quickly to changes in the robot’s movement or acoustic
+transient behaviors, noise, and any other relevant frequency                    environment, while still preserving sufficient frequency and
+signatures.                                                                     time resolution. These intervals are particularly suitable for
+                                                                                identifying periodic signals and optimizing the performance
+   The audio is sampled at = 94          . For the DFT, we use                  of detection and localization algorithms. [11], [12].
+segments of the signal in their entirety to reveal the overall
+
+
+
+
+      Authorized licensed use limited to: Stanford University. Downloaded on September 10,2026 at 05:09:50 UTC from IEEE Xplore. Restrictions apply.
+             Fig. 4. Analysis with FFT and with Logarithmic Mel Spectrograms of ASF-1 and AS-1 Hydrophones in a 12-minute recording.
+
+    Figure 5 represents a 3-second audio segment spectrogram                         where     is the reference amplitude at a known distance,
+recorded by two hydrophones: the ASF-1 (Channel 0, left) and                        is the geometric spreading factor (empirically adjusted
+the AS-1 (Channel 3, right). Both spectrograms clearly                          based on experimental data), and $ represents the absorption
+capture distinct tonal components in the low-to-mid frequency                   coefficient of the medium. Given that the swimming pool is a
+range, particularly between 500 Hz and 10 kHz, which are                        confined environment with reflective boundaries, the
+indicative of the robot's motor and propeller harmonics. The                    parameters        and $ were adjusted based on control
+ASF-1 demonstrates superior sensitivity, with higher energy                     measurements at known distances, ensuring an optimal fit to
+levels across all frequency bands, making subtle spectral                       the experimental data. Specifically, a set of calibration points
+details more evident, particularly in the higher frequency                      at known distances between the ROV and the hydrophones
+ranges above 10 kHz. In contrast, the AS-1 spectrogram, while                   was used to collect amplitude data. A nonlinear least squares
+slightly noisier and less detailed in the upper frequencies, still              fitting process was then applied to these data points to
+reliably detects the dominant tonal features and broadband                      minimize the error between the measured and predicted
+noise, showing its capability for detection and tracking tasks.                 amplitudes, yielding optimal estimates for and $.
+The results highlight the importance of the ASF-1 for detailed
+acoustic analysis, while the AS-1 provides a cost-effective                     With the estimated distances from each hydrophone, the
+alternative with sufficient performance for detecting the                       position of the robot is computed using a nonlinear least
+primary acoustic features of interest. This analysis supports                   squares trilateration approach. The objective is to minimize
+the use of short 3-second segments, as they effectively capture                 the error function:
+transient and continuous acoustic signatures critical for                                            1
+positioning and tracking.                                                                     %& ' ()*+ , + - . */ , / - ,                0
+                                                                                                    2
+
+                                                                                where *+, /- is the estimated position of the ROV, and *+ , / -
+                                                                                are the known positions of the hydrophones. The optimization
+                                                                                was performed using a least-squares solver, which iteratively
+                                                                                adjusts *+, /- to minimize the discrepancy between the
+                                                                                modeled and observed distances. To evaluate the accuracy of
+                                                                                the positioning algorithm, we conducted controlled
+                                                                                experiments by placing the ROV at predefined coordinates
+                                                                                within the pool. The estimated positions were then compared
+                                                                                to the ground-truth locations to calculate mean and maximum
+     Fig. 5. 3 seconds LogMel spectrograms with ASF-1 and AS-1.                 distance errors, validating the precision of the method.
+B. Data processing for detection and positioning                                    For the detection algorithm, we build upon previous work
+    The positioning algorithm developed for the swimming                        that has explored vessel classification using spectrogram-
+pool environment relies on the estimation of the received                       based analysis under different noise conditions [17]. This
+signal amplitude at multiple hydrophones and the calibration                    approach leverages convolutional neural networks (CNNs) for
+of a propagation model. The first step involves selecting                       feature extraction and classification, demonstrating high
+specific frequency bands associated with the underwater                         accuracy in distinguishing between various vessel types. As
+robot's propulsion system. These bands were identified                          future work, we aim to extend this methodology to a multi-
+through spectral analysis, ensuring they represent consistent                   class detection framework, incorporating additional vessel
+acoustic emissions from the ROV rather than ambient noise.                      categories, including the ROV used in our experiments.
+For each hydrophone, the signal amplitude        is extracted                   Furthermore, we plan to enhance the system by integrating
+from these frequency bands using a STFT, isolating the energy                   source separation techniques, allowing the differentiation of
+within the predefined range. Once the amplitude is obtained,                    overlapping acoustic signals from multiple sources. This
+the distance between the robot and each hydrophone is                           extension will improve the robustness of the detection
+estimated using a propagation model. The acoustic signal's                      algorithm, making it suitable for complex real-world
+attenuation underwater is modeled by incorporating geometric                    environments where multiple vessels and background noise
+spreading and absorption losses:                                                are present. For the scope of this paper and its presentation,
+                                                                                the presence of the ROV will be identified by detecting the
+                                             !"#
+                                =                                               previously analyzed frequency bands with a high acoustic
+                                                                                signal power, using an empirically determined threshold.
+
+
+
+
+      Authorized licensed use limited to: Stanford University. Downloaded on September 10,2026 at 05:09:50 UTC from IEEE Xplore. Restrictions apply.
+                           IV.     RESULTS                                      initial reference amplitude   at 1 meter, a spreading factor
+                                                                                of = 1.8, and an absorption coefficient of $ = 0.002 45/
+A. Deployment in water tank
+                                                                                %, ensuring a good fit with measured signal attenuation. For
+    The first tests were conducted within the test tank of the                  the AS-1, due to its lower sensitivity, a higher empirical
+Ports Laboratory, in the Civil Engineering Technical School                     threshold was required, leading to         = 2.2 and $ =
+                                                                                0.004 45/% to better match the observed decay in signal
+premises of UPM, a three-dimensional testing pool that has a
+depth of 1.36 meters, 11 meters wide, and 33 meters long. The
+                                                                                power. These values were derived by analyzing the
+bottom is finished with in situ terrazzo flooring, and the
+vertical walls are covered in continuous tiles, equipped with                   spectrograms and FFT results, ensuring that the estimated
+an anti-reflection system using 10 ppi polyurethane foam.                       distances were consistent with the known positions of the
+Multidirectional waves are generated with absorption control,                   hydrophones during calibration experiments.
+with individual blade movement, capable of filling up to 1.00
+meter, but they were not used for our initial tests.                                 The accuracy of quadrant classification was evaluated
+                                                                                based on manual annotations, resulting in a 79% accuracy.
+                                                                                This value is not entirely representative, as the annotations
+                                                                                were approximate and transitions between quadrants
+                                                                                introduce significant uncertainty. When the robot moves
+                                                                                across quadrant boundaries, misclassification is likely due to
+                                                                                the inherent imprecision of manual labeling. Nonetheless, the
+                                                                                use of a redundant system with six hydrophones, instead of
+                                                                                the minimum required three for trilateration, helps mitigate
+                                                                                these errors by providing additional constraints and
+       Fig. 5. Photographs of the water tank for the experiments.
+                                                                                improving the robustness of position estimation. To
+    For the test, we used a section of the tank that was 17                     contextualize the performance of our method, we compared
+meters long and 11 meters wide. The deployment of the                           it against a baseline approach using simple geometric
+hydrophones involved 2 ASF-1 and 4 AS-1 hydrophones, 2                          trilateration with constant sound speed and no attenuation
+audio interface and 2 Raspberries to cover the whole area and                   model achieving 47% accuracy in quadrant classification.
+use the complete set. The set of 4 AS-1 hydrophones were                        Our method demonstrated superior accuracy, particularly in
+placed covering the 4 furthest corners of the area of the tank                  the reflective pool environment, where signal attenuation and
+in use. The other 2 hydrophones were located at 8.5 m of the                    reverberation significantly affect simpler models.
+longest side of the tank. All of them were separated 25 cm
+from the closer wall to avoid undesired noises due to hits                      B. Deployment in Valencia Port
+against the wall and were hanging 1 m from the top of the                           The tests in Valencia were conducted in a 60 × 70-meter
+pool. The area was divided into 6 subareas as shown in Fig 6,                   area at the north arm of the Xitá dock (Fig. 7). Deploying in
+to annotate the position of the ROV as reference for future                     a real port presented challenges such as power availability,
+analysis. The study performed consisted in the ROV doing
+                                                                                weather conditions, interferences, and access restrictions. To
+different trajectories along the tank, getting closer and away
+from each hydrophone, while its subarea was annotated                           address these, a single deployment point was established with
+manually. In this way, we managed to record 6 different audio                   one AS-1 and one ASF-1 hydrophone connected to an
+tracks, one per hydrophone, completely covering 187 m2                          acquisition system housed in an IP65 enclosure on the dock,
+where the ROV is moving around. This configuration is an                        powered by a portable battery. Two external cameras were
+ideal study case to characterize the sound produced by the                      included to capture visual context alongside the acoustic
+ROV without other interferences and test the initial                            recordings. The hydrophones were mounted on a PVC
+positioning algorithms.                                                         structure to keep them separated from the dock wall,
+                                                                                minimizing unwanted reflections and interferences.
+
+
+
+
+                                                                                             Acoustic system
+
+
+
+                                                                                      Fig. 7. Deployment of the system in Valencia Port and equipment
+                                                                                                      prepared to work outdoors.
+
+                                                                                    In this test, we also relied on the maneuvers of the ROV
+                                                                                within the area of 60 x 70 m, in which the operations that
+                                                                                could be performed entailed larger distances that the test in
+ Fig. 6. Deployment of the system in the water tank and quadrant-based          the water tank, therefore the limitations of the acquisition
+                division for ROV position estimation.
+                                                                                system could be better analyzed, together with the
+                                                                                interferences of the port activities and the comparison
+   The model parameters were adjusted separately for each
+                                                                                between AS-1 and ASF-1 hydrophones in a realistic
+hydrophone type to account for their differences in sensitivity
+                                                                                environment. On the other hand, as we only had one
+and frequency response. For the ASF-1, which has higher
+                                                                                placement for both hydrophones, the positioning estimation
+sensitivity, the propagation model was calibrated using an
+                                                                                could not be addressed with the proposed approach.
+
+
+
+
+      Authorized licensed use limited to: Stanford University. Downloaded on September 10,2026 at 05:09:50 UTC from IEEE Xplore. Restrictions apply.
+                                                                                                         ACKNOWLEDGMENT
+The recorded power spectral density (PSD) of the harbor and
+                                                                                This work has been supported by the European Commission within the
+pool environments shows distinct background noise profiles.                     context of the project SMAUG, funded under EU Horizon Europe Grant
+Figure 8 presents the mean PSD from 10 samples (3 seconds                       Agreement 101121129. This work has partially been supported by Grant
+each) taken during periods of no visible activity, covering the                 PID2020-112502RB-C41 and grant PID2023-146540OB-C42 funded by
+1 Hz–4 kHz range. In the pool, ambient noise decreases from                     MCIN/AEI/10.13039/501100011033.
+−75 dB to −105 dB between 0–1 kHz, then remains stable. In
+                                                                                                              REFERENCES
+contrast, the harbor displays a more complex profile,
+                                                                                [1]  Y. Zhu and L. Zhou, "Hybrid Tightly-Coupled SINS/LBL for
+fluctuating between −85 and −95 dB, with a sharp drop                                Underwater Navigation System," in IEEE Access, vol. 12, pp. 31279-
+beyond 3.25 kHz. This complexity is likely due to vessel                             31286, 2024, doi: 10.1109/ACCESS.2021.3051398.
+activity and the open, acoustically reflective environment.                     [2] Yuyi, Zhai et al. “Study of Underwater Positioning Based on Short
+These conditions make detection and localization more                                Baseline Sonar System.” 2009 International Conference on Artificial
+difficult.                                                                           Intelligence and Computational Intelligence 2 (2009): 343-346.
+                                                                                [3] Reis, J., Morgado, M., Batista, P., Oliveira, P., & Silvestre, C. (2016).
+                                                                                     Design and Experimental Validation of a USBL Underwater Acoustic
+                                                                                     Positioning System. Sensors, 16(9), 1491.
+                                                                                [4] Bo Xu, Haibin Zhu, Yu Guo, A robust iterative algorithm for
+                                                                                     SINS/USBL integrated navigation based on dual hydrophone
+                                                                                     differential model, Measurement, Volume 242, Part A, 2025, 115854,
+                                                                                     ISSN 0263-2241.
+                                                                                [5] S. Zhu, Y. Yang, Y. Wang, Q. Yang and X. Yan, "Performance of a
+                                                                                     cylindrical hydrophone array for practical use," 2017 IEEE.
+                                                                                     International Conference on Signal Processing, Communications and
+                                                                                     Computing (ICSPCC), Xiamen, China, 2017, pp. 1-5.
+                                                                                [6] Dai, Y., & Sun, C. (2023). Adaptive Beamforming with Hydrophone
+                                                                                     Arrays Based on Oblique Projection in the Presence of the Steering
+                                                                                     Vector Mismatch. Journal of Marine Science and Engineering, 11(4),
+                                                                                     876.
+                                                                                [7] Dewey, Richard & Dakin, Tom & Mouy, Xavier & Urazghildiiev,
+                                                                                     Ildar. (2015). A REGIONAL HYDROPHONE NETWORK:
+                                                                                     MONITOR, DETECT AND TRACK.
+                                                                                [8] Matsumoto, Haru & Bohnenstiehl, D. & Dziak, Bob & Embley, Robert
+                                                                                     & Park, Minkyu. (2008). DEPLOYMENT OF AUTONOMOUS
+   Fig. 8.   Power spectral density of ambient noise for both the pool and           HYDROPHONE ARRAY IN THE SCOTIA SEA Cooperative
+                          Valencia environments.                                     Institute for Marine Resources Studies Sponsored by National Nuclear
+                                                                                     Security Administration.
+In response, the next phase of this work will focus on                          [9] R. Flagg, J. Kanes, L. Marshall, K. Holman, D. Bulger and J. Duggan,
+implementing noise reduction techniques and source                                   "Ocean Acoustic Data Collection - Community-Based Methods for
+separation methods to isolate the ROV’s acoustic signature                           Meeting Community Needs," OCEANS 2022, Hampton Roads,
+                                                                                     Hampton Roads, VA, USA, 2022, pp. 1-6
+from interfering signals. This enhancement is essential for
+                                                                                [10] Zhu, C., Seri, S. G., Mohebbi-Kalkhoran, H., & Ratilal, P. (2020).
+adapting the system to real-world conditions, where                                  Long-Range        Automatic      Detection,      Acoustic     Signature
+uncontrolled noise sources can impact detection accuracy.                            Characterization and Bearing-Time Estimation of Multiple Ships with
+                                                                                     Coherent Hydrophone Array.
+              V.     CONCLUSIONS AND FUTURE WORK                                [11] L. C. F. Domingos, P. E. Santos, P. S. M. Skelton, R. S. A. Brinkworth
+                                                                                     and K. Sammut, "An Investigation of Preprocessing Filters and Deep
+    This study demonstrates the feasibility of using                                 Learning Methods for Vessel Type Classification With Underwater
+hydrophone arrays for the detection and positioning of ROVs                          Acoustic Data," in IEEE Access, vol. 10, pp. 117582-117596, 2022.
+in controlled and semi-controlled environments. By                              [12] David Santos-Domínguez, Soledad Torres-Guijarro, Antonio
+combining frequency and time-frequency analysis with                                 Cardenal-López, Antonio Pena-Gimenez, ShipsEar: An underwater
+amplitude-based propagation modeling, we achieved reliable                           vessel noise database, Applied Acoustics, Volume 113, 2016, Pages
+                                                                                     64-69, ISSN 0003-682X.
+tracking of the ROV's movements, even in the presence of
+                                                                                [13] Tesei, Alessandra et al. “Tracking of multiple surface vessels based on
+acoustic reflections and background noise. The experimental                          passive acoustic underwater arrays.” The Journal of the Acoustical
+results highlight the advantages of using high-sensitivity                           Society of America 147 2 (2020).
+hydrophones for improved signal clarity and the benefits of a                   [14] MacGillivray, Alexander O. and Christ A. F. de Jong. “A Reference
+redundant hydrophone setup in mitigating localization errors.                        Spectrum Model for Estimating Source Levels of Marine Shipping
+                                                                                     Based on Automated Identification System Data.” Journal of Marine
+Future work will focus on expanding the detection system to                          Science and Engineering (2021).
+a multi-class classification framework, incorporating                           [15] B. Robotics “BlueROV2: The world’s most affordable high-
+additional vessel types beyond the ROV and, we are analyzing                         performance ROV. BlueROV2” Datasheet; Blue Robotics: Torrance,
+techniques such as diffusion model for noise cleaning in more                        CA, USA. (2016).
+challenging scenarios. This will involve refining deep learning                 [16] C. A. Ortiz-Toro et al., "Exploring UUV Development with NauSim:
+models for vessel recognition and integrating source                                 An Open-Source Simulation Platform," 2024 Global Conference on
+                                                                                     Wireless and Optical Technologies (GCWOT), Malaga, Spain, 2024,
+separation techniques to improve detection in environments                           pp. 1-7, doi: 10.1109/GCWOT63882.2024.10805602.
+with overlapping acoustic sources. Further experiments will                     [17] Hjelmervik, KT et al. “DATA AUGMENTATION AND
+also be conducted in larger and more dynamic maritime                                PEPROCESSING             TECHNIQUES            FOR        ENHANCED
+settings to validate the scalability and robustness of the                           UNDERWATER            DETECTION        AND        CLASSIFICATION.”
+proposed approach.                                                                   International Conference on Underwater Acoustics 2024.
+
+
+
+
+      Authorized licensed use limited to: Stanford University. Downloaded on September 10,2026 at 05:09:50 UTC from IEEE Xplore. Restrictions apply.
+

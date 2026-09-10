@@ -1,0 +1,310 @@
+ICASSP 2023 - 2023 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP) | 978-1-7281-6327-7/23/$31.00 ©2023 IEEE | DOI: 10.1109/ICASSP49357.2023.10094978
+                                                                                                                                                                                                       LEARNING ENVIRONMENTAL STRUCTURE USING ACOUSTIC PROBES
+                                                                                                                                                                                                                     WITH A DEEP NEURAL NETWORK
+
+                                                                                                                                                                                               Toros Arikan⋆ , Amir Weiss⋆ , Hari Vishnu‡ , Grant Deane◦ , Andrew Singer† , and Gregory Wornell⋆
+                                                                                                                                                                                                             ⋆                           ‡            ◦                                                   †
+                                                                                                                                                                                                                 Dept. of EECS               ARL          Scripps Inst. of Oceanography                       Dept. of ECE
+                                                                                                                                                                                                                     MIT                     NUS                      UCSD                                      UIUC
+
+
+                                                                                                                                                                                                                      ABSTRACT
+                                                                                                                                                                                         Learning the physical environment is an important yet chal-
+                                                                                                                                                                                         lenging task in reverberant settings such as the underwater
+                                                                                                                                                                                         and indoor acoustic domains. The locations of reflective
+                                                                                                                                                                                         boundaries, for example, can be estimated using echoes and
+                                                                                                                                                                                         leveraged for subsequent, more accurate localization. Current
+                                                                                                                                                                                         boundary estimation methods are constrained to a regime of
+                                                                                                                                                                                         high signal strength, or mitigate noise with heuristic (subop-
+                                                                                                                                                                                         timal) filters. These limitations can lead to fragile estimators
+                                                                                                                                                                                         that fail under non-ideal conditions. Furthermore, many al-
+                                                                                                                                                                                         gorithms in the literature also require a correct assignment
+                                                                                                                                                                                                                                                                          Fig. 1: A general underwater acoustic setting, highlighting
+                                                                                                                                                                                         of echoes to boundaries, which is combinatorially hard. To
+                                                                                                                                                                                                                                                                          the typical NLOS arrivals and corresponding virtual emitters.
+                                                                                                                                                                                         evade these limitations, we develop a convolutional neural
+                                                                                                                                                                                         network method for robust 2D boundary estimation, given                          available, more accurate estimates of their positions can be
+                                                                                                                                                                                         known emitter and receiver locations. Our method uses as its                     required. Over short ranges, these boundaries can be approx-
+                                                                                                                                                                                         input data format transform images, which are the potential                      imated as planar, thus giving rise to mirror images of the true
+                                                                                                                                                                                         boundary locations mapped into curves. We demonstrated in                        emitter as ‘virtual’ emitters, as per Snell’s Law. Euclidean
+                                                                                                                                                                                         simulations that the proposed neural network method outper-                      distance matrices (EDM) [8] or other methods [9] can then be
+                                                                                                                                                                                         forms alternative state-of-the-art algorithms.                                   used for boundary estimation through virtual emitter localiza-
+                                                                                                                                                                                            Index Terms— Convolutional neural networks, delay es-                         tion. Ocean applications, however, can feature low signal-to-
+                                                                                                                                                                                         timation, localization, underwater acoustics.                                    noise ratios (SNRs) [10] and model mismatch due to dynamic
+                                                                                                                                                                                                                                                                          environments, which is not addressed by existing methods.
+                                                                                                                                                                                                                 1. INTRODUCTION
+                                                                                                                                                                                                                                                                              An alternative boundary estimation approach leverages
+                                                                                                                                                                                         Environmental learning in reverberant settings is an impor-                      the fact that in 2D, a NLOS arrival corresponds to a path dis-
+                                                                                                                                                                                         tant task for difficult domains such as underwater and indoor                    tance of dNLOS and yields an ellipse whose foci are the emitter
+                                                                                                                                                                                         acoustics [1–3]. Depending on the application, environment                       and receiver location, as in Fig. 2. By definition, points on
+                                                                                                                                                                                         learning itself may be the goal, or a step in a processing chain                 the ellipse have a total distance of dNLOS to the emitter and
+                                                                                                                                                                                         for enhanced localization accuracy. For example, to passively                    receiver, and the reflective boundary itself is a tangent to this
+                                                                                                                                                                                         localize an unknown emitter with a collection of receivers,                      ellipse. With multiple receivers, multiple ellipses are defined
+                                                                                                                                                                                         line of sight (LOS) arrivals to the receivers are used for time                  by such NLOS arrivals, and the boundary is their common
+                                                                                                                                                                                         difference of arrival (TDOA) [4] or time of arrival (TOA) lo-                    tangent. Therefore, by fitting common tangents to ellipses,
+                                                                                                                                                                                         calization [5], [6]. Morevoer, leveraging the non-line of sight                  the boundaries can be estimated while avoiding the echo la-
+                                                                                                                                                                                         (NLOS) arrivals can enhance localization performance [7].                        beling problem in multipath environments, as illustrated in
+                                                                                                                                                                                             Within the general scope of environment learning, we fo-                     Fig. 3. Assigning ellipses to tangents is combinatorially com-
+                                                                                                                                                                                         cus on reflective boundary estimation for shallow-water un-                      plex [11] and complicated by missing or spurious arrivals,
+                                                                                                                                                                                         derwater acoustics, as in Fig. 1. We envision estimating the                     motivating a solution that bypasses this task.
+                                                                                                                                                                                         emitter location using LOS arrivals, and then using it and the                       In light of these challenges, we propose a convolutional
+                                                                                                                                                                                         NLOS arrivals to accurately estimate the boundaries. While                       neural network-based (CNN) method for boundary estima-
+                                                                                                                                                                                         prior knowledge of the sea surface and seafloor is typically                     tion. We paramterize the tangents to ellipses by their range
+                                                                                                                                                                                             This work was supported, in part, by ONR under Grants N00014-19-1-2661,      ρ and azimuth θ [7], calling this ρ- and θ-space the common
+                                                                                                                                                                                         N00014-19-1-2662 and N00014-19-1-2665, and NSF under Grant CCF-1816209.          tangents to spheroids (COTANS) domain. We then map the
+
+
+
+                                                                                                                                                                                                Authorized licensed use limited to: Stanford University. Downloaded on September 10,2026 at 05:10:06 UTC from IEEE Xplore. Restrictions apply.
+                                                                                               2. PROBLEM FORMULATION
+                                                                               We model a static 2D environment with N planar boundaries,
+                                                                               where N is known. These boundaries are described by the
+                                                                               range ρ ∈ R+ and azimuth θ ∈ [−π, π) of their normal vec-
+                                                                               tor relative to the (arbitrarily-chosen) origin. Thus, the j-th
+                                                                                                                                           T
+                                                                               boundary is parametrized as the vector η j = [ρj θj ] , for
+Fig. 2: NLOS arrivals define ellipses with foci at the emitter
+and receiver positions.                                                        all boundaries j ∈ SN , where we denote SK ≜ {1, . . . , K}
+                                                                               for some K ∈ N. We assume a single isotropic emitter in
+                                                                                                                                      T
+                                                                               the environment at a known location pe = [xe ye ] , and M
+                                                                                                                                          T
+                                                                               isotropic receivers at known locations pr,i = [xi yi ] , i ∈
+                                                                               SM . The speed of sound, denoted by vs , is assumed to be
+                                                                               constant, which is a reasonable simplification at short ranges
+                                                                               in a well-mixed shallow-water underwater environment [16].
+                                                                                   The received signal at the i-th receiver, ri (t) ∈ R, is mod-
+                                                                               eled as the sum of the LOS arrival and single-reflection NLOS
+                                                                               arrivals, delayed by their respective TOAs. The LOS TOA,
+                                                                               denoted by τi,0 , is given by:
+                                                                                                       ∥pr,i − pe ∥2
+                                                                                                 τi,0 =              , ∀i ∈ SM .          (1)
+                                                                                                             vs
+                                                                                For the j-th boundary, we obtain the virtual emitter location
+Fig. 3: Illustration of a multipath setting: each NLOS arrival                 pj by finding the corresponding reflection of pe (see Fig. 1).
+gives rise to an emitter-receiver pair ellipse, as in Fig. 2.                  The NLOS TOA to the i-th receiver from the j-th boundary,
+                                                                               denoted by τi,j , is equal to the TOA from the i-th receiver
+environment and the time-delay estimates to images in the
+                                                                               (pr,i ) to the corresponding j-th virtual emitter (pj ):
+COTANS domain, transforming the data into a more natural
+input representation for the CNN. The proposed COTANS                                        ∥pr,i − pj ∥2   di,j
+                                                                                    τi,j =                 ≜      , ∀i ∈ SM , ∀j ∈ SN .               (2)
+neural network (NN), termed COTANS-NN, is a modified                                               vs         vs
+AlexNet [12] that is trained on synthetic data to estimate                         Merging the effects of attenuation and reflection into the
+boundaries from unlabeled NLOS arrivals. The resulting NN                      equivalent attenuation coefficient αi,j , the received signal at
+can be used with both simulated and recorded data.                             the i-th receiver is modeled by:
+    Fitting tangent planes to spheroids for boundary esti-
+                                                                                                          N
+mation was proposed in [13], [14] as the common tangent                                                   X
+                                                                                               ri (t) =         αi,j s (t − τi,j ) + ξi (t),          (3)
+(COTA) algorithm. In [15], a Hough transform-inspired
+                                                                                                          j=0
+methodology was used, with provisions to reject incorrectly-
+chosen echoes. To avoid conflating the plane-fitting method                    where s(t) is the known emitted signal, and ξi (t) is a noise
+with the Hough transform, we refer to a COTANS trans-                          signal that is a realization of a spectrally-flat Gaussian pro-
+form and COTANS domain. These methods typically apply                          cess. Given the energy of a received (and attenuated) pulse as
+a heuristic smoothing filter to COTANS images, followed                        Er , the SNR is defined as Er /N0 , where N0 is the one-sided
+by the extraction of maxima. This hand-crafted approach is                     power spectral density of the noise ξi (t). In practice, the en-
+generally suboptimal and setting-specific.                                     vironment can be reverberant, and ri (t) can feature higher-
+    If, however, a NN is trained with a wide range of geome-                   order reflections and noise that may not be Gaussian [17]. We
+tries and realistic estimation errors, it can potentially learn                work with a discrete-time sampled version of (3) as ri [n] ≜
+the optimal inference rule, which can be viewed as joint (and                  { ri (t)|t=nTs }n∈Z , where Ts is the sampling period.
+implicit) filtering and peak extraction. The resulting NN can                       The geometric information for boundary estimation con-
+also be re-trained for different environments, for applicability               sists of the known pe and {pr,i }, and the unknown {τi,j }.
+to a wide range of settings (e.g., different numbers of bound-                 Hereafter, we assume that the NLOS TOAs are estimated us-
+aries and receivers). Our main contribution is exactly such an                 ing an (at least asymptotically) optimal estimator. For exam-
+architecture, which provides superior boundary estimates—                      ple, these estimates can be obtained by matched-filtering ri [n]
+without echo labeling—using COTANS images as its input.                        with s[n] ≜ s(nTs ) and picking the TOAs corresponding to
+    The paper is organized as follows. In Section 2, we for-                   the N largest peaks in the result, after removing the LOS ar-
+mulate the environment and signal models. The COTANS-                          rival, as {τ̂i,j }. The distance estimates {dˆi,j ≜ vs τ̂i,j } (from
+NN method is detailed in Section 3. Simulation results are                     (2)) are then used for estimating the boundaries as {η̂ j }N    j=1 .
+presented in Section 4, and final remarks in Section 5.                             At high SNR, the error in τ̂i,j due to Gaussian noise in
+
+
+
+     Authorized licensed use limited to: Stanford University. Downloaded on September 10,2026 at 05:10:06 UTC from IEEE Xplore. Restrictions apply.
+Fig. 4: Bounds on the range estimation root-mean squared                                         (a)                                   (b)
+error (RMSE) for a Gaussian pulse of 15.4 kHz bandwidth.
+                                                                                Fig. 5: COTANS images for low SNR with dispersed curves
+(3) is Gaussian itself, with mean squared error (MSE) that                      (a) and high SNR (b), with the true boundaries marked in red.
+asymptotically coincides with the Cramér-Rao lower bound
+(CRLB) for time-delay estimation [18]. However, there is
+an SNR threshold below which large ‘global errors’ occur,
+leading to a drastic performance reduction as captured by the
+Ziv-Zakai lower bound (ZZLB) [19], depicted in Fig. 4. In
+this case, the matched-filtered signal can have larger peaks
+than the peak of the true arrival; picking such a spurious peak
+causes τ̂i,j to be distributed uniformly on the observation time
+interval. A global error yields an unserviceable time-delay                                     (a)                                     (b)
+estimate for boundary estimation; thus, a practical estimation                  Fig. 6: Taking a tangent’s COTANS transform: start from a
+method must be robust to large errors in a subset of {dˆi,j }.                  standard ellipse (a), and modify to match the true setting (b).
+    A key motivation for the use of NNs in this context is that,
+while it is reasonable to assume Gaussian noise in ri (t) (in                   (ρj , θj ) for each boundary. Plane-fitting boundary estimation
+(3)), it is certainly not the case for errors in τ̂i,j . The nonlinear          methods currently apply heuristic filters to these images, to
+time-delay estimation leads to a non-Gaussian estimation er-                    locally average COTANS curves that do not exactly intersect.
+ror. Hence, it is hard to analytically design a (non-asymptotic)                This methodology does not match the underlying statistics of
+optimal estimator for the boundary locations based on {τ̂i,j },                 COTANS images, and requires hand-crafting parameters such
+encouraging a data-driven approach instead.                                     as filter sizes [7]. Our NN automates these tasks.
+                                                                                3.2. Proposed COTANS-NN Architecture
+   3. COTANS-NN FOR BOUNDARY ESTIMATION
+                                                                                The COTANS-NN method re-purposes the 8-layer AlexNet
+We now discuss how the COTANS transform is used to gen-                         architecture [12] by replacing the classification layer with
+erate images for a given geometry and the estimated {dˆi,j }.                   a regression layer [21]. The inputs are COTANS images,
+We then detail the COTANS-NN method for estimating the                          which encapsulate the relevant information for boundary
+boundaries {η j } from such images.                                             estimation. The outputs are boundary parameter estimates
+3.1. Generation of COTANS Images                                                [ρ̂1 · · · ρ̂N θ̂1 · · · θ̂N ]T , each scaled to a dimensionless range
+In 2D, a boundary defined by ρ and θ can be conceptualized                      of [0, 1] by dividing each ρ by a ρmax (10 m in our case), and
+                                                                                                                                                  T
+as a point (ρ, θ) in a COTANS domain; working out the (ρ, θ)                    each θ by 360°. We use the correct [ρ1 · · · ρN θ1 · · · θN ] for
+expression of a line is to take its COTANS transform [20].                      training, using MSE as the cost function. Thus, the output
+Discretizing the space ρ × θ as a matrix and incrementing this                  size is 2N . Training images are generated by simulating
+‘accumulator’ over every potential (ρ, θ) for NLOS ellipses                     scenarios with randomized pe and {pr,i }, as in Fig. 7.
+yields a COTANS-domain image (as in Fig. 5), with maxima                             In this framework, the advantages of COTANS-NN rela-
+at the true boundaries {(ρj , θj )} in the absence of errors.                   tive to analytical methods become clearer. The least-squares
+     For each θ, we obtain ρ for a standard ellipse (Fig. 6(a))                 (LS) algorithm [22], for example, assumes that the distance
+as:                     p                                                       estimates are independently corrupted by Gaussian errors:
+                ρ (θ) = a2 cos2 θ + b2 sin2 θ,                 (4)                              dˆi,j = di,j + ϵi,j , ϵi,j ∼ N 0, σ 2 .
+                                                                                                                                         
+                                                                                                                                                    (5)
+                               p
+                                   2         2
+where a = dNLOS /2 and b = dNLOS − dLOS /2, as in Fig. 2.
+                                                                                Another example is the EDM algorithm [23], which mini-
+Then, (4) is used to generate the {(ρ, θ)} for a standard el-
+                                                                                mizes the following s-stress cost function (sequentially and
+lipse of the same size as the true ellipse (e.g., Fig. 6(b)). The
+                                                                                iteratively) over potential Cartesian coordinates x
+                                                                                                                                  ej and yej for
+COTANS transform then modifies ρ and θ based on rotations
+                                                                                the virtual emitters [23, Eq. S15]:
+and translations that map one ellipse to the other.
+                                                                                                    Xh                                  i2
+     In the absence of time-delay estimation errors, picking                       C (exj , yej ) =
+                                                                                                                 2
+                                                                                                        xj − xi ) + (e
+                                                                                                       (e
+                                                                                                                               2
+                                                                                                                      yj − yi ) − dˆ2i,j , (6)
+the maxima in COTANS images yields the exact and correct                                               i
+
+
+
+
+      Authorized licensed use limited to: Stanford University. Downloaded on September 10,2026 at 05:10:06 UTC from IEEE Xplore. Restrictions apply.
+               (a)                                    (b)
+
+Fig. 7: Random training settings and their NLOS ellipses:
+                                                                                Fig. 8: Average range RMSE vs. SNR of COTANS-NN, LS
+dispersed at 2 dB SNR (a); and consistent at 20 dB SNR (b).
+                                                                                and EDM. COTANS-NN is uniformly superior.
+and is therefore also assuming (even if implicitly) statistically               Note that unlike its competitors, COTANS-NN does not re-
+independent Gaussian errors. As mentioned earlier, this as-                     quire such side-information, or an initialization at all, since
+sumption is valid only at high SNR; furthermore, the echo la-                   it is by nature a non-iterative method. Fig. 8 shows the aver-
+beling problem has to be solved as well to correctly group the                  age range RMSE of the two boundaries vs. the SNR for the
+{dˆi,j } together for each j to achieve a reasonable estimate.                  three methods. Evidently, COTANS-NN outperforms LS and
+     COTANS-NN, by contrast, is data-driven over a synthetic                    EDM by a wide margin of up to 9 dB SNR, and maintains
+dataset of both small and large errors. Using COTANS im-                        its stability despite global errors. When global errors arise,
+ages eliminates the need to solve the echo labeling problem                     LS and EDM severely deteriorate, demonstrating that their
+altogether: the input to the NN is a transformation of all the                  ‘small-error’ assumption plays a vital role in their proper op-
+unlabeled {dˆi,j }, rather than a sorted version of them.                       eration. In tougher error regimes, COTANS-NN is not merely
+                 4. SIMULATION RESULTS                                          robust but also continues to perform well.
+We now present the performance of COTANS-NN in a simu-                               LS and EDM perform very similarly, which arises from
+lation setting that is representative of the shallow-water un-                  how they both minimize the squared error between measured
+derwater acoustic channel (i.e., with two boundaries), and                      and estimated distances, albeit with different optimization
+compare it to the LS and EDM algorithms.                                        routines and cost functions. Since LS and EDM require echo
+    We train COTANS-NN on 14 SNR levels, equally spaced                         labeling that in practice can also cause large errors, their per-
+in the 10 to 20 dB SNR range (covering the transition re-                       formances will be worse than what is reported in Fig. 8. In
+gion of global errors and the high-SNR regime), generating                      contrast, COTANS-NN does not require echo labeling, and
+50,000 training, 3,000 validation, and 50,000 test images                       therefore cannot suffer from such performance deterioration.
+per SNR. One boundary has its ρ- and θ-parameters as uni-                                       5. CONCLUDING REMARKS
+formly distributed random variables supported on the inter-                     We propose the COTANS-NN method for 2D boundary es-
+vals [3 m, 3.5 m] and [260◦ , 280◦ ], respectively, and similarly               timation, exploiting the multiscale filtering capabilities of
+for the other boundary on [6 m, 6.5 m] and [80◦ , 100◦ ]. This                  CNNs. Our method leverages a large training set covering
+yields a scenario where boundaries are known to be roughly at                   SNR regimes with both large and small estimation errors to
+(3 m, 270◦ ) and (6.25 m, 90◦ ). The pe and {pr,i } are drawn                   deliver robust performance, which is superior to the state-
+from a uniform distribution over 2 meter-wide areas centered                    of-the-art alternatives that rely on high-SNR assumptions.
+on the points (3.5, 0.5) m and (−2.5, 3.5) m, respectively.                     COTANS-NN avoids the echo labeling and ad-hoc image
+Our performance metric is the range RMSE (in m) over all N                      filtering steps that further degrade the performance of alter-
+boundaries and K environment realizations for each SNR S:                       native methods. It simplifies the use of domain knowledge to
+                                                                                aid the boundary estimation task, and is capable of learning
+                      v
+                      uP                             2
+                      u N PK              (S)     (S)
+                      t j=1 k=1 ρj,k − ρ̂j,k                                    and using the true time-delay estimation error statistics.
+        ρRMSE (S) ≜                                      .    (7)                    Future work will focus on applying COTANS-NN to
+                                       NK
+                                                                                real-world data, with larger parameter spaces and model mis-
+    While we have simulated three-boundary environments as                      match, to quantify its robustness. Derivation of theoretical re-
+well, and have also estimated θ, the resulting performance                      sults on boundary estimation will also help assess COTANS-
+curves are qualitatively similar to the performance for ρ pre-                  NN’s performance. While COTANS-NN was presented in
+sented here. Hence, we only present the range estimation re-                    a 2D setting, its operation can be extended to 3D. However,
+sults for two-boundary environments.                                            this may already be computationally non-trivial, and some
+    We compare COTANS-NN to LS and EDM when these                               algorithmic modifications could be required. Among other
+alternative methods are initialized with correct echo labeling.                 aspects, future work will also address this generalization.
+
+
+
+      Authorized licensed use limited to: Stanford University. Downloaded on September 10,2026 at 05:10:06 UTC from IEEE Xplore. Restrictions apply.
+                       6. REFERENCES                                           [12] A. Krizhevsky, I. Sutskever, and G. E. Hinton, “Ima-
+                                                                                    geNet classification with deep convolutional neural net-
+ [1] H. Niu, E. Ozanich, and P. Gerstoft, “Ship localization                        works,” in Advances in neural inf. process. syst., 2012,
+     in Santa Barbara Channel using machine learning classi-                        vol. 25.
+     fiers,” J. Acoust. Soc. Am., vol. 142, no. 5, pp. 455–460,
+     2017.                                                                     [13] F. Antonacci, A. Sarti, and S. Tubaro, “Geometric re-
+                                                                                    construction of the environment from its response to
+ [2] H. Niu, Z. Gong, E. Ozanich, P. Gerstoft, H. Wang, and                         multiple acoustic emissions,” in IEEE Int. Conf. on
+     Z. Li, “Deep-learning source localization using multi-                         Acoust., Speech, Signal Process., 2010, pp. 2822–2825.
+     frequency magnitude-only data,” J. Acoust. Soc. Am.,
+     vol. 146, no. 1, pp. 211–222, 2019.                                       [14] F. Antonacci, J. Filos, M. R. Thomas, E. A. Habets,
+                                                                                    A. Sarti, P. A. Naylor, and S. Tubaro, “Inference of
+ [3] Y. Wu, R. Ayyalasomayajula, M. J. Bianco, D. Bhara-                            room geometry from acoustic impulse responses,” IEEE
+     dia, and P. Gerstoft, “Sslide: Sound source localization                       Trans. Audio, Speech, Lang. Process., vol. 20, no. 10,
+     for indoors based on deep learning,” in ICASSP 2021-                           pp. 2683–2695, 2012.
+     2021 IEEE Int. Conf. on Acoustics, Speech and Signal
+     Processing, Jun 2021, pp. 4680–4684.                                      [15] S. Park and J. Choi, “Iterative echo labeling algorithm
+                                                                                    with convex hull expansion for room geometry estima-
+ [4] T. Korhonen, “Acoustic localization using reverberation                        tion,” IEEE/ACM Trans. Audio, Speech, Lang. Process.,
+     with virtual microphones,” in Proc. Int. Workshop on                           vol. 29, no. 3, pp. 1463–1478, 2021.
+     Acoustic Echo and Noise Control (IWAENC), 2008, pp.
+     211–223.                                                                  [16] Y. M. Too, M. Chitre, G. Barbastathis, and V. Pal-
+                                                                                    layil, “Localizing snapping shrimp noise using a small-
+ [5] F. Ribeiro, C. Zhang, D. A. Florêncio, and D. E. Ba,                          aperture array,” IEEE J. Oceanic Eng., vol. 44, no. 1,
+     “Using reverberation to improve range and elevation                            pp. 207–219, 2017.
+     discrimination for small array sound source localiza-
+     tion,” IEEE Trans. Audio, Speech, Lang. Process., vol.                    [17] M. A. Chitre, “A high-frequency warm shallow wa-
+     18, no. 7, pp. 1781–1792, 2010.                                                ter acoustic communications channel model and mea-
+                                                                                    surements,” J. Acoust. Soc. Am., vol. 122, no. 5, pp.
+ [6] A. Brutti, M. Omologo, and P. Svaizer,      “Multi-                            2580–2586, 2007.
+     ple source localization based on acoustic map de-
+     emphasis,” EURASIP J. Audio, Speech, Music Process.,                      [18] C. Cook, Radar signals: An introduction to theory and
+     pp. 1–17, 2010.                                                                application, Elsevier, 2012.
+
+ [7] H. Naseri and V. Koivunen, “Cooperative simultaneous                      [19] D. Dardari, C. Chong, and M. Win, “Improved lower
+     localization and mapping by exploiting multipath prop-                         bounds on time-of-arrival estimation error in realis-
+     agation,” IEEE Signal Process. Mag., vol. 65, no. 1, pp.                       tic UWB channels,” in 2006 IEEE Int. Conf. Ultra-
+     200–211, 2016.                                                                 Wideband, 2006, pp. 531–537.
+
+ [8] I. Dokmanic, R. Parhizkar, J. Ranieri, and M. Vetterli,                   [20] D. Borrmann, J. Elseberg, K. Lingemann, and A.
+     “Euclidean Distance Matrices: Essential theory, algo-                          Nüchter, “The 3D Hough transform for plane detec-
+     rithms, and applications,” IEEE Signal Process. Mag.,                          tion in point clouds: A review and a new accumulator
+     vol. 32, no. 6, pp. 12–30, Nov 2015.                                           design,” 3D Research, vol. 2, no. 2, pp. 3, 2011.
+
+ [9] H. Naseri, M. Costa, and V. Koivunen, “Multipath-                         [21] C. Szegedy, A. Toshev, and D. Erhan, “Deep neural
+     aided cooperative network localization using convex op-                        networks for object detection,” in Advances in neural
+     timization,” in 48th Asilomar Conf. Signals, Syst. Com-                        inf. process. syst., 2013, vol. 26.
+     put., 2014, pp. 1515–1520.
+                                                                               [22] K. W. Cheung, H. C. So, W. K. Ma, and Y. T. Chan,
+[10] D. Dardari, A. Conti, U. Ferner, A. Giorgetti, and M. Z.                       “Least squares algorithms for time-of-arrival-based mo-
+     Win, “Ranging with ultrawide bandwidth signals in                              bile location,” IEEE Trans. Signal Process., vol. 52, no.
+     multipath environments,” Proc. IEEE, vol. 97, no. 2,                           4, pp. 1121–113, 2004.
+     pp. 404–426, 2000.
+                                                                               [23] I. Dokmanic, R. Parhizkar, A. Walther, Y. M. Lu, and
+[11] M. Crocco, A. Trucco, and A. D. Bue, “Uncalibrated                             M. Vetterli, “Acoustic echoes reveal room shape,” Proc.
+     3D room geometry estimation from sound impulse re-                             Nat. Acad. Sciences, vol. 110, no. 30, pp. 12186–12191,
+     sponses,” J. Franklin Institute, vol. 354, no. 18, pp.                         2013.
+     8678–8709, 2017.
+
+
+
+     Authorized licensed use limited to: Stanford University. Downloaded on September 10,2026 at 05:10:06 UTC from IEEE Xplore. Restrictions apply.
+
