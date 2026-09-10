@@ -206,6 +206,27 @@ unavailable, and where a 2020 review found no documented accuracy for any
 acoustic system. Aberdeen local tracks: Offshore Infrastructure, Underwater
 Security and Protection.
 
+## IEEE Xplore cross-check (2026-09-09, fresh session, 12 targeted queries)
+
+- Gap 6 (vehicle self-localization from its own echoes, underwater): zero hits
+  for "self-localization echoes walls underwater vehicle" and "underwater
+  vehicle own acoustic source reflections localization tank". Stands.
+- Gap 1/2 (multipath as virtual array; array self-calibration): 1 and 0 hits.
+  Stands. Closest IEEE items are the Arikan/Singer boundary-estimation line
+  (ICASSP 2023, 10094978; ICASSP 2025, 10887904: number and location of
+  boundaries with DL, no user prior) and Kari/Singer's differentiable modular
+  forward model (10944684, 2025, IEEE-published version of arXiv:2503.23260).
+- Gap 4 (scanning sonar + hydrophone fusion): 0 hits. Stands.
+- Gap 5 ("Jetson hydrophone"): 1 hit, a thruster fault-diagnosis paper. Stands.
+- Precedents to cite for the confined-environment framing, not gaps:
+  Hodgkinson, Shyu & Mohseni, OCEANS 2012 (6404991): linear hydrophone array
+  for small UUVs "in confined environments such as swimming pools or water
+  tanks", 8 m steel tank, <5 % of slant range, "severe multipath" survived,
+  not exploited. Belmonte-Hernández et al. 2025 (11166125): ROV detection and
+  positioning with hydrophone arrays in a swimming pool and a harbour, with
+  propagation modeling. Our claim must be worded as *exploiting* the echoes
+  with a fitted model and a compact vehicle array, against these.
+
 ## Verified NOT gaps (do not pitch these as new)
 - "First pool hydrophone dataset" (Woodward 2020 PLOS ONE; Lu 2024 IEEE
   DataPort). Dataset release is still worth doing, framed as vehicle-hull
