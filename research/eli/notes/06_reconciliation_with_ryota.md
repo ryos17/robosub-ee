@@ -6,6 +6,29 @@ territory from the DAFx side. This note lists what he found that corrects my
 notes, where the two plans overlap, and a proposed merge. Nothing here has
 been agreed with Ryota yet.
 
+## 0. The two ideas in plain words
+
+**Eli.** Cheap speaker + 4 hydrophones + Orin → a fitted 3D echo model of the
+pool and the 3D position of the speaker. The walls act as mirrors that place
+virtual copies of the tiny array metres away, which is what gives distance,
+not just direction. Ground truth is a tape-measure survey; the Ping360 only
+confirms where the walls are.
+
+**Ryota.** The 4 cheap piezo-disc hydrophones are bad (they ring and don't
+match each other), so teach a small network to un-ring and rebalance each one,
+then find the RoboSub pinger's direction from the corrected signals on the
+Orin. To train it, build a pool echo model fitted to real recordings and
+measure the discs against a proper reference hydrophone.
+
+**Same:** fit a pool echo model from recordings; use echoes instead of
+fighting them; check walls with the Ping360; report Orin speed and power.
+
+**Different:** he starts from "fix the bad microphones", I start from "use the
+walls to get distance". His target is the real 25–40 kHz pinger; mine used
+the speaker's 2–18 kHz. Each needs the other half: my model needs his
+per-element compensation to work on ringing discs; his pinger localizer
+needs my fitted model and wall echoes to get range.
+
 ## 1. Facts from Ryota's work that change my notes
 
 | Item | My notes said | Ryota verified | Fixed where |

@@ -21,7 +21,7 @@ Extracts are for our reading; do not add PDFs of paywalled papers.
 - `6404991_hodgkinson2012_linear_array_small_uuv_tank.txt` — OCEANS 2012. Linear array for small UUVs in pools/tanks, 8 m steel tank, <5 % slant range; multipath survived, not exploited.
 - `11166125_belmonte2025_rov_positioning_pool_harbour.txt` — 2025. ROV detection/positioning with hydrophone arrays in a pool and a harbour.
 - `11104616_song2025_convlstm_pulse_doa.txt` — Song 2025. ConvLSTM pulse DOA on a 3-element array; reports collapse outside trained conditions (motivates the ablation).
-- `8096292_pinger_localization_sparse_AUV.txt` (+ pdf, demo of the fetch tool) — Kasetkasem 2017. Sparse-representation first-arrival pinger DOA baseline.
+- `8096292_pinger_localization_sparse_AUV.txt` — Kasetkasem 2017. Sparse-representation first-arrival pinger DOA baseline.
 
 ## Dropped directions (kept for the related-work paragraph)
 - `10623112_uwlora_plus_pool_css.txt` — UWLoRa+ 2024. Chirp-SS modem in a pool; later paths exceed first path.
