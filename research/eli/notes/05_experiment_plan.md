@@ -12,16 +12,25 @@ unambiguous; a two-scale layout is an option). Measure element positions to
 2 mm and record them; the fit refines them. Do not copy the sub's
 front/back parallel-pair layout. Cables to the Zoom H8 on deck.
 
-**Recorder.** Zoom H8, inputs 1–4, phantom on if H2a-XLR, 96 kHz / 24-bit
-multitrack WAV to SD. One ADC clock, so channels are sample-synchronous.
+**Recorder.** Zoom H8, inputs 1–4, 96 kHz / 24-bit multitrack WAV to SD.
+The hydrophones are DIY piezo discs (high impedance, no phantom-powered
+electronics), so each needs the existing Daisy front-end or a simple buffer
+preamp before the H8; confirm in week 1. Alternative: Ryota's Daisy
+inter-board sync fix (shared MCLK or GPIO sync counter), which also serves
+the vehicle. One ADC clock, so channels are sample-synchronous.
 Optionally USB interface mode into the Orin at 96 kHz for live capture
 (test Linux class compliance in week 1). Log water temperature each session.
 
-**Source.** The SD-card underwater speaker on a second rigid pole with a
+**Source.** For the audio band (2–18 kHz): the SD-card underwater speaker on a second rigid pole with a
 depth stop and bubble level, facing down, fixed orientation. Plays the probe
 WAV (`src/probe.py`). Characterize once in a bucket: WAV vs codec playback,
 0.5–24 kHz response, THD at three volumes, directivity at 0/45/90°, DAC ppm
 from chirp time-scaling, any AGC/fade.
+
+**Pinger band (25–40 kHz).** Ryota's plan adds a 20–50 kHz projector and a
+192 kHz interface so the model and localizer are also validated in the
+RoboSub pinger band, where the discs ring. Do the audio-band campaign first
+(no purchase gate), pinger band when the projector arrives.
 
 **Sonar.** Ping360 on the receiver jig. One 360° sweep per pose (~15 s),
 gain 0, short transmit, 1200 samples. Driver: `pip install bluerobotics-ping`.
@@ -37,8 +46,8 @@ range-to-two-walls is a cross-check, not the truth.
 Per pose block (~90 s), from `src/probe.py`:
 1. 1 s sync sweep 500 Hz → 20 kHz (alignment; clock-ratio estimate from the
    drift of arrivals across the block: 120 ppm × 90 s = 10.8 ms).
-2. 20 × 50 ms linear chirps 2–18 kHz at 2 s spacing (RT60 ~3 s, so echoes
-   die between chirps).
+2. 20 × 50 ms linear chirps 2–18 kHz at 2 s spacing (published pool decay
+   constant ≈ 0.125 s, so 2 s is generous; could drop to 0.5 s).
 3. One 2 s exponential sweep 500 Hz → 20 kHz (full-band CIR).
 4. One 1 s pink burst.
 Optional: one chirp-spread-spectrum packet for the comms paragraph.
@@ -113,9 +122,16 @@ with/without fine-tune).
 | Fit unstable on real data | envelope-first schedule, more inits, freeze walls after sonar init |
 | Too few poses for the ablation | fold session 2 into training/eval split, report intervals |
 
+## 6b. Deadline
+
+Abstract 15 Jan 2027 (2 pages, preliminary results); full paper 24 May 2027.
+Ryota's 18-week timeline (`../../ryota/notes/2026-09-07_research_plan.md` §7)
+is the master schedule; the checklist below is the audio-band subset that
+needs no purchases.
+
 ## 7. Week 1–4 checklist
 
-**Week 1.** Identify hydrophone variant; order adapters/preamp if needed.
+**Week 1.** Confirm the disc → preamp → H8 path (or commit to the Daisy sync fix).
 Speaker bucket test. Measure and record jig element positions. Get pool
 dimensions, materials and bookings. H8 on Orin test. `pip install
 bluerobotics-ping`, bucket sweep.

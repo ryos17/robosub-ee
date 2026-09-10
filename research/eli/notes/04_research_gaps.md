@@ -33,8 +33,12 @@ those echoes away as "multipath error".
 - Ocean work uses only the surface and bottom echo (Li 2016, 7485369;
   Cao 2022, 9662075; Qu 2025/26, 11195126, 11370860). A pool has six
   reflectors and nobody has used them for range with a vehicle array.
-- The only 4-hydrophone pool localization paper (Misiurewicz et al., Sensors
-  22:1162, 2022) treats reflections as a problem to detect and reject.
+- The one 4-hydrophone pool localization paper (Misiurewicz et al., Sensors
+  22:1162, 2022; same 25×12.5 m pool class as ours) handles reflections by
+  multi-hypothesis TDOA (direct vs one mirror-image reflection per sensor)
+  with hydrophones mounted mid-wall, 50–80 kHz, no fitted model, no
+  ground-truth accuracy reported. It resolves the ambiguity; it does not
+  gain range from the echoes with a compact vehicle array, which is our claim.
 - The confined-environment UUV review (Watson et al., Sensors 20:6203, 2020)
   treats multipath purely as a nuisance and says there is "virtually no
   literature that independently documents the use and accuracy of such
@@ -49,7 +53,10 @@ model plus matched-field search finds a held-out pose to ~cm where an
 unfitted model is off by 70 cm (src/README.md). The pool is the ideal case:
 known box, hard walls, short ranges, chirp sources we control.
 
-**Risk.** Pool walls are not perfect planes (gutters, lane ropes, steps);
+**Risk.** Ryota's judge adds: on ringing piezo discs at 0.5–1 m depth the
+surface echo is unresolvable from the direct path, so use side walls and
+floor (delays > ~1 ms) and treat the disc response as a learnable per-channel
+filter. Pool walls are not perfect planes (gutters, lane ropes, steps);
 Chitre 2023 warns tank multipath is "surprisingly complicated" and phase is
 hypersensitive to cm geometry errors. Mitigation: early-window only,
 envelope-first fitting, learnable wall offsets, sonar-measured geometry (G4).
@@ -129,7 +136,9 @@ Nothing fuses a scanning sonar with a hydrophone array or uses it to
 validate an acoustic channel model (investigator report, notes/02).
 
 **Why reasonable for us.** One 360° sweep per pose, ~15 s, open-source
-driver, Hough on the polar scan. Zero extra pool sessions.
+driver, Hough on the polar scan. Zero extra pool sessions. Local hook: the
+host university RGU published the only Ping360 + deep-learning papers
+(Hasan 2025, on a Jetson Orin).
 
 **Risk.** 25° vertical beam smears surface/floor into the scan at short
 range; tiled corners saturate. Use gain 0, short transmit, side walls only.

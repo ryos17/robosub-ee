@@ -20,12 +20,12 @@ H8 facts (vendor specs):
   which is fine for the paper (real-time claims then apply to the estimator,
   not the capture chain).
 
-Hydrophone cabling depends on the variant we own (repo does not say):
-- H2a-XLR: plug straight into H8 XLR, enable phantom.
-- H2a 3.5 mm (plug-in power): needs a 2.5–5 V bias adapter or the existing
-  preamp; H8 combo inputs do not supply plug-in power.
-- AS-1: needs Aquarian PA4/PA6 preamp into TRS/XLR.
-Action: check which variant, order adapters if needed.
+Hydrophone cabling (corrected 2026-09-09 from Ryota's survey): the four
+hydrophones are CCRMA DIY piezo discs, not Aquarian units. They are
+high-impedance passive elements; phantom power is irrelevant. They need a
+buffer/preamp (the Daisy front-end or a small JFET/op-amp buffer) before the
+H8's inputs. Action: trace the existing disc → Daisy analog path and see
+whether it can be tapped for the H8.
 
 Consequences for the paper:
 - Full 4-channel sample-synchronous capture: 2D/3D localization claims are
