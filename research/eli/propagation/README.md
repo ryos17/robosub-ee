@@ -8,12 +8,23 @@ composition, the dotted line the high-loss one.**
 |---|---|---|---|
 | [figs/acoustic_water.png](figs/acoustic_water.png) | sound | water | fresh (pool) / seawater |
 | [figs/em_water.png](figs/em_water.png) | EM | water | fresh (pool) / seawater |
-| [figs/acoustic_air.png](figs/acoustic_air.png) | sound | air | 20% RH / 80% RH |
-| [figs/em_air.png](figs/em_air.png) | EM | air | 20% RH / 80% RH |
+| [figs/acoustic_air_vs_water.png](figs/acoustic_air_vs_water.png) | sound | air ÷ water | vs fresh / vs sea |
+| [figs/em_air_vs_water.png](figs/em_air_vs_water.png) | EM | air ÷ water | vs fresh / vs sea |
 
-Salinity is the composition variable for water; **humidity is the equivalent
-for air** — it sets both vibrational relaxation frequencies, and it moves the
-oxygen one by most of a decade.
+The first two figures are absolute: salinity is the composition variable, and
+the right-hand axis carries loss over a reference range.
+
+The last two are **comparisons against air**, at a fixed 20 °C / 50% RH. They
+plot the ratio `α_air / α_water` on a log axis rather than a subtraction,
+because the media differ by up to six decades and the vertical gap between
+two curves on a log plot *is* the ratio. A horizontal rule marks unity:
+
+- **above the line → air is the lossier medium**
+- **below the line → water is the lossier medium**
+
+so water absorbing more always reads as lower on the y axis. Note that the
+comparison figures use a normal axis orientation, not the inverted one of the
+two absolute figures — the ratio itself already carries the direction.
 
 PNG (200 dpi) and PDF (vector, for the paper) of each.
 
@@ -209,6 +220,12 @@ that; only very narrowband signalling does, which is exactly what real VLF
 submarine comms is.
 
 ## Air versus water, which is the whole point
+
+The two comparison figures say it in one line each. For sound the ratio never
+approaches unity — air is between 80x and 150000x the more absorptive medium
+across the entire band. For EM it never approaches unity from the other side
+— water is between 7e6 and 6e19 times the more absorptive medium. Neither
+curve ever crosses over.
 
 | | sound | EM |
 |---|---|---|

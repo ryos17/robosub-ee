@@ -473,8 +473,8 @@ def main():
                        sigma_note=" (pool, 0.02–0.1 typical)",
                        marks=[(25e3, "VLF"), (2.4e9, "Wi-Fi 2.4 G")],
                        bands=[(85.0, 8e3, "speech band", SPEECH)])
-    air_dry = Air("dry air", T_C=20.0, RH=20.0)
-    air_humid = Air("humid air", T_C=20.0, RH=80.0)
+    # one representative air condition; the comparison dimension is now the water
+    air_ref = Air("air", T_C=20.0, RH=50.0)
     air_marks = [SPEECH_BAND, (25e3, 40e3, "ultrasound (40 kHz)", ACC)]
 
     em_sea = EMWater("seawater", eps_s=73.0, eps_inf=5.5, tau=9.0e-12,
@@ -485,8 +485,10 @@ def main():
     jobs = [
         ("acoustic_water", lambda: figure_acoustic(fresh, sea, acoustic_marks)),
         ("em_water", lambda: figure_em(em_fresh, em_sea)),
-        ("acoustic_air", lambda: figure_acoustic_air(air_dry, air_humid, air_marks)),
-        ("em_air", lambda: figure_em_air(air_dry, air_humid, [SPEECH_BAND])),
+        ("acoustic_air_vs_water",
+         lambda: figure_acoustic_air_vs_water(air_ref, fresh, sea, air_marks)),
+        ("em_air_vs_water",
+         lambda: figure_em_air_vs_water(air_ref, em_fresh, em_sea, [SPEECH_BAND])),
     ]
     for name, build in jobs:
         fig = build()
@@ -789,6 +791,164 @@ def figure_em_air(dry: Air, humid: Air, bands, range_m=1000.0):
     h2, l2 = ax2b.get_legend_handles_labels()
     ax2.legend(h1 + h2, l1 + l2, loc="lower right",
                bbox_to_anchor=(0.995, 0.03), ncol=2)
+    return fig
+
+
+# --------------------------------------------------------------------------
+# air against water
+# --------------------------------------------------------------------------
+
+UNITY = "#444444"
+
+
+def _ratio_axes(ax, f):
+    """Mark the crossover and say which way is which."""
+    ax.axhline(1.0, color=UNITY, ls="-", lw=1.1, zorder=1)
+    ax.text(0.99, 0.86, "air is the lossier medium  $\\uparrow$",
+            transform=ax.transAxes, fontsize=7.5, color=UNITY,
+            ha="right", va="top")
+    ax.text(0.99, 0.02, "water is the lossier medium  $\\downarrow$",
+            transform=ax.transAxes, fontsize=7.5, color=UNITY,
+            ha="right", va="bottom")
+
+
+def figure_acoustic_air_vs_water(air: Air, fresh: Water, sea: Water, marks):
+    """Air absorption divided by water absorption, at the same frequency.
+
+    Plotted as a ratio on a log axis rather than as a subtraction, because the
+    two media differ by up to six decades and the vertical gap between the
+    curves on a log plot *is* the ratio. Above the unity line air absorbs
+    more; below it, water does.
+    """
+    f = np.logspace(np.log10(20.0), 6, 2400)
+    a_air, b_air, _, ppm_air, ex_air = air_acoustic_response(f, air)
+    a_f, b_f, _, ppm_f, ex_f = acoustic_response(f, fresh)
+    a_s, b_s, _, ppm_s, ex_s = acoustic_response(f, sea)
+
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(7.2, 7.4), sharex=False,
+                                   gridspec_kw=dict(hspace=0.34))
+
+    ax1.loglog(f, a_air / a_f, label="air / fresh water (pool)", **FRESH_KW)
+    ax1.loglog(f, a_air / a_s, label="air / seawater", **SEA_KW)
+    ax1.set_ylabel(r"absorption ratio  $\alpha_{air} / \alpha_{water}$")
+    ax1.set_xlabel("frequency  [Hz]")
+    ax1.set_ylim(1e0, 1e7)
+    ax1.set_title("Sound: air against water\n"
+                  f"air {air.T_C:g} °C {air.RH:g}% RH;  water {fresh.T:g} °C, "
+                  f"fresh pH {fresh.pH:g} and sea S = {sea.S:g} psu")
+    ax1.legend(loc="lower left")
+
+    ax2.loglog(f, b_air / b_f, label=r"$\beta_{air}/\beta_{fresh}$", **FRESH_KW)
+    ax2.loglog(f, b_air / b_s, label=r"$\beta_{air}/\beta_{sea}$", **SEA_KW)
+    ax2.set_ylabel(r"phase-constant ratio  $\beta_{air} / \beta_{water}$"
+                   "\n(= wavelength ratio $\\lambda_{water}/\\lambda_{air}$)")
+    ax2.set_xlabel("frequency  [Hz]")
+    ax2.set_ylim(1e0, 1e1)
+
+    ax2b = ax2.twinx()
+    ax2b.set_xscale("log")
+    ax2b.plot(f, ppm_air - ppm_f, label="dispersion excess vs fresh", **FRESH_R)
+    ax2b.plot(f, ppm_air - ppm_s, label="dispersion excess vs sea", **SEA_R)
+    ax2b.set_ylabel(r"dispersion difference  $\Delta c/c_0$(air) $-$ water  [ppm]",
+                    color=ACC)
+    ax2b.tick_params(axis="y", colors=ACC, labelsize=8)
+    ax2b.grid(False)
+    ax2b.set_ylim(-25.0, 470.0)
+
+    for ax in (ax1, ax2):
+        _decade_ticks(ax)
+        _graticule(ax)
+        ax.set_xlim(f[0], f[-1])
+    for row, (lo, hi, lab, col) in enumerate(marks):
+        _band(ax1, lo, hi, lab, col, row)
+        _band(ax2, lo, hi, "", col)
+    _ratio_axes(ax1, f)
+
+    i40 = int(np.argmin(np.abs(f - 40e3)))
+    note = (f"at 40 kHz:\n"
+            f"  air absorbs {a_air[i40]/a_f[i40]:6.0f}x more than pool water\n"
+            f"  air absorbs {a_air[i40]/a_s[i40]:6.0f}x more than seawater\n"
+            f"  sound is {b_air[i40]/b_f[i40]:.1f}x shorter-waved in air")
+    ax2.text(0.015, 0.97, note, transform=ax2.transAxes, fontsize=7.2,
+             va="top", ha="left", family="monospace",
+             bbox=dict(boxstyle="round,pad=0.35", fc="white", ec=AUX, lw=0.6, alpha=0.92))
+
+    h1, l1 = ax2.get_legend_handles_labels()
+    h2, l2 = ax2b.get_legend_handles_labels()
+    ax2.legend(h1 + h2, l1 + l2, loc="lower right",
+               bbox_to_anchor=(0.995, 0.03), ncol=2, fontsize=7)
+    return fig
+
+
+def figure_em_air_vs_water(air: Air, fresh: EMWater, sea: EMWater, bands):
+    """Same ratio for EM. Air is the low-loss medium everywhere here, so the
+    curves sit entirely below unity -- the mirror image of the acoustic case.
+    """
+    f = np.logspace(1, 11, 2600)
+    a_air, b_air, v_air, N_air, _ = air_em_response(f, air)
+    a_f, b_f, v_f, _, _ = em_response(f, fresh)
+    a_s, b_s, v_s, _, _ = em_response(f, sea)
+    F_OK = 1.5e10
+    ok, hi = f <= F_OK, f >= F_OK
+
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(7.2, 7.4), sharex=False,
+                                   gridspec_kw=dict(hspace=0.34))
+
+    ax1.loglog(f[ok], (a_air / a_f)[ok], label="air / fresh water (pool)", **FRESH_KW)
+    ax1.loglog(f[ok], (a_air / a_s)[ok], label="air / seawater", **SEA_KW)
+    kw = dict(FRESH_KW); kw.update(ls="--", lw=1.4)
+    ax1.loglog(f[hi], (a_air / a_f)[hi], **kw,
+               label="air term incomplete above 15 GHz\n(molecular lines not modelled)")
+    ax1.loglog(f[hi], (a_air / a_s)[hi], color=SEA_C, ls="--", lw=1.1)
+    ax1.set_ylabel(r"attenuation ratio  $\alpha_{air} / \alpha_{water}$")
+    ax1.set_xlabel("frequency  [Hz]")
+    ax1.set_ylim(1e-18, 1e1)
+    ax1.set_title("Electromagnetic waves: air against water\n"
+                  f"air {air.T_C:g} °C {air.RH:g}% RH, N = {N_air:.0f};  "
+                  f"fresh $\\sigma$ = {fresh.sigma:g}, sea $\\sigma$ = {sea.sigma:g} S/m")
+    ax1.legend(loc="upper left", bbox_to_anchor=(0.01, 0.90), fontsize=7)
+
+    ax2.loglog(f, b_air / b_f, label=r"$\beta_{air}/\beta_{fresh}$", **FRESH_KW)
+    ax2.loglog(f, b_air / b_s, label=r"$\beta_{air}/\beta_{sea}$", **SEA_KW)
+    ax2.set_ylabel(r"phase-constant ratio  $\beta_{air} / \beta_{water}$"
+                   "\n(= wavelength ratio $\\lambda_{water}/\\lambda_{air}$)")
+    ax2.set_xlabel("frequency  [Hz]")
+    ax2.set_ylim(1e-5, 1e0)
+
+    ax2b = ax2.twinx()
+    ax2b.loglog(f, v_air / v_f, label=r"$v_p$ air / fresh", **FRESH_R)
+    ax2b.loglog(f, v_air / v_s, label=r"$v_p$ air / sea", **SEA_R)
+    ax2b.set_ylabel(r"phase-velocity ratio  $v_{p,air} / v_{p,water}$", color=ACC)
+    ax2b.tick_params(axis="y", colors=ACC, labelsize=8)
+    ax2b.grid(False)
+    ax2b.set_ylim(1e0, 1e5)
+    ax2b.set_xlim(f[0], f[-1])
+
+    for ax in (ax1, ax2):
+        _decade_ticks(ax)
+        _graticule(ax)
+        ax.set_xlim(f[0], f[-1])
+    for row, (lo, hi_b, lab, col) in enumerate(bands):
+        _band(ax1, lo, hi_b, lab, col, row)
+        _band(ax2, lo, hi_b, "", col)
+    for fx, lab in ((25e3, "VLF"), (2.4e9, "Wi-Fi 2.4 G")):
+        _line(ax1, fx, lab)
+        _line(ax2, fx, lab)
+    _ratio_axes(ax1, f)
+
+    i24 = int(np.argmin(np.abs(f - 2.4e9)))
+    note = (f"at 2.4 GHz:\n"
+            f"  pool water absorbs {a_f[i24]/a_air[i24]:9.3g}x more than air\n"
+            f"  seawater   absorbs {a_s[i24]/a_air[i24]:9.3g}x more than air\n"
+            f"  EM is {b_s[i24]/b_air[i24]:.0f}x shorter-waved in seawater")
+    ax2.text(0.015, 0.97, note, transform=ax2.transAxes, fontsize=7.2,
+             va="top", ha="left", family="monospace",
+             bbox=dict(boxstyle="round,pad=0.35", fc="white", ec=AUX, lw=0.6, alpha=0.92))
+
+    h1, l1 = ax2.get_legend_handles_labels()
+    h2, l2 = ax2b.get_legend_handles_labels()
+    ax2.legend(h1 + h2, l1 + l2, loc="upper right",
+               bbox_to_anchor=(0.995, 0.80), ncol=2, fontsize=7)
     return fig
 
 
