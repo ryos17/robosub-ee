@@ -1,13 +1,19 @@
 # propagation — how sound and EM waves travel through water
 
-Two figures, each one Bode-style pair (magnitude on top, phase below), with
-both media overlaid: **fresh (pool) water is the bold solid line, seawater
-the dotted one**.
+Four figures, each one Bode-style pair (magnitude on top, phase below), with
+two compositions of the medium overlaid. **The bold solid line is the low-loss
+composition, the dotted line the high-loss one.**
 
-| Figure | Wave |
-|---|---|
-| [figs/acoustic.png](figs/acoustic.png) | sound in water |
-| [figs/em.png](figs/em.png) | electromagnetic waves in water |
+| Figure | Wave | Medium | bold / dotted |
+|---|---|---|---|
+| [figs/acoustic_water.png](figs/acoustic_water.png) | sound | water | fresh (pool) / seawater |
+| [figs/em_water.png](figs/em_water.png) | EM | water | fresh (pool) / seawater |
+| [figs/acoustic_air.png](figs/acoustic_air.png) | sound | air | 20% RH / 80% RH |
+| [figs/em_air.png](figs/em_air.png) | EM | air | 20% RH / 80% RH |
+
+Salinity is the composition variable for water; **humidity is the equivalent
+for air** — it sets both vibrational relaxation frequencies, and it moves the
+oxygen one by most of a decade.
 
 PNG (200 dpi) and PDF (vector, for the paper) of each.
 
@@ -94,6 +100,39 @@ is the low-frequency tail of water's structural relaxation, folded in at an
 assumed f_r = 1 GHz; its in-band dispersion scales as (f/f_r)² and is
 therefore negligible, which is the point of including it.
 
+### Air
+
+**Acoustic absorption** — ISO 9613-1 / ANSI S1.26 (Bass et al., *JASA* 97:680,
+1995). Three terms: the classical viscous + thermal loss (∝ f², a straight
+line on log-log) and the vibrational relaxations of oxygen and nitrogen. Both
+relaxation terms have the same algebraic form as the Francois-Garrison ones,
+`α_i ~ A_i f_i f²/(f_i² + f²)`, so the same Debye argument used for water
+fixes the phase velocity from the absorption coefficients with no extra free
+parameters.
+
+Checked against published values at 20 °C, 50% RH, 1 atm: model gives
+4.7 dB/km at 1 kHz (published ~5), 30 dB/km at 4 kHz (published ~26), and
+1.32 dB/m at 40 kHz (published ~1.1–1.3).
+
+**Clear-air EM** — this is the one model here that is deliberately
+incomplete. The magnitude is the ITU-R P.676 Annex 1 **non-resonant (Debye)
+oxygen term only**. That is essentially all there is below ~15 GHz, and it
+reproduces the published clear-air figures well (model 0.0053 dB/km at 1 GHz
+against a published 0.0055–0.0067; 0.0071 at 10 GHz against 0.006–0.009).
+Above 15 GHz the **resonant molecular lines are not modelled**, so the curve
+there is a lower bound and is drawn dashed; the H₂O 22 GHz and O₂ 60 GHz
+bands are instead marked with their published sea-level peak values
+(0.18 and 15 dB/km). If the fine structure ever matters, drop in ITU-R P.676
+Annex 1 line-by-line — it needs a 44-line O₂ table and a 35-line H₂O table
+that are not reproduced here.
+
+The phase comes from the ITU-R P.453 radio refractivity
+`N = 77.6/T·(p + 4810·e/T)`, which is flat with frequency across the whole
+band — air is non-dispersive for EM here. Model gives N = 320 N-units at
+15 °C sea level against a standard value of ~315.
+
+### Water
+
 **Electromagnetic** — single-Debye water permittivity plus ionic conduction,
 
 ```
@@ -168,6 +207,25 @@ links. In the conduction regime v_p = √(2w/(mu*sigma)) — 10⁵ m/s in seawat
 at 10 kHz, four orders below c, and varying as √f. A pulse does not survive
 that; only very narrowband signalling does, which is exactly what real VLF
 submarine comms is.
+
+## Air versus water, which is the whole point
+
+| | sound | EM |
+|---|---|---|
+| **air** | 20–31 dB over 25 m at 40 kHz | 6e-6 dB/m at 2.4 GHz, n-1 = 290–350 ppm |
+| **water** | 0.009 dB over 25 m at 40 kHz | 1110 dB/m at 2.4 GHz (sea) |
+
+The two media are almost exactly each other's inverse. Air is transparent to
+EM and lossy for sound; water is transparent to sound and opaque to EM. At
+40 kHz, air absorbs sound 2200x (dry) to 3500x (humid) harder per metre than
+the pool does; at 2.4 GHz, seawater absorbs EM 1.7e8 times harder per metre
+than air.
+
+Dispersion follows the same pattern. Air's sound speed varies by ~400 ppm
+across the oxygen and nitrogen relaxations — about 100x more than seawater
+and 40000x more than pool water — while its refractive index for EM is flat
+to the last digit. Pool water is the mirror image: a pure, non-dispersive
+delay line for sound, and hopeless for EM.
 
 Practical consequence for us: acoustics for anything through the water,
 optical (blue-green, 470–550 nm, the one transparent EM window) for

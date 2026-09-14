@@ -473,14 +473,20 @@ def main():
                        sigma_note=" (pool, 0.02–0.1 typical)",
                        marks=[(25e3, "VLF"), (2.4e9, "Wi-Fi 2.4 G")],
                        bands=[(85.0, 8e3, "speech band", SPEECH)])
+    air_dry = Air("dry air", T_C=20.0, RH=20.0)
+    air_humid = Air("humid air", T_C=20.0, RH=80.0)
+    air_marks = [SPEECH_BAND, (25e3, 40e3, "ultrasound (40 kHz)", ACC)]
+
     em_sea = EMWater("seawater", eps_s=73.0, eps_inf=5.5, tau=9.0e-12,
                      sigma=4.8, T=20.0, S=35.0, range_m=1.0,
                      sigma_note="", marks=[(25e3, "VLF"), (2.4e9, "Wi-Fi 2.4 G")],
                      bands=[(85.0, 8e3, "speech band", SPEECH)])
 
     jobs = [
-        ("acoustic", lambda: figure_acoustic(fresh, sea, acoustic_marks)),
-        ("em", lambda: figure_em(em_fresh, em_sea)),
+        ("acoustic_water", lambda: figure_acoustic(fresh, sea, acoustic_marks)),
+        ("em_water", lambda: figure_em(em_fresh, em_sea)),
+        ("acoustic_air", lambda: figure_acoustic_air(air_dry, air_humid, air_marks)),
+        ("em_air", lambda: figure_em_air(air_dry, air_humid, [SPEECH_BAND])),
     ]
     for name, build in jobs:
         fig = build()
@@ -490,6 +496,300 @@ def main():
             fig.savefig(p, bbox_inches="tight")
             print("wrote", p)
         plt.close(fig)
+
+
+
+# --------------------------------------------------------------------------
+# air
+# --------------------------------------------------------------------------
+
+@dataclass
+class Air:
+    """Air column conditions. Humidity is the composition variable here, the
+    way salinity is for water: it sets both relaxation frequencies."""
+    name: str
+    T_C: float          # temperature, deg C
+    RH: float           # relative humidity, percent
+    p_kPa: float = 101.325
+    range_m: float = 25.0
+
+    @property
+    def T(self) -> float:
+        return self.T_C + 273.15
+
+    @property
+    def p_sat_kPa(self) -> float:
+        """ISO 9613-1 saturation vapour pressure."""
+        T01 = 273.16
+        return 101.325 * 10.0 ** (-6.8346 * (T01 / self.T) ** 1.261 + 4.6151)
+
+    @property
+    def h(self) -> float:
+        """Water vapour molar concentration, percent."""
+        return self.RH * self.p_sat_kPa / self.p_kPa
+
+    @property
+    def e_hPa(self) -> float:
+        """Partial pressure of water vapour, hPa."""
+        return self.RH / 100.0 * self.p_sat_kPa * 10.0
+
+    @property
+    def c(self) -> float:
+        """Sound speed, m/s. Dry-air relation plus the usual humidity term."""
+        return 331.3 * np.sqrt(1.0 + self.T_C / 273.15) + 0.0124 * self.RH
+
+
+def air_acoustic_response(f: np.ndarray, a: Air):
+    """ISO 9613-1 / ANSI S1.26 absorption, plus the dispersion it implies.
+
+    Both vibrational relaxations have the same algebraic form as the
+    Francois-Garrison terms, alpha_i ~ A_i f_i f^2 / (f_i^2 + f^2), so the
+    same Debye argument used for water fixes the phase velocity from the
+    absorption coefficients with no extra free parameters.
+    """
+    T, T0 = a.T, 293.15
+    rp = a.p_kPa / 101.325
+    h = a.h
+
+    f_rO = rp * (24.0 + 4.04e4 * h * (0.02 + h) / (0.391 + h))
+    f_rN = rp * (T / T0) ** -0.5 * (
+        9.0 + 280.0 * h * np.exp(-4.170 * ((T / T0) ** (-1.0 / 3.0) - 1.0)))
+
+    k_cl = 1.84e-11 / rp * (T / T0) ** 0.5
+    k_O = (T / T0) ** -2.5 * 0.01275 * np.exp(-2239.1 / T)
+    k_N = (T / T0) ** -2.5 * 0.1068 * np.exp(-3352.0 / T)
+
+    cl = 8.686 * f**2 * k_cl
+    aO = 8.686 * f**2 * k_O * f_rO / (f_rO**2 + f**2)
+    aN = 8.686 * f**2 * k_N * f_rN / (f_rN**2 + f**2)
+    alpha_db_m = cl + aO + aN
+
+    # relaxation strengths from the high-frequency asymptote of each shelf
+    c = a.c
+    eps = []
+    for k, f_r in ((k_O, f_rO), (k_N, f_rN)):
+        asym_np_m = 8.686 * k * f_r * NP_PER_DB
+        eps.append((asym_np_m * c / (np.pi * f_r), f_r))
+    # the classical f^2 term is the tail of a relaxation far above the band
+    F_CL = 1e9
+    eps.append((8.686 * k_cl * F_CL * NP_PER_DB * c / (np.pi * F_CL), F_CL))
+
+    omega = 2.0 * np.pi * f
+    corr = np.zeros_like(f)
+    corr_dc = 0.0
+    for e_i, f_r in eps:
+        corr += 0.5 * e_i / (1.0 + (f / f_r) ** 2)
+        corr_dc += 0.5 * e_i
+    beta = omega / c * (1.0 + corr)
+    v_ph = omega / beta
+    c_zero = c / (1.0 + corr_dc)
+    ppm = (v_ph / c_zero - 1.0) * 1e6
+    return alpha_db_m, beta, v_ph, ppm, dict(
+        classical=cl, oxygen=aO, nitrogen=aN,
+        f_rO=f_rO, f_rN=f_rN, c_zero=c_zero)
+
+
+def air_em_response(f_hz: np.ndarray, a: Air):
+    """Clear-air EM: non-resonant absorption and refractivity.
+
+    Magnitude is the ITU-R P.676 Annex 1 non-resonant (Debye) oxygen term.
+    This is exact below roughly 15 GHz, where it is all there is; the
+    resonant molecular LINES ARE NOT MODELLED, so above ~15 GHz the curve is
+    a lower bound and the figure annotates the two bands instead.
+
+    Phase comes from the ITU-R P.453 radio refractivity, which is flat with
+    frequency across this whole band -- air is non-dispersive here.
+    """
+    f_ghz = f_hz / 1e9
+    theta = 300.0 / a.T
+    e = a.e_hPa
+    p = a.p_kPa * 10.0 - e                     # dry partial pressure, hPa
+
+    d = 5.6e-4 * (p + e) * theta ** 0.8
+    Npp = f_ghz * p * theta**2 * (
+        6.14e-5 / (d * (1.0 + (f_ghz / d) ** 2))
+        + 1.4e-12 * p * theta**1.5 / (1.0 + 1.9e-5 * f_ghz**1.5))
+    gamma_db_km = 0.1820 * f_ghz * Npp
+    alpha_db_m = gamma_db_km / 1e3
+
+    N = 77.6 / a.T * (a.p_kPa * 10.0 + 4810.0 * e / a.T)   # N-units
+    n = 1.0 + N * 1e-6
+    v_ph = C0 / n
+    beta = 2.0 * np.pi * f_hz / v_ph
+    return alpha_db_m, beta, np.full_like(f_hz, v_ph), N, n
+
+
+def figure_acoustic_air(dry: Air, humid: Air, marks, range_m=25.0):
+    """Both humidities on one figure; the dry case gets the bold line."""
+    f = np.logspace(np.log10(20.0), 6, 2400)
+    a_d, b_d, _, ppm_d, ex_d = air_acoustic_response(f, dry)
+    a_h, b_h, _, ppm_h, ex_h = air_acoustic_response(f, humid)
+
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(7.2, 7.4), sharex=False,
+                                   gridspec_kw=dict(hspace=0.34))
+
+    ax1.loglog(f, a_d, label=f"dry air, {dry.RH:g}% RH", **FRESH_KW)
+    ax1.loglog(f, a_h, label=f"humid air, {humid.RH:g}% RH", **SEA_KW)
+    ax1.loglog(f, ex_d["classical"], ls="--", lw=1.0, color=AUX,
+               label="classical (viscous + thermal)")
+    ax1.set_ylabel("absorption  [dB / m]\n(more loss downward $\\downarrow$)")
+    ax1.set_xlabel("frequency  [Hz]")
+    ax1.set_ylim(1e-6, 1e3)
+    ax1.invert_yaxis()
+
+    axr = ax1.twinx()
+    axr.set_yscale("log")
+    axr.set_ylim(*[v * range_m for v in ax1.get_ylim()])
+    axr.set_ylabel(f"loss over {range_m:g} m  [dB]", color=ACC)
+    axr.tick_params(axis="y", colors=ACC, labelsize=8)
+    axr.grid(False)
+    axr.axhline(3.0, color=ACC, ls="--", lw=0.9)
+    axr.text(10.0 ** (np.log10(f[0]) + 0.12 * np.log10(f[-1] / f[0])), 3.0,
+             "3 dB", color=ACC, fontsize=7, ha="center", va="top")
+
+    ax1.set_title("Acoustic propagation in air — dry vs humid\n"
+                  f"T = {dry.T_C:g} °C, p = {dry.p_kPa:g} kPa;  "
+                  f"$c_0$ = {ex_d['c_zero']:.1f} / {ex_h['c_zero']:.1f} m/s")
+    ax1.legend(loc="upper right", bbox_to_anchor=(0.995, 0.80))
+
+    ax2.loglog(f, np.degrees(b_d), label=r"$\beta$, dry", **FRESH_KW)
+    ax2.loglog(f, np.degrees(b_h), label=r"$\beta$, humid", **SEA_KW)
+    ax2.set_ylabel("phase shift  [deg / m]")
+    ax2.set_xlabel("frequency  [Hz]")
+
+    ax2b = ax2.twinx()
+    ax2b.set_xscale("log")
+    ax2b.plot(f, ppm_d, label=r"$\Delta c/c_0$, dry", **FRESH_R)
+    ax2b.plot(f, ppm_h, label=r"$\Delta c/c_0$, humid", **SEA_R)
+    ax2b.set_ylabel(r"phase-velocity dispersion  $\Delta c/c_0$  [ppm]", color=ACC)
+    ax2b.tick_params(axis="y", colors=ACC, labelsize=8)
+    ax2b.grid(False)
+    ax2b.set_ylim(-25.0, 470.0)
+
+    for ax in (ax1, ax2):
+        _decade_ticks(ax)
+        _graticule(ax)
+        ax.set_xlim(f[0], f[-1])
+    for row, (lo, hi, lab, col) in enumerate(marks):
+        _band(ax1, lo, hi, lab, col, row)
+        _band(ax2, lo, hi, "", col)
+    # humidity moves the O2 relaxation by most of a decade -- that is the story
+    for w, st in ((dry, "-"), (humid, ":")):
+        _, _, _, _, ex = air_acoustic_response(np.array([1e3]), w)
+        for ax in (ax1, ax2):
+            ax.axvline(ex["f_rO"], color=SONAR, ls=st, lw=1.1, zorder=0)
+    ax1.text(ex_d["f_rO"], 0.70, f"  $f_{{rO}}$ {ex_d['f_rO']/1e3:.0f} kHz (dry)",
+             transform=ax1.get_xaxis_transform(), rotation=90, fontsize=6.5,
+             color=SONAR, ha="left", va="center")
+    ax1.text(ex_h["f_rO"], 0.70, f"  $f_{{rO}}$ {ex_h['f_rO']/1e3:.0f} kHz (humid)",
+             transform=ax1.get_xaxis_transform(), rotation=90, fontsize=6.5,
+             color=SONAR, ha="left", va="center")
+
+    i40 = int(np.argmin(np.abs(f - 40e3)))
+    note = (f"at 40 kHz, over {range_m:g} m:\n"
+            f"  dry    {a_d[i40]*range_m:7.1f} dB,  $\\Delta c/c_0$ = {ppm_d[i40]:.0f} ppm\n"
+            f"  humid  {a_h[i40]*range_m:7.1f} dB,  $\\Delta c/c_0$ = {ppm_h[i40]:.0f} ppm")
+    ax2.text(0.015, 0.97, note, transform=ax2.transAxes, fontsize=7.2,
+             va="top", ha="left", family="monospace",
+             bbox=dict(boxstyle="round,pad=0.35", fc="white", ec=AUX, lw=0.6, alpha=0.92))
+
+    h1, l1 = ax2.get_legend_handles_labels()
+    h2, l2 = ax2b.get_legend_handles_labels()
+    ax2.legend(h1 + h2, l1 + l2, loc="lower right",
+               bbox_to_anchor=(0.995, 0.09), ncol=2)
+    return fig
+
+
+def figure_em_air(dry: Air, humid: Air, bands, range_m=1000.0):
+    """Clear-air EM.
+
+    Only the non-resonant oxygen term is computed. The resonant molecular
+    lines are not modelled, so the curve is drawn dashed above 15 GHz and the
+    two absorption bands are shaded and annotated with published peak values
+    instead of being drawn as a fabricated spectrum.
+    """
+    f = np.logspace(1, 11, 2600)
+    a_d, b_d, v_d, N_d, n_d = air_em_response(f, dry)
+    a_h, b_h, v_h, N_h, n_h = air_em_response(f, humid)
+    F_OK = 1.5e10
+    ok, hi = f <= F_OK, f >= F_OK
+
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(7.2, 7.4), sharex=False,
+                                   gridspec_kw=dict(hspace=0.34))
+
+    ax1.loglog(f[ok], a_d[ok], label=f"dry air, {dry.RH:g}% RH", **FRESH_KW)
+    ax1.loglog(f[ok], a_h[ok], label=f"humid air, {humid.RH:g}% RH", **SEA_KW)
+    kw = dict(FRESH_KW); kw.update(ls="--", lw=1.4)
+    ax1.loglog(f[hi], a_d[hi], **kw, label="non-resonant term only\n(lines not modelled)")
+    ax1.loglog(f[hi], a_h[hi], color=SEA_C, ls="--", lw=1.1)
+    ax1.set_ylabel("attenuation  [dB / m]\n(more loss downward $\\downarrow$)")
+    ax1.set_xlabel("frequency  [Hz]")
+    ax1.set_ylim(1e-18, 1e-1)
+    ax1.invert_yaxis()
+
+    axr = ax1.twinx()
+    axr.set_yscale("log")
+    axr.set_ylim(*[v * range_m for v in ax1.get_ylim()])
+    axr.set_ylabel(f"loss over {range_m:g} m  [dB]", color=ACC)
+    axr.tick_params(axis="y", colors=ACC, labelsize=8)
+    axr.grid(False)
+
+    # published ITU-R P.676 sea-level peaks, marked rather than computed
+    for fx, gamma, lab, ha in ((22.235e9, 0.18, "H$_2$O 22 GHz", "center"),
+                               (60e9, 15.0, "O$_2$ 60 GHz", "right")):
+        ax1.plot([fx], [gamma / 1e3], marker="v", ms=7, color=SONAR, zorder=5,
+                 ls="none")
+        # axis is inverted, so a smaller value places the label visually above
+        ax1.text(fx if ha == "center" else fx * 0.85, gamma / 2.5e4,
+                 f"{lab}\n{gamma:g} dB/km", color=SONAR,
+                 fontsize=6.5, ha=ha, va="center")
+
+    ax1.set_title("Electromagnetic propagation in air — dry vs humid\n"
+                  f"T = {dry.T_C:g} °C, p = {dry.p_kPa:g} kPa;  "
+                  f"N = {N_d:.0f} / {N_h:.0f} N-units")
+    ax1.legend(loc="lower left", fontsize=7)
+
+    ax2.loglog(f, np.degrees(b_d), label=r"$\beta$, dry", **FRESH_KW)
+    ax2.loglog(f, np.degrees(b_h), label=r"$\beta$, humid", **SEA_KW)
+    ax2.set_ylabel("phase shift  [deg / m]")
+    ax2.set_xlabel("frequency  [Hz]")
+    ax2.set_ylim(1e-6, 1e6)
+
+    ax2b = ax2.twinx()
+    ax2b.set_xscale("log")
+    ax2b.plot(f, np.full_like(f, N_d), label="refractivity $N$, dry", **FRESH_R)
+    ax2b.plot(f, np.full_like(f, N_h), label="refractivity $N$, humid", **SEA_R)
+    ax2b.set_ylabel("radio refractivity  $N = (n-1)\\times10^6$", color=ACC)
+    ax2b.tick_params(axis="y", colors=ACC, labelsize=8)
+    ax2b.grid(False)
+    ax2b.set_ylim(0.0, 500.0)
+    ax2b.text(f[-1], N_h + 18,
+              f"flat with frequency: air is non-dispersive here  ",
+              color=ACC, fontsize=7, ha="right", va="bottom")
+
+    for ax in (ax1, ax2):
+        _decade_ticks(ax)
+        _graticule(ax)
+        ax.set_xlim(f[0], f[-1])
+    for row, (lo, hi_b, lab, col) in enumerate(bands):
+        _band(ax1, lo, hi_b, lab, col, row)
+        _band(ax2, lo, hi_b, "", col)
+    for fx, lab in ((25e3, "VLF"), (2.4e9, "Wi-Fi 2.4 G")):
+        _line(ax1, fx, lab)
+        _line(ax2, fx, lab)
+
+    note = (f"v$_p$ = {v_d[0]/1e6:.3f} Mm/s (dry), {v_h[0]/1e6:.3f} Mm/s (humid)\n"
+            f"n - 1 = {N_d:.0f} / {N_h:.0f} ppm, so v$_p$ is within "
+            f"{N_h:.0f} ppm of c")
+    ax2.text(0.015, 0.97, note, transform=ax2.transAxes, fontsize=7.2,
+             va="top", ha="left",
+             bbox=dict(boxstyle="round,pad=0.35", fc="white", ec=AUX, lw=0.6, alpha=0.92))
+
+    h1, l1 = ax2.get_legend_handles_labels()
+    h2, l2 = ax2b.get_legend_handles_labels()
+    ax2.legend(h1 + h2, l1 + l2, loc="lower right",
+               bbox_to_anchor=(0.995, 0.03), ncol=2)
+    return fig
 
 
 if __name__ == "__main__":
