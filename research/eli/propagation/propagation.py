@@ -484,8 +484,8 @@ def main():
                      bands=[(85.0, 8e3, "speech band", SPEECH)])
 
     jobs = [
-        ("", "acoustic_water", lambda: figure_acoustic(fresh, sea, acoustic_marks)),
-        ("", "em_water", lambda: figure_em(em_fresh, em_sea)),
+        ("absolute", "acoustic_water", lambda: figure_acoustic(fresh, sea, acoustic_marks)),
+        ("absolute", "em_water", lambda: figure_em(em_fresh, em_sea)),
         ("ratio", "acoustic_air_vs_water",
          lambda: figure_acoustic_air_vs_water(air_ref, fresh, sea, air_marks)),
         ("ratio", "em_air_vs_water",
@@ -494,6 +494,7 @@ def main():
          lambda: figure_acoustic_range(fresh, sea, air_ref, acoustic_marks)),
         ("range", "em_range",
          lambda: figure_em_range(em_fresh, em_sea, air_ref, [SPEECH_BAND])),
+        ("noise", "noise_floor", lambda: figure_noise_floor(acoustic_marks)),
     ]
     for subdir, name, build in jobs:
         fig = build()
@@ -1071,6 +1072,120 @@ def figure_em_range(fresh: EMWater, sea: EMWater, air: Air, bands):
             va="bottom", ha="left", family="monospace",
             bbox=dict(boxstyle="round,pad=0.35", fc="white", ec=AUX, lw=0.6, alpha=0.92))
     ax.legend(loc="lower left", bbox_to_anchor=(0.36, 0.30), fontsize=7.5)
+    return fig
+
+
+# --------------------------------------------------------------------------
+# ambient noise floor
+# --------------------------------------------------------------------------
+
+K_B = 1.380649e-23
+DB_20UPA = 20.0 * np.log10(20.0)   # 26.02 dB between the air and water references
+
+
+def thermal_noise_db(f_hz, rho, c, T=293.15):
+    """Pressure spectral density of thermal agitation seen by an ideal
+    omnidirectional receiver: <p^2>/df = 4 pi k T rho f^2 / c.
+    Returned in dB re 1 uPa^2/Hz. In water this is the Wenz -15 + 20 log f_kHz."""
+    S = 4.0 * np.pi * K_B * T * rho * f_hz**2 / c          # Pa^2/Hz
+    return 10.0 * np.log10(S / 1e-12)
+
+
+def _sum_db(*levels):
+    return 10.0 * np.log10(sum(10.0 ** (np.asarray(L) / 10.0) for L in levels))
+
+
+def ocean_noise_db(f_hz, shipping=0.5, wind_ms=5.0):
+    """Wenz ambient noise in the Coates (1989) closed form. dB re 1 uPa^2/Hz.
+    shipping 0..1 (0.5 = moderate), wind in m/s (5 m/s ~ sea state 2-3)."""
+    f = f_hz / 1e3
+    turb = 17.0 - 30.0 * np.log10(f)
+    ship = 40.0 + 20.0 * (shipping - 0.5) + 26.0 * np.log10(f) - 60.0 * np.log10(f + 0.03)
+    wind = 50.0 + 7.5 * np.sqrt(wind_ms) + 20.0 * np.log10(f) - 40.0 * np.log10(f + 0.4)
+    return _sum_db(turb, ship, wind, thermal_noise_db(f_hz, 1025.0, 1500.0))
+
+
+def lake_noise_db(f_hz, wind_ms=2.0):
+    """Same Wenz wind and turbulence terms with no shipping and light wind.
+    A quiet inland lake at night; boats, rain and biology would add to it."""
+    f = f_hz / 1e3
+    turb = 17.0 - 30.0 * np.log10(f)
+    wind = 50.0 + 7.5 * np.sqrt(wind_ms) + 20.0 * np.log10(f) - 40.0 * np.log10(f + 0.4)
+    return _sum_db(turb, wind, thermal_noise_db(f_hz, 1000.0, 1480.0))
+
+
+# NC-30 octave-band SPLs (ANSI S12.2): a quiet room, or a rural night outdoors
+NC30_HZ = np.array([63., 125., 250., 500., 1e3, 2e3, 4e3, 8e3])
+NC30_DB = np.array([57., 48., 41., 35., 31., 29., 28., 27.])   # dB re 20 uPa, octave band
+
+
+def air_noise_db(f_hz):
+    """Quiet-room ambient as a pressure spectral density, dB re 1 uPa^2/Hz.
+    Octave-band SPL minus 10 log(octave bandwidth) gives the density; the
+    end slopes are extended outside 63 Hz - 8 kHz; thermal agitation is the
+    floor at the top."""
+    dens = NC30_DB - 10.0 * np.log10(0.7071 * NC30_HZ) + DB_20UPA
+    lf = np.log10(f_hz)
+    ambient = np.interp(lf, np.log10(NC30_HZ), dens,
+                        left=np.nan, right=np.nan)
+    lo = lf < np.log10(NC30_HZ[0])
+    hi = lf > np.log10(NC30_HZ[-1])
+    s_lo = (dens[1] - dens[0]) / (np.log10(NC30_HZ[1]) - np.log10(NC30_HZ[0]))
+    s_hi = (dens[-1] - dens[-2]) / (np.log10(NC30_HZ[-1]) - np.log10(NC30_HZ[-2]))
+    ambient[lo] = dens[0] + s_lo * (lf[lo] - np.log10(NC30_HZ[0]))
+    ambient[hi] = dens[-1] + s_hi * (lf[hi] - np.log10(NC30_HZ[-1]))
+    return _sum_db(ambient, thermal_noise_db(f_hz, 1.2, 343.0))
+
+
+def figure_noise_floor(marks):
+    """Ambient pressure noise in the three media on one axis.
+
+    Everything is a pressure spectral density re 1 uPa^2/Hz so the curves
+    share an axis; the right-hand axis is the same thing re 20 uPa for air
+    habits. Same pressure carries 36 dB more intensity in air than in water
+    (rho*c is 3600x smaller), so this is what a pressure sensor sees, not an
+    energy comparison.
+    """
+    f = np.logspace(1, 6, 2000)
+    ocean = ocean_noise_db(f)
+    lake = lake_noise_db(f)
+    air = air_noise_db(f)
+
+    fig, ax = plt.subplots(figsize=(7.2, 4.8))
+    ax.semilogx(f, ocean, label="ocean: moderate shipping, 5 m/s wind (Wenz)", **SEA_KW)
+    ax.semilogx(f, lake, label="quiet lake: no traffic, 2 m/s wind (Wenz form)", **FRESH_KW)
+    ax.semilogx(f, air, label="air: quiet room / rural night (NC-30)", **AIR_KW)
+    ax.semilogx(f, thermal_noise_db(f, 1025.0, 1500.0), color=SEA_C, ls="-", lw=0.7,
+                alpha=0.6, label="thermal floor, water")
+    ax.semilogx(f, thermal_noise_db(f, 1.2, 343.0), color="#9467bd", ls="-", lw=0.7,
+                alpha=0.6, label="thermal floor, air")
+
+    ax.set_ylabel("ambient noise  [dB re 1 µPa² / Hz]")
+    ax.set_xlabel("frequency  [Hz]")
+    ax.set_ylim(-10.0, 110.0)
+    ax.set_title("Ambient noise floor: air, lake, ocean\n"
+                 "pressure spectral density; what an omnidirectional receiver sees")
+    axr = ax.twinx()
+    axr.set_ylim(*[v - DB_20UPA for v in ax.get_ylim()])
+    axr.set_ylabel("[dB re 20 µPa² / Hz]", color=ACC)
+    axr.tick_params(axis="y", colors=ACC, labelsize=8)
+    axr.grid(False)
+
+    _decade_ticks(ax)
+    _graticule(ax, log_y=False)
+    ax.set_xlim(f[0], f[-1])
+    for row, (lo, hi, lab, col) in enumerate(marks):
+        _band(ax, lo, hi, lab, col, row)
+
+    i1, i40 = int(np.argmin(np.abs(f - 1e3))), int(np.argmin(np.abs(f - 40e3)))
+    note = (f"         1 kHz   40 kHz   drop\n"
+            f"ocean  {ocean[i1]:6.1f}  {ocean[i40]:6.1f}  {ocean[i1]-ocean[i40]:5.1f} dB\n"
+            f"lake   {lake[i1]:6.1f}  {lake[i40]:6.1f}  {lake[i1]-lake[i40]:5.1f} dB\n"
+            f"air    {air[i1]:6.1f}  {air[i40]:6.1f}  {air[i1]-air[i40]:5.1f} dB")
+    ax.text(0.015, 0.03, note, transform=ax.transAxes, fontsize=7.2,
+            va="bottom", ha="left", family="monospace",
+            bbox=dict(boxstyle="round,pad=0.35", fc="white", ec=AUX, lw=0.6, alpha=0.92))
+    ax.legend(loc="upper right", bbox_to_anchor=(0.995, 0.86), fontsize=7)
     return fig
 
 

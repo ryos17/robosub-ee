@@ -6,15 +6,17 @@ composition, the dotted line the high-loss one.**
 
 | Figure | Wave | Medium | bold / dotted |
 |---|---|---|---|
-| [figs/acoustic_water.png](figs/acoustic_water.png) | sound | water | fresh (pool) / seawater |
-| [figs/em_water.png](figs/em_water.png) | EM | water | fresh (pool) / seawater |
+| [figs/absolute/acoustic_water.png](figs/absolute/acoustic_water.png) | sound | water | fresh (pool) / seawater |
+| [figs/absolute/em_water.png](figs/absolute/em_water.png) | EM | water | fresh (pool) / seawater |
 | [figs/ratio/acoustic_air_vs_water.png](figs/ratio/acoustic_air_vs_water.png) | sound | air ÷ water | vs fresh / vs sea |
 | [figs/ratio/em_air_vs_water.png](figs/ratio/em_air_vs_water.png) | EM | air ÷ water | vs fresh / vs sea |
 | [figs/range/acoustic_range.png](figs/range/acoustic_range.png) | sound | fresh, sea, air | range for a 3 dB drop |
 | [figs/range/em_range.png](figs/range/em_range.png) | EM | fresh, sea, air | range for a 3 dB drop |
+| [figs/noise/noise_floor.png](figs/noise/noise_floor.png) | sound | air, lake, ocean | ambient noise floor |
 
-Layout: `figs/` holds the two absolute figures, `figs/ratio/` the
-air-against-water ratios, `figs/range/` the distance figures.
+Layout: `figs/absolute/` holds the two absolute figures, `figs/ratio/` the
+air-against-water ratios, `figs/range/` the distance figures, `figs/noise/`
+the ambient noise floor.
 
 The first two figures are absolute: salinity is the composition variable, and
 the right-hand axis carries loss over a reference range.
@@ -245,6 +247,27 @@ at low frequency that the nominal 3 dB range passes 10¹⁷ m; the figure says
 so and notes that Earth curvature and the ionosphere take over long before.
 The air curve is dotted above 15 GHz for the same reason as everywhere
 else: an upper bound, since the molecular lines are not modelled.
+
+## Noise floor
+
+`figs/noise/noise_floor.png` is ambient noise in the three media as a
+pressure spectral density, dB re 1 µPa²/Hz, with the air convention
+(re 20 µPa) on the right-hand axis. Ocean is the Wenz curves in the Coates
+(1989) closed form at moderate shipping and 5 m/s wind; the lake is the same
+wind and turbulence terms with no shipping and 2 m/s wind — a quiet inland
+lake at night, before boats, rain or biology add to it; air is the NC-30
+octave-band curve (a quiet room, or a rural night) turned into a density.
+Thermal agitation, `<p²>/df = 4πkTρf²/c`, is drawn as the floor for each.
+
+**Underwater noise is not white.** It falls roughly 5–6 dB per octave from
+1 kHz up, bottoming out near 30–100 kHz where thermal noise takes over:
+about 26 dB quieter at 40 kHz than at 1 kHz in both ocean and lake. That
+quiet window is exactly where pingers, sonar and acoustic modems live. A
+pool is redder still — pump, filtration and people are all below ~2 kHz.
+
+One caution on reading air against water on a pressure axis: the same
+pressure carries 36 dB more intensity in air, because ρc is 3600x smaller.
+This is what a pressure sensor sees, not an energy comparison.
 
 ## Air versus water, which is the whole point
 
