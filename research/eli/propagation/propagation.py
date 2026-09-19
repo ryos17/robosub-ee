@@ -222,6 +222,7 @@ SEA_C = "#101010"
 # fresh water is the case we actually operate in, so it gets the bold line
 FRESH_KW = dict(color=SIG, ls="-", lw=2.4)
 SEA_KW = dict(color=SEA_C, ls=":", lw=1.9)
+AIR_KW = dict(color="#9467bd", ls="-.", lw=1.9)
 FRESH_R = dict(color=ACC, ls="-", lw=2.0)
 SEA_R = dict(color=ACC, ls=":", lw=1.6)
 
@@ -483,18 +484,23 @@ def main():
                      bands=[(85.0, 8e3, "speech band", SPEECH)])
 
     jobs = [
-        ("acoustic_water", lambda: figure_acoustic(fresh, sea, acoustic_marks)),
-        ("em_water", lambda: figure_em(em_fresh, em_sea)),
-        ("acoustic_air_vs_water",
+        ("", "acoustic_water", lambda: figure_acoustic(fresh, sea, acoustic_marks)),
+        ("", "em_water", lambda: figure_em(em_fresh, em_sea)),
+        ("ratio", "acoustic_air_vs_water",
          lambda: figure_acoustic_air_vs_water(air_ref, fresh, sea, air_marks)),
-        ("em_air_vs_water",
+        ("ratio", "em_air_vs_water",
          lambda: figure_em_air_vs_water(air_ref, em_fresh, em_sea, [SPEECH_BAND])),
+        ("range", "acoustic_range",
+         lambda: figure_acoustic_range(fresh, sea, air_ref, acoustic_marks)),
+        ("range", "em_range",
+         lambda: figure_em_range(em_fresh, em_sea, air_ref, [SPEECH_BAND])),
     ]
-    for name, build in jobs:
+    for subdir, name, build in jobs:
         fig = build()
         fig.subplots_adjust(left=0.11, right=0.88, top=0.90, bottom=0.08)
+        (outdir / subdir).mkdir(parents=True, exist_ok=True)
         for ext in ("png", "pdf"):
-            p = outdir / f"{name}.{ext}"
+            p = outdir / subdir / f"{name}.{ext}"
             fig.savefig(p, bbox_inches="tight")
             print("wrote", p)
         plt.close(fig)
@@ -949,6 +955,122 @@ def figure_em_air_vs_water(air: Air, fresh: EMWater, sea: EMWater, bands):
     h2, l2 = ax2b.get_legend_handles_labels()
     ax2.legend(h1 + h2, l1 + l2, loc="upper right",
                bbox_to_anchor=(0.995, 0.80), ncol=2, fontsize=7)
+    return fig
+
+
+# --------------------------------------------------------------------------
+# range for a fixed loss: how far a wave gets before the medium eats X dB
+# --------------------------------------------------------------------------
+
+DB_DROP = 3.0            # half power -- the standard reference drop
+DB_DROP_ALT = 20.0       # tenth amplitude, on the right-hand axis
+
+# horizontal rules that make the distances graspable
+LANDMARKS = [(25.0, "25 m pool"), (1e3, "1 km"),
+             (4.0e7, "around the Earth"), (3.84e8, "Earth to Moon")]
+
+
+def _m(r):
+    """metres, readable."""
+    for scale, unit in ((1e9, "Gm"), (1e6, "Mm"), (1e3, "km"), (1.0, "m"),
+                        (1e-3, "mm")):
+        if r >= scale:
+            return f"{r/scale:.3g} {unit}"
+    return f"{r*1e3:.2g} mm"
+
+
+def _range_panel(ax, f, title, ylim):
+    ax.set_ylabel(f"range for a {DB_DROP:g} dB drop  [m]\n"
+                  f"(absorption only, spreading excluded)")
+    ax.set_xlabel("frequency  [Hz]")
+    ax.set_ylim(*ylim)
+    ax.set_title(title)
+    for r, lab in LANDMARKS:
+        ax.axhline(r, color=AUX, ls="--", lw=0.8, zorder=0)
+        ax.text(f[-1], r, lab + "  ", color=AUX, fontsize=6.8,
+                ha="right", va="bottom")
+    axr = ax.twinx()
+    axr.set_yscale("log")
+    axr.set_ylim(*[v * DB_DROP_ALT / DB_DROP for v in ylim])
+    axr.set_ylabel(f"range for a {DB_DROP_ALT:g} dB drop  [m]", color=ACC)
+    axr.tick_params(axis="y", colors=ACC, labelsize=8)
+    axr.grid(False)
+    _decade_ticks(ax)
+    _graticule(ax)
+    ax.set_xlim(f[0], f[-1])
+    return axr
+
+
+def figure_acoustic_range(fresh: Water, sea: Water, air: Air, marks):
+    """Distance at which absorption alone has cost DB_DROP, r = DB_DROP/alpha.
+
+    Since r is just a rescaling of 1/alpha, every curve shape is the absorption
+    curve flipped; what this view adds is a common distance axis so the three
+    media sit on one plot without a ratio.
+    """
+    f = np.logspace(np.log10(20.0), 6, 2400)
+    a_f, *_ = acoustic_response(f, fresh)
+    a_s, *_ = acoustic_response(f, sea)
+    a_a, *_ = air_acoustic_response(f, air)
+
+    fig, ax = plt.subplots(figsize=(7.2, 4.8))
+    ax.loglog(f, DB_DROP / a_f, label="fresh water (pool)", **FRESH_KW)
+    ax.loglog(f, DB_DROP / a_s, label="seawater", **SEA_KW)
+    ax.loglog(f, DB_DROP / a_a, label=f"air, {air.RH:g}% RH", **AIR_KW)
+    _range_panel(ax, f, "Sound: how far before the medium takes "
+                 f"{DB_DROP:g} dB\n{fresh.T:g} °C; fresh pH {fresh.pH:g}, "
+                 f"sea S = {sea.S:g} psu, air {air.RH:g}% RH", (1e-3, 1e11))
+    for row, (lo, hi, lab, col) in enumerate(marks):
+        _band(ax, lo, hi, lab, col, row)
+
+    i = int(np.argmin(np.abs(f - 40e3)))
+    note = (f"at 40 kHz, {DB_DROP:g} dB drop after:\n"
+            f"  fresh  {_m(DB_DROP/a_f[i]):>9}\n"
+            f"  sea    {_m(DB_DROP/a_s[i]):>9}\n"
+            f"  air    {_m(DB_DROP/a_a[i]):>9}")
+    ax.text(0.015, 0.03, note, transform=ax.transAxes, fontsize=7.2,
+            va="bottom", ha="left", family="monospace",
+            bbox=dict(boxstyle="round,pad=0.35", fc="white", ec=AUX, lw=0.6, alpha=0.92))
+    ax.legend(loc="lower left", bbox_to_anchor=(0.01, 0.22), fontsize=7.5)
+    return fig
+
+
+def figure_em_range(fresh: EMWater, sea: EMWater, air: Air, bands):
+    f = np.logspace(1, 11, 2600)
+    a_f, *_ = em_response(f, fresh)
+    a_s, *_ = em_response(f, sea)
+    a_a, *_ = air_em_response(f, air)
+    F_OK = 1.5e10
+    ok, hi = f <= F_OK, f >= F_OK
+
+    fig, ax = plt.subplots(figsize=(7.2, 4.8))
+    ax.loglog(f, DB_DROP / a_f, label="fresh water (pool)", **FRESH_KW)
+    ax.loglog(f, DB_DROP / a_s, label="seawater", **SEA_KW)
+    ax.loglog(f[ok], (DB_DROP / a_a)[ok], label=f"air, {air.RH:g}% RH", **AIR_KW)
+    kw = dict(AIR_KW); kw.update(ls=":", lw=1.3)
+    ax.loglog(f[hi], (DB_DROP / a_a)[hi], **kw,
+              label="air: upper bound above 15 GHz\n(molecular lines not modelled)")
+    _range_panel(ax, f, "Electromagnetic waves: how far before the medium takes "
+                 f"{DB_DROP:g} dB\nfresh $\\sigma$ = {fresh.sigma:g}, "
+                 f"sea $\\sigma$ = {sea.sigma:g} S/m, air {air.RH:g}% RH",
+                 (1e-4, 1e18))
+    for row, (lo, hi_b, lab, col) in enumerate(bands):
+        _band(ax, lo, hi_b, lab, col, row)
+    for fx, lab in ((25e3, "VLF"), (2.4e9, "Wi-Fi 2.4 G")):
+        _line(ax, fx, lab)
+    ax.text(0.985, 0.975, "air above ~1e7 m: Earth curvature and the ionosphere\n"
+            "take over long before clear-air absorption does",
+            transform=ax.transAxes, fontsize=6.8, color=AUX, ha="right", va="top")
+
+    i = int(np.argmin(np.abs(f - 2.4e9)))
+    note = (f"at 2.4 GHz, {DB_DROP:g} dB drop after:\n"
+            f"  fresh  {_m(DB_DROP/a_f[i]):>9}\n"
+            f"  sea    {_m(DB_DROP/a_s[i]):>9}\n"
+            f"  air    {_m(DB_DROP/a_a[i]):>9}")
+    ax.text(0.015, 0.03, note, transform=ax.transAxes, fontsize=7.2,
+            va="bottom", ha="left", family="monospace",
+            bbox=dict(boxstyle="round,pad=0.35", fc="white", ec=AUX, lw=0.6, alpha=0.92))
+    ax.legend(loc="lower left", bbox_to_anchor=(0.36, 0.30), fontsize=7.5)
     return fig
 
 

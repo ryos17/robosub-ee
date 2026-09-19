@@ -8,8 +8,13 @@ composition, the dotted line the high-loss one.**
 |---|---|---|---|
 | [figs/acoustic_water.png](figs/acoustic_water.png) | sound | water | fresh (pool) / seawater |
 | [figs/em_water.png](figs/em_water.png) | EM | water | fresh (pool) / seawater |
-| [figs/acoustic_air_vs_water.png](figs/acoustic_air_vs_water.png) | sound | air ÷ water | vs fresh / vs sea |
-| [figs/em_air_vs_water.png](figs/em_air_vs_water.png) | EM | air ÷ water | vs fresh / vs sea |
+| [figs/ratio/acoustic_air_vs_water.png](figs/ratio/acoustic_air_vs_water.png) | sound | air ÷ water | vs fresh / vs sea |
+| [figs/ratio/em_air_vs_water.png](figs/ratio/em_air_vs_water.png) | EM | air ÷ water | vs fresh / vs sea |
+| [figs/range/acoustic_range.png](figs/range/acoustic_range.png) | sound | fresh, sea, air | range for a 3 dB drop |
+| [figs/range/em_range.png](figs/range/em_range.png) | EM | fresh, sea, air | range for a 3 dB drop |
+
+Layout: `figs/` holds the two absolute figures, `figs/ratio/` the
+air-against-water ratios, `figs/range/` the distance figures.
 
 The first two figures are absolute: salinity is the composition variable, and
 the right-hand axis carries loss over a reference range.
@@ -218,6 +223,28 @@ links. In the conduction regime v_p = √(2w/(mu*sigma)) — 10⁵ m/s in seawat
 at 10 kHz, four orders below c, and varying as √f. A pulse does not survive
 that; only very narrowband signalling does, which is exactly what real VLF
 submarine comms is.
+
+## Range figures
+
+`figs/range/` turns the same absorption curves into a distance: how far a
+wave travels before the medium alone has taken 3 dB (half power),
+`r = 3 / α`. The right-hand axis reads the same curves for a 20 dB drop
+(tenth amplitude) — it is just the left axis times 20/3. **Spreading is
+excluded** here as everywhere else in this directory; these are medium
+limits, not link budgets, and a real range is shorter.
+
+The point of this view is a common y axis. All three media sit on one plot
+with no ratio needed, and the dashed rules (25 m pool, 1 km, around the
+Earth, Earth to Moon) make the decades graspable. At 40 kHz, sound goes
+8.5 km in pool water, 344 m in seawater and 2.3 m in air before losing
+3 dB. At 2.4 GHz, EM manages 11 mm in pool water, 2.7 mm in seawater and
+468 km in air.
+
+The two figures have different y ranges. Clear-air EM absorption is so small
+at low frequency that the nominal 3 dB range passes 10¹⁷ m; the figure says
+so and notes that Earth curvature and the ionosphere take over long before.
+The air curve is dotted above 15 GHz for the same reason as everywhere
+else: an upper bound, since the molecular lines are not modelled.
 
 ## Air versus water, which is the whole point
 
