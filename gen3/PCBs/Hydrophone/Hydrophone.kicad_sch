@@ -1596,7 +1596,7 @@
 			(color 0 0 0 0)
 		)
 		(uuid "ffe4dbe6-d3e1-4c30-b149-2f278e539bba")
-		(property "Sheetname" "Control_and_Relays"
+		(property "Sheetname" "Control"
 			(at 154.94 102.1584 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -1607,7 +1607,7 @@
 				(justify left bottom)
 			)
 		)
-		(property "Sheetfile" "Control_and_Relays.kicad_sch"
+		(property "Sheetfile" "Control.kicad_sch"
 			(at 154.94 145.3646 0)
 			(show_name no)
 			(do_not_autoplace no)
