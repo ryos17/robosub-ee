@@ -1,0 +1,4 @@
+(sym_lib_table
+  (version 7)
+  (lib (name "robosub_symbols")(type "KiCad")(uri "${KIPRJMOD}/../../../imported_parts/robosub_symbols/robosub_symbols.kicad_sym")(options "")(descr "Robosub custom symbols"))
+)
