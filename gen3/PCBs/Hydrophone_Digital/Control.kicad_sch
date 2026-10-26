@@ -1811,7 +1811,7 @@
 			(uuid "66f2d0fe-d023-4a42-80f5-4a42d8085a5f")
 		)
 		(instances
-			(project "Hydrophone"
+			(project "Hydrophone_Digital"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/ffe4dbe6-d3e1-4c30-b149-2f278e539bba"
 					(reference "U701")
 					(unit 1)
@@ -1890,7 +1890,7 @@
 			(uuid "f06f3bb8-bc3b-4984-a25d-5ad4bb547e6e")
 		)
 		(instances
-			(project "Hydrophone"
+			(project "Hydrophone_Digital"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/ffe4dbe6-d3e1-4c30-b149-2f278e539bba"
 					(reference "#PWR0707")
 					(unit 1)
@@ -1970,7 +1970,7 @@
 			(uuid "f4828d35-55e1-4edf-a36e-3c9cea50c404")
 		)
 		(instances
-			(project "Hydrophone"
+			(project "Hydrophone_Digital"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/ffe4dbe6-d3e1-4c30-b149-2f278e539bba"
 					(reference "R703")
 					(unit 1)
@@ -2049,7 +2049,7 @@
 			(uuid "83747099-6b70-467b-a69e-3ecb3081ed1e")
 		)
 		(instances
-			(project "Hydrophone"
+			(project "Hydrophone_Digital"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/ffe4dbe6-d3e1-4c30-b149-2f278e539bba"
 					(reference "#PWR0703")
 					(unit 1)
@@ -2127,7 +2127,7 @@
 			(uuid "e9704375-1261-4d74-903b-cdc1a82561ea")
 		)
 		(instances
-			(project "Hydrophone"
+			(project "Hydrophone_Digital"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/ffe4dbe6-d3e1-4c30-b149-2f278e539bba"
 					(reference "#PWR0706")
 					(unit 1)
@@ -2207,7 +2207,7 @@
 			(uuid "251a1728-e5df-4563-a44a-6432275c4293")
 		)
 		(instances
-			(project "Hydrophone"
+			(project "Hydrophone_Digital"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/ffe4dbe6-d3e1-4c30-b149-2f278e539bba"
 					(reference "#PWR0714")
 					(unit 1)
@@ -2287,7 +2287,7 @@
 			(uuid "4d602f3a-ba4b-40ec-839f-0d673d8501f6")
 		)
 		(instances
-			(project "Hydrophone"
+			(project "Hydrophone_Digital"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/ffe4dbe6-d3e1-4c30-b149-2f278e539bba"
 					(reference "C703")
 					(unit 1)
@@ -2449,7 +2449,7 @@
 			(uuid "fb33818c-90fd-4afe-a5a1-2fe0f5bfe910")
 		)
 		(instances
-			(project "Hydrophone"
+			(project "Hydrophone_Digital"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/ffe4dbe6-d3e1-4c30-b149-2f278e539bba"
 					(reference "U703")
 					(unit 1)
@@ -2529,7 +2529,7 @@
 			(uuid "4784012e-926e-4479-a428-a685bdc196ba")
 		)
 		(instances
-			(project "Hydrophone"
+			(project "Hydrophone_Digital"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/ffe4dbe6-d3e1-4c30-b149-2f278e539bba"
 					(reference "C702")
 					(unit 1)
@@ -2608,7 +2608,7 @@
 			(uuid "5850b55e-9a8c-4b0f-b100-61da774063e3")
 		)
 		(instances
-			(project "Hydrophone"
+			(project "Hydrophone_Digital"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/ffe4dbe6-d3e1-4c30-b149-2f278e539bba"
 					(reference "#PWR0702")
 					(unit 1)
@@ -2688,7 +2688,7 @@
 			(uuid "ade8cab0-82eb-43d6-882e-42c5b6d13d52")
 		)
 		(instances
-			(project "Hydrophone"
+			(project "Hydrophone_Digital"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/ffe4dbe6-d3e1-4c30-b149-2f278e539bba"
 					(reference "C701")
 					(unit 1)
@@ -2765,7 +2765,7 @@
 			(uuid "4c5c2041-218a-4fc2-9f36-735dd379024a")
 		)
 		(instances
-			(project "Hydrophone"
+			(project "Hydrophone_Digital"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/ffe4dbe6-d3e1-4c30-b149-2f278e539bba"
 					(reference "#PWR0705")
 					(unit 1)
@@ -2843,7 +2843,7 @@
 			(uuid "8efc663e-759a-49e5-be1c-1d500eef678d")
 		)
 		(instances
-			(project "Hydrophone"
+			(project "Hydrophone_Digital"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/ffe4dbe6-d3e1-4c30-b149-2f278e539bba"
 					(reference "#PWR0716")
 					(unit 1)
@@ -2922,7 +2922,7 @@
 			(uuid "96e4cfb6-4c6a-4c60-ae73-fdcb154b5ab6")
 		)
 		(instances
-			(project "Hydrophone"
+			(project "Hydrophone_Digital"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/ffe4dbe6-d3e1-4c30-b149-2f278e539bba"
 					(reference "#PWR0701")
 					(unit 1)
@@ -3001,7 +3001,7 @@
 			(uuid "033ca718-a164-4e46-8402-acb508c9226b")
 		)
 		(instances
-			(project "Hydrophone"
+			(project "Hydrophone_Digital"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/ffe4dbe6-d3e1-4c30-b149-2f278e539bba"
 					(reference "#PWR0715")
 					(unit 1)
@@ -3163,7 +3163,7 @@
 			(uuid "62388ed2-6665-4bdf-b58e-24e0b8ac1e5a")
 		)
 		(instances
-			(project "Hydrophone"
+			(project "Hydrophone_Digital"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/ffe4dbe6-d3e1-4c30-b149-2f278e539bba"
 					(reference "U702")
 					(unit 1)
@@ -3241,7 +3241,7 @@
 			(uuid "0649cb1e-0d5e-4e05-9889-644d40538416")
 		)
 		(instances
-			(project "Hydrophone"
+			(project "Hydrophone_Digital"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/ffe4dbe6-d3e1-4c30-b149-2f278e539bba"
 					(reference "#PWR0711")
 					(unit 1)
@@ -3318,7 +3318,7 @@
 			(uuid "f1679cb8-1663-47a8-bdf6-95e5e775ee80")
 		)
 		(instances
-			(project "Hydrophone"
+			(project "Hydrophone_Digital"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/ffe4dbe6-d3e1-4c30-b149-2f278e539bba"
 					(reference "#PWR0704")
 					(unit 1)
@@ -3398,7 +3398,7 @@
 			(uuid "ec3c342c-7b72-4a75-a5ee-9668c85989ae")
 		)
 		(instances
-			(project "Hydrophone"
+			(project "Hydrophone_Digital"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/ffe4dbe6-d3e1-4c30-b149-2f278e539bba"
 					(reference "#PWR0708")
 					(unit 1)
@@ -3477,7 +3477,7 @@
 			(uuid "9468f385-ad8b-42fb-8add-ce37bd1a1065")
 		)
 		(instances
-			(project "Hydrophone"
+			(project "Hydrophone_Digital"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/ffe4dbe6-d3e1-4c30-b149-2f278e539bba"
 					(reference "#PWR0712")
 					(unit 1)
@@ -3557,7 +3557,7 @@
 			(uuid "3be1e983-9152-4abb-b745-b32202d934d9")
 		)
 		(instances
-			(project "Hydrophone"
+			(project "Hydrophone_Digital"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/ffe4dbe6-d3e1-4c30-b149-2f278e539bba"
 					(reference "#PWR0713")
 					(unit 1)
@@ -3637,7 +3637,7 @@
 			(uuid "1edfba5d-4480-4ca2-b7e4-bdb79562547a")
 		)
 		(instances
-			(project "Hydrophone"
+			(project "Hydrophone_Digital"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/ffe4dbe6-d3e1-4c30-b149-2f278e539bba"
 					(reference "R702")
 					(unit 1)
@@ -3716,7 +3716,7 @@
 			(uuid "d2a748e1-8e40-47a9-93e2-99689450cd65")
 		)
 		(instances
-			(project "Hydrophone"
+			(project "Hydrophone_Digital"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/ffe4dbe6-d3e1-4c30-b149-2f278e539bba"
 					(reference "#PWR0710")
 					(unit 1)
@@ -3794,7 +3794,7 @@
 			(uuid "d13c8b2e-e9ee-47c9-a629-b1ba33a8f426")
 		)
 		(instances
-			(project "Hydrophone"
+			(project "Hydrophone_Digital"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/ffe4dbe6-d3e1-4c30-b149-2f278e539bba"
 					(reference "#PWR0709")
 					(unit 1)
@@ -3874,7 +3874,7 @@
 			(uuid "18511746-5043-465e-ad05-66c30f41d085")
 		)
 		(instances
-			(project "Hydrophone"
+			(project "Hydrophone_Digital"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/ffe4dbe6-d3e1-4c30-b149-2f278e539bba"
 					(reference "R701")
 					(unit 1)
@@ -3953,7 +3953,7 @@
 			(uuid "d6236d24-aeb2-4832-a550-631fdef8985b")
 		)
 		(instances
-			(project "Hydrophone"
+			(project "Hydrophone_Digital"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/ffe4dbe6-d3e1-4c30-b149-2f278e539bba"
 					(reference "#PWR0717")
 					(unit 1)
