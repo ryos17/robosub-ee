@@ -1388,16 +1388,6 @@
 	)
 	(wire
 		(pts
-			(xy 210.82 111.76) (xy 228.6 111.76)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "1d85845f-9520-4f94-8d21-fefa0732ef93")
-	)
-	(wire
-		(pts
 			(xy 38.1 52.07) (xy 43.18 52.07)
 		)
 		(stroke
@@ -1445,6 +1435,16 @@
 			(type default)
 		)
 		(uuid "24e88b1a-addd-40ad-bbd3-37161382b42e")
+	)
+	(wire
+		(pts
+			(xy 212.09 111.76) (xy 228.6 111.76)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "27376c97-e8fb-443d-b924-2b418db28c07")
 	)
 	(wire
 		(pts
@@ -1545,16 +1545,6 @@
 			(type default)
 		)
 		(uuid "3d4b8b6a-ab90-4eee-970d-10ab634f3ee1")
-	)
-	(wire
-		(pts
-			(xy 210.82 109.22) (xy 228.6 109.22)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "3ecd3a52-6acc-4cd0-8aed-cd095b09a72d")
 	)
 	(wire
 		(pts
@@ -1698,6 +1688,16 @@
 	)
 	(wire
 		(pts
+			(xy 212.09 105.41) (xy 228.6 105.41)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "66bd6712-89d9-441e-aad8-19880e29cbb6")
+	)
+	(wire
+		(pts
 			(xy 347.98 151.13) (xy 353.06 151.13)
 		)
 		(stroke
@@ -1795,16 +1795,6 @@
 			(type default)
 		)
 		(uuid "7dc6bb27-fdb7-4bd9-ad43-8c089969a7ce")
-	)
-	(wire
-		(pts
-			(xy 210.82 105.41) (xy 228.6 105.41)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "89422cb1-9407-421f-97ee-6a00de0751aa")
 	)
 	(wire
 		(pts
@@ -1955,6 +1945,16 @@
 			(type default)
 		)
 		(uuid "b09a1883-9617-43ef-a91f-311817b4c8ab")
+	)
+	(wire
+		(pts
+			(xy 212.09 109.22) (xy 228.6 109.22)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "b32e690b-f510-4090-b16a-605e9c9cb148")
 	)
 	(wire
 		(pts
@@ -2186,7 +2186,7 @@
 		)
 		(uuid "0cadbeb7-c6ed-4bcf-bcc6-7f2912b2f078")
 	)
-	(label "CH0_GAIN_G2"
+	(label "CH1_GAIN_G2"
 		(at 38.1 104.14 180)
 		(effects
 			(font
@@ -2236,7 +2236,7 @@
 		)
 		(uuid "2537a4fe-0f93-4891-950b-dace2bf4c35f")
 	)
-	(label "12C1_SDA"
+	(label "I2C1_SDA"
 		(at 347.98 156.21 180)
 		(effects
 			(font
@@ -2566,7 +2566,7 @@
 		)
 		(uuid "ad8904d6-bf76-40f2-aec9-4f142a57d54b")
 	)
-	(label "CH0_FILT_AUDIO"
+	(label "CH1_FILT_AUDIO"
 		(at 39.37 99.06 180)
 		(effects
 			(font
@@ -2586,7 +2586,7 @@
 		)
 		(uuid "b91b0074-2486-49a1-9c0e-8967efc2c1c3")
 	)
-	(label "12C1_SCL"
+	(label "I2C1_SCL"
 		(at 347.98 153.67 180)
 		(effects
 			(font
@@ -2595,16 +2595,6 @@
 			(justify right bottom)
 		)
 		(uuid "bc6f7ee5-2db4-4f2b-a9e0-26aaa427c5f6")
-	)
-	(label "I2C1_SDA"
-		(at 210.82 109.22 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left bottom)
-		)
-		(uuid "c1248977-d081-426e-8457-ab96b6c21056")
 	)
 	(label "CH1_GAIN_G2"
 		(at 151.13 120.65 180)
@@ -2626,7 +2616,7 @@
 		)
 		(uuid "c2d9b74c-02c9-438a-b669-d67ed34c878f")
 	)
-	(label "CH0_RX_EN"
+	(label "CH1_RX_EN"
 		(at 39.37 115.57 180)
 		(effects
 			(font
@@ -2806,7 +2796,7 @@
 		)
 		(uuid "fbc4029f-b53e-4d52-854a-38c73aae0659")
 	)
-	(label "CH0_GAIN_G11"
+	(label "CH1_GAIN_G11"
 		(at 39.37 107.95 180)
 		(effects
 			(font
@@ -2839,28 +2829,6 @@
 				(justify left)
 			)
 		)
-	)
-	(hierarchical_label "I2C1_SCL"
-		(shape input)
-		(at 210.82 105.41 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left)
-		)
-		(uuid "d06c5719-4b07-4bd0-aab0-163f09cfcae0")
-	)
-	(hierarchical_label "CTRL_RESET_N"
-		(shape input)
-		(at 210.82 111.76 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left)
-		)
-		(uuid "e00f5893-2d36-447c-9614-e59e16d37500")
 	)
 	(symbol
 		(lib_id "power:GND")
@@ -4881,7 +4849,7 @@
 				(justify left)
 			)
 		)
-		(pin "CH0_GAIN_G11" input
+		(pin "CH0_GAIN_G11" output
 			(at 154.94 107.95 180)
 			(uuid "65041802-0494-43e0-9b19-0088b209c7ed")
 			(effects
@@ -5029,6 +4997,36 @@
 					(size 1.27 1.27)
 				)
 				(justify left)
+			)
+		)
+		(pin "CTRL_RESET_N" input
+			(at 212.09 111.76 0)
+			(uuid "4e4de4e1-176a-43c9-ac13-ce475f01c4df")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
+			)
+		)
+		(pin "I2C1_SCL" input
+			(at 212.09 105.41 0)
+			(uuid "5713e0f2-44bc-4cae-aafb-b708ca599d93")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
+			)
+		)
+		(pin "I2C1_SDA" input
+			(at 212.09 109.22 0)
+			(uuid "0caae7fc-0316-4870-a902-aa710febddd3")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
 			)
 		)
 		(instances

@@ -1610,6 +1610,12 @@
 		(uuid "1620f10f-5651-4629-a8c4-f65af70585e9")
 	)
 	(junction
+		(at 39.37 44.45)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "23b34483-ce6b-40bb-8960-00038c024ab9")
+	)
+	(junction
 		(at 153.67 172.72)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -1658,6 +1664,12 @@
 		(uuid "96002697-d628-4b71-8a65-173923f5f655")
 	)
 	(junction
+		(at 39.37 57.15)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "99e5140d-2d78-40b3-baa7-a58bb1fedc0c")
+	)
+	(junction
 		(at 30.48 130.81)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -1674,6 +1686,12 @@
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "b3af3f82-d93a-446f-9fff-cfef38ed9261")
+	)
+	(junction
+		(at 39.37 34.29)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "bd7acaa9-9ed3-4de1-9fb7-0f2e9cf541ca")
 	)
 	(junction
 		(at 176.53 69.85)
@@ -1875,6 +1893,16 @@
 	)
 	(wire
 		(pts
+			(xy 39.37 53.34) (xy 39.37 57.15)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "315d348d-32ca-4925-9d0b-d9b1ec98502f")
+	)
+	(wire
+		(pts
 			(xy 160.02 134.62) (xy 154.94 134.62)
 		)
 		(stroke
@@ -2042,16 +2070,6 @@
 			(type default)
 		)
 		(uuid "5ad5ea2a-dffc-4b35-a08d-a0e6645e4f19")
-	)
-	(wire
-		(pts
-			(xy 39.37 34.29) (xy 54.61 34.29)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "5db2f165-6eab-4712-9f4a-d66f523583cd")
 	)
 	(wire
 		(pts
@@ -2265,6 +2283,16 @@
 	)
 	(wire
 		(pts
+			(xy 39.37 39.37) (xy 39.37 44.45)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "9e8717f4-03ee-4c70-b629-801f427fff0a")
+	)
+	(wire
+		(pts
 			(xy 30.48 130.81) (xy 25.4 130.81)
 		)
 		(stroke
@@ -2272,6 +2300,16 @@
 			(type default)
 		)
 		(uuid "a03e653e-2a27-45ae-953f-6beea3cd0aee")
+	)
+	(wire
+		(pts
+			(xy 39.37 34.29) (xy 54.61 34.29)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "a0dc1616-db70-4c89-97ce-05ce75095bda")
 	)
 	(wire
 		(pts
@@ -2322,6 +2360,16 @@
 			(type default)
 		)
 		(uuid "b766cab9-b25f-49aa-a5eb-1cbd8c067094")
+	)
+	(wire
+		(pts
+			(xy 39.37 26.67) (xy 39.37 34.29)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "be1c7ec7-ec75-4a1d-8cfa-2dd19406fe69")
 	)
 	(wire
 		(pts
@@ -2713,7 +2761,7 @@
 		)
 		(uuid "8143e4d8-2add-4192-8c9e-3933f4e4a1d6")
 	)
-	(label "CH0_RX_EN"
+	(label "CTRL_CH1_AUDIO"
 		(at 186.69 104.14 0)
 		(effects
 			(font
@@ -3028,6 +3076,17 @@
 		)
 		(uuid "345b4cd1-9b55-4be0-9e47-e4ebe980e9f1")
 	)
+	(hierarchical_label "I2C1_SDA"
+		(shape input)
+		(at 39.37 39.37 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left)
+		)
+		(uuid "370ae296-9f22-44a2-a1f2-58ad4c85a58a")
+	)
 	(hierarchical_label "CH3_GAIN_G11"
 		(shape input)
 		(at 121.92 166.37 0)
@@ -3039,6 +3098,17 @@
 		)
 		(uuid "609a65d6-dcf0-440d-9820-b1071552c033")
 	)
+	(hierarchical_label "CTRL_RESET_N"
+		(shape input)
+		(at 39.37 53.34 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left)
+		)
+		(uuid "65fdf35f-daf5-4ade-ac3b-c9adcf2bf4e9")
+	)
 	(hierarchical_label "CH0_GAIN_G2"
 		(shape input)
 		(at 44.45 93.98 0)
@@ -3049,6 +3119,17 @@
 			(justify left)
 		)
 		(uuid "71c195e2-80ca-4c94-a34d-4945828a7264")
+	)
+	(hierarchical_label "I2C1_SCL"
+		(shape input)
+		(at 39.37 26.67 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left)
+		)
+		(uuid "7d754a0d-a596-4391-a30b-9196319a68c4")
 	)
 	(hierarchical_label "CH1_GAIN_G11"
 		(shape input)

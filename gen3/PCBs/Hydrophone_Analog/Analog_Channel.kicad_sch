@@ -3489,7 +3489,7 @@
 	)
 	(wire
 		(pts
-			(xy 181.61 156.21) (xy 172.72 156.21)
+			(xy 181.61 157.48) (xy 172.72 157.48)
 		)
 		(stroke
 			(width 0)
@@ -3909,7 +3909,7 @@
 	)
 	(wire
 		(pts
-			(xy 172.72 156.21) (xy 172.72 153.67)
+			(xy 172.72 157.48) (xy 172.72 153.67)
 		)
 		(stroke
 			(width 0)
@@ -4529,7 +4529,7 @@
 	)
 	(wire
 		(pts
-			(xy 181.61 148.59) (xy 181.61 156.21)
+			(xy 181.61 148.59) (xy 181.61 157.48)
 		)
 		(stroke
 			(width 0)
@@ -4828,7 +4828,7 @@
 		(uuid "1d58b9b6-9935-4337-be96-98f304f76486")
 	)
 	(label "-5VA"
-		(at 172.72 156.21 0)
+		(at 172.72 157.48 0)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -7285,7 +7285,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "47uF"
+		(property "Value" "10uF"
 			(at 185.42 146.0499 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -8730,7 +8730,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "82pF"
+		(property "Value" "820pF"
 			(at 86.36 101.5999 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -9111,7 +9111,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "82pF"
+		(property "Value" "820pF"
 			(at 237.49 39.3699 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -9919,7 +9919,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "820pF"
+		(property "Value" "82pF"
 			(at 250.19 39.3699 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -10013,7 +10013,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "47uF"
+		(property "Value" "10uF"
 			(at 166.37 147.3199 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -10425,7 +10425,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "820pF"
+		(property "Value" "82pF"
 			(at 99.06 101.5999 0)
 			(show_name no)
 			(do_not_autoplace no)

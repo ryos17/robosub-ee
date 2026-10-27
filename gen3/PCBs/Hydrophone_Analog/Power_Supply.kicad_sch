@@ -163,6 +163,164 @@
 			)
 			(embedded_fonts no)
 		)
+		(symbol "Converter_DCDC:R-78E5.0-0.5"
+			(pin_names
+				(offset 0.254)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "U"
+				(at -3.81 3.175 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "R-78E5.0-0.5"
+				(at 0 3.175 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(justify left)
+				)
+			)
+			(property "Footprint" "Converter_DCDC:Converter_DCDC_RECOM_R-78E-0.5_THT"
+				(at 1.27 -6.35 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+						(italic yes)
+					)
+					(justify left)
+				)
+			)
+			(property "Datasheet" "https://www.recom-power.com/pdf/Innoline/R-78Exx-0.5.pdf"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" "500mA Step-Down DC/DC-Regulator, 7-28V input, 5V fixed Output Voltage, LM78xx replacement, -40°C to +85°C, SIP3"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_keywords" "dc-dc recom Step-Down DC/DC-Regulator"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_fp_filters" "Converter*DCDC*RECOM*R*78E*0.5*"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "R-78E5.0-0.5_0_1"
+				(rectangle
+					(start -5.08 1.905)
+					(end 5.08 -5.08)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type background)
+					)
+				)
+			)
+			(symbol "R-78E5.0-0.5_1_1"
+				(pin power_in line
+					(at -7.62 0 0)
+					(length 2.54)
+					(name "IN"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin power_in line
+					(at 0 -7.62 90)
+					(length 2.54)
+					(name "GND"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin power_out line
+					(at 7.62 0 180)
+					(length 2.54)
+					(name "OUT"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "3"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
 		(symbol "Converter_DCDC:R-78E5.0-1.0"
 			(pin_names
 				(offset 0.254)
@@ -787,249 +945,6 @@
 			)
 			(embedded_fonts no)
 		)
-		(symbol "Regulator_SwitchedCapacitor:ICL7660"
-			(exclude_from_sim no)
-			(in_bom yes)
-			(on_board yes)
-			(in_pos_files yes)
-			(duplicate_pin_numbers_are_jumpers no)
-			(property "Reference" "U"
-				(at -6.35 11.43 0)
-				(show_name no)
-				(do_not_autoplace no)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-				)
-			)
-			(property "Value" "ICL7660"
-				(at 3.81 11.43 0)
-				(show_name no)
-				(do_not_autoplace no)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-				)
-			)
-			(property "Footprint" ""
-				(at 2.54 -2.54 0)
-				(show_name no)
-				(do_not_autoplace no)
-				(hide yes)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-				)
-			)
-			(property "Datasheet" "http://datasheets.maximintegrated.com/en/ds/ICL7660-MAX1044.pdf"
-				(at 2.54 -2.54 0)
-				(show_name no)
-				(do_not_autoplace no)
-				(hide yes)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-				)
-			)
-			(property "Description" "Switched-Capacitor Voltage Converter, 1.5V to 10.0V operating supply voltage, 10mA with a 0.5V output drop, SO-8/DIP-8/µMAX-8/TO-99"
-				(at 0 0 0)
-				(show_name no)
-				(do_not_autoplace no)
-				(hide yes)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-				)
-			)
-			(property "ki_keywords" "monolithic CMOS switched capacitor voltage converter invert double divide multiply"
-				(at 0 0 0)
-				(show_name no)
-				(do_not_autoplace no)
-				(hide yes)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-				)
-			)
-			(property "ki_fp_filters" "DIP*W7.62mm* SOIC*3.9x4.9mm* MSOP*3x3mm*P0.65mm* TO?99*"
-				(at 0 0 0)
-				(show_name no)
-				(do_not_autoplace no)
-				(hide yes)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-				)
-			)
-			(symbol "ICL7660_0_1"
-				(rectangle
-					(start -7.62 10.16)
-					(end 7.62 -10.16)
-					(stroke
-						(width 0.254)
-						(type default)
-					)
-					(fill
-						(type background)
-					)
-				)
-			)
-			(symbol "ICL7660_1_1"
-				(pin no_connect line
-					(at -7.62 5.08 0)
-					(length 2.54)
-					(hide yes)
-					(name "NC"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "1"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-				)
-				(pin input line
-					(at 10.16 2.54 180)
-					(length 2.54)
-					(name "CAP+"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "2"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-				)
-				(pin power_in line
-					(at 0 -12.7 90)
-					(length 2.54)
-					(name "GND"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "3"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-				)
-				(pin input line
-					(at 10.16 -7.62 180)
-					(length 2.54)
-					(name "CAP-"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "4"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-				)
-				(pin power_out line
-					(at 10.16 7.62 180)
-					(length 2.54)
-					(name "VOUT"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "5"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-				)
-				(pin input line
-					(at -10.16 -5.08 0)
-					(length 2.54)
-					(name "LV"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "6"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-				)
-				(pin input line
-					(at -10.16 0 0)
-					(length 2.54)
-					(name "OSC"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "7"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-				)
-				(pin power_in line
-					(at -10.16 7.62 0)
-					(length 2.54)
-					(name "V+"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "8"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-				)
-			)
-			(embedded_fonts no)
-		)
 		(symbol "power:+3.3V"
 			(power global)
 			(pin_numbers
@@ -1308,6 +1223,121 @@
 			)
 			(embedded_fonts no)
 		)
+		(symbol "power:-5V"
+			(power global)
+			(pin_numbers
+				(hide yes)
+			)
+			(pin_names
+				(offset 0)
+				(hide yes)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "#PWR"
+				(at 0 -3.81 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "-5V"
+				(at 0 3.556 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" "Power symbol creates a global label with name \"-5V\""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_keywords" "global power"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "-5V_0_0"
+				(pin power_in line
+					(at 0 0 90)
+					(length 0)
+					(name ""
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+			(symbol "-5V_0_1"
+				(polyline
+					(pts
+						(xy 0 0) (xy 0 1.27) (xy 0.762 1.27) (xy 0 2.54) (xy -0.762 1.27) (xy 0 1.27)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type outline)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
 		(symbol "power:GND"
 			(power global)
 			(pin_numbers
@@ -1455,12 +1485,6 @@
 		(uuid "2bd84421-2bb0-426a-833e-3d3672ee22ed")
 	)
 	(junction
-		(at 127 135.89)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "37db616e-f919-4ded-9047-c1f9ab0d868b")
-	)
-	(junction
 		(at 54.61 53.34)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -1473,16 +1497,22 @@
 		(uuid "4915e425-8d98-469c-97a1-2288627594ce")
 	)
 	(junction
-		(at 138.43 135.89)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "5a73fa80-bd3a-40b6-bc74-fafc76160f6b")
-	)
-	(junction
 		(at 30.48 113.03)
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "bb74e01b-c79e-47b7-8b8d-801e8fb418bb")
+	)
+	(junction
+		(at 102.87 154.94)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "d309dda0-8ff6-4bc3-b3df-a7df84f067b1")
+	)
+	(junction
+		(at 102.87 166.37)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "da79593b-1d3f-4519-8125-fddc939f9e60")
 	)
 	(wire
 		(pts
@@ -1506,13 +1536,13 @@
 	)
 	(wire
 		(pts
-			(xy 115.57 151.13) (xy 119.38 151.13)
+			(xy 102.87 143.51) (xy 102.87 154.94)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "05032058-a8a5-44dd-b9f8-f54855896f9b")
+		(uuid "14282611-821c-434c-b658-65c3b050f22b")
 	)
 	(wire
 		(pts
@@ -1556,13 +1586,13 @@
 	)
 	(wire
 		(pts
-			(xy 127 135.89) (xy 138.43 135.89)
+			(xy 102.87 166.37) (xy 102.87 168.91)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "298ac251-2a1a-4cb7-b854-3964a0d46718")
+		(uuid "367ae5b0-2115-44bc-8618-9003dcae6253")
 	)
 	(wire
 		(pts
@@ -1626,13 +1656,13 @@
 	)
 	(wire
 		(pts
-			(xy 138.43 137.16) (xy 138.43 135.89)
+			(xy 102.87 154.94) (xy 101.6 154.94)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "542e52e2-b382-4b56-8f99-5f419b1d0831")
+		(uuid "4b6c149d-c81a-4d90-9abc-159bb87ca66b")
 	)
 	(wire
 		(pts
@@ -1666,16 +1696,6 @@
 	)
 	(wire
 		(pts
-			(xy 105.41 156.21) (xy 105.41 161.29)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "6cd97141-e5a1-4d6a-8557-ce40cbedb9b9")
-	)
-	(wire
-		(pts
 			(xy 43.18 60.96) (xy 43.18 66.04)
 		)
 		(stroke
@@ -1693,6 +1713,16 @@
 			(type default)
 		)
 		(uuid "864cb072-8624-4fa5-bda0-87148e58bf3a")
+	)
+	(wire
+		(pts
+			(xy 101.6 166.37) (xy 102.87 166.37)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "8fcd352b-267d-4856-b85a-86a691bac6c1")
 	)
 	(wire
 		(pts
@@ -1716,16 +1746,6 @@
 	)
 	(wire
 		(pts
-			(xy 138.43 135.89) (xy 140.97 135.89)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "98cc09f7-e3a3-430d-9452-d445e23cc34b")
-	)
-	(wire
-		(pts
 			(xy 30.48 53.34) (xy 35.56 53.34)
 		)
 		(stroke
@@ -1743,26 +1763,6 @@
 			(type default)
 		)
 		(uuid "ba83f848-8553-4643-87b4-68280f59b732")
-	)
-	(wire
-		(pts
-			(xy 127 135.89) (xy 127 137.16)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "bd2a4db7-e05c-48f1-9a94-4f80e3a76be8")
-	)
-	(wire
-		(pts
-			(xy 119.38 151.13) (xy 119.38 149.86)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "c15b44eb-bf2c-41e7-8946-fb548e709cf4")
 	)
 	(wire
 		(pts
@@ -1796,17 +1796,17 @@
 	)
 	(wire
 		(pts
-			(xy 119.38 142.24) (xy 119.38 140.97)
+			(xy 102.87 154.94) (xy 102.87 166.37)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "da0f53dc-a455-477c-94fb-1b2a9b7b1695")
+		(uuid "d4b9590a-6870-4bf9-8af7-c4406fbe826a")
 	)
 	(wire
 		(pts
-			(xy 115.57 135.89) (xy 127 135.89)
+			(xy 110.49 135.89) (xy 119.38 135.89)
 		)
 		(stroke
 			(width 0)
@@ -1823,16 +1823,6 @@
 			(type default)
 		)
 		(uuid "e6eb6a48-4679-4173-bec3-bc9f4cb3b4c1")
-	)
-	(wire
-		(pts
-			(xy 119.38 140.97) (xy 115.57 140.97)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "ebce5cfc-93a4-4638-a766-17753b6ec0e6")
 	)
 	(wire
 		(pts
@@ -1854,7 +1844,7 @@
 		)
 		(uuid "0f7705fe-2fda-44de-9291-ca6c5650a85c")
 	)
-	(label "+VCOIL"
+	(label "+VBAT"
 		(at 27.94 113.03 180)
 		(effects
 			(font
@@ -1864,7 +1854,7 @@
 		)
 		(uuid "15a1296d-137b-463d-8eb3-71e19834b902")
 	)
-	(label "+VCOIL"
+	(label "+VBAT"
 		(at 83.82 135.89 180)
 		(effects
 			(font
@@ -1915,6 +1905,84 @@
 					(size 1.27 1.27)
 				)
 				(justify left)
+			)
+		)
+	)
+	(symbol
+		(lib_id "power:GND")
+		(at 93.98 166.37 270)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "07ea431b-1abf-4b58-9541-33825ba981cf")
+		(property "Reference" "#PWR073"
+			(at 87.63 166.37 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "GND"
+			(at 88.9 166.37 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 93.98 166.37 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 93.98 166.37 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
+			(at 93.98 166.37 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "70e2e593-2b00-455a-8a4e-b22d34d8f11e")
+		)
+		(instances
+			(project "Hydrophone_Analog"
+				(path "/3634aa72-f703-4c52-b463-b00d283490ac/d6c2f1e6-e2b1-4ad6-8707-c42f5810f96f"
+					(reference "#PWR073")
+					(unit 1)
+				)
 			)
 		)
 	)
@@ -2162,7 +2230,7 @@
 	)
 	(symbol
 		(lib_id "Device:C")
-		(at 138.43 140.97 0)
+		(at 97.79 166.37 270)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -2171,9 +2239,9 @@
 		(in_pos_files yes)
 		(dnp no)
 		(fields_autoplaced yes)
-		(uuid "1d7496cc-245c-4278-b1ba-a602a2b8ad68")
+		(uuid "2163a24e-bb4e-43a2-930d-634b2d561655")
 		(property "Reference" "C78"
-			(at 142.24 139.6999 0)
+			(at 99.0601 170.18 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -2184,7 +2252,7 @@
 			)
 		)
 		(property "Value" "100nF"
-			(at 142.24 142.2399 0)
+			(at 96.5201 170.18 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -2195,7 +2263,7 @@
 			)
 		)
 		(property "Footprint" "Capacitor_SMD:C_0805_2012Metric"
-			(at 139.3952 144.78 0)
+			(at 93.98 167.3352 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -2206,7 +2274,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 138.43 140.97 0)
+			(at 97.79 166.37 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -2217,7 +2285,7 @@
 			)
 		)
 		(property "Description" "Unpolarized capacitor"
-			(at 138.43 140.97 0)
+			(at 97.79 166.37 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -2228,10 +2296,10 @@
 			)
 		)
 		(pin "2"
-			(uuid "2e3904d7-e258-428c-803c-6806663a5f3b")
+			(uuid "74af056c-8d78-47c2-8871-bfb338c9408e")
 		)
 		(pin "1"
-			(uuid "d82a5b86-7ec7-4997-81fd-ce9f58e0183b")
+			(uuid "5be700f6-0bcf-4572-b4b6-6ae5d54fe87a")
 		)
 		(instances
 			(project "Hydrophone_Analog"
@@ -2403,88 +2471,6 @@
 		)
 	)
 	(symbol
-		(lib_id "Device:C")
-		(at 119.38 146.05 0)
-		(unit 1)
-		(body_style 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(in_pos_files yes)
-		(dnp no)
-		(fields_autoplaced yes)
-		(uuid "34476d61-899e-48ab-9934-4f40744ca922")
-		(property "Reference" "C79"
-			(at 123.19 144.7799 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Value" "10uF"
-			(at 123.19 147.3199 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Footprint" "Capacitor_SMD:C_1206_3216Metric"
-			(at 120.3452 149.86 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" ""
-			(at 119.38 146.05 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" "Unpolarized capacitor"
-			(at 119.38 146.05 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(pin "2"
-			(uuid "be214a24-9682-4a84-9dfb-9802b507a013")
-		)
-		(pin "1"
-			(uuid "82b37fd6-45a6-4847-866c-554a224be350")
-		)
-		(instances
-			(project "Hydrophone_Analog"
-				(path "/3634aa72-f703-4c52-b463-b00d283490ac/d6c2f1e6-e2b1-4ad6-8707-c42f5810f96f"
-					(reference "C79")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
 		(lib_id "power:GND")
 		(at 43.18 66.04 0)
 		(unit 1)
@@ -2563,8 +2549,8 @@
 		)
 	)
 	(symbol
-		(lib_id "Regulator_SwitchedCapacitor:ICL7660")
-		(at 105.41 143.51 0)
+		(lib_id "power:-5V")
+		(at 102.87 168.91 180)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -2573,29 +2559,9 @@
 		(in_pos_files yes)
 		(dnp no)
 		(fields_autoplaced yes)
-		(uuid "47f9d3df-f1d1-4c65-ae67-894af2f77a89")
-		(property "Reference" "U13"
-			(at 105.41 128.27 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Value" "ICL7660"
-			(at 105.41 130.81 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Footprint" "Package_SO:SOIC-8_3.9x4.9mm_P1.27mm"
-			(at 107.95 146.05 0)
+		(uuid "38e3df02-1b29-4323-b330-67c84dfc8409")
+		(property "Reference" "#PWR074"
+			(at 102.87 165.1 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -2605,8 +2571,19 @@
 				)
 			)
 		)
-		(property "Datasheet" "http://datasheets.maximintegrated.com/en/ds/ICL7660-MAX1044.pdf"
-			(at 107.95 146.05 0)
+		(property "Value" "-5V"
+			(at 102.8701 172.72 90)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" ""
+			(at 102.87 168.91 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -2616,8 +2593,8 @@
 				)
 			)
 		)
-		(property "Description" "Switched-Capacitor Voltage Converter, 1.5V to 10.0V operating supply voltage, 10mA with a 0.5V output drop, SO-8/DIP-8/µMAX-8/TO-99"
-			(at 105.41 143.51 0)
+		(property "Datasheet" ""
+			(at 102.87 168.91 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -2627,34 +2604,24 @@
 				)
 			)
 		)
-		(pin "2"
-			(uuid "50c1f30e-c3a2-4f92-bad2-38ed0dc8cb6c")
+		(property "Description" "Power symbol creates a global label with name \"-5V\""
+			(at 102.87 168.91 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
 		)
 		(pin "1"
-			(uuid "2f97885b-2731-4b62-b582-c30a4cb5b147")
-		)
-		(pin "3"
-			(uuid "3bf6c56e-cd13-4714-8a4a-49c0a8f69e69")
-		)
-		(pin "4"
-			(uuid "d75f07cc-6e5e-4297-98b9-9dc2b5a44a84")
-		)
-		(pin "5"
-			(uuid "d077bcb5-a194-41ee-833e-e238a3e8e274")
-		)
-		(pin "6"
-			(uuid "0f10b3bd-7acc-412a-946c-6df46be4740c")
-		)
-		(pin "7"
-			(uuid "a8cae55b-46e7-4e96-8502-50c4355ccbb6")
-		)
-		(pin "8"
-			(uuid "f7487bf4-7b2d-4949-abf8-cf2988bb1987")
+			(uuid "714f3589-ef55-4be5-a9ba-67165fa6d41e")
 		)
 		(instances
 			(project "Hydrophone_Analog"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/d6c2f1e6-e2b1-4ad6-8707-c42f5810f96f"
-					(reference "U13")
+					(reference "#PWR074")
 					(unit 1)
 				)
 			)
@@ -2740,6 +2707,88 @@
 		)
 	)
 	(symbol
+		(lib_id "Device:C")
+		(at 97.79 154.94 270)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "58cd9315-dd43-42a4-b960-0f00d65ebc78")
+		(property "Reference" "C77"
+			(at 99.0601 158.75 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "10uF"
+			(at 96.5201 158.75 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "Capacitor_SMD:C_1206_3216Metric"
+			(at 93.98 155.9052 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 97.79 154.94 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Unpolarized capacitor"
+			(at 97.79 154.94 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "2"
+			(uuid "296aa645-8105-48da-8728-574370dd957d")
+		)
+		(pin "1"
+			(uuid "db343599-38dc-43ac-ac7a-13c5339cdd8c")
+		)
+		(instances
+			(project "Hydrophone_Analog"
+				(path "/3634aa72-f703-4c52-b463-b00d283490ac/d6c2f1e6-e2b1-4ad6-8707-c42f5810f96f"
+					(reference "C77")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "power:+3.3V")
 		(at 57.15 82.55 270)
 		(unit 1)
@@ -2813,84 +2862,6 @@
 			(project "Hydrophone_Analog"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/d6c2f1e6-e2b1-4ad6-8707-c42f5810f96f"
 					(reference "#PWR064")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "power:GND")
-		(at 127 144.78 0)
-		(unit 1)
-		(body_style 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(in_pos_files yes)
-		(dnp no)
-		(fields_autoplaced yes)
-		(uuid "5d22fa2c-9807-4965-bec6-5228c0b60aca")
-		(property "Reference" "#PWR072"
-			(at 127 151.13 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Value" "GND"
-			(at 127 149.86 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Footprint" ""
-			(at 127 144.78 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" ""
-			(at 127 144.78 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
-			(at 127 144.78 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(pin "1"
-			(uuid "bc12c840-e4a1-4ace-b5f2-64c5d3a2e539")
-		)
-		(instances
-			(project "Hydrophone_Analog"
-				(path "/3634aa72-f703-4c52-b463-b00d283490ac/d6c2f1e6-e2b1-4ad6-8707-c42f5810f96f"
-					(reference "#PWR072")
 					(unit 1)
 				)
 			)
@@ -3055,84 +3026,6 @@
 			(project "Hydrophone_Analog"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/d6c2f1e6-e2b1-4ad6-8707-c42f5810f96f"
 					(reference "C75")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "power:GND")
-		(at 138.43 144.78 0)
-		(unit 1)
-		(body_style 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(in_pos_files yes)
-		(dnp no)
-		(fields_autoplaced yes)
-		(uuid "775ec48a-a2b7-4adb-9ed4-ab00e21ecf8c")
-		(property "Reference" "#PWR073"
-			(at 138.43 151.13 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Value" "GND"
-			(at 138.43 149.86 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Footprint" ""
-			(at 138.43 144.78 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" ""
-			(at 138.43 144.78 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
-			(at 138.43 144.78 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(pin "1"
-			(uuid "7645d31c-4bf9-404d-aa58-1207d4b1abe9")
-		)
-		(instances
-			(project "Hydrophone_Analog"
-				(path "/3634aa72-f703-4c52-b463-b00d283490ac/d6c2f1e6-e2b1-4ad6-8707-c42f5810f96f"
-					(reference "#PWR073")
 					(unit 1)
 				)
 			)
@@ -3380,88 +3273,6 @@
 	)
 	(symbol
 		(lib_id "Device:C")
-		(at 127 140.97 0)
-		(unit 1)
-		(body_style 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(in_pos_files yes)
-		(dnp no)
-		(fields_autoplaced yes)
-		(uuid "83aade19-ed18-442f-84df-ac5be386b799")
-		(property "Reference" "C77"
-			(at 130.81 139.6999 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Value" "10uF"
-			(at 130.81 142.2399 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Footprint" "Capacitor_SMD:C_1206_3216Metric"
-			(at 127.9652 144.78 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" ""
-			(at 127 140.97 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" "Unpolarized capacitor"
-			(at 127 140.97 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(pin "2"
-			(uuid "d2c0ccb7-71e5-45d0-9395-e0d811686a8b")
-		)
-		(pin "1"
-			(uuid "3cf5ce69-a388-4290-ba45-d173952ee541")
-		)
-		(instances
-			(project "Hydrophone_Analog"
-				(path "/3634aa72-f703-4c52-b463-b00d283490ac/d6c2f1e6-e2b1-4ad6-8707-c42f5810f96f"
-					(reference "C77")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "Device:C")
 		(at 30.48 58.42 0)
 		(unit 1)
 		(body_style 1)
@@ -3544,7 +3355,7 @@
 	)
 	(symbol
 		(lib_id "power:GND")
-		(at 105.41 161.29 0)
+		(at 119.38 135.89 90)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -3555,7 +3366,7 @@
 		(fields_autoplaced yes)
 		(uuid "89070d37-a3c6-4772-9a20-6eb89684afb9")
 		(property "Reference" "#PWR071"
-			(at 105.41 167.64 0)
+			(at 125.73 135.89 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -3566,17 +3377,18 @@
 			)
 		)
 		(property "Value" "GND"
-			(at 105.41 166.37 0)
+			(at 123.19 135.8899 90)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
+				(justify right)
 			)
 		)
 		(property "Footprint" ""
-			(at 105.41 161.29 0)
+			(at 119.38 135.89 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -3587,7 +3399,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 105.41 161.29 0)
+			(at 119.38 135.89 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -3598,7 +3410,7 @@
 			)
 		)
 		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
-			(at 105.41 161.29 0)
+			(at 119.38 135.89 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -3778,6 +3590,84 @@
 			(project "Hydrophone_Analog"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/d6c2f1e6-e2b1-4ad6-8707-c42f5810f96f"
 					(reference "U9")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "power:GND")
+		(at 93.98 154.94 270)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "bfd14519-3c97-48be-8c14-d06a95af328b")
+		(property "Reference" "#PWR072"
+			(at 87.63 154.94 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "GND"
+			(at 88.9 154.94 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 93.98 154.94 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 93.98 154.94 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
+			(at 93.98 154.94 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "a5ab4917-219d-4ec5-b58a-5f179b5656b8")
+		)
+		(instances
+			(project "Hydrophone_Analog"
+				(path "/3634aa72-f703-4c52-b463-b00d283490ac/d6c2f1e6-e2b1-4ad6-8707-c42f5810f96f"
+					(reference "#PWR072")
 					(unit 1)
 				)
 			)
@@ -4026,8 +3916,8 @@
 		)
 	)
 	(symbol
-		(lib_id "power:+5V")
-		(at 140.97 135.89 270)
+		(lib_id "Converter_DCDC:R-78E5.0-0.5")
+		(at 102.87 135.89 0)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -4036,10 +3926,9 @@
 		(in_pos_files yes)
 		(dnp no)
 		(fields_autoplaced yes)
-		(uuid "cecdbd69-0184-4e9b-a194-1894c895c9ca")
-		(property "Reference" "#PWR074"
-			(at 137.16 135.89 0)
-			(hide yes)
+		(uuid "d12e39b8-8d63-488c-809e-224ab8b09617")
+		(property "Reference" "U14"
+			(at 102.87 129.54 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -4048,19 +3937,31 @@
 				)
 			)
 		)
-		(property "Value" "-5V"
-			(at 144.78 135.8899 90)
+		(property "Value" "R-78E5.0-0.5"
+			(at 102.87 132.08 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
 				(font
 					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" "Converter_DCDC:Converter_DCDC_RECOM_R-78E-0.5_THT"
+			(at 104.14 142.24 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+					(italic yes)
 				)
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
-			(at 140.97 135.89 0)
+		(property "Datasheet" "https://www.recom-power.com/pdf/Innoline/R-78Exx-0.5.pdf"
+			(at 102.87 135.89 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -4070,8 +3971,8 @@
 				)
 			)
 		)
-		(property "Datasheet" ""
-			(at 140.97 135.89 0)
+		(property "Description" "500mA Step-Down DC/DC-Regulator, 7-28V input, 5V fixed Output Voltage, LM78xx replacement, -40°C to +85°C, SIP3"
+			(at 102.87 135.89 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -4081,24 +3982,19 @@
 				)
 			)
 		)
-		(property "Description" "Power symbol creates a global label with name \"+5V\""
-			(at 140.97 135.89 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
+		(pin "2"
+			(uuid "da406e7f-78b8-481e-bebd-095b0b346acb")
 		)
 		(pin "1"
-			(uuid "39a69007-4bc0-4012-b22e-6e4763fb83aa")
+			(uuid "683e05db-3c16-47bf-a66f-92f61d057184")
+		)
+		(pin "3"
+			(uuid "1972b4df-d89c-4372-9d49-a902654b407a")
 		)
 		(instances
 			(project "Hydrophone_Analog"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/d6c2f1e6-e2b1-4ad6-8707-c42f5810f96f"
-					(reference "#PWR074")
+					(reference "U14")
 					(unit 1)
 				)
 			)
