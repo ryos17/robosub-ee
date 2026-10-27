@@ -5421,7 +5421,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Resistor_SMD:R_0805_2012Metric"
 			(at 209.55 61.468 90)
 			(hide yes)
 			(show_name no)
@@ -5461,7 +5461,7 @@
 			(uuid "ec26c20d-cb6b-4ebd-a4d6-4f1d8eba011d")
 		)
 		(instances
-			(project "Hydrophone"
+			(project "Hydrophone_Analog"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/4852629f-3c72-4b6d-b0d0-8832d7830968"
 					(reference "R34")
 					(unit 1)
@@ -5513,7 +5513,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Resistor_SMD:R_0805_2012Metric"
 			(at 44.45 123.698 90)
 			(hide yes)
 			(show_name no)
@@ -5553,7 +5553,7 @@
 			(uuid "fac7aa5d-ac44-44ea-8ccc-e00371b47dd8")
 		)
 		(instances
-			(project "Hydrophone"
+			(project "Hydrophone_Analog"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/4852629f-3c72-4b6d-b0d0-8832d7830968"
 					(reference "R18")
 					(unit 1)
@@ -5605,7 +5605,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Resistor_SMD:R_0805_2012Metric"
 			(at 163.83 107.188 90)
 			(hide yes)
 			(show_name no)
@@ -5645,7 +5645,7 @@
 			(uuid "6e48b515-44cf-4b7b-9dad-4318c8eb5112")
 		)
 		(instances
-			(project "Hydrophone"
+			(project "Hydrophone_Analog"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/4852629f-3c72-4b6d-b0d0-8832d7830968"
 					(reference "R29")
 					(unit 1)
@@ -5761,7 +5761,7 @@
 			(uuid "0bf7b1e0-ab83-4028-8d66-ee069190d21a")
 		)
 		(instances
-			(project "Hydrophone"
+			(project "Hydrophone_Analog"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/4852629f-3c72-4b6d-b0d0-8832d7830968"
 					(reference "D10")
 					(unit 1)
@@ -5813,7 +5813,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Resistor_SMD:R_0805_2012Metric"
 			(at 88.9 39.878 90)
 			(hide yes)
 			(show_name no)
@@ -5853,7 +5853,7 @@
 			(uuid "d3f47999-b3b7-4930-9aaf-01b1eecc6b49")
 		)
 		(instances
-			(project "Hydrophone"
+			(project "Hydrophone_Analog"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/4852629f-3c72-4b6d-b0d0-8832d7830968"
 					(reference "R21")
 					(unit 1)
@@ -5905,7 +5905,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Resistor_SMD:R_0805_2012Metric"
 			(at 163.83 116.078 90)
 			(hide yes)
 			(show_name no)
@@ -5945,7 +5945,7 @@
 			(uuid "34c4cae7-2bf9-4d0d-b9b8-a273bc30ba8e")
 		)
 		(instances
-			(project "Hydrophone"
+			(project "Hydrophone_Analog"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/4852629f-3c72-4b6d-b0d0-8832d7830968"
 					(reference "R30")
 					(unit 1)
@@ -5999,7 +5999,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Capacitor_SMD:C_0805_2012Metric"
 			(at 214.63 24.4348 0)
 			(hide yes)
 			(show_name no)
@@ -6039,7 +6039,7 @@
 			(uuid "bcf5a704-f7fd-4f1d-8f95-47ac769832b2")
 		)
 		(instances
-			(project "Hydrophone"
+			(project "Hydrophone_Analog"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/4852629f-3c72-4b6d-b0d0-8832d7830968"
 					(reference "C30")
 					(unit 1)
@@ -6093,7 +6093,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Capacitor_SMD:C_0805_2012Metric"
 			(at 63.5 81.5848 0)
 			(hide yes)
 			(show_name no)
@@ -6133,7 +6133,7 @@
 			(uuid "296f6b8f-4696-41b5-91f9-e3330309cdb3")
 		)
 		(instances
-			(project "Hydrophone"
+			(project "Hydrophone_Analog"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/4852629f-3c72-4b6d-b0d0-8832d7830968"
 					(reference "C18")
 					(unit 1)
@@ -6239,7 +6239,7 @@
 			(uuid "40e7cac6-11e5-4ad6-a3ea-97dc7ccae90f")
 		)
 		(instances
-			(project "Hydrophone"
+			(project "Hydrophone_Analog"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/4852629f-3c72-4b6d-b0d0-8832d7830968"
 					(reference "D9")
 					(unit 1)
@@ -6349,7 +6349,7 @@
 			(uuid "0dcd8b0e-e0ef-41dc-ba17-da5f968604fa")
 		)
 		(instances
-			(project "Hydrophone"
+			(project "Hydrophone_Analog"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/4852629f-3c72-4b6d-b0d0-8832d7830968"
 					(reference "U4")
 					(unit 2)
@@ -6440,7 +6440,7 @@
 			(uuid "64e0b90c-8a2e-46ac-baed-6ddc2fcf0083")
 		)
 		(instances
-			(project "Hydrophone"
+			(project "Hydrophone_Analog"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/4852629f-3c72-4b6d-b0d0-8832d7830968"
 					(reference "#PWR06")
 					(unit 1)
@@ -6492,7 +6492,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Capacitor_SMD:C_0805_2012Metric"
 			(at 157.48 137.4648 0)
 			(hide yes)
 			(show_name no)
@@ -6532,7 +6532,7 @@
 			(uuid "f781995c-6c96-4e5c-b0f0-586eefbe2aa2")
 		)
 		(instances
-			(project "Hydrophone"
+			(project "Hydrophone_Analog"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/4852629f-3c72-4b6d-b0d0-8832d7830968"
 					(reference "C23")
 					(unit 1)
@@ -6584,7 +6584,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Resistor_SMD:R_0805_2012Metric"
 			(at 62.23 39.878 90)
 			(hide yes)
 			(show_name no)
@@ -6624,7 +6624,7 @@
 			(uuid "96badbd0-52b4-42d1-b633-e3ddfd241336")
 		)
 		(instances
-			(project "Hydrophone"
+			(project "Hydrophone_Analog"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/4852629f-3c72-4b6d-b0d0-8832d7830968"
 					(reference "R20")
 					(unit 1)
@@ -6678,7 +6678,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Relay_THT:Relay_DPDT_Schrack-RT2-FormC_RM5mm"
 			(at 67.31 104.14 0)
 			(hide yes)
 			(show_name no)
@@ -6737,7 +6737,7 @@
 			(uuid "c2049f8c-4e25-4fda-b6c2-234afc4cedae")
 		)
 		(instances
-			(project "Hydrophone"
+			(project "Hydrophone_Analog"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/4852629f-3c72-4b6d-b0d0-8832d7830968"
 					(reference "K7")
 					(unit 1)
@@ -6853,7 +6853,7 @@
 			(uuid "29d95015-ee97-4bd0-84d5-95791bb614c8")
 		)
 		(instances
-			(project "Hydrophone"
+			(project "Hydrophone_Analog"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/4852629f-3c72-4b6d-b0d0-8832d7830968"
 					(reference "D7")
 					(unit 1)
@@ -6907,7 +6907,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Resistor_SMD:R_0805_2012Metric"
 			(at 182.372 64.77 90)
 			(hide yes)
 			(show_name no)
@@ -6947,7 +6947,7 @@
 			(uuid "a7be2f85-c55c-4c96-a47e-8b0137cc0d61")
 		)
 		(instances
-			(project "Hydrophone"
+			(project "Hydrophone_Analog"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/4852629f-3c72-4b6d-b0d0-8832d7830968"
 					(reference "R32")
 					(unit 1)
@@ -7059,7 +7059,7 @@
 			(uuid "c27e9656-f92b-4870-9864-918e032ed50c")
 		)
 		(instances
-			(project "Hydrophone"
+			(project "Hydrophone_Analog"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/4852629f-3c72-4b6d-b0d0-8832d7830968"
 					(reference "U5")
 					(unit 3)
@@ -7150,7 +7150,7 @@
 			(uuid "76e6ad0b-07c7-492c-ba33-2c6ec5fa8e97")
 		)
 		(instances
-			(project "Hydrophone"
+			(project "Hydrophone_Analog"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/4852629f-3c72-4b6d-b0d0-8832d7830968"
 					(reference "#PWR04")
 					(unit 1)
@@ -7202,7 +7202,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Capacitor_SMD:C_0805_2012Metric"
 			(at 172.72 137.4648 0)
 			(hide yes)
 			(show_name no)
@@ -7242,7 +7242,7 @@
 			(uuid "c6b1d934-6643-4d24-aec1-ee048d981aaa")
 		)
 		(instances
-			(project "Hydrophone"
+			(project "Hydrophone_Analog"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/4852629f-3c72-4b6d-b0d0-8832d7830968"
 					(reference "C25")
 					(unit 1)
@@ -7296,7 +7296,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Capacitor_SMD:C_1206_3216Metric"
 			(at 182.5752 148.59 0)
 			(hide yes)
 			(show_name no)
@@ -7336,7 +7336,7 @@
 			(uuid "16f23315-f261-499e-85b6-8e4b0c0c2620")
 		)
 		(instances
-			(project "Hydrophone"
+			(project "Hydrophone_Analog"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/4852629f-3c72-4b6d-b0d0-8832d7830968"
 					(reference "C27")
 					(unit 1)
@@ -7390,7 +7390,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Relay_THT:Relay_SPST_Schrack-RT1-FormA_RM5mm"
 			(at 187.96 77.47 0)
 			(hide yes)
 			(show_name no)
@@ -7437,7 +7437,7 @@
 			(uuid "28198a32-3449-4350-a446-dfa477ec290d")
 		)
 		(instances
-			(project "Hydrophone"
+			(project "Hydrophone_Analog"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/4852629f-3c72-4b6d-b0d0-8832d7830968"
 					(reference "K9")
 					(unit 1)
@@ -7489,7 +7489,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Capacitor_SMD:C_0805_2012Metric"
 			(at 138.43 39.6748 0)
 			(hide yes)
 			(show_name no)
@@ -7529,7 +7529,7 @@
 			(uuid "a570cd8f-3968-46a4-87f4-5a00de41ff00")
 		)
 		(instances
-			(project "Hydrophone"
+			(project "Hydrophone_Analog"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/4852629f-3c72-4b6d-b0d0-8832d7830968"
 					(reference "C22")
 					(unit 1)
@@ -7581,7 +7581,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Resistor_SMD:R_0805_2012Metric"
 			(at 118.11 112.268 90)
 			(hide yes)
 			(show_name no)
@@ -7621,7 +7621,7 @@
 			(uuid "aa80dab7-6c7c-4508-bb2c-42e209e158a3")
 		)
 		(instances
-			(project "Hydrophone"
+			(project "Hydrophone_Analog"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/4852629f-3c72-4b6d-b0d0-8832d7830968"
 					(reference "R23")
 					(unit 1)
@@ -7733,7 +7733,7 @@
 			(uuid "bda0136a-fd39-42df-8c0c-88e0648118bc")
 		)
 		(instances
-			(project "Hydrophone"
+			(project "Hydrophone_Analog"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/4852629f-3c72-4b6d-b0d0-8832d7830968"
 					(reference "U4")
 					(unit 3)
@@ -7785,7 +7785,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Resistor_SMD:R_0805_2012Metric"
 			(at 195.58 61.468 90)
 			(hide yes)
 			(show_name no)
@@ -7825,7 +7825,7 @@
 			(uuid "430d2f27-f193-460c-8771-5b2680f76395")
 		)
 		(instances
-			(project "Hydrophone"
+			(project "Hydrophone_Analog"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/4852629f-3c72-4b6d-b0d0-8832d7830968"
 					(reference "R33")
 					(unit 1)
@@ -7916,7 +7916,7 @@
 			(uuid "3ee4150d-d166-4d77-bdb0-8986f0ee8449")
 		)
 		(instances
-			(project "Hydrophone"
+			(project "Hydrophone_Analog"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/4852629f-3c72-4b6d-b0d0-8832d7830968"
 					(reference "#PWR05")
 					(unit 1)
@@ -7970,7 +7970,7 @@
 				(justify right)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Resistor_SMD:R_0805_2012Metric"
 			(at 103.378 46.99 90)
 			(hide yes)
 			(show_name no)
@@ -8010,7 +8010,7 @@
 			(uuid "dc1e928a-74d4-4beb-99a9-6bf3d5dc07aa")
 		)
 		(instances
-			(project "Hydrophone"
+			(project "Hydrophone_Analog"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/4852629f-3c72-4b6d-b0d0-8832d7830968"
 					(reference "R22")
 					(unit 1)
@@ -8064,7 +8064,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Capacitor_SMD:C_0805_2012Metric"
 			(at 173.6852 113.03 0)
 			(hide yes)
 			(show_name no)
@@ -8104,7 +8104,7 @@
 			(uuid "dcb7ab9f-da91-4de5-bc80-c249a45881c6")
 		)
 		(instances
-			(project "Hydrophone"
+			(project "Hydrophone_Analog"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/4852629f-3c72-4b6d-b0d0-8832d7830968"
 					(reference "C26")
 					(unit 1)
@@ -8156,7 +8156,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Resistor_SMD:R_0805_2012Metric"
 			(at 132.08 126.238 90)
 			(hide yes)
 			(show_name no)
@@ -8196,7 +8196,7 @@
 			(uuid "1d757e7e-8d11-4534-84dc-014cc2678037")
 		)
 		(instances
-			(project "Hydrophone"
+			(project "Hydrophone_Analog"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/4852629f-3c72-4b6d-b0d0-8832d7830968"
 					(reference "R26")
 					(unit 1)
@@ -8248,7 +8248,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Relay_THT:Relay_SPST_Schrack-RT1-FormA_RM5mm"
 			(at 41.91 41.91 0)
 			(hide yes)
 			(show_name no)
@@ -8295,7 +8295,7 @@
 			(uuid "3f0cd44c-fe3a-4fe4-ab3d-1b2d2a835d63")
 		)
 		(instances
-			(project "Hydrophone"
+			(project "Hydrophone_Analog"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/4852629f-3c72-4b6d-b0d0-8832d7830968"
 					(reference "K6")
 					(unit 1)
@@ -8409,7 +8409,7 @@
 			(uuid "adf8ed55-af77-4e22-b6a8-15adc0fc76f9")
 		)
 		(instances
-			(project "Hydrophone"
+			(project "Hydrophone_Analog"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/4852629f-3c72-4b6d-b0d0-8832d7830968"
 					(reference "D8")
 					(unit 1)
@@ -8461,7 +8461,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Resistor_SMD:R_0805_2012Metric"
 			(at 118.11 117.348 90)
 			(hide yes)
 			(show_name no)
@@ -8501,7 +8501,7 @@
 			(uuid "1d19f676-3d21-4acd-86af-72de86ae3a21")
 		)
 		(instances
-			(project "Hydrophone"
+			(project "Hydrophone_Analog"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/4852629f-3c72-4b6d-b0d0-8832d7830968"
 					(reference "R24")
 					(unit 1)
@@ -8555,7 +8555,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Capacitor_SMD:C_0805_2012Metric"
 			(at 63.5 86.6648 0)
 			(hide yes)
 			(show_name no)
@@ -8595,7 +8595,7 @@
 			(uuid "917e1e13-6500-41b5-bd7a-a4836ee70d1d")
 		)
 		(instances
-			(project "Hydrophone"
+			(project "Hydrophone_Analog"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/4852629f-3c72-4b6d-b0d0-8832d7830968"
 					(reference "C19")
 					(unit 1)
@@ -8647,7 +8647,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Capacitor_SMD:C_0805_2012Metric"
 			(at 55.88 79.0448 0)
 			(hide yes)
 			(show_name no)
@@ -8687,7 +8687,7 @@
 			(uuid "6d29ac30-894e-4ccd-acb0-a8160b1c7258")
 		)
 		(instances
-			(project "Hydrophone"
+			(project "Hydrophone_Analog"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/4852629f-3c72-4b6d-b0d0-8832d7830968"
 					(reference "C17")
 					(unit 1)
@@ -8741,7 +8741,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Capacitor_SMD:C_0805_2012Metric"
 			(at 83.5152 104.14 0)
 			(hide yes)
 			(show_name no)
@@ -8781,7 +8781,7 @@
 			(uuid "a64a5049-276c-4ce2-984a-42b02a4968e1")
 		)
 		(instances
-			(project "Hydrophone"
+			(project "Hydrophone_Analog"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/4852629f-3c72-4b6d-b0d0-8832d7830968"
 					(reference "C20")
 					(unit 1)
@@ -8835,7 +8835,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Relay_THT:Relay_SPST_Schrack-RT1-FormA_RM5mm"
 			(at 149.86 76.2 0)
 			(hide yes)
 			(show_name no)
@@ -8882,7 +8882,7 @@
 			(uuid "10cf4b77-ef79-4470-a23b-ed4d8d0e4338")
 		)
 		(instances
-			(project "Hydrophone"
+			(project "Hydrophone_Analog"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/4852629f-3c72-4b6d-b0d0-8832d7830968"
 					(reference "K8")
 					(unit 1)
@@ -8934,7 +8934,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Resistor_SMD:R_0805_2012Metric"
 			(at 132.08 98.298 90)
 			(hide yes)
 			(show_name no)
@@ -8974,7 +8974,7 @@
 			(uuid "f2769566-92f9-4de8-8d02-fb7f9b06dd4b")
 		)
 		(instances
-			(project "Hydrophone"
+			(project "Hydrophone_Analog"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/4852629f-3c72-4b6d-b0d0-8832d7830968"
 					(reference "R25")
 					(unit 1)
@@ -9028,7 +9028,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Resistor_SMD:R_0805_2012Metric"
 			(at 144.272 63.5 90)
 			(hide yes)
 			(show_name no)
@@ -9068,7 +9068,7 @@
 			(uuid "26ae4e48-8721-4cf1-8dfd-af7c038c43f3")
 		)
 		(instances
-			(project "Hydrophone"
+			(project "Hydrophone_Analog"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/4852629f-3c72-4b6d-b0d0-8832d7830968"
 					(reference "R28")
 					(unit 1)
@@ -9122,7 +9122,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Capacitor_SMD:C_0805_2012Metric"
 			(at 234.6452 41.91 0)
 			(hide yes)
 			(show_name no)
@@ -9162,7 +9162,7 @@
 			(uuid "67458f55-53aa-4eb7-abd0-4e4b910c1ae6")
 		)
 		(instances
-			(project "Hydrophone"
+			(project "Hydrophone_Analog"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/4852629f-3c72-4b6d-b0d0-8832d7830968"
 					(reference "C31")
 					(unit 1)
@@ -9214,7 +9214,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Resistor_SMD:R_0805_2012Metric"
 			(at 58.42 123.698 90)
 			(hide yes)
 			(show_name no)
@@ -9254,7 +9254,7 @@
 			(uuid "39a2a7c8-0247-45dd-ab9b-77b77f2d94a5")
 		)
 		(instances
-			(project "Hydrophone"
+			(project "Hydrophone_Analog"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/4852629f-3c72-4b6d-b0d0-8832d7830968"
 					(reference "R19")
 					(unit 1)
@@ -9392,7 +9392,7 @@
 			(uuid "ecc5c49d-abc5-4ede-8fac-9e8076149f27")
 		)
 		(instances
-			(project "Hydrophone"
+			(project "Hydrophone_Analog"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/4852629f-3c72-4b6d-b0d0-8832d7830968"
 					(reference "U6")
 					(unit 2)
@@ -9446,7 +9446,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Resistor_SMD:R_0805_2012Metric"
 			(at 143.002 49.53 90)
 			(hide yes)
 			(show_name no)
@@ -9486,7 +9486,7 @@
 			(uuid "d00a1b22-d1a6-4e03-b282-9953dfbc8af4")
 		)
 		(instances
-			(project "Hydrophone"
+			(project "Hydrophone_Analog"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/4852629f-3c72-4b6d-b0d0-8832d7830968"
 					(reference "R27")
 					(unit 1)
@@ -9540,7 +9540,7 @@
 				(justify right)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Capacitor_SMD:C_0805_2012Metric"
 			(at 186.9948 130.81 0)
 			(hide yes)
 			(show_name no)
@@ -9580,7 +9580,7 @@
 			(uuid "601f2367-6a27-431e-b064-7452a04bb51a")
 		)
 		(instances
-			(project "Hydrophone"
+			(project "Hydrophone_Analog"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/4852629f-3c72-4b6d-b0d0-8832d7830968"
 					(reference "C66")
 					(unit 1)
@@ -9634,7 +9634,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Capacitor_SMD:C_0805_2012Metric"
 			(at 214.63 19.3548 0)
 			(hide yes)
 			(show_name no)
@@ -9674,7 +9674,7 @@
 			(uuid "48798a3c-e934-4b18-90be-f10d63f85644")
 		)
 		(instances
-			(project "Hydrophone"
+			(project "Hydrophone_Analog"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/4852629f-3c72-4b6d-b0d0-8832d7830968"
 					(reference "C29")
 					(unit 1)
@@ -9784,7 +9784,7 @@
 			(uuid "de6b8cba-6c3c-405f-b7c7-c5b21d9cc2f7")
 		)
 		(instances
-			(project "Hydrophone"
+			(project "Hydrophone_Analog"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/4852629f-3c72-4b6d-b0d0-8832d7830968"
 					(reference "U5")
 					(unit 2)
@@ -9836,7 +9836,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Capacitor_SMD:C_0805_2012Metric"
 			(at 207.01 16.8148 0)
 			(hide yes)
 			(show_name no)
@@ -9876,7 +9876,7 @@
 			(uuid "e2946a9b-e806-4af1-982a-13eb579e8d5c")
 		)
 		(instances
-			(project "Hydrophone"
+			(project "Hydrophone_Analog"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/4852629f-3c72-4b6d-b0d0-8832d7830968"
 					(reference "C28")
 					(unit 1)
@@ -9930,7 +9930,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Capacitor_SMD:C_0805_2012Metric"
 			(at 247.3452 41.91 0)
 			(hide yes)
 			(show_name no)
@@ -9970,7 +9970,7 @@
 			(uuid "d76355db-c7ed-4093-98f9-5ff9999f62d1")
 		)
 		(instances
-			(project "Hydrophone"
+			(project "Hydrophone_Analog"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/4852629f-3c72-4b6d-b0d0-8832d7830968"
 					(reference "C32")
 					(unit 1)
@@ -10024,7 +10024,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Capacitor_SMD:C_1206_3216Metric"
 			(at 163.5252 149.86 0)
 			(hide yes)
 			(show_name no)
@@ -10064,7 +10064,7 @@
 			(uuid "d4873c7d-abc5-4b52-9be0-77ec6b83883b")
 		)
 		(instances
-			(project "Hydrophone"
+			(project "Hydrophone_Analog"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/4852629f-3c72-4b6d-b0d0-8832d7830968"
 					(reference "C24")
 					(unit 1)
@@ -10116,7 +10116,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Resistor_SMD:R_0805_2012Metric"
 			(at 166.37 58.928 90)
 			(hide yes)
 			(show_name no)
@@ -10156,7 +10156,7 @@
 			(uuid "e27b3870-8305-4c3a-b8e7-ccb40523951d")
 		)
 		(instances
-			(project "Hydrophone"
+			(project "Hydrophone_Analog"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/4852629f-3c72-4b6d-b0d0-8832d7830968"
 					(reference "R31")
 					(unit 1)
@@ -10266,7 +10266,7 @@
 			(uuid "71d15ac6-69f8-41d3-8743-36323f30cebe")
 		)
 		(instances
-			(project "Hydrophone"
+			(project "Hydrophone_Analog"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/4852629f-3c72-4b6d-b0d0-8832d7830968"
 					(reference "U5")
 					(unit 1)
@@ -10382,7 +10382,7 @@
 			(uuid "1bd5fa82-2ba8-4adb-a6c1-05eb822517c3")
 		)
 		(instances
-			(project "Hydrophone"
+			(project "Hydrophone_Analog"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/4852629f-3c72-4b6d-b0d0-8832d7830968"
 					(reference "D12")
 					(unit 1)
@@ -10436,7 +10436,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Capacitor_SMD:C_0805_2012Metric"
 			(at 96.2152 104.14 0)
 			(hide yes)
 			(show_name no)
@@ -10476,7 +10476,7 @@
 			(uuid "6b02e857-54b6-4d6b-9293-5afc86d065f4")
 		)
 		(instances
-			(project "Hydrophone"
+			(project "Hydrophone_Analog"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/4852629f-3c72-4b6d-b0d0-8832d7830968"
 					(reference "C21")
 					(unit 1)
@@ -10530,7 +10530,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Relay_THT:Relay_DPDT_Schrack-RT2-FormC_RM5mm"
 			(at 218.44 41.91 0)
 			(hide yes)
 			(show_name no)
@@ -10589,7 +10589,7 @@
 			(uuid "ff0ec003-94a0-4c39-b43d-1c163033356d")
 		)
 		(instances
-			(project "Hydrophone"
+			(project "Hydrophone_Analog"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/4852629f-3c72-4b6d-b0d0-8832d7830968"
 					(reference "K10")
 					(unit 1)
@@ -10675,19 +10675,19 @@
 			)
 		)
 		(pin "7"
-			(uuid "083e26c6-a843-438e-a782-54b384450c6e")
+			(uuid "083e26c6-a843-438e-a782-54b384450c6f")
 		)
 		(pin "4"
-			(uuid "907100cd-4871-492e-b4fe-4d7842c40274")
+			(uuid "907100cd-4871-492e-b4fe-4d7842c40275")
 		)
 		(pin "6"
-			(uuid "09161235-1d88-4b59-9836-453ec6326d70")
+			(uuid "09161235-1d88-4b59-9836-453ec6326d71")
 		)
 		(pin "3"
 			(uuid "493935d5-0468-4c6d-94ae-39dcbda6ef16")
 		)
 		(pin "5"
-			(uuid "129fcf8c-ac3b-40d2-b9f0-07b47e8d58c9")
+			(uuid "129fcf8c-ac3b-40d2-b9f0-07b47e8d58ca")
 		)
 		(pin "2"
 			(uuid "91fda6f7-c6c2-4391-8507-8348e3bc4a8b")
@@ -10696,10 +10696,10 @@
 			(uuid "dd6400ac-3159-45da-8feb-eaa6f1041227")
 		)
 		(pin "8"
-			(uuid "0dcd8b0e-e0ef-41dc-ba17-da5f968604fa")
+			(uuid "0dcd8b0e-e0ef-41dc-ba17-da5f968604fb")
 		)
 		(instances
-			(project "Hydrophone"
+			(project "Hydrophone_Analog"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/4852629f-3c72-4b6d-b0d0-8832d7830968"
 					(reference "U4")
 					(unit 1)
@@ -10795,7 +10795,7 @@
 			(uuid "d961cf8a-9376-452d-b9ff-e2955bd7f51f")
 		)
 		(pin "17"
-			(uuid "2c85db54-b9a6-40bf-a786-3b68dc0f2acc")
+			(uuid "2c85db54-b9a6-40bf-a786-3b68dc0f2acd")
 		)
 		(pin "1"
 			(uuid "32e78b00-f00a-4b4d-8058-ab89a396bdd6")
@@ -10804,40 +10804,40 @@
 			(uuid "1b4781e5-8b53-460f-b99d-223d68296bcd")
 		)
 		(pin "14"
-			(uuid "0b8da2b2-ed85-4808-8cf6-a42d0d4fccbf")
+			(uuid "0b8da2b2-ed85-4808-8cf6-a42d0d4fccc0")
 		)
 		(pin "4"
 			(uuid "8bfab0a8-de8f-4f05-b7b5-8302232bc9bc")
 		)
 		(pin "15"
-			(uuid "522fa6a4-9f3f-4991-b8a5-23f60644c85e")
+			(uuid "522fa6a4-9f3f-4991-b8a5-23f60644c85f")
 		)
 		(pin "3"
 			(uuid "12d74d32-34d4-40dc-9175-c261de48a415")
 		)
 		(pin "7"
-			(uuid "7be58611-d947-4ff3-b4f8-b603408f1e19")
+			(uuid "7be58611-d947-4ff3-b4f8-b603408f1e1a")
 		)
 		(pin "16"
-			(uuid "e41b6026-4ed9-4e36-b267-66930e8490d0")
+			(uuid "e41b6026-4ed9-4e36-b267-66930e8490d1")
 		)
 		(pin "10"
 			(uuid "fabce4a4-5994-40ff-877f-165a84055a89")
 		)
 		(pin "8"
-			(uuid "b20bfc45-f926-4b33-a9ba-b7b388922689")
+			(uuid "b20bfc45-f926-4b33-a9ba-b7b38892268a")
 		)
 		(pin "13"
-			(uuid "9cf2a07a-aadc-436a-b69e-15d3b50e7d24")
+			(uuid "9cf2a07a-aadc-436a-b69e-15d3b50e7d25")
 		)
 		(pin "5"
-			(uuid "5bad4bb9-6147-4a7b-bfb6-7bd46a387a61")
+			(uuid "5bad4bb9-6147-4a7b-bfb6-7bd46a387a62")
 		)
 		(pin "6"
-			(uuid "ecc5c49d-abc5-4ede-8fac-9e8076149f27")
+			(uuid "ecc5c49d-abc5-4ede-8fac-9e8076149f28")
 		)
 		(instances
-			(project "Hydrophone"
+			(project "Hydrophone_Analog"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/4852629f-3c72-4b6d-b0d0-8832d7830968"
 					(reference "U6")
 					(unit 1)
@@ -10953,7 +10953,7 @@
 			(uuid "a0d13d61-04fa-4df4-ac82-08cfb5a3b514")
 		)
 		(instances
-			(project "Hydrophone"
+			(project "Hydrophone_Analog"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/4852629f-3c72-4b6d-b0d0-8832d7830968"
 					(reference "D11")
 					(unit 1)
