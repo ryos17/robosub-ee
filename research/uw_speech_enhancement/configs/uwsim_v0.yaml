@@ -1,0 +1,149 @@
+# uwsim v0 simulator configuration (RESEARCH_PLAN.md section 4.2 randomization ranges).
+# calibrated: false -> every "measured" item is an uncalibrated textbook/placeholder value:
+#   chain FIRs (h1/h2/h3, hydrophone) = identity/linear, directivity = piston a = 0.117 m,
+#   T60 per octave, preamp corner, codec floor, measured SNR range, boundary priors.
+# Replace them with the section 4.3 fit at gate G3 and set calibrated: true.
+# Ranges are [lo, hi] sampled uniformly. Load with uwse.uwsim.config.load_config.
+version: uwsim_v0
+calibrated: false
+fs: 48000
+pool:
+  calibrated_name: avery
+  calibrated_dims: null
+  generic_fraction: 0.2
+  dim_jitter: 0.1
+  slope_jitter: 0.5
+  generic_L:
+  - 15.0
+  - 50.0
+  generic_W:
+  - 8.0
+  - 25.0
+  generic_H:
+  - 1.2
+  - 5.0
+  generic_rel_slope:
+  - 0.0
+  - 0.4
+  surface_R:
+  - -1.0
+  - -0.9
+  walls:
+    cp:
+    - 3500.0
+    - 5500.0
+    cs:
+    - 2000.0
+    - 3000.0
+    rho:
+    - 2200.0
+    - 2500.0
+    eta:
+    - 0.01
+    - 0.05
+  floor:
+    cp:
+    - 3500.0
+    - 5500.0
+    cs:
+    - 2000.0
+    - 3000.0
+    rho:
+    - 2200.0
+    - 2500.0
+    eta:
+    - 0.01
+    - 0.05
+acoustics:
+  temperature_c: 26.0
+  c_nominal: null
+  c_jitter: 0.005
+  t_e:
+  - 0.03
+  - 0.05
+  t60_bands:
+    125: 1.0
+    250: 0.9
+    500: 0.8
+    1000: 0.7
+    2000: 0.6
+    4000: 0.5
+    8000: 0.4
+  t60_two_slope: null
+  t60_scale:
+  - 0.7
+  - 1.3
+  f_x_min: 500.0
+  modal_f_max_factor: 2.0
+  rir_length_s: 1.0
+  eps_max: 0.001
+  ir_perturb_db: 0.0
+geometry:
+  source_depth_min: 1.0
+  receiver_depth_min: 0.1
+  wall_margin: 0.1
+  range_m:
+  - 0.3
+  - 25.0
+  orientation_deg:
+  - 0.0
+  - 360.0
+  range_sampling: volume
+  thruster_dist:
+  - 0.3
+  - 1.5
+chain:
+  drive_lpf_hz: 8000.0
+  drive_lpf_order: 8
+  drive_level_db:
+  - -10.0
+  - 0.0
+  h1_path: null
+  h2_path: null
+  h3_path: null
+  proj_eq_db: 3.0
+  resonance_shift: 0.2
+  directivity_path: null
+  piston_radius_m: 0.117
+  hydrophone_fir_path: null
+  hyd_tilt_db: 2.0
+  preamp_hpf_hz: 100.0
+  preamp_hpf_order: 2
+  adc_floor_dbfs: -110.0
+  adc_jitter_db: 3.0
+  adc_bits: 24
+  level_dbfs:
+  - -35.0
+  - -15.0
+noise:
+  snr_measured:
+  - 0.0
+  - 15.0
+  snr_widen_db: 10.0
+  snr_clip:
+  - -10.0
+  - 25.0
+  band:
+  - 500.0
+  - 8000.0
+  thruster_prob: 0.7
+  thruster_split: train
+  ambient_prob: 1.0
+  ambient_rel_db:
+  - -20.0
+  - -5.0
+  bubble_rate:
+  - 0.0
+  - 20.0
+  bubble_radius_m:
+  - 0.0005
+  - 0.003
+  bubble_rel_db:
+  - -20.0
+  - 0.0
+  recorded_bubbles_prob: 0.0
+target:
+  kind: R1
+  f_lo: 500.0
+  f_hi: 8000.0
+  gain: rms

@@ -1,0 +1,37 @@
+name: uwse
+channels:
+  - conda-forge
+dependencies:
+  - python=3.10
+  - pip
+  - ffmpeg
+  - pip:
+      # Desktop / workstation build. The pins are the versions the test suite
+      # passed on (2026-10-28). Install torch FIRST from the CUDA index: a
+      # later plain-PyPI resolve otherwise replaces it with a CPU build.
+      # On the Orin use the Jetson wheels pinned in
+      # ../whisper_ivc/environment.yaml instead.
+      - --extra-index-url https://download.pytorch.org/whl/cu126
+      - torch==2.14.1
+      - torchaudio==2.11.1
+      - numpy==1.26.4
+      - scipy
+      - soundfile
+      - tqdm
+      - pyyaml
+      - pytest
+      # evaluation
+      - jiwer
+      - pystoi
+      - pesq
+      - openai-whisper==20250625
+      # baselines / adapters
+      - speechbrain==1.1.2
+      - nara_wpe
+      - peft==0.21.2
+      - transformers==5.20.2
+      # 0.5.6 needs the torchaudio.backend shim in uwse/adapters/dfn3.py
+      - deepfilternet==0.5.6
+      - deepfilterlib==0.5.6
+      # in-air control (C7) and ISM cross-check only
+      - pyroomacoustics

@@ -1,0 +1,55 @@
+# C7: in-air control (RQ2b). Same DFN3 recipe as c2_dfn3.yaml, but RIRs from a
+# pyroomacoustics ShoeBox in AIR (c = 343 m/s, frequency-flat Sabine absorption, no
+# sign flip), T60 drawn from the POOL distribution, same noise bank, same SNR rule and
+# the same R1 target (RESEARCH_PLAN.md §7.3, §4.2 Implementation). MVR: DFN3 x 1.
+run_name: c7_inair_dfn3
+condition: C7
+task: se
+adapter:
+  name: dfn3
+  kwargs:
+    loss_name: native
+data:
+  kind: inair
+  train_clean: data/librispeech/LibriSpeech/train-clean-100
+  val_clean: data/librispeech/LibriSpeech/dev-clean
+  noise_root: data/noise
+  chain_fir: null       # measured h_chain (.npy at fs_sim) once E2 exists; null -> identity (R0)
+  sim_config: configs/uwsim_v0.yaml   # SNR and level ranges are read from here (same rule as C2)
+  n_train_items: 1000000
+  n_val_items: 900
+  val_seed: 20261027
+  val_dir: data/frozen/sim_val_2h_inair_48k
+  params:
+    # UNCALIBRATED placeholder: replace t60_range by t60_samples = measured pool T60s (E3)
+    t60_range: [0.25, 1.0]
+    t60_samples: null
+    room_dim_range: [[15.0, 50.0], [8.0, 25.0], [1.2, 5.0]]   # generic pools, §4.2 row 3
+    distance_range: [0.3, 25.0]                              # §4.2 row 13
+    c: 343.0
+    max_order: 12       # ISM cap; the late part is the energy-matched synthetic tail
+    t_e: 0.04
+    synth_tail: true
+    n_rirs: 2048        # lazily generated per worker
+    # snr_range / level_dbfs_range: taken from sim_config (uwsim noise.snr_* and chain.level_dbfs)
+train:
+  out_dir: runs
+  lr: 1.0e-4
+  betas: [0.9, 0.999]
+  weight_decay: null    # resolved by param_mode: 1e-4 full, 0 lora (§7.4)
+  warmup_steps: 1000
+  max_steps: 50000
+  grad_clip: 5.0
+  param_mode: full
+  audio_s_per_step: 64.0
+  segment_s: 4.0
+  batch_size: 4
+  val_segment_s: 8.0
+  val_batch_size: 4
+  amp: false
+  eval_every: 2000
+  patience: 5
+  log_every: 50
+  ckpt_every: 1000
+  num_workers: 4
+seeds: [0]

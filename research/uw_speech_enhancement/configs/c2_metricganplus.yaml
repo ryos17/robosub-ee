@@ -1,0 +1,44 @@
+# C2: MetricGAN+ (generator + discriminator; the native MetricGAN+ loop runs inside the
+# adapter's loss), full fine-tuning on uwsim v0 (RESEARCH_PLAN.md §7.2-7.4).
+# MVR: 1 seed (3 in the paper). PESQ for the discriminator runs on the CPU every step:
+# its cost is part of the W4 smoke-test throughput.
+run_name: c2_metricganplus
+condition: C2
+task: se
+adapter:
+  name: metricganplus   # 16 kHz
+  kwargs:
+    loss_name: metricgan
+data:
+  kind: uwsim
+  train_clean: data/librispeech/LibriSpeech/train-clean-100
+  val_clean: data/librispeech/LibriSpeech/dev-clean
+  noise_root: data/noise
+  sim_config: configs/uwsim_v0.yaml
+  rir_bank: data/rirs/uwsim_v0
+  target: R1
+  n_train_items: 1000000
+  n_val_items: 900
+  val_seed: 20261027
+  val_dir: data/frozen/sim_val_2h_16k
+train:
+  out_dir: runs
+  lr: 1.0e-4            # §7.4 MetricGAN+ generator peak LR
+  betas: [0.9, 0.999]
+  weight_decay: null    # resolved by param_mode: 1e-4 full, 0 lora (§7.4)
+  warmup_steps: 1000
+  max_steps: 50000
+  grad_clip: 5.0
+  param_mode: full
+  audio_s_per_step: 64.0
+  segment_s: 4.0
+  batch_size: 8         # accum = 2
+  val_segment_s: 8.0
+  val_batch_size: 8
+  amp: false
+  eval_every: 2000
+  patience: 5
+  log_every: 50
+  ckpt_every: 1000
+  num_workers: 4
+seeds: [0, 1, 2]        # the MVR runs seed 0 only (the default without --all-seeds)

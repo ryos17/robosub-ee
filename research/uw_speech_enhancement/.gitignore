@@ -1,0 +1,13 @@
+# corpora, generated audio, recordings: never committed
+data/*
+!data/README.md
+runs/
+checkpoints/
+pretrained_models/
+*.wav
+*.flac
+*.pt
+*.ckpt
+.pytest_cache/
+*.egg-info/
+tmp/
