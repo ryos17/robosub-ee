@@ -179,29 +179,33 @@ def _systems_on_disk(out: Path, cond: str) -> list[str]:
 
 
 def stage_asr(utts, out: Path, model: str, device: str) -> None:
-    from uwse.evaluation.asr import TranscriptCache, WhisperASR, transcribe_items
+    from uwse.evaluation.asr import TranscriptCache, WhisperASR
     from uwse.evaluation.normalize import normalize_cut
 
     asr = WhisperASR(model, device=device)
     cache = TranscriptCache(str(out / "transcripts.jsonl"))
-    items = []
+    key = f"whisper-{model}+lnorm"
+    # Build only the uncached work list (paths, no audio), then load, normalize
+    # and decode one item at a time: holding every normalized cut in RAM cost
+    # ~4.5 GB for the full 9600-item run.
+    todo = []
     for cond in sorted(p.name for p in (out / "wav").iterdir()):
-        r0 = {u.utt_id: sf.read(out / "wav" / cond / "R0" / f"{u.utt_id}.wav")[0] for u in utts}
         for sysname in _systems_on_disk(out, cond):
             for u in utts:
                 p = out / "wav" / cond / sysname / f"{u.utt_id}.wav"
-                if not p.exists():
-                    continue
-                if cache.get(f"{cond}/{sysname}", u.utt_id, f"whisper-{model}+lnorm") is not None:
-                    items.append({"system": f"{cond}/{sysname}", "utt_id": u.utt_id, "audio": None})
-                    continue
-                x, _ = sf.read(p)
-                ref = x if sysname == "clean" else r0[u.utt_id]
-                y, g, _ = normalize_cut(x, ref, FS_SCORE)
-                items.append({"system": f"{cond}/{sysname}", "utt_id": u.utt_id,
-                              "audio": np.clip(y, -1, 1).astype(np.float32), "fs": FS_SCORE})
-    # cached items never touch audio; transcribe_items checks the cache first
-    transcribe_items(asr, items, cache=cache, model_key=f"whisper-{model}+lnorm")
+                if p.exists() and cache.get(f"{cond}/{sysname}", u.utt_id, key) is None:
+                    todo.append((cond, sysname, u.utt_id, p))
+    print(f"ASR: {len(todo)} uncached items, {len(cache)} cached, device {asr.device}, fp16 {asr.fp16}")
+    r0_cond, r0 = None, {}
+    for cond, sysname, uid, p in tqdm(todo, desc=f"ASR {key}"):
+        if cond != r0_cond:
+            r0_cond = cond
+            r0 = {u.utt_id: sf.read(out / "wav" / cond / "R0" / f"{u.utt_id}.wav")[0] for u in utts}
+        x, _ = sf.read(p)
+        ref = x if sysname == "clean" else r0[uid]
+        y, _, _ = normalize_cut(x, ref, FS_SCORE)
+        res = asr.transcribe(np.clip(y, -1, 1).astype(np.float32))
+        cache.put({"system": f"{cond}/{sysname}", "utt_id": uid, "model": key, **res})
     (out / "asr_info.json").write_text(json.dumps(asr.info(), indent=1))
 
 

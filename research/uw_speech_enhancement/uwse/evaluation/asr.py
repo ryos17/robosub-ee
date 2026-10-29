@@ -307,6 +307,21 @@ class WhisperASR:
             import whisper
 
             self._model = whisper.load_model(self.model_name, device=self.device, download_root=self.download_root)
+            if self.fp16:
+                # load_model keeps fp32 weights and casts them to the input
+                # dtype on every call: large-v3 then holds 6.2 GB of VRAM and
+                # spills into shared memory on an 8 GB GPU. Pre-casting the
+                # weights the custom Linear/Conv1d/embedding layers cast anyway
+                # gives bit-identical outputs; LayerNorm stays fp32 as whisper
+                # computes it in fp32.
+                import torch
+                from whisper.model import Conv1d, Linear
+
+                for m in self._model.modules():
+                    if isinstance(m, (Linear, Conv1d, torch.nn.Embedding)):
+                        m.half()
+                if self.device.startswith("cuda"):
+                    torch.cuda.empty_cache()
         return self._model
 
     def transcribe(self, audio: np.ndarray) -> dict:
