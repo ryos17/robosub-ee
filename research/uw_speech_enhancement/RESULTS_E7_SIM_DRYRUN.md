@@ -94,6 +94,39 @@ The full table, with S/D/I counts, hallucination flags and CI-SDR, is in
 - **Repeat transcriptions match exactly.** The 2243 transcripts from the first, crashed run were re-decoded after the fp16-weight change and matched exactly (8/8 checked).
 - **Synthetic noise at 0 dB SNR is harsh and spectrally unrealistic.** Absolute noise0 WERs mean little until the recorded noise bank (thrusters, pumps, bubbles) replaces it.
 
+## Addendum (2026-10-29): C10, Kiel-recipe U-Net trained on uwsim
+
+- **Model.** `runs/c10_kiel_unet_s0/best.pt`, trained from scratch on uwsim v0 with `configs/c10_kiel_unet.yaml` and `data.noise_root=null`:
+  - The RIR bank is `data/rirs/uwsim_v0` (20k RIRs, uncalibrated), with synthetic noise in place of a recorded bank.
+  - Training SNR was drawn from −10 to 25 dB, with thrusters on in 70% of items.
+  - Early stopping hit at step 24k. The best validation loss was 0.0912 at step 14k (1.5M audio-seconds seen).
+  - Training was data-bound: 74 audio-s per wall-second, about 89% of it spent in data loading.
+- **Evaluation.** The model enhanced the cached 16 kHz `noisy` wavs (`scripts/sim_baseline.py --stages enhance`), then was scored with the same harness.
+
+WER and ESTOI against R1:
+
+| condition | C0 noisy WER % | C10 kiel_unet WER % | C10 better / same / worse (utts) | C0 ESTOI | C10 ESTOI |
+|---|---|---|---|---|---|
+| quiet 1 m | 3.1 [2.5, 3.8] | 2.6 [1.9, 3.4] | 30 / 151 / 19 | 0.798 | 0.868 |
+| quiet 3 m | 3.7 [2.9, 4.6] | 5.5 [4.5, 6.6] | 25 / 117 / 58 | 0.508 | 0.701 |
+| quiet 6 m | 4.3 [3.4, 5.4] | 8.0 [6.6, 9.6] | 14 / 102 / 84 | 0.364 | 0.560 |
+| noise0 1 m | 20.3 [16.6, 24.6] | 76.1 [67.6, 86.9] | 3 / 11 / 186 | 0.310 | 0.311 |
+| noise0 3 m | 48.3 [42.9, 54.0] | 97.9 [91.9, 105.6] | 12 / 10 / 178 | 0.230 | 0.239 |
+| noise0 6 m | 56.4 [50.7, 62.4] | 100.7 [96.8, 105.2] | 11 / 27 / 162 | 0.168 | 0.200 |
+
+Reading:
+
+- **Dereverberation works on the metric it was trained for.** In quiet conditions, ESTOI rises a lot (0.36 → 0.56 at 6 m), and this is the largest ESTOI gain of any system in the table.
+- **WER still gets worse with range.** Even in quiet, C10 is worse than C0 at 3 m and 6 m. Finding 2 above applies even to a model trained in-domain: an IRM-masking network optimized toward R1 does not, on its own, give Whisper anything it can use.
+- **The 0 dB condition is a failure.**
+  - ESTOI is flat, so the model barely denoises.
+  - WER triples at 1 m. Most of the increase is substitutions (1950 S vs 540).
+  - Two explanations remain open:
+    - (a) the training noise mix (mostly thruster, plus bubbles) does not cover the test's −3 dB/oct synthetic noise;
+    - (b) masking artefacts at low SNR hurt Whisper more than residual noise does.
+  - A matched-noise re-score separates (a) from (b), and needs no retraining.
+- **This is one seed of a from-scratch recipe** whose optimizer settings are our §7.4 defaults, not Kiel's (see the config header). Early stopping on the noisy validation loss (patience 5 × 2k steps) cut it at about half the planned 50k steps.
+
 ## Next
 
 - **C2 fine-tuning.** Run kiel_unet (C10) first, as the cheap pipeline check, then dfn3 C2 on uwsim. Re-score on this same harness to get the first sim ΔWER(C2 − C0).
