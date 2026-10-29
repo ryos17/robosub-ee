@@ -20,10 +20,12 @@ ripple, hydrophone tilt) and the directivity filter are linear-phase FIRs applie
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from functools import lru_cache
 from typing import Sequence
 
 import numpy as np
-from scipy.signal import butter, fftconvolve, firwin2, resample, sosfilt, sosfiltfilt
+from scipy import fft as sp_fft
+from scipy.signal import butter, fftconvolve, firwin2, resample, sosfilt, sosfilt_zi
 from scipy.special import j1
 
 # Octave centres used for the directivity table and the band-wise equalizers.
@@ -36,6 +38,36 @@ LL916_RADIUS_M = 0.117
 # --------------------------------------------------------------------------- utilities
 
 
+def _ols_block(m: int, n: int) -> int:
+    """Overlap-save FFT size for an ``m``-tap FIR on ``n`` samples (0: one FFT of the whole signal)."""
+    b = 1 << max(11, int(np.ceil(np.log2(8 * m))))
+    return b if n >= 4 * b else 0
+
+
+def fir_full(x: np.ndarray, h: np.ndarray) -> np.ndarray:
+    """Full linear convolution of ``x`` with the 1-D FIR ``h`` along the last axis.
+
+    Same result as ``fftconvolve(x, h, mode="full", axes=-1)`` up to float round-off. A
+    short FIR on a long signal goes through block overlap-save (batched 4-8k FFTs instead
+    of three FFTs of the whole padded signal; about 2x faster for 4 s at 48 kHz).
+    """
+    x = np.asarray(x, dtype=np.float64)
+    h = np.asarray(h, dtype=np.float64).ravel()
+    m, n = h.size, x.shape[-1]
+    B = _ols_block(m, n) if m else 0  # empty FIR: scipy's (empty) result, as before
+    if not B:
+        return fftconvolve(x, h.reshape((1,) * (x.ndim - 1) + (m,)), mode="full", axes=-1)
+    lead = x.shape[:-1]
+    step = B - m + 1  # valid (non-wrapped) outputs per block
+    n_full = n + m - 1
+    nb = -(-n_full // step)
+    xp = np.zeros(lead + ((nb - 1) * step + B,))
+    xp[..., m - 1: m - 1 + n] = x
+    frames = np.lib.stride_tricks.sliding_window_view(xp, B, axis=-1)[..., ::step, :]
+    yb = sp_fft.irfft(sp_fft.rfft(frames, axis=-1) * sp_fft.rfft(h, B), B, axis=-1)
+    return yb[..., m - 1:].reshape(lead + (nb * step,))[..., :n_full]
+
+
 def apply_fir(x: np.ndarray, h: np.ndarray, centred: bool = False) -> np.ndarray:
     """Convolve ``x`` with FIR ``h`` along the last axis, output length = len(x).
 
@@ -44,9 +76,74 @@ def apply_fir(x: np.ndarray, h: np.ndarray, centred: bool = False) -> np.ndarray
     h = np.asarray(h, dtype=np.float64)
     if h.size == 1:
         return x * h[0]
-    y = fftconvolve(x, h, mode="full", axes=-1)
+    y = fir_full(x, h)
     off = (h.size - 1) // 2 if centred else 0
     return y[..., off: off + x.shape[-1]]
+
+
+# --------------------------------------------------------------------------- IIR helpers
+
+
+@lru_cache(maxsize=64)
+def _butter(order: int, wn: float | tuple[float, float], btype: str,
+            fs: float) -> tuple[np.ndarray, np.ndarray]:
+    """Cached Butterworth design: (sos, sosfilt_zi(sos)). Shared arrays: never modify them
+    (they cannot be flagged read-only because scipy's sosfilt wants writable buffers)."""
+    sos = butter(order, list(wn) if isinstance(wn, tuple) else wn, btype=btype, fs=fs, output="sos")
+    return sos, sosfilt_zi(sos)
+
+
+def butter_sos(order: int, wn, btype: str, fs: float) -> np.ndarray:
+    """``butter(order, wn, btype, fs=fs, output="sos")`` from the design cache (a copy)."""
+    wn = (float(wn[0]), float(wn[1])) if np.ndim(wn) else float(wn)
+    return _butter(int(order), wn, btype, float(fs))[0].copy()
+
+
+# A run of exact zeros (bubble-noise gaps, zero padding) lets the states of an IIR
+# cascade decay into subnormal floats, where x86 arithmetic is ~100x slower: sosfilt on
+# the bubble noise took 15-75 ms instead of 1.5 ms. A tone at fs/4 (away from the
+# bilinear zeros at DC and Nyquist) 1e-150 x below the row peak keeps every state in the
+# normal range. Adding it leaves every sample with |x| > ~1e-134 x peak bit-identical,
+# so outputs differ from the plain filter only at the ~1e-150 relative level. Inputs
+# without a single exact zero cannot build such a run and are filtered as they are.
+_DITHER_REL = 1e-150
+
+
+def _dither(x: np.ndarray) -> np.ndarray:
+    """``x`` plus the fs/4 dither tone (per-row scale); input without an exact zero is returned as is."""
+    x = np.asarray(x, dtype=np.float64)
+    if x.size == 0 or x.all():
+        return x
+    pk = np.maximum(np.max(x, axis=-1, keepdims=True), -np.min(x, axis=-1, keepdims=True))
+    y = x.copy()
+    y[..., 1::4] += _DITHER_REL * pk
+    y[..., 3::4] -= _DITHER_REL * pk
+    return y
+
+
+def sosfilt_ftz(sos: np.ndarray, x: np.ndarray, zi: np.ndarray | None = None):
+    """``scipy.signal.sosfilt(sos, x, axis=-1, zi=zi)`` without subnormal stalls (see ``_dither``)."""
+    return sosfilt(sos, _dither(x), axis=-1, zi=zi)
+
+
+def sosfiltfilt_ftz(sos: np.ndarray, x: np.ndarray, zi: np.ndarray | None = None) -> np.ndarray:
+    """``scipy.signal.sosfiltfilt(sos, x, axis=-1)`` without subnormal stalls (see ``_dither``).
+
+    Same steps as scipy (odd extension by 3 * ntaps, steady-state initial conditions
+    scaled by the first sample of each pass); ``zi`` = ``sosfilt_zi(sos)`` if precomputed.
+    """
+    x = _dither(x)
+    ns = sos.shape[0]
+    ntaps = 2 * ns + 1 - min(int((sos[:, 2] == 0).sum()), int((sos[:, 5] == 0).sum()))
+    edge = 3 * ntaps
+    if x.shape[-1] <= edge:
+        raise ValueError(f"The length of the input vector x must be greater than padlen, which is {edge}.")
+    ext = np.concatenate((2 * x[..., :1] - x[..., edge:0:-1], x,
+                          2 * x[..., -1:] - x[..., -2:-(edge + 2):-1]), axis=-1)
+    zi = (sosfilt_zi(sos) if zi is None else zi).reshape((ns,) + (1,) * (x.ndim - 1) + (2,))
+    y, _ = sosfilt(sos, ext, axis=-1, zi=zi * ext[..., :1])
+    y, _ = sosfilt(sos, y[..., ::-1], axis=-1, zi=zi * y[..., -1:])
+    return y[..., ::-1][..., edge:-edge]
 
 
 def eq_fir(freqs_hz: Sequence[float], gains_db: Sequence[float], fs: int,
@@ -118,8 +215,8 @@ def drive_lpf(x: np.ndarray, fs: int, fc: float = 8000.0, order: int = 8,
     """
     if fc >= fs / 2:
         return np.array(x, dtype=np.float64, copy=True)
-    sos = butter(order, fc, btype="low", fs=fs, output="sos")
-    return sosfiltfilt(sos, x, axis=-1) if zero_phase else sosfilt(sos, x, axis=-1)
+    sos = butter_sos(order, fc, "low", fs)
+    return sosfiltfilt_ftz(sos, x) if zero_phase else sosfilt_ftz(sos, x)
 
 
 # --------------------------------------------------------------------------- projector
@@ -246,8 +343,7 @@ def preamp_hpf(x: np.ndarray, fs: int, fc: float = 100.0, order: int = 2) -> np.
     """Causal Butterworth high-pass of the preamp. The corner is uncalibrated (100 Hz)."""
     if fc <= 0:
         return np.array(x, dtype=np.float64, copy=True)
-    sos = butter(order, fc, btype="high", fs=fs, output="sos")
-    return sosfilt(sos, x, axis=-1)
+    return sosfilt_ftz(butter_sos(order, fc, "high", fs), x)
 
 
 def apply_gain(x: np.ndarray, gain_db: float) -> np.ndarray:
@@ -269,7 +365,10 @@ def adc(x: np.ndarray, rng: np.random.Generator | None = None,
         y += 10.0 ** (noise_floor_dbfs / 20.0) * rng.standard_normal(y.shape)
     q = 2.0 ** (bits - 1)
     clipped = bool(np.any(np.abs(y) >= 1.0))
-    y = np.clip(np.round(y * q), -q, q - 1) / q
+    y *= q  # in place: same operations as np.clip(np.round(y * q), -q, q - 1) / q
+    np.round(y, out=y)
+    np.clip(y, -q, q - 1, out=y)
+    y /= q
     return y, clipped
 
 
@@ -338,17 +437,43 @@ class TransducerChain:
             y = apply_fir(y, eq_fir(proj_eq[0], proj_eq[1], self.fs), centred=True)
         return self.receive(y, hyd_eq)
 
+    def _transmit_and_h_chain_tx(self, s: np.ndarray, drive_db: float, theta_deg: float,
+                                 proj_eq: tuple[np.ndarray, np.ndarray] | None = None,
+                                 resonance_factor: float = 1.0) -> tuple[np.ndarray, np.ndarray]:
+        """(transmit(s, ...), transmit half of h_chain_apply(s, ...)) with shared work.
+
+        The second output is h_chain_apply before ``receive``. Both start from the same
+        drive LPF output; with a linear projector (h2, h3 absent or zero) the transmit
+        signal is the h_chain one times the drive gain, so the h1 and projector-EQ
+        convolutions run once (equal to the separate calls up to float round-off).
+        """
+        x = drive_lpf(s, self.fs, self.drive_lpf_hz, self.drive_lpf_order)
+        pk = np.max(np.abs(x)) if x.size else 0.0
+        g = 10.0 ** (drive_db / 20.0) / pk if pk > 0 else 1.0
+        eq = eq_fir(proj_eq[0], proj_eq[1], self.fs) if proj_eq is not None else None
+        y = self.projector.apply_linear(x, resonance_factor)
+        if eq is not None:
+            y = apply_fir(y, eq, centred=True)
+        p = self.projector
+        if all(h is None or not np.any(h) for h in (p.h2, p.h3)) and np.any(p.h1):
+            tx = y * g
+        else:
+            tx = p.apply(x / pk * 10.0 ** (drive_db / 20.0) if pk > 0 else x, resonance_factor)
+            if eq is not None:
+                tx = apply_fir(tx, eq, centred=True)
+        return self.directivity.apply(tx, theta_deg, self.fs), y
+
 
 def bandlimit(x: np.ndarray, fs: int, f_lo: float, f_hi: float, order: int = 4) -> np.ndarray:
     """Zero-phase Butterworth band-pass [f_lo, f_hi]; edges at/above Nyquist are dropped."""
     hi_ok = f_hi is not None and f_hi < 0.49 * fs
     lo_ok = f_lo is not None and f_lo > 0
     if lo_ok and hi_ok:
-        sos = butter(order, [f_lo, f_hi], btype="band", fs=fs, output="sos")
+        sos, zi = _butter(int(order), (float(f_lo), float(f_hi)), "band", float(fs))
     elif lo_ok:
-        sos = butter(order, f_lo, btype="high", fs=fs, output="sos")
+        sos, zi = _butter(int(order), float(f_lo), "high", float(fs))
     elif hi_ok:
-        sos = butter(order, f_hi, btype="low", fs=fs, output="sos")
+        sos, zi = _butter(int(order), float(f_hi), "low", float(fs))
     else:
         return np.array(x, dtype=np.float64, copy=True)
-    return sosfiltfilt(sos, x, axis=-1)
+    return sosfiltfilt_ftz(sos, x, zi)

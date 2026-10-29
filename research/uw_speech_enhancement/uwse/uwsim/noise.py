@@ -26,9 +26,9 @@ from typing import Iterable, Sequence
 
 import numpy as np
 import soundfile as sf
-from scipy.signal import butter, sosfiltfilt
 
 from uwse.audio import resample
+from uwse.uwsim.chain import _butter, sosfiltfilt_ftz
 
 try:  # sibling module (section 4.2 row 16); local fallback keeps this module usable alone
     from uwse.uwsim.physics import minnaert_frequency as _minnaert_physics
@@ -244,14 +244,14 @@ def _band(x: np.ndarray, fs: int, band: tuple[float, float] | None) -> np.ndarra
     lo, hi = band
     hi_ok = hi is not None and hi < 0.49 * fs
     if lo and hi_ok:
-        sos = butter(4, [lo, hi], btype="band", fs=fs, output="sos")
+        sos, zi = _butter(4, (float(lo), float(hi)), "band", float(fs))
     elif lo:
-        sos = butter(4, lo, btype="high", fs=fs, output="sos")
+        sos, zi = _butter(4, float(lo), "high", float(fs))
     elif hi_ok:
-        sos = butter(4, hi, btype="low", fs=fs, output="sos")
+        sos, zi = _butter(4, float(hi), "low", float(fs))
     else:
         return x
-    return sosfiltfilt(sos, x)
+    return sosfiltfilt_ftz(sos, x, zi)
 
 
 def band_snr_db(speech: np.ndarray, noise: np.ndarray, fs: int,
@@ -263,8 +263,9 @@ def band_snr_db(speech: np.ndarray, noise: np.ndarray, fs: int,
     m = np.asarray(active_mask, dtype=bool)
     if not m.any():
         m = np.ones_like(m)
-    ps = np.mean(_band(speech, fs, band)[m] ** 2)
-    pn = np.mean(_band(noise, fs, band)[m] ** 2)
+    sb, nb = _band(np.stack([speech, noise]), fs, band)  # one row-wise filter call for both
+    ps = np.mean(sb[m] ** 2)
+    pn = np.mean(nb[m] ** 2)
     return float(10 * np.log10((ps + 1e-30) / (pn + 1e-30)))
 
 

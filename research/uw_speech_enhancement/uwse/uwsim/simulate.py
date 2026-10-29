@@ -468,6 +468,59 @@ def time_scale(x: np.ndarray, eps: float) -> np.ndarray:
     return _fit(y, x.size)
 
 
+def time_scale_pair(a: np.ndarray, b: np.ndarray, eps: float,
+                    single: bool = False) -> tuple[np.ndarray, np.ndarray]:
+    """(time_scale(a, eps), time_scale(b, eps)) for two real signals of equal length.
+
+    One complex FFT resample of a + ib: the resample is linear and maps real input to
+    real output (scipy's complex path folds the Nyquist bin the same way as the real
+    one), so the real and imaginary parts are the two results, equal to separate calls
+    up to float round-off. The output-length FFT is usually not a fast size (Bluestein),
+    so this costs about half of two real calls.
+
+    ``single=True`` runs the FFTs in complex64 (about 35% faster at 4 s / 48 kHz). Each
+    output then differs from the float64 result by about 1e-7 of its own peak (worst
+    seen 4e-7 on white noise), inside the simulator's 1e-6-of-peak tolerance and of the
+    order of the float32 rounding of the returned signals. Results are returned as float64.
+    """
+    if eps == 0.0 or a.size < 2:
+        return a, b
+    n = a.size
+    a = np.asarray(a, dtype=np.float64)
+    b = np.asarray(b, dtype=np.float64)
+    num = max(2, int(round(n / (1.0 + eps))))
+    if not single:
+        y = fft_resample(a + 1j * b, num)
+        return _fit(y.real, n), _fit(y.imag, n)
+    # Single precision: each part is first scaled by a power of two near its peak, so that
+    # the float32 round-off of the smaller signal is relative to its own peak, not to the
+    # other one's (the parts can differ by orders of magnitude, e.g. R1 vs R0).
+    sa, sb = _pow2_scale(a), _pow2_scale(b)
+    z = np.empty(n, dtype=np.complex64)
+    z.real = a * (1.0 / sa)
+    z.imag = b * (1.0 / sb)
+    y = fft_resample(z, num)
+    return (_fit(y.real.astype(np.float64) * sa, n), _fit(y.imag.astype(np.float64) * sb, n))
+
+
+def _pow2_scale(x: np.ndarray) -> float:
+    """Power of two near max|x| (1.0 for an all-zero or non-finite peak)."""
+    pk = float(np.max(np.abs(x))) if x.size else 0.0
+    if not np.isfinite(pk) or pk == 0.0:
+        return 1.0
+    return float(2.0 ** np.round(np.log2(pk)))
+
+
+def _conv32(x: np.ndarray, h: np.ndarray) -> np.ndarray:
+    """``fftconvolve(x, h)`` in float32 (about 2x faster for 4 s against a 1 s RIR), as float64.
+
+    Used for the pool-RIR convolutions only; the result differs from the float64 one by
+    about 1e-7 of its peak (worst seen 2.5e-7 on white noise).
+    """
+    return fftconvolve(np.asarray(x, dtype=np.float32),
+                       np.asarray(h, dtype=np.float32)).astype(np.float64)
+
+
 def _shift(x: np.ndarray, d: int) -> np.ndarray:
     return np.concatenate([np.zeros(d), x[: x.size - d]]) if d > 0 else x
 
@@ -521,13 +574,20 @@ def simulate(clean_48k: np.ndarray, scene: Scene, noise_bank: NoiseBank | None,
                   "chain_calibrated": chain.calibrated, "noise": []}
 
     # ---- transmit, channel, time variation
-    x = chain.transmit(s, scene.drive_db, scene.theta_deg, proj_eq, scene.resonance_factor)
+    # x = chain.transmit(...); y_chain = transmit half of chain.h_chain_apply(s) (for R1),
+    # computed together because they share the drive LPF and the projector EQ.
+    x, y_chain = chain._transmit_and_h_chain_tx(s, scene.drive_db, scene.theta_deg, proj_eq,
+                                                scene.resonance_factor)
     if rir is None:
         rir = render_rir(scene, measured_low_irs)
     rir = np.asarray(rir, dtype=np.float64)
     if scene.ir_perturb:
         rir = apply_fir(rir, eq_fir(scene.ir_perturb[0], scene.ir_perturb[1], fs), centred=True)
-    p = time_scale(fftconvolve(x, rir)[:n], scene.eps)
+    # time_scale through the complex path (time_scale_pair with a zero partner): scipy caches
+    # FFT plans per length and kind, so the Bluestein plan for this item's output length is
+    # then built once and reused by the R1/R0 pair below (~8 ms less than a real + a complex call).
+    # single=True: complex64 FFTs, ~1e-7 of peak from the float64 result (see time_scale_pair).
+    p, _ = time_scale_pair(_conv32(x, rir)[:n], np.zeros(n), scene.eps, single=True)
     d0 = direct_path_index(rir, scene)
     meta["direct_index_48k"] = d0
 
@@ -549,7 +609,7 @@ def simulate(clean_48k: np.ndarray, scene: Scene, noise_bank: NoiseBank | None,
             if thruster_rir is not None:
                 Lt = int(np.asarray(thruster_rir).size)
                 seg, info = noise_bank.draw(n + Lt, rng, "thruster", scene.thruster_split)
-                comps.append((fftconvolve(seg, thruster_rir)[Lt: Lt + n], 0.0))
+                comps.append((_conv32(seg, thruster_rir)[Lt: Lt + n], 0.0))
             else:
                 seg, info = noise_bank.draw(n, rng, "thruster", scene.thruster_split)
                 comps.append((seg, 0.0))
@@ -570,8 +630,9 @@ def simulate(clean_48k: np.ndarray, scene: Scene, noise_bank: NoiseBank | None,
     _, noise = mix_at_snr(p, noise, scene.snr_db, fs, nb, mask)
 
     # ---- receive chain, gain, ADC (rows 19, 20)
-    sp_rx = chain.receive(p, hyd_eq)
-    mix_rx = sp_rx + chain.receive(noise, hyd_eq)
+    # One batched receive for speech, noise and the h_chain path of R1 (row-wise identical).
+    sp_rx, n_rx, h_rx = chain.receive(np.stack([p, noise, y_chain]), hyd_eq)
+    mix_rx = sp_rx + n_rx
     act = mask if mask.any() else np.ones(n, bool)
     lvl = np.sqrt(np.mean(mix_rx[act] ** 2)) + 1e-20
     gain = 10.0 ** (scene.level_dbfs / 20.0) / lvl
@@ -583,12 +644,12 @@ def simulate(clean_48k: np.ndarray, scene: Scene, noise_bank: NoiseBank | None,
     # R0 = s also gets the chain's bulk delay (R1 = s * h_chain contains it already), and
     # both get the row-14 time scaling, so that the only target/input misalignment left is
     # the pool path itself (otherwise eps = 1e-3 drifts the target 4 ms over 4 s).
-    sp_b = bandlimit(sp_out, fs, *tb)
+    sp_b, h_b, s_b = bandlimit(np.stack([sp_out, h_rx, s]), fs, *tb)  # h_rx = s * h_chain
     d_chain = chain_delay(chain, proj_eq, hyd_eq, scene.resonance_factor, tb, fs)
     meta["chain_delay_48k"] = d_chain
-    r1 = _shift(bandlimit(chain.h_chain_apply(s, proj_eq, hyd_eq, scene.resonance_factor), fs, *tb), d0)
-    r0 = _shift(bandlimit(s, fs, *tb), max(d0 + d_chain, 0))
-    r1, r0 = time_scale(r1, scene.eps), time_scale(r0, scene.eps)
+    r1 = _shift(h_b, d0)
+    r0 = _shift(s_b, max(d0 + d_chain, 0))
+    r1, r0 = time_scale_pair(r1, r0, scene.eps, single=True)
     g1, g0 = _ls_gain(r1, sp_b), _ls_gain(r0, sp_b)
     ref = np.sqrt(np.mean(sp_b[act] ** 2))
     q1 = ref / (np.sqrt(np.mean(r1[act] ** 2)) + 1e-20)
@@ -604,8 +665,9 @@ def simulate(clean_48k: np.ndarray, scene: Scene, noise_bank: NoiseBank | None,
 
     out = {}
     n_out = int(round(n * fs_model / fs))
-    for k, v in (("noisy", noisy), ("target_R1", r1), ("target_R0", r0)):
-        out[k] = _fit(resample(v, fs, fs_model), n_out).astype(np.float32)
+    ys = resample(np.stack([noisy, r1, r0]), fs, fs_model)  # one polyphase call, row-wise identical
+    for k, v in zip(("noisy", "target_R1", "target_R0"), ys):
+        out[k] = _fit(v, n_out).astype(np.float32)
     out["fs"] = fs_model
     out["meta"] = meta
     return out
