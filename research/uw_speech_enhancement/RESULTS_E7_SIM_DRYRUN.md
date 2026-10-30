@@ -158,8 +158,38 @@ Reading:
   - Until the recorded bank exists, the training config should also mix in stationary synthetic noise. That is a design change and needs sign-off.
 - **One seed each.** The plan calls for three seeds for C2.
 
+## Addendum (2026-10-30): matched-noise check (`bubbles0`)
+
+- **Condition.** `bubbles0` = 0 dB speech-band SNR of Minnaert bubble trains (rate 10/s, radii 0.5–3 mm). This is the noise C10 and C2 trained on, since no bank exists.
+- **Scope.** Same scenes, utterances and harness as above. Systems: C0, wpe1, zero-shot dfn3, dfn3_c2 and kiel_unet. The SepFormer and MetricGAN+ rows were not run.
+
+WER % [95% CI], with better / same / worse vs C0 in utterances, and ESTOI against R1:
+
+| system | bubbles0 1 m | bubbles0 3 m | bubbles0 6 m | ESTOI 1 / 3 / 6 m |
+|---|---|---|---|---|
+| C0 noisy | **2.4** [1.8, 3.2] | 5.1 [4.1, 6.4] | 5.7 [4.5, 7.1] | 0.583 / 0.392 / 0.284 |
+| wpe1 | **2.4** [1.8, 3.2] (3/195/2) | **4.2** [3.2, 5.3] (27/167/6) | **5.3** [4.2, 6.6] (10/186/4) | 0.586 / 0.397 / 0.288 |
+| dfn3 zero-shot | 3.5 [2.6, 4.6] (14/148/38) | 27.7 [22.5, 33.1] (12/33/155) | 50.7 [42.0, 60.2] (3/14/183) | 0.725 / 0.448 / 0.302 |
+| dfn3_c2 | 2.6 [1.9, 3.5] (8/181/11) | 7.0 [5.8, 8.2] (32/108/60) | 9.9 [8.3, 11.6] (25/93/82) | 0.833 / 0.670 / 0.575 |
+| kiel_unet (C10) | 2.6 [1.9, 3.6] (10/178/12) | 5.9 [4.8, 7.1] (37/112/51) | 8.6 [7.0, 10.4] (23/105/72) | 0.843 / 0.684 / 0.558 |
+
+R1 is 2.1–2.2% and clean 2.4% in every row.
+
+Reading:
+
+- **The noise0 collapse was a noise mismatch (explanation (a)).**
+  - In matched noise, C2 and C10 no longer collapse. At 1 m both are within the CI of C0 (2.6 vs 2.4%), whereas at noise0 1 m they were at 41.5% and 76.1%.
+  - Both models learned to remove bubble trains, never stationary broadband noise, and both mangle speech when given the latter.
+- **Matched noise still gives no WER gain.** At 3 m and 6 m, C2 and C10 are worse than C0 by about the same margin as in quiet (C2 6 m: 9.9 vs 5.7 here, 9.2 vs 4.3 in quiet). What remains is the range-dependent penalty from dereverberation and masking artefacts, not a noise effect.
+  - So (b) is real but range-driven. It shows up at 3 m and 6 m in every noise condition.
+- **Bubble noise at 0 dB barely hurts Whisper.** C0 is 2.4 / 5.1 / 5.7%, close to quiet (3.1 / 3.7 / 4.3%). Sparse impulsive noise at a given speech-band SNR is far easier than stationary noise.
+  - This makes the current no-bank training set a weak denoising task. It is a second reason not to train further without stationary noise or the recorded bank.
+- **Zero-shot dfn3 is far worse on bubbles than fine-tuned dfn3** (27.7 → 7.0% at 3 m). Fine-tuning does fix the in-domain noise. It just cannot beat Whisper's own robustness.
+- **WPE stays the only system that never hurts.** It is now nominally best at 3 m and 6 m, though inside C0's CI.
+
 ## Next
 
-- **Matched-noise re-score.** Add a `bubbles0` condition (0 dB, bubble-train noise as in training) for C0, wpe1, dfn3, dfn3_c2 and kiel_unet.
+- **Training noise (needs sign-off).** Until the recorded bank exists, mix stationary synthetic noise (and coloured variants) into training. Today it only appears when an item draws no bubbles. Without it, any SE trained on uwsim fails on broadband noise.
+- **C8 (Whisper LoRA on uwsim).** Two SE models trained toward R1 both lose to C0 on Whisper at range. Adapting the recognizer is the direct test of H2.
 - **Hallucination flag.** Add a substitution-hallucination flag to `evaluation.asr` before E14.
 - **Calibration.** Replace the placeholders with measured pool values (E0–E4) and the recorded noise bank, then regenerate this table. The current table is retired at that point.

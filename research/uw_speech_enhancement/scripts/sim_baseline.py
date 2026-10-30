@@ -59,7 +59,11 @@ FS_SIM = 48000
 FS_SCORE = 16000
 RANGES_M = (1.0, 3.0, 6.0)
 DEPTH_M = 1.0
-CONDITIONS = {"quiet": 30.0, "noise0": 0.0}
+# name -> (SNR dB, scene overrides). "noise0" gets the simulator's stationary
+# -3 dB/oct fallback noise; "bubbles0" gets Minnaert bubble trains, the only noise
+# training sees while no recorded bank exists (matched-noise check).
+CONDITIONS = {"quiet": (30.0, {}), "noise0": (0.0, {}),
+              "bubbles0": (0.0, {"bubble_rate": 10.0, "bubble_rel_db": 0.0})}
 SYSTEMS = ("wpe1", "metricganplus", "sepformer_wham16k", "sepformer_whamr", "dfn3")
 ORACLES = ("R1", "clean")
 
@@ -140,13 +144,13 @@ def stage_sim_enhance(utts, scenes, systems, out: Path, device: str, seed: int,
                       adapters: dict[str, str] | None = None, ckpts: dict[str, str] | None = None) -> None:
     import torch
 
-    from uwse.adapters import build, import_errors
+    from uwse.adapters import import_errors
     from uwse.uwsim.simulate import render_rir, simulate
 
     rirs = {r: render_rir(s) for r, s in scenes.items()}
-    for (cname, snr), r in [(c, r) for c in CONDITIONS.items() for r in RANGES_M]:
+    for (cname, (snr, over)), r in [(c, r) for c in CONDITIONS.items() for r in RANGES_M]:
         cond = f"{cname}_{r:g}m"
-        scene = dataclasses.replace(scenes[r], snr_db=snr)
+        scene = dataclasses.replace(scenes[r], snr_db=snr, **over)
         cdir = out / "wav" / cond
         todo = [s for s in (*ORACLES, "noisy", *systems)
                 if not all((cdir / s / f"{u.utt_id}.wav").exists() for u in utts)]
@@ -164,7 +168,8 @@ def stage_sim_enhance(utts, scenes, systems, out: Path, device: str, seed: int,
             s16, fs = sf.read(u.path, dtype="float64")
             s48 = audio.resample(s16, fs, FS_SIM)
             rng = np.random.default_rng([seed, k, int(r * 10), int(snr + 100)])
-            sims[u.utt_id] = (simulate(s48, scene, None, rng, fs_model=FS_SIM, rir=rirs[r]), s16)
+            sim = simulate(s48, scene, None, rng, fs_model=FS_SIM, rir=rirs[r])
+            sims[u.utt_id] = ({k: sim[k] for k in ("target_R1", "target_R0", "noisy")}, s16)
         for name in ("R1", "clean", "noisy"):
             d = cdir / name
             d.mkdir(parents=True, exist_ok=True)
@@ -182,13 +187,12 @@ def stage_sim_enhance(utts, scenes, systems, out: Path, device: str, seed: int,
             d = cdir / name
             if all((d / f"{u.utt_id}.wav").exists() for u in utts):
                 continue
-            if name in import_errors:
-                print(f"[skip] {name}: {import_errors[name]}")
+            if (adapters or {}).get(name, name) in import_errors:
+                print(f"[skip] {name}: {import_errors[(adapters or {}).get(name, name)]}")
                 continue
             d.mkdir(parents=True, exist_ok=True)
-            dev = "cpu" if name in ("identity", "wpe1") else device
-            se = build(name, device=dev)
-            se.load_pretrained()
+            dev = "cpu" if (adapters or {}).get(name, name) in ("identity", "wpe1") else device
+            se = _load_system(name, dev, adapters or {}, ckpts or {})
             fs_a = se.sample_rate
             t0, n_audio = time.perf_counter(), 0.0
             for uid, (sim, _) in tqdm(sims.items(), desc=f"{name} {cond}", leave=False):
