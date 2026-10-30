@@ -98,7 +98,7 @@ The full table, with S/D/I counts, hallucination flags and CI-SDR, is in
 
 - **Model.** `runs/c10_kiel_unet_s0/best.pt`, trained from scratch on uwsim v0 with `configs/c10_kiel_unet.yaml` and `data.noise_root=null`:
   - The RIR bank is `data/rirs/uwsim_v0` (20k RIRs, uncalibrated), with synthetic noise in place of a recorded bank.
-  - Training SNR was drawn from −10 to 25 dB, with thrusters on in 70% of items.
+  - Training SNR was drawn from −10 to 25 dB. Thrusters are on in 70% of scenes, but with no noise bank the simulator skips thruster and ambient noise, so the training noise is almost entirely synthetic Minnaert bubble trains (see the C2 addendum below).
   - Early stopping hit at step 24k. The best validation loss was 0.0912 at step 14k (1.5M audio-seconds seen).
   - Training was data-bound: 74 audio-s per wall-second, about 89% of it spent in data loading.
 - **Evaluation.** The model enhanced the cached 16 kHz `noisy` wavs (`scripts/sim_baseline.py --stages enhance`), then was scored with the same harness.
@@ -122,13 +122,44 @@ Reading:
   - ESTOI is flat, so the model barely denoises.
   - WER triples at 1 m. Most of the increase is substitutions (1950 S vs 540).
   - Two explanations remain open:
-    - (a) the training noise mix (mostly thruster, plus bubbles) does not cover the test's −3 dB/oct synthetic noise;
+    - (a) the training noise (bubble trains only, see below) does not cover the test's stationary −3 dB/oct synthetic noise;
     - (b) masking artefacts at low SNR hurt Whisper more than residual noise does.
   - A matched-noise re-score separates (a) from (b), and needs no retraining.
 - **This is one seed of a from-scratch recipe** whose optimizer settings are our §7.4 defaults, not Kiel's (see the config header). Early stopping on the noisy validation loss (patience 5 × 2k steps) cut it at about half the planned 50k steps.
 
+## Addendum (2026-10-30): C2, DeepFilterNet3 fully fine-tuned on uwsim
+
+- **Model.** `runs/c2_dfn3_s0/best.pt`: dfn3 fully fine-tuned with `configs/c2_dfn3.yaml` and `data.noise_root=null`, seed 0.
+  - It ran all 50k steps (3.2M audio-seconds). The best validation loss was 1.2245 at step 48k.
+  - Validation was flat from 42k (1.2249) onward, so the run has converged. More steps are not needed.
+- **Evaluation.** Labelled `dfn3_c2` (`--adapter dfn3_c2=dfn3 --ckpt dfn3_c2=...`).
+  - It is fed the 48 kHz simulator output, re-simulated per item with the same RNG, exactly as zero-shot `dfn3` was.
+  - Spot check on 6 items: the re-simulated noisy matched the cache within 4e-7 of peak, and zero-shot dfn3 run through the new path matched its cached output within 5e-4 (CPU vs GPU).
+
+WER % [95% CI] and ESTOI against R1:
+
+| condition | C0 noisy | dfn3 zero-shot | dfn3_c2 | C2 vs C0 better / same / worse (utts) | ESTOI C0 / dfn3 / C2 |
+|---|---|---|---|---|---|
+| quiet 1 m | 3.1 [2.5, 3.8] | 2.4 [1.7, 3.2] | 2.3 [1.7, 3.1] | 27 / 159 / 14 | 0.798 / 0.836 / 0.864 |
+| quiet 3 m | 3.7 [2.9, 4.6] | 5.8 [4.6, 7.1] | 6.0 [4.9, 7.2] | 16 / 115 / 69 | 0.508 / 0.578 / 0.698 |
+| quiet 6 m | 4.3 [3.4, 5.4] | 13.3 [10.1, 16.8] | 9.2 [7.7, 11.0] | 15 / 86 / 99 | 0.364 / 0.413 / 0.606 |
+| noise0 1 m | 20.3 [16.6, 24.6] | 32.0 [27.6, 37.2] | 41.5 [36.3, 47.3] | 22 / 26 / 152 | 0.310 / 0.497 / 0.468 |
+| noise0 3 m | 48.3 [42.9, 54.0] | 81.9 [70.9, 96.1] | 87.3 [78.4, 99.1] | 19 / 15 / 166 | 0.230 / 0.316 / 0.367 |
+| noise0 6 m | 56.4 [50.7, 62.4] | 90.8 [82.4, 102.3] | 93.6 [86.2, 103.3] | 13 / 22 / 165 | 0.168 / 0.228 / 0.306 |
+
+Reading:
+
+- **Fine-tuning helps dfn3 in quiet conditions, but not enough to beat C0 at range.** At quiet 6 m, WER drops from 13.3% (zero-shot) to 9.2% and ESTOI rises from 0.41 to 0.61. That is still about twice C0's 4.3%. At 1 m, C2 ties C0 within the CI.
+- **The first sim ΔWER(C2 − C0) is positive (worse) in 5 of 6 cells.** Only quiet 1 m is a point-estimate gain, and it overlaps C0.
+  - The same pattern holds for C10. Two different architectures, both trained toward R1, raise ESTOI a lot and still lose on Whisper.
+  - This is the in-air "SE hurts robust ASR" finding reproduced in-domain. It argues for C8 (Whisper fine-tuning) and joint or ASR-aware SE objectives over SE-only training.
+- **The noise0 rows are probably a train/test noise mismatch, not a property of the method.** With `noise_root=null`, the simulator skips thruster and ambient noise (both need a bank). The training noise is therefore Minnaert bubble trains with rate U(0, 20)/s. The stationary −3 dB/oct fallback only appears when an item draws no bubbles. The noise0 test uses that stationary fallback. Both C10 and C2 were trained almost without stationary broadband noise.
+  - A `bubbles0` test condition (a matched-noise re-score) separates this from masking artefacts. It is the next run.
+  - Until the recorded bank exists, the training config should also mix in stationary synthetic noise. That is a design change and needs sign-off.
+- **One seed each.** The plan calls for three seeds for C2.
+
 ## Next
 
-- **C2 fine-tuning.** Run kiel_unet (C10) first, as the cheap pipeline check, then dfn3 C2 on uwsim. Re-score on this same harness to get the first sim ΔWER(C2 − C0).
+- **Matched-noise re-score.** Add a `bubbles0` condition (0 dB, bubble-train noise as in training) for C0, wpe1, dfn3, dfn3_c2 and kiel_unet.
 - **Hallucination flag.** Add a substitution-hallucination flag to `evaluation.asr` before E14.
 - **Calibration.** Replace the placeholders with measured pool values (E0–E4) and the recorded noise bank, then regenerate this table. The current table is retired at that point.

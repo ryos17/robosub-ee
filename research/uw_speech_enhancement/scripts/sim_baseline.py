@@ -111,7 +111,33 @@ def make_scenes(cfg_path: str, seed: int) -> dict[float, object]:
     return scenes
 
 
-def stage_sim_enhance(utts, scenes, systems, out: Path, device: str, seed: int) -> None:
+def _load_system(label: str, device: str, adapters: dict[str, str], ckpts: dict[str, str]):
+    """Build the adapter behind system `label` (`adapters` maps label -> registry
+    name, default the label itself) and load its pretrained weights, then the
+    fine-tuned checkpoint if `ckpts` names one."""
+    from uwse.adapters import build
+
+    se = build(adapters.get(label, label), device=device)
+    se.load_pretrained()
+    if label in ckpts:
+        se.load_checkpoint(ckpts[label])
+    se.eval()
+    return se
+
+
+def _enhance_one(se, x: np.ndarray, fs_in: int, n_out: int, device: str) -> np.ndarray:
+    """Resample `x` (fs_in) to the adapter rate, enhance, return n_out samples at 16 kHz."""
+    import torch
+
+    xa = audio.resample(x.astype(np.float64), fs_in, se.sample_rate)
+    with torch.no_grad():
+        y = se.enhance(torch.as_tensor(xa, dtype=torch.float32)[None].to(device))
+    y16 = audio.resample(y.detach().float().cpu().numpy().reshape(-1).astype(np.float64), se.sample_rate, FS_SCORE)
+    return np.pad(y16, (0, max(0, n_out - y16.size)))[:n_out]
+
+
+def stage_sim_enhance(utts, scenes, systems, out: Path, device: str, seed: int,
+                      adapters: dict[str, str] | None = None, ckpts: dict[str, str] | None = None) -> None:
     import torch
 
     from uwse.adapters import build, import_errors
@@ -125,6 +151,13 @@ def stage_sim_enhance(utts, scenes, systems, out: Path, device: str, seed: int) 
         todo = [s for s in (*ORACLES, "noisy", *systems)
                 if not all((cdir / s / f"{u.utt_id}.wav").exists() for u in utts)]
         if not todo:
+            continue
+        if not set(todo) & {*ORACLES, "noisy"} and (cdir / "R0").is_dir():
+            # References are cached: add the missing systems by re-simulating one
+            # item at a time (same per-item RNG, so the same 48 kHz `noisy` up to
+            # the last ADC step) without rewriting the cached wavs.
+            _sim_enhance_stream(utts, scene, rirs[r], todo, cdir, device, seed, r, snr,
+                                adapters or {}, ckpts or {})
             continue
         sims = {}
         for k, u in enumerate(tqdm(utts, desc=f"sim {cond}", leave=False)):
@@ -174,7 +207,34 @@ def stage_sim_enhance(utts, scenes, systems, out: Path, device: str, seed: int) 
                 torch.cuda.empty_cache()
 
 
-def stage_enhance_cached(utts, systems, out: Path, device: str, ckpts: dict[str, str]) -> None:
+def _sim_enhance_stream(utts, scene, rir, systems, cdir: Path, device: str, seed: int, r: float, snr: float,
+                        adapters: dict[str, str], ckpts: dict[str, str]) -> None:
+    from uwse.uwsim.simulate import simulate
+
+    ses = {}
+    for name in systems:
+        (cdir / name).mkdir(parents=True, exist_ok=True)
+        dev = "cpu" if adapters.get(name, name) in ("identity", "wpe1") else device
+        ses[name] = (_load_system(name, dev, adapters, ckpts), dev)
+    for k, u in enumerate(tqdm(utts, desc=f"sim+{','.join(systems)} {cdir.name}", leave=False)):
+        if all((cdir / name / f"{u.utt_id}.wav").exists() for name in systems):
+            continue
+        s16, fs = sf.read(u.path, dtype="float64")
+        rng = np.random.default_rng([seed, k, int(r * 10), int(snr + 100)])
+        noisy = simulate(audio.resample(s16, fs, FS_SIM), scene, None, rng, fs_model=FS_SIM, rir=rir)["noisy"]
+        n16 = int(round(noisy.size * FS_SCORE / FS_SIM))
+        for name, (se, dev) in ses.items():
+            y16 = _enhance_one(se, noisy, FS_SIM, n16, dev)
+            sf.write(cdir / name / f"{u.utt_id}.wav", y16.astype(np.float32), FS_SCORE, subtype="FLOAT")
+    del ses
+    if device.startswith("cuda"):
+        import torch
+
+        torch.cuda.empty_cache()
+
+
+def stage_enhance_cached(utts, systems, out: Path, device: str, ckpts: dict[str, str],
+                         adapters: dict[str, str] | None = None) -> None:
     """Enhance the cached 16 kHz `noisy` wavs with (trained) adapters.
 
     Used to add systems to an existing run without re-simulating: the cached
@@ -185,8 +245,6 @@ def stage_enhance_cached(utts, systems, out: Path, device: str, ckpts: dict[str,
     """
     import torch
 
-    from uwse.adapters import build
-
     for cond in sorted(p.name for p in (out / "wav").iterdir()):
         cdir = out / "wav" / cond
         for name in systems:
@@ -194,18 +252,10 @@ def stage_enhance_cached(utts, systems, out: Path, device: str, ckpts: dict[str,
             if all((d / f"{u.utt_id}.wav").exists() for u in utts):
                 continue
             d.mkdir(parents=True, exist_ok=True)
-            kw = {"checkpoint": ckpts[name]} if name in ckpts else {}
-            se = build(name, device=device, **kw)
-            se.load_pretrained()
-            se.eval()
-            fs_a = se.sample_rate
+            se = _load_system(name, device, adapters or {}, ckpts)
             for u in tqdm(utts, desc=f"{name} {cond}", leave=False):
                 x16, _ = sf.read(cdir / "noisy" / f"{u.utt_id}.wav", dtype="float64")
-                x = audio.resample(x16, FS_SCORE, fs_a)
-                with torch.no_grad():
-                    y = se.enhance(torch.as_tensor(x, dtype=torch.float32)[None].to(device))
-                y16 = audio.resample(y.detach().float().cpu().numpy().reshape(-1).astype(np.float64), fs_a, FS_SCORE)
-                y16 = np.pad(y16, (0, max(0, x16.size - y16.size)))[: x16.size]
+                y16 = _enhance_one(se, x16, FS_SCORE, x16.size, device)
                 sf.write(d / f"{u.utt_id}.wav", y16.astype(np.float32), FS_SCORE, subtype="FLOAT")
             del se
             if device.startswith("cuda"):
@@ -320,7 +370,9 @@ def main(argv=None) -> int:
     ap.add_argument("--stages", default="sim,asr,score",
                     help="comma list of sim, enhance (cached noisy -> --systems), asr, score")
     ap.add_argument("--ckpt", action="append", default=[], metavar="SYSTEM=PATH",
-                    help="checkpoint for a trained adapter (enhance stage), e.g. kiel_unet=runs/c10_kiel_unet_s0/best.pt")
+                    help="fine-tuned checkpoint for a system, e.g. kiel_unet=runs/c10_kiel_unet_s0/best.pt")
+    ap.add_argument("--adapter", action="append", default=[], metavar="SYSTEM=ADAPTER",
+                    help="registry adapter behind a system label, e.g. dfn3_c2=dfn3 (default: the label)")
     args = ap.parse_args(argv)
 
     import torch
@@ -332,14 +384,16 @@ def main(argv=None) -> int:
     utts = select_utts(Path(args.librispeech), out, args.n_utts)
     print(f"{len(utts)} utterances, {len({u.speaker for u in utts})} speakers, device {device}")
     stages = set(args.stages.split(","))
+    ckpts = dict(c.split("=", 1) for c in args.ckpt)
+    adapters = dict(a.split("=", 1) for a in args.adapter)
     if "sim" in stages:
         scenes = make_scenes(args.config, args.seed)
         (out / "scenes.json").write_text(json.dumps({f"{r:g}m": s.to_dict() for r, s in scenes.items()},
                                                     indent=1, default=float))
-        stage_sim_enhance(utts, scenes, [s for s in args.systems.split(",") if s], out, device, args.seed)
+        stage_sim_enhance(utts, scenes, [s for s in args.systems.split(",") if s], out, device, args.seed,
+                          adapters, ckpts)
     if "enhance" in stages:
-        ckpts = dict(c.split("=", 1) for c in args.ckpt)
-        stage_enhance_cached(utts, [s for s in args.systems.split(",") if s], out, device, ckpts)
+        stage_enhance_cached(utts, [s for s in args.systems.split(",") if s], out, device, ckpts, adapters)
     if "asr" in stages:
         stage_asr(utts, out, args.asr_model, device)
     if "score" in stages:
