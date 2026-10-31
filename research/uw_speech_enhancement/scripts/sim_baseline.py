@@ -42,6 +42,7 @@ from __future__ import annotations
 import argparse
 import dataclasses
 import json
+import shutil
 import sys
 import time
 from pathlib import Path
@@ -66,6 +67,7 @@ CONDITIONS = {"quiet": (30.0, {}), "noise0": (0.0, {}),
               "bubbles0": (0.0, {"bubble_rate": 10.0, "bubble_rel_db": 0.0})}
 SYSTEMS = ("wpe1", "metricganplus", "sepformer_wham16k", "sepformer_whamr", "dfn3")
 ORACLES = ("R1", "clean")
+ASR_LORA_MARKER = "ASR_LORA.txt"  # in wav/<cond>/<label>/: system = noisy audio + this Whisper LoRA
 
 
 def _check_out(p: Path) -> None:
@@ -270,19 +272,49 @@ def _systems_on_disk(out: Path, cond: str) -> list[str]:
     return sorted(p.name for p in (out / "wav" / cond).iterdir() if p.is_dir() and p.name != "R0")
 
 
-def stage_asr(utts, out: Path, model: str, device: str) -> None:
+def stage_asr(utts, out: Path, model: str, device: str, asr_lora: dict[str, str] | None = None) -> None:
+    """Whisper on every system on disk. ``asr_lora`` maps an extra system label
+    (e.g. "c8") to a C8 LoRA checkpoint: that system is the unprocessed `noisy`
+    audio, decoded by Whisper with the LoRA merged in."""
     from uwse.evaluation.asr import TranscriptCache, WhisperASR
     from uwse.evaluation.normalize import normalize_cut
 
-    asr = WhisperASR(model, device=device)
+    asr_lora = asr_lora or {}
+    for label in asr_lora:  # an ASR-side system scores the unprocessed audio
+        for cdir in (out / "wav").iterdir():
+            d = cdir / label
+            d.mkdir(exist_ok=True)
+            (d / ASR_LORA_MARKER).write_text(asr_lora[label], encoding="utf-8")
+            for u in utts:
+                if not (d / f"{u.utt_id}.wav").exists():
+                    shutil.copyfile(cdir / "noisy" / f"{u.utt_id}.wav", d / f"{u.utt_id}.wav")
+    # ASR-side systems from earlier runs must never be decoded by the base model
+    asr_side = set(asr_lora) | {p.parent.name for p in (out / "wav").glob(f"*/*/{ASR_LORA_MARKER}")}
     cache = TranscriptCache(str(out / "transcripts.jsonl"))
     key = f"whisper-{model}+lnorm"
+    for label in [None, *asr_lora]:
+        asr = WhisperASR(model, device=device, lora_ckpt=asr_lora.get(label))
+        _asr_pass(utts, out, asr, cache, key, normalize_cut,
+                  only=label, skip=asr_side if label is None else set())
+        info = asr.info() if label is None else None
+        del asr
+        if device.startswith("cuda"):
+            import torch
+
+            torch.cuda.empty_cache()
+        if info is not None:
+            (out / "asr_info.json").write_text(json.dumps(info, indent=1))
+
+
+def _asr_pass(utts, out: Path, asr, cache, key: str, normalize_cut, only: str | None, skip: set[str]) -> None:
     # Build only the uncached work list (paths, no audio), then load, normalize
     # and decode one item at a time: holding every normalized cut in RAM cost
     # ~4.5 GB for the full 9600-item run.
     todo = []
     for cond in sorted(p.name for p in (out / "wav").iterdir()):
         for sysname in _systems_on_disk(out, cond):
+            if sysname in skip or (only is not None and sysname != only):
+                continue
             for u in utts:
                 p = out / "wav" / cond / sysname / f"{u.utt_id}.wav"
                 if p.exists() and cache.get(f"{cond}/{sysname}", u.utt_id, key) is None:
@@ -298,7 +330,6 @@ def stage_asr(utts, out: Path, model: str, device: str) -> None:
         y, _, _ = normalize_cut(x, ref, FS_SCORE)
         res = asr.transcribe(np.clip(y, -1, 1).astype(np.float32))
         cache.put({"system": f"{cond}/{sysname}", "utt_id": uid, "model": key, **res})
-    (out / "asr_info.json").write_text(json.dumps(asr.info(), indent=1))
 
 
 def stage_score(utts, out: Path, model: str, n_boot: int) -> None:
@@ -375,6 +406,9 @@ def main(argv=None) -> int:
                     help="comma list of sim, enhance (cached noisy -> --systems), asr, score")
     ap.add_argument("--ckpt", action="append", default=[], metavar="SYSTEM=PATH",
                     help="fine-tuned checkpoint for a system, e.g. kiel_unet=runs/c10_kiel_unet_s0/best.pt")
+    ap.add_argument("--asr-lora", action="append", default=[], metavar="SYSTEM=PATH",
+                    help="ASR-side system: the noisy audio decoded by Whisper with this C8 LoRA "
+                         "checkpoint merged in, e.g. c8=runs/c8_whisper_lora_lr1e-4_s0/best.pt")
     ap.add_argument("--adapter", action="append", default=[], metavar="SYSTEM=ADAPTER",
                     help="registry adapter behind a system label, e.g. dfn3_c2=dfn3 (default: the label)")
     args = ap.parse_args(argv)
@@ -399,7 +433,7 @@ def main(argv=None) -> int:
     if "enhance" in stages:
         stage_enhance_cached(utts, [s for s in args.systems.split(",") if s], out, device, ckpts, adapters)
     if "asr" in stages:
-        stage_asr(utts, out, args.asr_model, device)
+        stage_asr(utts, out, args.asr_model, device, dict(a.split("=", 1) for a in args.asr_lora))
     if "score" in stages:
         stage_score(utts, out, args.asr_model, args.n_boot)
     return 0

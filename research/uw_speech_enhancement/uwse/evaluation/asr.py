@@ -270,8 +270,44 @@ class DecodeConfig:
     without_timestamps: bool = False
 
 
+_HF_TO_OPENAI_ATTN = {"self_attn": "attn", "encoder_attn": "cross_attn"}
+_HF_TO_OPENAI_PROJ = {"q_proj": "query", "k_proj": "key", "v_proj": "value", "out_proj": "out"}
+
+
+def lora_deltas_openai(state: dict, r: int, alpha: float) -> dict:
+    """Merged LoRA weight deltas (alpha/r) B A keyed by openai-whisper parameter name.
+
+    ``state`` is a peft LoRA state dict of a Hugging Face Whisper (as saved by
+    `uwse.train.whisper_lora.WhisperLoRATrainable.save`), with keys such as
+    ``base_model.model.model.decoder.layers.3.encoder_attn.q_proj.lora_A.weight``.
+    HF's Whisper weights are a direct copy of openai-whisper's (the attention
+    scaling lives outside the projections in both), so a delta on an HF
+    projection applies unchanged to the matching openai Linear.
+    """
+    import re
+
+    pat = re.compile(r"model\.(encoder|decoder)\.layers\.(\d+)\.(self_attn|encoder_attn)\.(\w+)\.lora_A\.weight$")
+    out = {}
+    for k, a in state.items():
+        m = pat.search(k)
+        if not m:
+            if "lora_A" in k:
+                raise KeyError(f"unmapped LoRA key {k!r}")
+            continue
+        b = state[k.replace("lora_A", "lora_B")]
+        stack, i, attn, proj = m.groups()
+        name = f"{stack}.blocks.{i}.{_HF_TO_OPENAI_ATTN[attn]}.{_HF_TO_OPENAI_PROJ[proj]}.weight"
+        out[name] = (alpha / r) * (b.float() @ a.float())
+    return out
+
+
 class WhisperASR:
-    """openai-whisper backend with the §8.3 protocol; the model loads lazily."""
+    """openai-whisper backend with the §8.3 protocol; the model loads lazily.
+
+    ``lora_ckpt`` merges a C8 LoRA checkpoint (trained on the HF Whisper with
+    the same base weights) into the openai model, so adapted and unadapted
+    Whisper decode with the identical §8.3 decoder.
+    """
 
     def __init__(
         self,
@@ -280,6 +316,7 @@ class WhisperASR:
         decode: DecodeConfig | None = None,
         download_root: str | None = None,
         fp16: bool | None = None,
+        lora_ckpt: str | None = None,
     ) -> None:
         self.model_name = model_name
         self.name = f"whisper-{model_name}"
@@ -287,6 +324,7 @@ class WhisperASR:
         self.decode = decode or DecodeConfig()
         self.download_root = download_root
         self._fp16 = fp16
+        self.lora_ckpt = lora_ckpt
         self._model = None
 
     @property
@@ -307,6 +345,15 @@ class WhisperASR:
             import whisper
 
             self._model = whisper.load_model(self.model_name, device=self.device, download_root=self.download_root)
+            if self.lora_ckpt is not None:
+                import torch
+
+                st = torch.load(self.lora_ckpt, map_location="cpu", weights_only=False)
+                deltas = lora_deltas_openai(st["model"], int(st["lora"]["r"]), float(st["lora"]["alpha"]))
+                params = dict(self._model.named_parameters())
+                with torch.no_grad():
+                    for name, d in deltas.items():  # merge in fp32, before any fp16 cast
+                        params[name].add_(d.to(params[name].device, params[name].dtype))
             if self.fp16:
                 # load_model keeps fp32 weights and casts them to the input
                 # dtype on every call: large-v3 then holds 6.2 GB of VRAM and
@@ -374,6 +421,7 @@ class WhisperASR:
             "model_url": url,
             "device": self.device,
             "fp16": self.fp16,
+            "lora_ckpt": self.lora_ckpt,
             "decode": asdict(self.decode),
         }
 
