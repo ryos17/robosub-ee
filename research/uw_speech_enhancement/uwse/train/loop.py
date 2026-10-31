@@ -97,6 +97,12 @@ class TrainConfig:
     ckpt_every: int = 1000
     resume: bool = True
     stop_at: int | None = None  # stop (resumably) after this many steps; for chunked jobs
+    # divergence guard: stop when the logged training loss stays above
+    # diverge_factor x its running minimum for diverge_windows consecutive log
+    # windows (only while that minimum is positive). None disables it. A diverged
+    # run otherwise holds the GPU until early stopping, eval_every x patience later.
+    diverge_factor: float | None = 3.0
+    diverge_windows: int = 4
     # reproducibility
     seed: int = 0
     deterministic: bool = False
@@ -440,6 +446,7 @@ def fit(trainable: Trainable, train_ds: Dataset, val_ds: Dataset | None, cfg: Tr
     history: list[dict[str, Any]] = []
     win = {"loss": 0.0, "n": 0, "audio": 0.0, "compute": 0.0, "data": 0.0, "gn": 0.0}
     n_bad_loss = 0
+    min_win_loss, n_diverged, diverged = float("inf"), 0, False
     trainable.set_train(True)
     it = iter(loader)
     pbar = tqdm(total=cfg.max_steps, initial=step, desc=cfg.run_name, dynamic_ncols=True)
@@ -510,6 +517,20 @@ def fit(trainable: Trainable, train_ds: Dataset, val_ds: Dataset | None, cfg: Tr
                 }
                 log.write(row)
                 history.append(row)
+                if win["n"] > 0 and cfg.diverge_factor is not None:
+                    wl = row["loss"]
+                    if 0.0 < min_win_loss < float("inf") and wl > cfg.diverge_factor * min_win_loss:
+                        n_diverged += 1
+                    else:
+                        n_diverged = 0
+                    min_win_loss = min(min_win_loss, wl)
+                    if n_diverged >= cfg.diverge_windows:
+                        diverged = True
+                        log.write({"event": "diverged", "step": step, "loss": wl, "min_loss": min_win_loss})
+                        tqdm.write(f"[{cfg.run_name}] DIVERGED at step {step}: loss {wl:.4g} > "
+                                   f"{cfg.diverge_factor:g} x min {min_win_loss:.4g} for "
+                                   f"{cfg.diverge_windows} log windows; stopping")
+                        break
                 win = dict.fromkeys(win, 0.0)
                 win["n"] = 0
 
@@ -555,7 +576,7 @@ def fit(trainable: Trainable, train_ds: Dataset, val_ds: Dataset | None, cfg: Tr
         throughput_compute_steady=tp_steady, steady_from_step=steady_from,
     )
     summary = {k: v for k, v in dataclasses.asdict(result).items() if k != "history"}
-    summary.update(device=str(device), accum_steps=accum,
+    summary.update(device=str(device), accum_steps=accum, diverged=diverged,
                    gpu_name=torch.cuda.get_device_name(device) if device.type == "cuda" else None,
                    max_mem_gb=(torch.cuda.max_memory_allocated(device) / 2**30
                                if device.type == "cuda" else None))

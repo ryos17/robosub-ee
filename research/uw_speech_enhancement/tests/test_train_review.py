@@ -200,3 +200,37 @@ def test_check_not_datasets_windows_drive():
     with pytest.raises(ValueError):
         mod._check_not_datasets("C:\\datasets\\x")
     mod._check_not_datasets(os.path.join(ROOT, "runs"))
+
+
+class _BlowUpAdapter(RandInitAdapter):
+    """Training loss jumps 100x after `jump_at` loss calls (a diverged run)."""
+
+    jump_at = 10
+
+    def loss(self, noisy: torch.Tensor, clean: torch.Tensor) -> torch.Tensor:
+        self.n_calls = getattr(self, "n_calls", 0) + 1
+        scale = 100.0 if self.n_calls > self.jump_at else 1.0
+        return scale * super().loss(noisy, clean)
+
+
+def _blowup() -> _BlowUpAdapter:
+    torch.manual_seed(123)
+    a = _BlowUpAdapter()
+    a.load_pretrained()
+    return a
+
+
+def test_divergence_guard_stops_run(tmp_path):
+    res = train(_blowup(), _ds(), None, _cfg(tmp_path, diverge_factor=3.0, diverge_windows=3))
+    summ = json.load(open(os.path.join(res.run_dir, "summary.json"), encoding="utf-8"))
+    assert summ["diverged"] and res.step == _BlowUpAdapter.jump_at + 3
+    events = [json.loads(ln) for ln in open(os.path.join(res.run_dir, "train_log.jsonl"), encoding="utf-8")]
+    assert any(e.get("event") == "diverged" for e in events)
+
+
+def test_divergence_guard_off_and_quiet_on_normal_runs(tmp_path):
+    res = train(_blowup(), _ds(), None, _cfg(tmp_path / "off", diverge_factor=None))
+    assert res.step == 40
+    res = train(_adapter(), _ds(), None, _cfg(tmp_path / "ok"))
+    summ = json.load(open(os.path.join(res.run_dir, "summary.json"), encoding="utf-8"))
+    assert res.step == 40 and not summ["diverged"]
