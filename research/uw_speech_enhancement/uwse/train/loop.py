@@ -85,6 +85,7 @@ class TrainConfig:
     val_batch_size: int | None = None  # None -> batch_size
     max_val_batches: int | None = None
     num_workers: int = 0
+    val_num_workers: int | None = None  # None -> num_workers; 0 avoids a second worker's RAM during val
     # precision / device
     amp: bool = False
     amp_dtype: str = "fp16"  # "fp16" (GradScaler) | "bf16"
@@ -436,7 +437,8 @@ def fit(trainable: Trainable, train_ds: Dataset, val_ds: Dataset | None, cfg: Tr
     if val_ds is not None and len(val_ds) > 0:
         val_loader = DataLoader(val_ds, batch_size=cfg.val_batch_size or cfg.batch_size,
                                 shuffle=False, collate_fn=val_collate_fn,
-                                num_workers=cfg.num_workers)
+                                num_workers=cfg.num_workers if cfg.val_num_workers is None
+                                else cfg.val_num_workers)
 
     stop_at = cfg.max_steps if cfg.stop_at is None else min(cfg.max_steps, cfg.stop_at)
     # a run that already early-stopped stays stopped when the same command is relaunched
