@@ -187,9 +187,47 @@ Reading:
 - **Zero-shot dfn3 is far worse on bubbles than fine-tuned dfn3** (27.7 → 7.0% at 3 m). Fine-tuning does fix the in-domain noise. It just cannot beat Whisper's own robustness.
 - **WPE stays the only system that never hurts.** It is now nominally best at 3 m and 6 m, though inside C0's CI.
 
+## Addendum (2026-11-01): C8, Whisper large-v3 LoRA trained on uwsim
+
+- **Training.** `configs/c8_whisper_lora.yaml` with LoRA r 8, alpha 32, on q/v projections.
+  - Data: train-clean-100 clips of 30 s or less, through uwsim with no noise bank, so the noise is bubble trains as for C2 and C10.
+  - LR 1e-4. The config default of 1e-3 diverged near step 900 in run 1; the change still needs sign-off.
+  - Run dir `runs/c8_whisper_lora_lr1e-4_s0`. Early stop at step 16k. Best val CE 0.1018 at step 6k; val stayed between 0.102 and 0.111 throughout.
+- **Scoring.** The best LoRA is merged into openai-whisper large-v3 in fp32 before the fp16 cast. Decoding is the same fixed policy as C0: beam 5, temperature 0 with no fallback.
+  - C8 decodes the unprocessed noisy audio. Its ESTOI and SI-SDR therefore equal C0's and are omitted.
+  - Same 200 utterances and scenes as above.
+
+WER %, C0 → C8, with the paired bootstrap ΔWER (C8 − C0) and its 95% CI (2000 resamples over utterances):
+
+| condition | 1 m | 3 m | 6 m |
+|---|---|---|---|
+| quiet | 3.1 → **2.0**, −1.1 [−1.9, −0.3] | 3.7 → **2.3**, −1.4 [−2.1, −0.8] | 4.3 → **3.7**, −0.7 [−1.5, +0.2] |
+| noise0 | 20.3 → **17.1**, −3.2 [−4.9, −1.7] | 48.3 → **42.1**, −6.2 [−8.7, −3.5] | 56.4 → **48.8**, −7.6 [−10.4, −4.7] |
+| bubbles0 | 2.4 → 7.9, +5.5 [−0.9, +19.0] | 5.1 → **3.0**, −2.1 [−3.0, −1.4] | 5.7 → **4.4**, −1.4 [−2.2, −0.5] |
+
+Reading:
+
+- **C8 is the first system that beats C0, and it does so in 8 of 9 cells.** The CI excludes zero in 7 of them; quiet 6 m is the exception, at −0.7 [−1.5, +0.2].
+  - It is also best overall in every cell except bubbles0 1 m. Every SE system above loses to C0 at 3 m and 6 m.
+  - At 3 m in quiet it reaches 2.3%, which is the R1 level (2.2%).
+- **The gain grows with difficulty in noise0**, from −3.2 points at 1 m to −7.6 at 6 m. This holds even though C8 never trained on stationary noise.
+  - Adapting the recognizer to reverberation and range transfers to a noise type it did not see.
+  - SE trained on the same data instead collapsed on that noise (C2 and C10).
+- **The one regression is a single hallucination loop.** Utterance 5639-40744-0011 in bubbles0 1 m is 9 words long.
+  - C8 transcribed it correctly, then kept generating: "...locked outsideSuspects were arrested on the day of the murder of a young man who had been arrested...". That adds 219 insertions, and the length/compression flag catches it.
+  - Without that one utterance, C8 is at 2.0% in that cell.
+  - C8 has 2 flagged utterances out of 1800 scored, against 1 for C0.
+  - LoRA fine-tuning can weaken end-of-text prediction. Because the decoding policy has no temperature fallback, such a loop goes straight into the WER. Watch the flag count on the real v0 test.
+- **H2 reading under the placeholder simulator.** For Whisper at range, adapting the recognizer beats every front end tried. The caveats above still apply: uncalibrated RIRs, no recorded noise, and one seed.
+
 ## Next
 
 - **Training noise (needs sign-off).** Until the recorded bank exists, mix stationary synthetic noise (and coloured variants) into training. Today it only appears when an item draws no bubbles. Without it, any SE trained on uwsim fails on broadband noise.
-- **C8 (Whisper LoRA on uwsim).** Two SE models trained toward R1 both lose to C0 on Whisper at range. Adapting the recognizer is the direct test of H2.
+- **C8 follow-ups.**
+  - Get sign-off on LR 1e-4.
+  - Train more seeds.
+  - Retrain with stationary noise once that is approved, since noise0 is still 17–49% WER.
+  - Test the hallucination rate with temperature fallback against the fixed policy.
+  - Use `train.val_num_workers=0` on the 16 GB laptop: validation workers spawn on every eval.
 - **Hallucination flag.** Add a substitution-hallucination flag to `evaluation.asr` before E14.
 - **Calibration.** Replace the placeholders with measured pool values (E0–E4) and the recorded noise bank, then regenerate this table. The current table is retired at that point.
