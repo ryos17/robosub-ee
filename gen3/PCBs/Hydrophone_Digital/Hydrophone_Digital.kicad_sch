@@ -51,52 +51,6 @@
 			)
 		)
 	)
-	(sheet
-		(at 154.94 102.87)
-		(size 57.15 41.91)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(dnp no)
-		(fields_autoplaced yes)
-		(stroke
-			(width 0.1524)
-			(type solid)
-		)
-		(fill
-			(color 0 0 0 0)
-		)
-		(uuid "ffe4dbe6-d3e1-4c30-b149-2f278e539bba")
-		(property "Sheetname" "Control"
-			(at 154.94 102.1584 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left bottom)
-			)
-		)
-		(property "Sheetfile" "Control.kicad_sch"
-			(at 154.94 145.3646 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left top)
-			)
-		)
-		(instances
-			(project "Hydrophone_Digital"
-				(path "/3634aa72-f703-4c52-b463-b00d283490ac"
-					(page "7")
-				)
-			)
-		)
-	)
 	(sheet_instances
 		(path "/"
 			(page "1")
