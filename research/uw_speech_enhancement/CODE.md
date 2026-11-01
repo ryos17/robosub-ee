@@ -216,10 +216,20 @@ RAM on the laptop is tight, so run only one heavy process at a time: training, R
 - Recorded bubble noise is not used yet.
 - Rendering is about 0.3–3 s per RIR, so use `RIRBank` for training.
 
-**Target definition (needs the lead's sign-off):**
+**Target definition:**
 
-- The target gain defaults to `"rms"`; the literal §8.2 least-squares fit is available as `"ls"`.
-- t_e is measured from the direct arrival.
+- **Target gain: `"rms"` (decided 2026-11-01).** The literal §8.2 least-squares fit is still available as `"ls"`, and both gains are recorded in `meta` either way.
+  - What `"rms"` does: it scales R1 and R0 so their speech-active RMS matches the received speech.
+  - The LS gain and the RMS gain differ by a factor ρ, the correlation between target and received speech on the active samples: g_ls = ρ · q.
+  - In a reverberant pool ρ is low, because the late reverb dominates the received energy and does not correlate with the direct-plus-early target.
+  - Measured on 60 random `uwsim_v0` training scenes (`sample_scene` seeds 1000–1059, 6 s of a test-clean utterance each, ratio of the two `meta` gains; range median 11 m, p10–p90 4.7–19 m):
+    - ρ for R1 had median 0.24, p10 −0.03 and minimum −0.29.
+    - ρ was below 0.5 in 87% of scenes and negative in 13%. R0 was the same: median 0.25, negative in 13%.
+  - With `"ls"`, a typical target would therefore sit about 12 dB below the input. In one scene in eight it would also be polarity-inverted, which happens near Lloyd's-mirror nulls and with weak direct paths.
+  - For a level-sensitive training loss, that means learning a range-dependent attenuation and sign that carry no speech information.
+  - `"rms"` keeps every target at the input level and sign. Scale-invariant metrics (SI-SDR, ESTOI, WER) are unaffected by the choice.
+  - Note: `"rms"` makes the target louder than the physical direct-plus-early level.
+- t_e is measured from the direct arrival (needs the lead's sign-off).
 - Targets include the (1+ε) time scaling and the chain's bulk delay.
 
 **Evaluation:**
