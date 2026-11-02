@@ -78,6 +78,8 @@ The best enhancement front end in each noise0 cell, for comparison: 1 m 21.1% (W
 
 - Replace every [SIM] number with the real v0-test result. That data is the pre-registered H2 endpoint. H2d (SE vs recognizer adaptation) is exploratory in the abstract (RESEARCH_PLAN.md §2), so phrase finding 2 as exploratory.
 - The simulator is uncalibrated. Do not describe it as "calibrated" until E0–E4 are done.
-- The noise0 test noise is synthetic. If C8 is retrained with stationary synthetic noise (pending sign-off), the noise0 result is no longer out of distribution. Use a held-out noise or the recorded bank for that claim.
+- The noise0 test noise is synthetic. The stationary-noise retrain of C8 (signed off 2026-11-02) trains on the same Gaussian generator, but only at slopes [−6, −4] ∪ [−2, 0] dB/oct. The (−4, −2) band around the −3 dB/oct test noise is held out.
+  - State this in the paper's Methods: "Training noise slopes exclude a band around the test noise, so the test noise is unseen in spectral tilt, though from the same generator family."
+  - The stronger claim (unseen noise type) still needs the recorded bank.
 - One fixed scene per range. Real data add position variety.
 - The H2-primary comparison (C2 vs C0) currently goes the wrong way in sim. Decide with the lead how the abstract frames that if it holds on real data.

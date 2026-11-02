@@ -259,12 +259,15 @@ Reading:
 
 ## Next
 
-- **Training noise (needs sign-off).** Until the recorded bank exists, mix stationary synthetic noise (and coloured variants) into training. Today it only appears when an item draws no bubbles. Without it, any SE trained on uwsim fails on broadband noise.
+- **Training noise (signed off by the lead 2026-11-02; running).** Until the recorded bank exists, half of the training scenes add stationary coloured Gaussian noise (`configs/uwsim_v0_stat.yaml`).
+  - Level: −10 to 0 dB re the bubble component.
+  - Slope: drawn from [−6, −4] ∪ [−2, 0] dB/oct. The band (−4, −2) is held out because the noise0 test noise is the same generator at −3 dB/oct. Noise0 therefore stays out of distribution in slope, though not in generator family.
+  - First run: C8 (`configs/c8_whisper_lora_stat.yaml`, `runs/c8_whisper_lora_stat_s0`).
 - **C8 follow-ups.**
   - Get sign-off on LR 1e-4.
   - Seed 1 is done (see above).
   - Add WER-based checkpoint selection on a held-out uwsim dev set.
-  - Retrain with stationary noise once that is approved, since noise0 is still 17–49% WER.
+  - Retrain with stationary noise: running (see Training noise above).
   - Test the hallucination rate with temperature fallback against the fixed policy.
   - Use `train.val_num_workers=0` on the 16 GB laptop: validation workers spawn on every eval.
 - **Hallucination flag.** Add a substitution-hallucination flag to `evaluation.asr` before E14.
