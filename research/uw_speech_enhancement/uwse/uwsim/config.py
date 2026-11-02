@@ -122,6 +122,11 @@ class NoiseConfig:
     bubble_radius_m: Range = (0.5e-3, 3e-3)
     bubble_rel_db: Range = (-20.0, 0.0)
     recorded_bubbles_prob: float = 0.0
+    # Stationary coloured Gaussian noise (a stand-in for broadband pump/ambient noise until
+    # the recorded bank exists). 0 keeps scenes and RNG streams identical to v0.
+    stationary_prob: float = 0.0
+    stationary_slope_db_per_oct: Range = (-6.0, 0.0)
+    stationary_rel_db: Range = (-10.0, 0.0)  # re the bubble component
 
 
 @dataclass

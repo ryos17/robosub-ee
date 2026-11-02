@@ -283,3 +283,38 @@ def test_dataset_determinism(tmp_path, rng, noise_dir):
     loader = torch.utils.data.DataLoader(ds0, batch_size=2, num_workers=0)
     xb, yb, mb = next(iter(loader))
     assert xb.shape == (2, 8000) and len(mb) == 2
+
+
+# --------------------------------------------------------------------------- stationary noise
+
+
+def test_stationary_noise_off_by_default_and_rng_isolated():
+    """stationary_prob only changes the stationary fields; every other scene field is unchanged."""
+    off = SimConfig()
+    on = SimConfig()
+    on.noise.stationary_prob = 1.0
+    for seed in range(5):
+        a, b = sample_scene(off, seed).to_dict(), sample_scene(on, seed).to_dict()
+        assert a["stationary_on"] is False and b["stationary_on"] is True
+        lo, hi = on.noise.stationary_slope_db_per_oct
+        assert lo <= b["stationary_slope_db"] <= hi
+        for k in ("stationary_on", "stationary_slope_db", "stationary_rel_db"):
+            a.pop(k), b.pop(k)
+        assert a == b
+
+
+def test_stationary_noise_in_mix(rng):
+    sc = _small_scene()
+    sc.thruster_on, sc.ambient_on, sc.bubble_rate = False, False, 5.0
+    clean = speechlike(rng, 0.75)
+    kinds = lambda s: [i.get("kind") for i in simulate(clean, s, None, np.random.default_rng(0),
+                                                       rir=synth_rir())["meta"]["noise"]]
+    assert "stationary_synthetic" not in kinds(sc)
+    sc.stationary_on, sc.stationary_slope_db, sc.stationary_rel_db = True, -6.0, 0.0
+    k = kinds(sc)
+    assert "stationary_synthetic" in k and "synthetic_fallback" not in k
+    # Scene JSON written before the field existed still loads (defaults to off).
+    d = sc.to_dict()
+    for f in ("stationary_on", "stationary_slope_db", "stationary_rel_db"):
+        d.pop(f)
+    assert Scene.from_dict(d).stationary_on is False

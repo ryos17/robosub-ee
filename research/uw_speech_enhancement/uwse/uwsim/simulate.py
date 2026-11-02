@@ -171,6 +171,9 @@ class Scene:
     level_dbfs: float
     target_band: list
     lowband_src_idx: int = 0
+    stationary_on: bool = False
+    stationary_slope_db: float = -3.0
+    stationary_rel_db: float = 0.0
     extra: dict = field(default_factory=dict)
 
     def to_dict(self) -> dict:
@@ -283,6 +286,14 @@ def sample_scene(cfg: SimConfig, rng: np.random.Generator | int, generic: bool |
     snr_lo = max(nc.snr_measured[0] - nc.snr_widen_db, nc.snr_clip[0])
     snr_hi = min(nc.snr_measured[1] + nc.snr_widen_db, nc.snr_clip[1])
 
+    # Stationary-noise draws use their own stream so v0 scenes (stationary_prob = 0) and every
+    # other field of a scene stay identical whatever this setting is.
+    st_on, st_slope, st_rel = False, -3.0, 0.0
+    if nc.stationary_prob > 0:
+        rs = np.random.default_rng([seed, 0x57A7])
+        st_on = bool(rs.random() < nc.stationary_prob)
+        st_slope, st_rel = _u(rs, nc.stationary_slope_db_per_oct), _u(rs, nc.stationary_rel_db)
+
     return Scene(
         seed=seed, rir_seed=int(rng.integers(2 ** 31)), calibrated=bool(cfg.calibrated),
         is_generic=is_generic, pool=pool, c=c, surface_R=_u(rng, pc.surface_R),
@@ -303,7 +314,8 @@ def sample_scene(cfg: SimConfig, rng: np.random.Generator | int, generic: bool |
         adc_floor_dbfs=cc.adc_floor_dbfs + float(rng.uniform(-cc.adc_jitter_db, cc.adc_jitter_db)),
         adc_bits=int(cc.adc_bits), level_dbfs=_u(rng, cc.level_dbfs),
         target_band=[cfg.target.f_lo, cfg.target.f_hi],
-        lowband_src_idx=int(rng.integers(2 ** 31)), extra=extra,
+        lowband_src_idx=int(rng.integers(2 ** 31)), stationary_on=st_on,
+        stationary_slope_db=st_slope, stationary_rel_db=st_rel, extra=extra,
     )
 
 
@@ -623,6 +635,9 @@ def simulate(clean_48k: np.ndarray, scene: Scene, noise_bank: NoiseBank | None,
         if np.any(b):
             comps.append((b, scene.bubble_rel_db))
             meta["noise"].append({"kind": "bubbles_synthetic", "rate": scene.bubble_rate})
+    if scene.stationary_on:
+        comps.append((synthetic_noise(n, fs, rng, scene.stationary_slope_db), scene.stationary_rel_db))
+        meta["noise"].append({"kind": "stationary_synthetic", "slope_db_per_oct": scene.stationary_slope_db})
     noise = combine_noises(comps) if comps else None
     if noise is None or not np.any(noise):
         noise = synthetic_noise(n, fs, rng)
