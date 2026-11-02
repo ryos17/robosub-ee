@@ -220,12 +220,50 @@ Reading:
   - LoRA fine-tuning can weaken end-of-text prediction. Because the decoding policy has no temperature fallback, such a loop goes straight into the WER. Watch the flag count on the real v0 test.
 - **H2 reading under the placeholder simulator.** For Whisper at range, adapting the recognizer beats every front end tried. The caveats above still apply: uncalibrated RIRs, no recorded noise, and one seed.
 
+### C8 seed 1 (2026-11-02)
+
+- **Run.** Same config as seed 0 except `val_num_workers=0`. Run dir `runs/c8_whisper_lora_lr1e-4_s1`.
+  - Early stop at step 22k. Best val CE 0.0973 at step 12k (seed 0: 0.1018 at 6k).
+- **Scoring.** Same harness as seed 0.
+
+WER %, C0 / seed 0 / seed 1, then the seed-1 paired ΔWER vs C0 and vs seed 0 [95% CI]:
+
+| cell | C0 | s0 | s1 | s1 − C0 | s1 − s0 |
+|---|---|---|---|---|---|
+| quiet 1 m | 3.1 | 2.0 | 2.7 | −0.4 [−1.1, +0.3] | +0.7 [0.0, +1.4] |
+| quiet 3 m | 3.7 | 2.3 | 3.8 | +0.1 [−0.6, +0.8] | +1.5 [+0.9, +2.1] |
+| quiet 6 m | 4.3 | 3.7 | 4.8 | +0.5 [−0.5, +1.5] | +1.2 [+0.3, +2.1] |
+| noise0 1 m | 20.3 | 17.1 | 18.1 | **−2.2** [−3.8, −0.7] | +1.0 [−0.3, +2.3] |
+| noise0 3 m | 48.3 | 42.1 | 43.2 | **−5.1** [−7.7, −2.5] | +1.1 [−1.2, +3.4] |
+| noise0 6 m | 56.4 | 48.8 | 50.1 | **−6.3** [−9.2, −3.6] | +1.3 [−0.3, +3.0] |
+| bubbles0 1 m | 2.4 | 7.9 | 2.0 | −0.4 [−0.9, 0.0] | −5.9 [−18.7, +0.4] |
+| bubbles0 3 m | 5.1 | 3.0 | 3.4 | **−1.7** [−2.5, −1.0] | +0.4 [0.0, +0.9] |
+| bubbles0 6 m | 5.7 | 4.4 | 4.5 | **−1.2** [−2.1, −0.3] | +0.2 [−0.4, +0.8] |
+
+Reading:
+
+- **The noisy-cell gain replicates.**
+  - Seed 1 beats C0 in all 6 noise0 and bubbles0 cells. The CI excludes zero in 5 of them; bubbles0 1 m reaches 0.0.
+  - The noise0 gain still grows with range, from −2.2 to −6.3 points.
+  - Seed 1 is about 1 point behind seed 0 in noise0, inside the seed-vs-seed CI.
+- **The quiet-cell gain does not replicate.**
+  - Seed 1 is level with C0 in quiet; every CI includes zero.
+  - It is significantly worse than seed 0 at 3 m and 6 m.
+  - So the 8-of-9 claim for seed 0 should be read as 6 of 6 noisy cells (5 of 6 significant per seed), plus a quiet-cell gain that depends on the seed.
+- **The hallucination loop does not recur.** Seed 1 has no runaway insertions; its maximum is 13 words in one utterance. It has 2 flagged utterances of 1800, both in noise0, the same count as seed 0.
+  - The seed-0 bubbles0 1 m regression is therefore one stochastic event, not a systematic failure. Its rate still needs watching on real data.
+- **Val CE does not pick the better recognizer.**
+  - Seed 1 has the lower val CE (0.097 vs 0.102) but the higher WER in 8 of 9 cells. Only bubbles0 1 m, the cell with the seed-0 loop, goes the other way.
+  - Its best checkpoint is also later (step 12k vs 6k), and the quiet-cell loss may be drift away from the base model's clean-speech behaviour as training goes on.
+  - If seeds or checkpoints are compared, select on a small WER dev set, not CE.
+
 ## Next
 
 - **Training noise (needs sign-off).** Until the recorded bank exists, mix stationary synthetic noise (and coloured variants) into training. Today it only appears when an item draws no bubbles. Without it, any SE trained on uwsim fails on broadband noise.
 - **C8 follow-ups.**
   - Get sign-off on LR 1e-4.
-  - Train more seeds.
+  - Seed 1 is done (see above).
+  - Add WER-based checkpoint selection on a held-out uwsim dev set.
   - Retrain with stationary noise once that is approved, since noise0 is still 17–49% WER.
   - Test the hallucination rate with temperature fallback against the fixed policy.
   - Use `train.val_num_workers=0` on the 16 GB laptop: validation workers spawn on every eval.
