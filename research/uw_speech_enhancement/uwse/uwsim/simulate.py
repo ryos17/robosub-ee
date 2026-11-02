@@ -292,7 +292,13 @@ def sample_scene(cfg: SimConfig, rng: np.random.Generator | int, generic: bool |
     if nc.stationary_prob > 0:
         rs = np.random.default_rng([seed, 0x57A7])
         st_on = bool(rs.random() < nc.stationary_prob)
-        st_slope, st_rel = _u(rs, nc.stationary_slope_db_per_oct), _u(rs, nc.stationary_rel_db)
+        lo, hi = nc.stationary_slope_db_per_oct
+        a, b = (max(nc.stationary_slope_holdout[0], lo), min(nc.stationary_slope_holdout[1], hi)) \
+            if nc.stationary_slope_holdout is not None else (lo, lo)
+        gap = max(b - a, 0.0)
+        st_slope = lo + float(rs.uniform(0.0, (hi - lo) - gap))
+        st_slope += gap if st_slope >= a else 0.0
+        st_rel = _u(rs, nc.stationary_rel_db)
 
     return Scene(
         seed=seed, rir_seed=int(rng.integers(2 ** 31)), calibrated=bool(cfg.calibrated),

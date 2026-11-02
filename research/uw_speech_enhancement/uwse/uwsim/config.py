@@ -126,6 +126,9 @@ class NoiseConfig:
     # the recorded bank exists). 0 keeps scenes and RNG streams identical to v0.
     stationary_prob: float = 0.0
     stationary_slope_db_per_oct: Range = (-6.0, 0.0)
+    # Slopes excluded from training (uniform over the rest), so a test noise at a slope in this
+    # band stays out of distribution. E7 noise0 is -3 dB/oct.
+    stationary_slope_holdout: Range | None = None
     stationary_rel_db: Range = (-10.0, 0.0)  # re the bubble component
 
 

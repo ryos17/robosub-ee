@@ -1,5 +1,5 @@
 # C8: Whisper large-v3 + LoRA on uwsim audio, no SE (RQ2d; RESEARCH_PLAN.md §7.2-7.4).
-# Variant: uwsim_v0_stat.yaml (bubbles + stationary coloured noise). Pending sign-off.
+# Variant: uwsim_v0_stat.yaml (bubbles + stationary coloured noise, -3 dB/oct band held out). Signed off 2026-11-02.
 # LoRA r = 8, alpha = 32, dropout 0.05 on q_proj/v_proj; peak LR 1e-3; wd 0; CE on the
 # LibriSpeech transcripts of the simulated noisy audio. Whole utterances (no crops):
 # use a train list filtered to <= 30 s (uwse.bench.librispeech.filter_duration) as

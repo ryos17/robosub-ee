@@ -1,9 +1,8 @@
-# uwsim v0 + stationary coloured Gaussian noise in training (pending the lead's sign-off).
+# uwsim v0 + stationary coloured Gaussian noise in training (lead sign-off 2026-11-02).
 # Identical to uwsim_v0.yaml except noise.stationary_*; v0 scenes are unchanged for
 # the same seed apart from the stationary fields (separate RNG stream).
-# NOTE: the E7 noise0 test condition is the same generator at a fixed -3 dB/oct, which
-# lies inside the training slope range, so noise0 gains after training on this are
-# in-distribution and optimistic. See RESULTS_E7_SIM_DRYRUN.md, Next.
+# Slopes are drawn from [-6, -4] U [-2, 0] dB/oct: the band around the E7 noise0 test
+# noise (-3 dB/oct, same generator) is held out so noise0 stays out of distribution.
 # uwsim v0 simulator configuration (RESEARCH_PLAN.md section 4.2 randomization ranges).
 # calibrated: false -> every "measured" item is an uncalibrated textbook/placeholder value:
 #   chain FIRs (h1/h2/h3, hydrophone) = identity/linear, directivity = piston a = 0.117 m,
@@ -152,6 +151,9 @@ noise:
   stationary_slope_db_per_oct:
   - -6.0
   - 0.0
+  stationary_slope_holdout:   # E7 noise0 is -3 dB/oct: kept out of training (lead, 2026-11-02)
+  - -4.0
+  - -2.0
   stationary_rel_db:
   - -10.0
   - 0.0

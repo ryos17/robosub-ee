@@ -318,3 +318,13 @@ def test_stationary_noise_in_mix(rng):
     for f in ("stationary_on", "stationary_slope_db", "stationary_rel_db"):
         d.pop(f)
     assert Scene.from_dict(d).stationary_on is False
+
+
+def test_stationary_slope_holdout():
+    cfg = SimConfig()
+    cfg.noise.stationary_prob = 1.0
+    cfg.noise.stationary_slope_holdout = (-4.0, -2.0)
+    s = np.array([sample_scene(cfg, i).stationary_slope_db for i in range(400)])
+    assert s.min() >= -6.0 and s.max() <= 0.0
+    assert not np.any((s > -4.0) & (s < -2.0))
+    assert 0.35 < np.mean(s <= -4.0) < 0.65  # both kept bands equally likely
