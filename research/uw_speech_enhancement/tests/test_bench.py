@@ -294,3 +294,18 @@ def test_make_playlists_args_and_interleave():
     out = mp.interleave([f"t{i}" for i in range(25)], [f"d{i}" for i in range(5)])
     assert len(out) == 30 and sorted(out) == sorted([f"t{i}" for i in range(25)] + [f"d{i}" for i in range(5)])
     assert out[0].startswith("t") and out[-1].startswith("t")
+
+
+def test_prepare_utterance_peak_cap():
+    """A high-crest-factor utterance is turned down to the peak cap, and the cut is logged."""
+    fs = pl.FS_PLAYBACK
+    x = np.zeros(fs)
+    x[fs // 2] = 1.0  # one click in silence: huge crest factor
+    x += 1e-4 * np.random.default_rng(0).standard_normal(fs)
+    y, info = pl.prepare_utterance(x, fs)
+    assert np.max(np.abs(y)) <= 10 ** (pl.MAX_PEAK_DBFS / 20) + 1e-9
+    assert info["limited_dB"] < 0
+    y2, info2 = pl.prepare_utterance(x, fs, max_peak_dbfs=None)
+    assert info2["limited_dB"] == 0.0 and np.max(np.abs(y2)) > 1.0
+    s = np.sin(2 * np.pi * 440 * np.arange(fs) / fs)  # crest factor 3 dB: untouched
+    assert pl.prepare_utterance(s, fs)[1]["limited_dB"] == 0.0

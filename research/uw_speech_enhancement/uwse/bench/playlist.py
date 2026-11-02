@@ -53,6 +53,7 @@ from uwse.evaluation import align as _align
 
 FS_PLAYBACK = 48000
 TARGET_RMS_DBFS = -26.0
+MAX_PEAK_DBFS = -1.0           # per-utterance peak cap; the gain cut is logged as limited_dB
 DRIVE_LPF_HZ = 8000.0
 DRIVE_LPF_ORDER = 8          # per pass; sosfiltfilt doubles the effective order
 FADE_S = 0.005
@@ -110,8 +111,14 @@ def drive_lpf(x: np.ndarray, fs: int, fc: float = DRIVE_LPF_HZ,
 
 def prepare_utterance(x: np.ndarray, fs_in: int, fs: int = FS_PLAYBACK,
                       target_dbfs: float = TARGET_RMS_DBFS, lpf_hz: float = DRIVE_LPF_HZ,
-                      fade_s: float = FADE_S) -> tuple[np.ndarray, dict[str, float]]:
-    """Resample, RMS-normalize to ``target_dbfs``, fade, drive LPF. Returns (y, info)."""
+                      fade_s: float = FADE_S,
+                      max_peak_dbfs: float | None = MAX_PEAK_DBFS) -> tuple[np.ndarray, dict[str, float]]:
+    """Resample, RMS-normalize to ``target_dbfs``, fade, drive LPF. Returns (y, info).
+
+    A high-crest-factor utterance whose peak would exceed ``max_peak_dbfs`` is
+    turned down until it does not (``limited_dB`` < 0 in ``info``); its RMS
+    then sits below the target. None disables the cap.
+    """
     x = np.asarray(x, dtype=np.float64)
     if x.ndim != 1:
         raise ValueError("mono utterances only")
@@ -122,8 +129,15 @@ def prepare_utterance(x: np.ndarray, fs_in: int, fs: int = FS_PLAYBACK,
     gain_db = target_dbfs - 20.0 * math.log10(r)
     y = audio.fade(y * 10.0 ** (gain_db / 20.0), fs, fade_s, fade_s)
     y = drive_lpf(y, fs, lpf_hz)
+    limited_db = 0.0
+    if max_peak_dbfs is not None:
+        over = float(audio.db(np.max(np.abs(y)))) - max_peak_dbfs
+        if over > 0:
+            limited_db = -over
+            y = y * 10.0 ** (limited_db / 20.0)
     return y, {
-        "gain_dB": gain_db,
+        "gain_dB": gain_db + limited_db,
+        "limited_dB": limited_db,
         "rms_dBFS": float(audio.db(audio.rms(y))),
         "peak_dBFS": float(audio.db(np.max(np.abs(y)))),
     }
