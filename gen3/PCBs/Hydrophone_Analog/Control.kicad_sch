@@ -1694,22 +1694,10 @@
 		(uuid "bd7acaa9-9ed3-4de1-9fb7-0f2e9cf541ca")
 	)
 	(junction
-		(at 176.53 69.85)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "be144ffc-e58f-49dd-a8a2-315052d4bed0")
-	)
-	(junction
 		(at 67.31 29.21)
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "be22dbdd-017b-48a8-8d43-5e5231c605b4")
-	)
-	(junction
-		(at 193.04 29.21)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "c2daff34-e0b5-4128-a79f-9122ddf62d65")
 	)
 	(junction
 		(at 33.02 99.06)
@@ -1873,16 +1861,6 @@
 	)
 	(wire
 		(pts
-			(xy 180.34 69.85) (xy 176.53 69.85)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "2b1b2749-a6fd-4cf5-8145-108b06d073ab")
-	)
-	(wire
-		(pts
 			(xy 119.38 104.14) (xy 119.38 101.6)
 		)
 		(stroke
@@ -2000,16 +1978,6 @@
 			(type default)
 		)
 		(uuid "542f93bc-39af-4c46-8e05-e7254fb5ae56")
-	)
-	(wire
-		(pts
-			(xy 176.53 69.85) (xy 176.53 74.93)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "54e4ab3e-e78e-407f-add2-f6a70afcb5ab")
 	)
 	(wire
 		(pts
@@ -2413,16 +2381,6 @@
 	)
 	(wire
 		(pts
-			(xy 189.23 29.21) (xy 193.04 29.21)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "ccbef9d9-7465-4483-9f37-193b114dbe53")
-	)
-	(wire
-		(pts
 			(xy 77.47 102.87) (xy 77.47 100.33)
 		)
 		(stroke
@@ -2440,16 +2398,6 @@
 			(type default)
 		)
 		(uuid "d1782e83-5b83-4ec8-ae01-e5843b0fba21")
-	)
-	(wire
-		(pts
-			(xy 176.53 74.93) (xy 180.34 74.93)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "d50c964f-38cc-42eb-a083-33136931e049")
 	)
 	(wire
 		(pts
@@ -2641,16 +2589,6 @@
 		)
 		(uuid "3374df65-ed46-430f-9745-7259b9cccbea")
 	)
-	(label "CTRL_RESET_N"
-		(at 180.34 57.15 180)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify right bottom)
-		)
-		(uuid "37585bdd-175e-412a-b379-9bab8bc340e7")
-	)
 	(label "I2C1_SCL"
 		(at 120.65 34.29 180)
 		(effects
@@ -2830,26 +2768,6 @@
 			(justify left bottom)
 		)
 		(uuid "a364033a-5b79-4534-a70c-8f348f9cbdfa")
-	)
-	(label "I2C1_SDA"
-		(at 180.34 36.83 180)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify right bottom)
-		)
-		(uuid "b4e66981-906e-4c29-9f01-17e7413412d5")
-	)
-	(label "I2C1_SCL"
-		(at 180.34 34.29 180)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify right bottom)
-		)
-		(uuid "b7473f59-0fff-4368-82c0-51adb1b5d767")
 	)
 	(label "I2C1_SDA"
 		(at 120.65 36.83 180)
@@ -4991,86 +4909,6 @@
 		)
 	)
 	(symbol
-		(lib_id "power:+3.3V")
-		(at 180.34 72.39 90)
-		(mirror x)
-		(unit 1)
-		(body_style 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(in_pos_files yes)
-		(dnp no)
-		(fields_autoplaced yes)
-		(uuid "3a300f67-8f92-45a1-8bc5-1608cc375493")
-		(property "Reference" "#PWR0714"
-			(at 184.15 72.39 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Value" "+3.3V"
-			(at 176.53 72.3899 90)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Footprint" ""
-			(at 180.34 72.39 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" ""
-			(at 180.34 72.39 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" "Power symbol creates a global label with name \"+3.3V\""
-			(at 180.34 72.39 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(pin "1"
-			(uuid "251a1728-e5df-4563-a44a-6432275c4293")
-		)
-		(instances
-			(project "Hydrophone_Analog"
-				(path "/3634aa72-f703-4c52-b463-b00d283490ac/ffe4dbe6-d3e1-4c30-b149-2f278e539bba"
-					(reference "#PWR0714")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
 		(lib_id "Device:R")
 		(at 59.69 170.18 90)
 		(unit 1)
@@ -5725,86 +5563,6 @@
 		)
 	)
 	(symbol
-		(lib_id "Device:C")
-		(at 185.42 29.21 90)
-		(unit 1)
-		(body_style 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(in_pos_files yes)
-		(dnp no)
-		(fields_autoplaced yes)
-		(uuid "42ec5ab4-ff46-4e49-9294-01ace8e9f0e0")
-		(property "Reference" "C703"
-			(at 185.42 21.59 90)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Value" "100nF"
-			(at 185.42 24.13 90)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Footprint" "Capacitor_SMD:C_0805_2012Metric"
-			(at 189.23 28.2448 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" ""
-			(at 185.42 29.21 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" "Unpolarized capacitor"
-			(at 185.42 29.21 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(pin "2"
-			(uuid "cc2c5498-c667-4064-87de-a729d3530cd9")
-		)
-		(pin "1"
-			(uuid "4d602f3a-ba4b-40ec-839f-0d673d8501f6")
-		)
-		(instances
-			(project "Hydrophone_Analog"
-				(path "/3634aa72-f703-4c52-b463-b00d283490ac/ffe4dbe6-d3e1-4c30-b149-2f278e539bba"
-					(reference "C703")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
 		(lib_id "power:GND")
 		(at 88.9 105.41 0)
 		(unit 1)
@@ -5959,168 +5717,6 @@
 			(project "Hydrophone_Analog"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/ffe4dbe6-d3e1-4c30-b149-2f278e539bba"
 					(reference "R94")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "Interface_Expansion:MCP23017x-x-SS")
-		(at 193.04 54.61 0)
-		(unit 1)
-		(body_style 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(in_pos_files yes)
-		(dnp no)
-		(fields_autoplaced yes)
-		(uuid "4dd5959b-9ee9-4e20-b901-3a5f94dbb393")
-		(property "Reference" "U703"
-			(at 195.1833 26.67 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Value" "MCP23017x-x-SS"
-			(at 195.1833 29.21 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Footprint" "Package_SO:SSOP-28_5.3x10.2mm_P0.65mm"
-			(at 198.12 80.01 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Datasheet" "https://ww1.microchip.com/downloads/aemDocuments/documents/APID/ProductDocuments/DataSheets/MCP23017-Data-Sheet-DS20001952.pdf"
-			(at 198.12 82.55 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Description" "16-bit I/O expander, I2C, interrupts, w pull-ups, SSOP-28"
-			(at 193.04 54.61 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(pin "7"
-			(uuid "93c868f8-c673-45d7-b97d-4b769e107053")
-		)
-		(pin "5"
-			(uuid "978f5cf6-a500-43de-8838-e72c64a93085")
-		)
-		(pin "9"
-			(uuid "bcb67e79-dc35-4d7c-b323-97a6e9b90a71")
-		)
-		(pin "16"
-			(uuid "28a77fd9-5d94-4bb7-b47a-da6c5f476387")
-		)
-		(pin "4"
-			(uuid "2ca94f40-8f2a-4dc0-aec6-8066ae9fc99d")
-		)
-		(pin "14"
-			(uuid "92f171b0-9cca-4313-96ca-61a769e20416")
-		)
-		(pin "6"
-			(uuid "d2f36b41-54f9-40e9-979c-1578ec34d1e6")
-		)
-		(pin "20"
-			(uuid "5f431b06-9369-41a8-b1a6-f77915698615")
-		)
-		(pin "26"
-			(uuid "f1ddc115-2edd-45f1-a38a-88178ca22ba2")
-		)
-		(pin "12"
-			(uuid "ba282ab8-f5d5-4df3-878c-e0bbea9e7258")
-		)
-		(pin "24"
-			(uuid "d4d97130-6d72-43d9-94a8-58a793e45a7a")
-		)
-		(pin "1"
-			(uuid "db741761-578a-47b4-b9b1-883cd54f4f2a")
-		)
-		(pin "18"
-			(uuid "a2831392-d2e3-4090-a126-4ea5e162fb9c")
-		)
-		(pin "10"
-			(uuid "2800d0e4-2e85-4222-8c26-d703426bdac1")
-		)
-		(pin "17"
-			(uuid "479ec4fd-4d51-422e-ba19-0eb0bbe52fba")
-		)
-		(pin "2"
-			(uuid "c37b7b9e-1581-48ca-b10f-bb54d80292f7")
-		)
-		(pin "8"
-			(uuid "c4c4dd55-aed3-422b-8c07-b29c5c1f15f4")
-		)
-		(pin "13"
-			(uuid "cafca6e7-afad-489a-bddd-85b4f9a36b7e")
-		)
-		(pin "23"
-			(uuid "247f975d-0dd3-4d80-b8ef-400ec8be90d2")
-		)
-		(pin "28"
-			(uuid "f598f4dc-2286-4a52-afe4-8f3722b48402")
-		)
-		(pin "27"
-			(uuid "8440f9c2-3365-43b4-a5fb-fe014eefe2ef")
-		)
-		(pin "19"
-			(uuid "0da631c5-0c62-49a7-b013-75ebea5f57c6")
-		)
-		(pin "22"
-			(uuid "cbcb8c21-278f-4242-b483-3635f8833f52")
-		)
-		(pin "25"
-			(uuid "b5443d33-3f67-411b-aacd-0b5cf78e04b6")
-		)
-		(pin "3"
-			(uuid "e529c70b-d9a1-456b-a21f-77a34ff0ec29")
-		)
-		(pin "11"
-			(uuid "3c400b83-a03a-4f50-bf2e-f1e8ddff731a")
-		)
-		(pin "21"
-			(uuid "924eece6-1d0e-4505-ae2d-ee1a00a3d506")
-		)
-		(pin "15"
-			(uuid "fb33818c-90fd-4afe-a5a1-2fe0f5bfe910")
-		)
-		(instances
-			(project "Hydrophone_Analog"
-				(path "/3634aa72-f703-4c52-b463-b00d283490ac/ffe4dbe6-d3e1-4c30-b149-2f278e539bba"
-					(reference "U703")
 					(unit 1)
 				)
 			)
@@ -7583,84 +7179,6 @@
 		)
 	)
 	(symbol
-		(lib_id "power:+3.3V")
-		(at 193.04 29.21 0)
-		(unit 1)
-		(body_style 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(in_pos_files yes)
-		(dnp no)
-		(fields_autoplaced yes)
-		(uuid "80087660-bc8e-4c6a-902f-19edb46e9454")
-		(property "Reference" "#PWR0716"
-			(at 193.04 33.02 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Value" "+3.3V"
-			(at 193.04 24.13 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Footprint" ""
-			(at 193.04 29.21 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" ""
-			(at 193.04 29.21 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" "Power symbol creates a global label with name \"+3.3V\""
-			(at 193.04 29.21 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(pin "1"
-			(uuid "8efc663e-759a-49e5-be1c-1d500eef678d")
-		)
-		(instances
-			(project "Hydrophone_Analog"
-				(path "/3634aa72-f703-4c52-b463-b00d283490ac/ffe4dbe6-d3e1-4c30-b149-2f278e539bba"
-					(reference "#PWR0716")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
 		(lib_id "power:GND")
 		(at 30.48 140.97 0)
 		(unit 1)
@@ -8134,85 +7652,6 @@
 			(project "Hydrophone_Analog"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/ffe4dbe6-d3e1-4c30-b149-2f278e539bba"
 					(reference "#PWR033")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "power:GND1")
-		(at 181.61 29.21 270)
-		(unit 1)
-		(body_style 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(in_pos_files yes)
-		(dnp no)
-		(fields_autoplaced yes)
-		(uuid "8e69e69c-58d3-42e4-ae16-6d615d706531")
-		(property "Reference" "#PWR0715"
-			(at 175.26 29.21 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Value" "GND"
-			(at 177.8 29.2099 90)
-			(show_name no)
-			(do_not_autoplace yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify right)
-			)
-		)
-		(property "Footprint" ""
-			(at 181.61 29.21 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" ""
-			(at 181.61 29.21 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" "Power symbol creates a global label with name \"GND1\" , ground"
-			(at 181.61 29.21 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(pin "1"
-			(uuid "033ca718-a164-4e46-8402-acb508c9226b")
-		)
-		(instances
-			(project "Hydrophone_Analog"
-				(path "/3634aa72-f703-4c52-b463-b00d283490ac/ffe4dbe6-d3e1-4c30-b149-2f278e539bba"
-					(reference "#PWR0715")
 					(unit 1)
 				)
 			)
@@ -9505,86 +8944,6 @@
 			(project "Hydrophone_Analog"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/ffe4dbe6-d3e1-4c30-b149-2f278e539bba"
 					(reference "R85")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "power:GND1")
-		(at 176.53 69.85 270)
-		(mirror x)
-		(unit 1)
-		(body_style 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(in_pos_files yes)
-		(dnp no)
-		(fields_autoplaced yes)
-		(uuid "b6470012-2d6f-47b4-bdb2-b6273030ee3f")
-		(property "Reference" "#PWR0713"
-			(at 170.18 69.85 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Value" "GND"
-			(at 172.72 69.8499 90)
-			(show_name no)
-			(do_not_autoplace yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify right)
-			)
-		)
-		(property "Footprint" ""
-			(at 176.53 69.85 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" ""
-			(at 176.53 69.85 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" "Power symbol creates a global label with name \"GND1\" , ground"
-			(at 176.53 69.85 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(pin "1"
-			(uuid "3be1e983-9152-4abb-b745-b32202d934d9")
-		)
-		(instances
-			(project "Hydrophone_Analog"
-				(path "/3634aa72-f703-4c52-b463-b00d283490ac/ffe4dbe6-d3e1-4c30-b149-2f278e539bba"
-					(reference "#PWR0713")
 					(unit 1)
 				)
 			)
@@ -11052,85 +10411,6 @@
 			(project "Hydrophone_Analog"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac/ffe4dbe6-d3e1-4c30-b149-2f278e539bba"
 					(reference "R82")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "power:GND1")
-		(at 193.04 80.01 0)
-		(unit 1)
-		(body_style 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(in_pos_files yes)
-		(dnp no)
-		(fields_autoplaced yes)
-		(uuid "dff01c2d-1ab3-4b50-b9ea-cd7b4696b239")
-		(property "Reference" "#PWR0717"
-			(at 193.04 86.36 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Value" "GND"
-			(at 195.58 81.2799 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Footprint" ""
-			(at 193.04 80.01 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" ""
-			(at 193.04 80.01 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" "Power symbol creates a global label with name \"GND1\" , ground"
-			(at 193.04 80.01 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(pin "1"
-			(uuid "d6236d24-aeb2-4832-a550-631fdef8985b")
-		)
-		(instances
-			(project "Hydrophone_Analog"
-				(path "/3634aa72-f703-4c52-b463-b00d283490ac/ffe4dbe6-d3e1-4c30-b149-2f278e539bba"
-					(reference "#PWR0717")
 					(unit 1)
 				)
 			)

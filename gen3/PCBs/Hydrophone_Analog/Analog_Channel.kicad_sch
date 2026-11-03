@@ -1509,7 +1509,7 @@
 			)
 			(embedded_fonts no)
 		)
-		(symbol "Relay:Relay_DPDT"
+		(symbol "Hydrophone_RelayFix:G6K_2F_Y_DPDT"
 			(pin_names
 				(hide yes)
 			)
@@ -1529,7 +1529,7 @@
 					(justify left)
 				)
 			)
-			(property "Value" "Relay_DPDT"
+			(property "Value" "G6K-2F-Y"
 				(at 16.51 1.27 0)
 				(show_name no)
 				(do_not_autoplace no)
@@ -1540,7 +1540,7 @@
 					(justify left)
 				)
 			)
-			(property "Footprint" ""
+			(property "Footprint" "Relay_SMD:Relay_DPDT_Omron_G6K-2F-Y"
 				(at 16.51 -1.27 0)
 				(show_name no)
 				(do_not_autoplace no)
@@ -1585,7 +1585,7 @@
 					)
 				)
 			)
-			(property "ki_fp_filters" "Relay?DPDT*"
+			(property "ki_fp_filters" "Relay_DPDT_Omron_G6K-2F-Y"
 				(at 0 0 0)
 				(show_name no)
 				(do_not_autoplace no)
@@ -1596,7 +1596,7 @@
 					)
 				)
 			)
-			(symbol "Relay_DPDT_0_1"
+			(symbol "G6K_2F_Y_DPDT_0_1"
 				(rectangle
 					(start -15.24 5.08)
 					(end 15.24 -5.08)
@@ -1908,36 +1908,18 @@
 					)
 				)
 			)
-			(symbol "Relay_DPDT_1_1"
+			(symbol "G6K_2F_Y_DPDT_1_1"
 				(pin passive line
-					(at 0 -7.62 90)
+					(at -10.16 -7.62 90)
 					(length 2.54)
-					(name "11"
+					(name "A2"
 						(effects
 							(font
 								(size 1.27 1.27)
 							)
 						)
 					)
-					(number "11"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-				)
-				(pin passive line
-					(at -2.54 7.62 270)
-					(length 2.54)
-					(name "12"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "12"
+					(number "1"
 						(effects
 							(font
 								(size 1.27 1.27)
@@ -1955,7 +1937,43 @@
 							)
 						)
 					)
-					(number "14"
+					(number "4"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at -2.54 7.62 270)
+					(length 2.54)
+					(name "12"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 0 -7.62 90)
+					(length 2.54)
+					(name "11"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "3"
 						(effects
 							(font
 								(size 1.27 1.27)
@@ -1973,7 +1991,7 @@
 							)
 						)
 					)
-					(number "21"
+					(number "6"
 						(effects
 							(font
 								(size 1.27 1.27)
@@ -1991,7 +2009,7 @@
 							)
 						)
 					)
-					(number "22"
+					(number "7"
 						(effects
 							(font
 								(size 1.27 1.27)
@@ -2009,7 +2027,7 @@
 							)
 						)
 					)
-					(number "24"
+					(number "5"
 						(effects
 							(font
 								(size 1.27 1.27)
@@ -2027,25 +2045,7 @@
 							)
 						)
 					)
-					(number "A1"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-				)
-				(pin passive line
-					(at -10.16 -7.62 90)
-					(length 2.54)
-					(name "A2"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "A2"
+					(number "8"
 						(effects
 							(font
 								(size 1.27 1.27)
@@ -2056,7 +2056,7 @@
 			)
 			(embedded_fonts no)
 		)
-		(symbol "Relay:Relay_SPST-NO"
+		(symbol "Hydrophone_RelayFix:G6K_2F_Y_SPST_NO"
 			(pin_names
 				(hide yes)
 			)
@@ -2076,7 +2076,7 @@
 					(justify left)
 				)
 			)
-			(property "Value" "Relay_SPST-NO"
+			(property "Value" "G6K-2F-Y"
 				(at 11.43 1.27 0)
 				(show_name no)
 				(do_not_autoplace no)
@@ -2087,7 +2087,7 @@
 					(justify left)
 				)
 			)
-			(property "Footprint" ""
+			(property "Footprint" "Relay_SMD:Relay_DPDT_Omron_G6K-2F-Y"
 				(at 11.43 -1.27 0)
 				(show_name no)
 				(do_not_autoplace no)
@@ -2132,7 +2132,7 @@
 					)
 				)
 			)
-			(property "ki_fp_filters" "Relay?SPST*"
+			(property "ki_fp_filters" "Relay_DPDT_Omron_G6K-2F-Y"
 				(at 0 0 0)
 				(show_name no)
 				(do_not_autoplace no)
@@ -2143,7 +2143,7 @@
 					)
 				)
 			)
-			(symbol "Relay_SPST-NO_0_0"
+			(symbol "G6K_2F_Y_SPST_NO_0_0"
 				(polyline
 					(pts
 						(xy 7.62 5.08) (xy 7.62 2.54) (xy 6.985 3.175) (xy 7.62 3.81)
@@ -2157,7 +2157,7 @@
 					)
 				)
 			)
-			(symbol "Relay_SPST-NO_0_1"
+			(symbol "G6K_2F_Y_SPST_NO_0_1"
 				(rectangle
 					(start -10.16 5.08)
 					(end 10.16 -5.08)
@@ -2301,18 +2301,18 @@
 					)
 				)
 			)
-			(symbol "Relay_SPST-NO_1_1"
+			(symbol "G6K_2F_Y_SPST_NO_1_1"
 				(pin passive line
-					(at 5.08 -7.62 90)
+					(at -5.08 -7.62 90)
 					(length 2.54)
-					(name "13"
+					(name "A2"
 						(effects
 							(font
 								(size 1.27 1.27)
 							)
 						)
 					)
-					(number "13"
+					(number "1"
 						(effects
 							(font
 								(size 1.27 1.27)
@@ -2330,7 +2330,25 @@
 							)
 						)
 					)
-					(number "14"
+					(number "4"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 5.08 -7.62 90)
+					(length 2.54)
+					(name "13"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "3"
 						(effects
 							(font
 								(size 1.27 1.27)
@@ -2348,25 +2366,7 @@
 							)
 						)
 					)
-					(number "A1"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-				)
-				(pin passive line
-					(at -5.08 -7.62 90)
-					(length 2.54)
-					(name "A2"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "A2"
+					(number "8"
 						(effects
 							(font
 								(size 1.27 1.27)
@@ -6645,7 +6645,7 @@
 		)
 	)
 	(symbol
-		(lib_id "Relay:Relay_DPDT")
+		(lib_id "Hydrophone_RelayFix:G6K_2F_Y_DPDT")
 		(at 50.8 102.87 0)
 		(unit 1)
 		(body_style 1)
@@ -6667,7 +6667,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "Relay_DPDT"
+		(property "Value" "G6K-2F-Y"
 			(at 67.31 104.1399 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -6678,7 +6678,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Relay_THT:Relay_DPDT_Schrack-RT2-FormC_RM5mm"
+		(property "Footprint" "Relay_SMD:Relay_DPDT_Omron_G6K-2F-Y"
 			(at 67.31 104.14 0)
 			(hide yes)
 			(show_name no)
@@ -6712,28 +6712,28 @@
 				)
 			)
 		)
-		(pin "21"
+		(pin "1"
 			(uuid "569b5ccf-2ece-4147-ba99-07cc53649a4a")
 		)
-		(pin "12"
+		(pin "4"
 			(uuid "6a51d411-a169-43fe-a7f7-0cd72c05b55b")
 		)
-		(pin "11"
+		(pin "2"
 			(uuid "c0eee27d-cc93-4bc5-bc5c-09c63b3b227e")
 		)
-		(pin "A2"
+		(pin "3"
 			(uuid "983e3891-21c7-427b-947e-8cb271f7a3f2")
 		)
-		(pin "14"
+		(pin "6"
 			(uuid "c88f6cd1-c7b3-40ce-b0db-c6af4e056a83")
 		)
-		(pin "A1"
+		(pin "7"
 			(uuid "24f42bc2-32ea-4bfb-b6dc-2d4f287f5709")
 		)
-		(pin "24"
+		(pin "5"
 			(uuid "d6a1c79e-0ea1-4679-a433-0b499b372706")
 		)
-		(pin "22"
+		(pin "8"
 			(uuid "c2049f8c-4e25-4fda-b6c2-234afc4cedae")
 		)
 		(instances
@@ -7357,7 +7357,7 @@
 		)
 	)
 	(symbol
-		(lib_id "Relay:Relay_SPST-NO")
+		(lib_id "Hydrophone_RelayFix:G6K_2F_Y_SPST_NO")
 		(at 176.53 76.2 0)
 		(unit 1)
 		(body_style 1)
@@ -7379,7 +7379,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "Relay_SPST-NO"
+		(property "Value" "G6K-2F-Y"
 			(at 187.96 77.4699 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -7390,7 +7390,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Relay_THT:Relay_SPST_Schrack-RT1-FormA_RM5mm"
+		(property "Footprint" "Relay_SMD:Relay_DPDT_Omron_G6K-2F-Y"
 			(at 187.96 77.47 0)
 			(hide yes)
 			(show_name no)
@@ -7424,16 +7424,16 @@
 				)
 			)
 		)
-		(pin "14"
+		(pin "1"
 			(uuid "5b27e898-f510-4623-abc0-fa83a2d06063")
 		)
-		(pin "13"
+		(pin "4"
 			(uuid "5c2580f7-56b5-4266-a88f-e91c9b238308")
 		)
-		(pin "A1"
+		(pin "3"
 			(uuid "1245be68-4d8a-4ca2-9029-4a14494d0d0c")
 		)
-		(pin "A2"
+		(pin "8"
 			(uuid "28198a32-3449-4350-a446-dfa477ec290d")
 		)
 		(instances
@@ -8217,7 +8217,7 @@
 		)
 	)
 	(symbol
-		(lib_id "Relay:Relay_SPST-NO")
+		(lib_id "Hydrophone_RelayFix:G6K_2F_Y_SPST_NO")
 		(at 43.18 30.48 270)
 		(unit 1)
 		(body_style 1)
@@ -8238,7 +8238,7 @@
 				)
 			)
 		)
-		(property "Value" "Relay_SPST-NO"
+		(property "Value" "G6K-2F-Y"
 			(at 43.18 17.78 90)
 			(show_name no)
 			(do_not_autoplace no)
@@ -8248,7 +8248,7 @@
 				)
 			)
 		)
-		(property "Footprint" "Relay_THT:Relay_SPST_Schrack-RT1-FormA_RM5mm"
+		(property "Footprint" "Relay_SMD:Relay_DPDT_Omron_G6K-2F-Y"
 			(at 41.91 41.91 0)
 			(hide yes)
 			(show_name no)
@@ -8282,16 +8282,16 @@
 				)
 			)
 		)
-		(pin "14"
+		(pin "1"
 			(uuid "c3bcb8e1-bcbc-41ac-ab3a-2309fbfecc51")
 		)
-		(pin "13"
+		(pin "4"
 			(uuid "d6e69fce-1e2d-4896-aa1b-479bcc7950b1")
 		)
-		(pin "A1"
+		(pin "3"
 			(uuid "8d60e2c6-582a-4194-8530-d4781e3b6e0e")
 		)
-		(pin "A2"
+		(pin "8"
 			(uuid "3f0cd44c-fe3a-4fe4-ab3d-1b2d2a835d63")
 		)
 		(instances
@@ -8802,7 +8802,7 @@
 		)
 	)
 	(symbol
-		(lib_id "Relay:Relay_SPST-NO")
+		(lib_id "Hydrophone_RelayFix:G6K_2F_Y_SPST_NO")
 		(at 138.43 74.93 0)
 		(unit 1)
 		(body_style 1)
@@ -8824,7 +8824,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "Relay_SPST-NO"
+		(property "Value" "G6K-2F-Y"
 			(at 149.86 76.1999 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -8835,7 +8835,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Relay_THT:Relay_SPST_Schrack-RT1-FormA_RM5mm"
+		(property "Footprint" "Relay_SMD:Relay_DPDT_Omron_G6K-2F-Y"
 			(at 149.86 76.2 0)
 			(hide yes)
 			(show_name no)
@@ -8869,16 +8869,16 @@
 				)
 			)
 		)
-		(pin "13"
+		(pin "1"
 			(uuid "29a32ccd-669b-4591-baa5-e521e8af7cda")
 		)
-		(pin "A1"
+		(pin "4"
 			(uuid "159f072c-6aa6-409a-9255-c5cdfbd249ce")
 		)
-		(pin "14"
+		(pin "3"
 			(uuid "47ba46b0-3be7-4fab-b406-f0ac4efa0690")
 		)
-		(pin "A2"
+		(pin "8"
 			(uuid "10cf4b77-ef79-4470-a23b-ed4d8d0e4338")
 		)
 		(instances
@@ -9343,10 +9343,10 @@
 		(pin "9"
 			(uuid "813620ed-7806-48fd-88c9-1b6aaf578c64")
 		)
-		(pin "12"
+		(pin "2"
 			(uuid "a56de454-52cf-44e1-a6a5-27c40791f0d6")
 		)
-		(pin "2"
+		(pin "11"
 			(uuid "b648ab06-9528-4760-9fce-4091744516f3")
 		)
 		(pin "17"
@@ -9355,13 +9355,13 @@
 		(pin "1"
 			(uuid "80f54e0d-7cbd-4819-a51c-7c56ef67b97e")
 		)
-		(pin "11"
+		(pin "4"
 			(uuid "7bceafa3-31ce-4574-b76e-9aae5004f3b2")
 		)
-		(pin "14"
+		(pin "12"
 			(uuid "0b8da2b2-ed85-4808-8cf6-a42d0d4fccbf")
 		)
-		(pin "4"
+		(pin "13"
 			(uuid "14892a99-d63d-4338-96f8-c607eda91b1c")
 		)
 		(pin "15"
@@ -9382,7 +9382,7 @@
 		(pin "8"
 			(uuid "b20bfc45-f926-4b33-a9ba-b7b388922689")
 		)
-		(pin "13"
+		(pin "14"
 			(uuid "9cf2a07a-aadc-436a-b69e-15d3b50e7d24")
 		)
 		(pin "5"
@@ -10497,7 +10497,7 @@
 		)
 	)
 	(symbol
-		(lib_id "Relay:Relay_DPDT")
+		(lib_id "Hydrophone_RelayFix:G6K_2F_Y_DPDT")
 		(at 201.93 40.64 0)
 		(unit 1)
 		(body_style 1)
@@ -10519,7 +10519,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "Relay_DPDT"
+		(property "Value" "G6K-2F-Y"
 			(at 218.44 41.9099 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -10530,7 +10530,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Relay_THT:Relay_DPDT_Schrack-RT2-FormC_RM5mm"
+		(property "Footprint" "Relay_SMD:Relay_DPDT_Omron_G6K-2F-Y"
 			(at 218.44 41.91 0)
 			(hide yes)
 			(show_name no)
@@ -10564,28 +10564,28 @@
 				)
 			)
 		)
-		(pin "21"
+		(pin "1"
 			(uuid "8e0b2229-fa00-4e7b-83e3-0bb59d3b320d")
 		)
-		(pin "12"
+		(pin "4"
 			(uuid "22e95d78-5d06-41e4-a873-ebb17e17a151")
 		)
-		(pin "11"
+		(pin "2"
 			(uuid "f991a211-26d9-4441-b838-876a88ad6dc8")
 		)
-		(pin "A2"
+		(pin "3"
 			(uuid "21f74034-f03e-4746-8670-9881f95ef1f0")
 		)
-		(pin "14"
+		(pin "6"
 			(uuid "5ef91f5d-9fe1-4401-a6a5-0369a4035e21")
 		)
-		(pin "A1"
+		(pin "7"
 			(uuid "d9c97f3f-30f3-4317-ba6e-19a17733e539")
 		)
-		(pin "24"
+		(pin "5"
 			(uuid "6732076f-b3a0-47a8-86b7-8d13b4c7ef7b")
 		)
-		(pin "22"
+		(pin "8"
 			(uuid "ff0ec003-94a0-4c39-b43d-1c163033356d")
 		)
 		(instances
@@ -10788,7 +10788,7 @@
 		(pin "9"
 			(uuid "4c4195dc-bfa7-4334-8f41-9b81cc8b4f71")
 		)
-		(pin "12"
+		(pin "3"
 			(uuid "ee0fdacd-b7c4-486a-a987-7ae1ee7c5a25")
 		)
 		(pin "2"
@@ -10800,19 +10800,19 @@
 		(pin "1"
 			(uuid "32e78b00-f00a-4b4d-8058-ab89a396bdd6")
 		)
-		(pin "11"
+		(pin "4"
 			(uuid "1b4781e5-8b53-460f-b99d-223d68296bcd")
 		)
-		(pin "14"
+		(pin "11"
 			(uuid "0b8da2b2-ed85-4808-8cf6-a42d0d4fccc0")
 		)
-		(pin "4"
+		(pin "12"
 			(uuid "8bfab0a8-de8f-4f05-b7b5-8302232bc9bc")
 		)
 		(pin "15"
 			(uuid "522fa6a4-9f3f-4991-b8a5-23f60644c85f")
 		)
-		(pin "3"
+		(pin "13"
 			(uuid "12d74d32-34d4-40dc-9175-c261de48a415")
 		)
 		(pin "7"
@@ -10827,7 +10827,7 @@
 		(pin "8"
 			(uuid "b20bfc45-f926-4b33-a9ba-b7b38892268a")
 		)
-		(pin "13"
+		(pin "14"
 			(uuid "9cf2a07a-aadc-436a-b69e-15d3b50e7d25")
 		)
 		(pin "5"

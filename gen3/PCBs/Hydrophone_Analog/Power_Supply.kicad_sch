@@ -1834,7 +1834,7 @@
 		)
 		(uuid "f4a3bae0-78ec-4c11-bdaa-4b9e0aeeb598")
 	)
-	(label "+VBAT"
+	(label "VBAT"
 		(at 38.1 38.1 180)
 		(effects
 			(font
@@ -1844,7 +1844,7 @@
 		)
 		(uuid "0f7705fe-2fda-44de-9291-ca6c5650a85c")
 	)
-	(label "+VBAT"
+	(label "VBAT"
 		(at 27.94 113.03 180)
 		(effects
 			(font
@@ -1854,7 +1854,7 @@
 		)
 		(uuid "15a1296d-137b-463d-8eb3-71e19834b902")
 	)
-	(label "+VBAT"
+	(label "VBAT"
 		(at 83.82 135.89 180)
 		(effects
 			(font
@@ -1864,7 +1864,7 @@
 		)
 		(uuid "7e89153c-fd08-4d2a-a1e2-f088e9da0c02")
 	)
-	(label "+VBAT"
+	(label "VBAT"
 		(at 27.94 53.34 180)
 		(effects
 			(font

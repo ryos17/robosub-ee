@@ -1,0 +1,6 @@
+Close KiCad before restoring.
+Restore these files from this folder:
+Analog_Channel.kicad_sch
+sym-lib-table
+These files were newly created; remove them when restoring:
+Hydrophone_RelayFix.kicad_sym
