@@ -272,11 +272,19 @@ def _systems_on_disk(out: Path, cond: str) -> list[str]:
     return sorted(p.name for p in (out / "wav" / cond).iterdir() if p.is_dir() and p.name != "R0")
 
 
-def stage_asr(utts, out: Path, model: str, device: str, asr_lora: dict[str, str] | None = None) -> None:
+def asr_key(model: str, decode: str) -> str:
+    """Transcript-cache key; guarded decodes are cached apart from the fixed §8.3 ones."""
+    return f"whisper-{model}+lnorm" + ("" if decode == "fixed" else f"+{decode}")
+
+
+def stage_asr(utts, out: Path, model: str, device: str, asr_lora: dict[str, str] | None = None,
+              decode: str = "fixed", only_systems: set[str] | None = None) -> None:
     """Whisper on every system on disk. ``asr_lora`` maps an extra system label
     (e.g. "c8") to a C8 LoRA checkpoint: that system is the unprocessed `noisy`
-    audio, decoded by Whisper with the LoRA merged in."""
-    from uwse.evaluation.asr import TranscriptCache, WhisperASR
+    audio, decoded by Whisper with the LoRA merged in. ``decode`` is "fixed"
+    (the §8.3 policy) or "guard" (`DecodeConfig.guarded`); ``only_systems``
+    restricts decoding to those system labels."""
+    from uwse.evaluation.asr import DecodeConfig, TranscriptCache, WhisperASR
     from uwse.evaluation.normalize import normalize_cut
 
     asr_lora = asr_lora or {}
@@ -291,11 +299,14 @@ def stage_asr(utts, out: Path, model: str, device: str, asr_lora: dict[str, str]
     # ASR-side systems from earlier runs must never be decoded by the base model
     asr_side = set(asr_lora) | {p.parent.name for p in (out / "wav").glob(f"*/*/{ASR_LORA_MARKER}")}
     cache = TranscriptCache(str(out / "transcripts.jsonl"))
-    key = f"whisper-{model}+lnorm"
+    key = asr_key(model, decode)
+    dec = DecodeConfig.guarded() if decode == "guard" else DecodeConfig()
     for label in [None, *asr_lora]:
-        asr = WhisperASR(model, device=device, lora_ckpt=asr_lora.get(label))
+        if label is not None and only_systems is not None and label not in only_systems:
+            continue
+        asr = WhisperASR(model, device=device, decode=dec, lora_ckpt=asr_lora.get(label))
         _asr_pass(utts, out, asr, cache, key, normalize_cut,
-                  only=label, skip=asr_side if label is None else set())
+                  only=label, skip=asr_side if label is None else set(), keep=only_systems)
         info = asr.info() if label is None else None
         del asr
         if device.startswith("cuda"):
@@ -303,10 +314,12 @@ def stage_asr(utts, out: Path, model: str, device: str, asr_lora: dict[str, str]
 
             torch.cuda.empty_cache()
         if info is not None:
-            (out / "asr_info.json").write_text(json.dumps(info, indent=1))
+            (out / ("asr_info.json" if decode == "fixed" else f"asr_info_{decode}.json")).write_text(
+                json.dumps(info, indent=1))
 
 
-def _asr_pass(utts, out: Path, asr, cache, key: str, normalize_cut, only: str | None, skip: set[str]) -> None:
+def _asr_pass(utts, out: Path, asr, cache, key: str, normalize_cut, only: str | None, skip: set[str],
+              keep: set[str] | None = None) -> None:
     # Build only the uncached work list (paths, no audio), then load, normalize
     # and decode one item at a time: holding every normalized cut in RAM cost
     # ~4.5 GB for the full 9600-item run.
@@ -314,6 +327,8 @@ def _asr_pass(utts, out: Path, asr, cache, key: str, normalize_cut, only: str | 
     for cond in sorted(p.name for p in (out / "wav").iterdir()):
         for sysname in _systems_on_disk(out, cond):
             if sysname in skip or (only is not None and sysname != only):
+                continue
+            if keep is not None and sysname not in keep:
                 continue
             for u in utts:
                 p = out / "wav" / cond / sysname / f"{u.utt_id}.wav"
@@ -332,13 +347,14 @@ def _asr_pass(utts, out: Path, asr, cache, key: str, normalize_cut, only: str | 
         cache.put({"system": f"{cond}/{sysname}", "utt_id": uid, "model": key, **res})
 
 
-def stage_score(utts, out: Path, model: str, n_boot: int) -> None:
+def stage_score(utts, out: Path, model: str, n_boot: int, decode: str = "fixed") -> None:
     from uwse.evaluation.asr import TranscriptCache, hallucination_flags, utterance_counts
     from uwse.evaluation.metrics import compute_metrics
     from uwse.evaluation.stats import cluster_bootstrap_mean, cluster_bootstrap_wer
 
     cache = TranscriptCache(str(out / "transcripts.jsonl"))
-    key = f"whisper-{model}+lnorm"
+    key = asr_key(model, decode)
+    sfx = "" if decode == "fixed" else f"_{decode}"
     refs = {u.utt_id: u.transcript for u in utts}
     spk = {u.utt_id: u.speaker for u in utts}
     rows, summary = [], []
@@ -346,12 +362,13 @@ def stage_score(utts, out: Path, model: str, n_boot: int) -> None:
         R1 = {u.utt_id: sf.read(out / "wav" / cond / "R1" / f"{u.utt_id}.wav")[0] for u in utts}
         R0 = {u.utt_id: sf.read(out / "wav" / cond / "R0" / f"{u.utt_id}.wav")[0] for u in utts}
         for sysname in _systems_on_disk(out, cond):
-            ids, hyps, raw = [], [], []
+            ids, hyps, temps = [], [], []
             for u in utts:
                 rec = cache.get(f"{cond}/{sysname}", u.utt_id, key)
                 if rec is not None:
                     ids.append(u.utt_id)
                     hyps.append(rec["text"])
+                    temps.append(rec.get("max_temperature", 0.0))
             if not ids:
                 continue
             cnt = utterance_counts([refs[i] for i in ids], hyps)
@@ -361,9 +378,9 @@ def stage_score(utts, out: Path, model: str, n_boot: int) -> None:
                 x, _ = sf.read(out / "wav" / cond / sysname / f"{i}.wav")
                 m = compute_metrics(x, R1[i], FS_SCORE, ref_r0=R0[i], metrics=("estoi", "si_sdr", "ci_sdr"))
                 met.append(m)
-            for i, h, c, f, m in zip(ids, hyps, cnt, flags, met):
+            for i, h, c, f, m, t in zip(ids, hyps, cnt, flags, met, temps):
                 rows.append({"cond": cond, "system": sysname, "utt_id": i, "speaker": spk[i], "hyp": h,
-                             **c.as_dict(), "flag": bool(f), **m})
+                             **c.as_dict(), "flag": bool(f), "max_temperature": t, **m})
             err = np.array([c.errors for c in cnt], float)
             nref = np.array([c.n_ref for c in cnt], float)
             cl = [spk[i] for i in ids]
@@ -374,20 +391,24 @@ def stage_score(utts, out: Path, model: str, n_boot: int) -> None:
                             "wer": w.estimate, "wer_lo": w.ci_low, "wer_hi": w.ci_high,
                             "S": int(sum(c.substitutions for c in cnt)), "D": int(sum(c.deletions for c in cnt)),
                             "I": int(sum(c.insertions for c in cnt)), "n_flagged": int(flags.sum()),
+                            # runaway insertion loop: insertions >= max(10, 2 x reference words)
+                            "n_loops": int(sum(c.insertions >= max(10, 2 * c.n_ref) for c in cnt)),
+                            "n_fallback": int(sum(t > 0 for t in temps)),
                             "estoi": e.estimate, "estoi_lo": e.ci_low, "estoi_hi": e.ci_high,
                             "ci_sdr": ci.estimate})
-    with open(out / "per_utt.jsonl", "w", encoding="utf-8") as f:
+    with open(out / f"per_utt{sfx}.jsonl", "w", encoding="utf-8") as f:
         for r in rows:
             f.write(json.dumps(r, default=float) + "\n")
-    (out / "summary.json").write_text(json.dumps(summary, indent=1, default=float))
-    lines = ["| condition | system | n | WER % [95% CI] | S/D/I | flagged | ESTOI vs R1 [95% CI] | CI-SDR dB |",
-             "|---|---|---|---|---|---|---|---|"]
+    (out / f"summary{sfx}.json").write_text(json.dumps(summary, indent=1, default=float))
+    lines = ["| condition | system | n | WER % [95% CI] | S/D/I | flagged | loops | fallback "
+             "| ESTOI vs R1 [95% CI] | CI-SDR dB |",
+             "|---|---|---|---|---|---|---|---|---|---|"]
     for s in summary:
         lines.append(f"| {s['cond']} | {s['system']} | {s['n']} | {100 * s['wer']:.1f} "
                      f"[{100 * s['wer_lo']:.1f}, {100 * s['wer_hi']:.1f}] | {s['S']}/{s['D']}/{s['I']} | "
-                     f"{s['n_flagged']} | {s['estoi']:.3f} [{s['estoi_lo']:.3f}, {s['estoi_hi']:.3f}] | "
+                     f"{s['n_flagged']} | {s['n_loops']} | {s['n_fallback']} | {s['estoi']:.3f} [{s['estoi_lo']:.3f}, {s['estoi_hi']:.3f}] | "
                      f"{s['ci_sdr']:.1f} |")
-    (out / "summary.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
+    (out / f"summary{sfx}.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
     print("\n".join(lines))
 
 
@@ -411,6 +432,11 @@ def main(argv=None) -> int:
                          "checkpoint merged in, e.g. c8=runs/c8_whisper_lora_lr1e-4_s0/best.pt")
     ap.add_argument("--adapter", action="append", default=[], metavar="SYSTEM=ADAPTER",
                     help="registry adapter behind a system label, e.g. dfn3_c2=dfn3 (default: the label)")
+    ap.add_argument("--decode", choices=("fixed", "guard"), default="fixed",
+                    help="fixed: the §8.3 policy; guard: temperature fallback + length cap "
+                         "(DecodeConfig.guarded), cached and scored under its own key")
+    ap.add_argument("--asr-systems", default=None,
+                    help="comma list: decode only these system labels (default: all on disk)")
     args = ap.parse_args(argv)
 
     import torch
@@ -433,9 +459,11 @@ def main(argv=None) -> int:
     if "enhance" in stages:
         stage_enhance_cached(utts, [s for s in args.systems.split(",") if s], out, device, ckpts, adapters)
     if "asr" in stages:
-        stage_asr(utts, out, args.asr_model, device, dict(a.split("=", 1) for a in args.asr_lora))
+        only = set(args.asr_systems.split(",")) if args.asr_systems else None
+        stage_asr(utts, out, args.asr_model, device, dict(a.split("=", 1) for a in args.asr_lora),
+                  decode=args.decode, only_systems=only)
     if "score" in stages:
-        stage_score(utts, out, args.asr_model, args.n_boot)
+        stage_score(utts, out, args.asr_model, args.n_boot, decode=args.decode)
     return 0
 
 

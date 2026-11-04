@@ -12,6 +12,13 @@ secondary ASR of §8.1):
   ``beam_size=5``, ``condition_on_previous_text=False``, no prompt. The default
   thresholds (compression ratio 2.4, logprob -1.0, no-speech 0.6) are passed
   explicitly so they appear in the recorded config.
+- Guarded decoding (:meth:`DecodeConfig.guarded`, opt-in): Whisper's own
+  temperature fallback (0, 0.2, ..., 1.0; beam 5 at 0, best-of-5 sampling
+  above, retried when the compression ratio exceeds 2.4 or the mean logprob
+  falls below -1.0) plus a decode-length cap tied to the audio duration.
+  It exists because adapted Whisper can transcribe an utterance and then fail
+  to emit end-of-text, appending ~200 invented words. Sampling is seeded per
+  call so guarded transcripts are reproducible.
 - ``whisper.normalizers.EnglishTextNormalizer`` on reference and hypothesis;
   corpus WER via jiwer as summed errors / summed reference words, with S, D
   and I reported.
@@ -259,7 +266,7 @@ class DecodeConfig:
 
     language: str = "en"
     task: str = "transcribe"
-    temperature: float = 0.0  # scalar -> no temperature fallback
+    temperature: float | tuple[float, ...] = 0.0  # scalar -> no temperature fallback
     beam_size: int | None = 5
     best_of: int | None = None
     condition_on_previous_text: bool = False
@@ -268,6 +275,23 @@ class DecodeConfig:
     logprob_threshold: float = -1.0
     no_speech_threshold: float = 0.6
     without_timestamps: bool = False
+    # Decode-length cap: ceil(max_tokens_per_s * duration) + max_tokens_margin
+    # tokens per window (at most the model's 224). None disables the cap.
+    # Correct LibriSpeech transcripts, timestamp tokens included, run at a
+    # median 3.7 and a maximum 6.2 tokens/s, so 8 tokens/s leaves headroom.
+    max_tokens_per_s: float | None = None
+    max_tokens_margin: int = 16
+    seed: int = 0  # torch seed set before every call that can sample
+
+    @classmethod
+    def guarded(cls) -> "DecodeConfig":
+        """Whisper-style loop protection: temperature fallback plus a length cap."""
+        return cls(temperature=(0.0, 0.2, 0.4, 0.6, 0.8, 1.0), best_of=5, max_tokens_per_s=8.0)
+
+    @property
+    def can_sample(self) -> bool:
+        t = self.temperature
+        return any(x > 0 for x in t) if isinstance(t, (tuple, list)) else t > 0
 
 
 _HF_TO_OPENAI_ATTN = {"self_attn": "attn", "encoder_attn": "cross_attn"}
@@ -390,16 +414,30 @@ class WhisperASR:
         )
         if d.best_of is not None:
             kw["best_of"] = d.best_of
+        cap = None
+        if d.max_tokens_per_s is not None:
+            dur = len(audio) / ASR_FS
+            cap = min(int(np.ceil(d.max_tokens_per_s * dur)) + d.max_tokens_margin,
+                      self.model.dims.n_text_ctx // 2)
+            kw["sample_len"] = cap
+        if d.can_sample:
+            import torch
+
+            torch.manual_seed(d.seed)
         out = self.model.transcribe(np.ascontiguousarray(audio, dtype=np.float32), **kw)
         segs = out.get("segments", [])
         text = out.get("text", "").strip()
-        return {
+        res = {
             "text": text,
             "compression_ratio": compression_ratio(text),
             "avg_logprob": float(np.mean([s["avg_logprob"] for s in segs])) if segs else float("nan"),
             "no_speech_prob": float(np.max([s["no_speech_prob"] for s in segs])) if segs else float("nan"),
             "n_segments": len(segs),
         }
+        if d.can_sample or cap is not None:
+            res["max_temperature"] = float(max((s["temperature"] for s in segs), default=0.0))
+            res["sample_len"] = cap
+        return res
 
     def info(self) -> dict:
         """Package version, checkpoint URL sha256 and decoding config for the record."""
