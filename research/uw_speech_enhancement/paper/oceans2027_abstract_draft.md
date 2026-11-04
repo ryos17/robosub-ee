@@ -45,7 +45,7 @@ We release the simulator, the evaluation harness, and [the measured pool channel
   - a decode-length cap of ceil(8 tokens/s × duration) + 16
   - no previous-text conditioning.
 
-  The earlier fixed policy (temperature 0, no cap) is kept as a sensitivity check. The front-end rows still use it until `e7_guard_se` lands.
+  The earlier fixed policy (temperature 0, no cap) is kept as a sensitivity check. Every system, front ends included, is reported under the guarded policy.
 - **Statistics.** Corpus WER with speaker-cluster bootstrap 95% CIs. Paired utterance-level bootstrap for ΔWER (2000 resamples).
 
 ### Table: WER (%) of unprocessed audio (C0) vs Whisper-LoRA (C8), guarded decoding [SIM]
@@ -66,7 +66,7 @@ C8 is shown for seeds 0 and 1 trained on bubble noise only, and for one seed wit
 
 Under the fixed policy, stat had runaway loops in 46 of 1200 quiet and bubble decodes, and seed 0 in 1, the bubbles0 1 m outlier at 7.9%. The guard removes all of them (RESULTS_E7_SIM_DRYRUN.md, "Guarded decoding").
 
-The best enhancement front end in each noise0 cell, for comparison: 1 m 21.1% (WPE), 3 m 48.2% (WPE), 6 m 62.4% (WPE). Every trained or zero-shot neural enhancer was worse, between 32% and 124%.
+The best enhancement front end in each noise0 cell, for comparison, guarded decoding: 1 m 21.1% (WPE), 3 m 48.3% (WPE), 6 m 56.9% (WPE). Every trained or zero-shot neural enhancer was worse, between 32% and 107%.
 
 ### Findings, in the order the paper would state them
 

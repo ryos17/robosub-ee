@@ -304,7 +304,7 @@ The lead chose option 2, a decoding guard with no retraining, applied identicall
   - Whisper's own temperature fallback: 0 → 0.2 → … → 1.0, beam 5 at 0, best-of-5 sampling above. A retry fires when the compression ratio is > 2.4 or the mean logprob is < −1.0. Sampling is seeded.
   - A decode-length cap of ceil(8 tokens/s × duration) + 16 tokens, at most 224. Correct transcripts of these clips run at a median 3.7 and a maximum 6.2 tokens/s.
   - Transcripts are cached under their own key (`+guard`), and scores go to `summary_guard.*` and `per_utt_guard.jsonl`. The fixed-policy (§8.3) results above are unchanged.
-- **Scope so far.** C0 (`noisy`) and the three C8 adapters. The enhancement front ends are queued (`e7_guard_se`), so the SE vs recognizer-adaptation comparison will use one policy throughout.
+- **Scope.** C0 (`noisy`), the three C8 adapters, and every enhancement front end (see "Guarded decoding: enhancement front ends" below). The SE vs recognizer-adaptation comparison therefore uses one policy throughout.
 
 WER %, guarded decoding:
 
@@ -350,6 +350,37 @@ Reading:
   - The best checkpoint is from step 28k; val CE does not select checkpoints well here (see seed 1).
 - **Policy for later evaluations.** Use the guarded decode for every ASR result from now on, including real-data E7. Pre-register it before the real data arrive, because it was chosen after seeing sim results.
 
+### Guarded decoding: enhancement front ends (2026-11-04)
+
+The same guarded policy applied to every front end (`e7_guard_se`): 10,800 decodes, 18,000 guarded decodes in all.
+
+WER %, guarded decoding. The change from the fixed policy is in brackets.
+
+| cell | C0 | WPE | DFN3 0-shot | DFN3 C2 | U-Net C10 | MetricGAN+ | SepF wham16k | SepF whamr | C8 stat |
+|---|---|---|---|---|---|---|---|---|---|
+| quiet 1 m | 3.1 | 3.0 | 2.4 | 2.3 | 2.6 | 3.5 | 6.0 | 3.6 | **1.7** |
+| quiet 3 m | 3.7 | 3.4 | 5.8 | 6.0 | 5.5 | 38.0 | 84.7 (−6.8) | 20.7 | **2.6** |
+| quiet 6 m | 4.3 | 4.4 | 13.3 | 9.2 | 8.0 | 43.3 | 105.9 (−4.4) | 43.0 | **3.2** |
+| noise0 1 m | 20.3 | 21.1 | 32.0 | 41.6 | 71.0 (−5.1) | 72.7 | 50.3 (−4.4) | 42.2 | **16.0** |
+| noise0 3 m | 48.4 | 48.3 | 74.2 (−7.7) | 81.6 (−5.7) | 94.0 (−4.0) | 105.4 (−14.7) | 100.3 (−6.0) | 85.0 (−12.7) | **37.2** |
+| noise0 6 m | 56.4 | 56.9 (−5.5) | 86.1 (−4.6) | 89.9 (−3.7) | 96.7 (−4.0) | 106.5 (−17.7) | 101.6 | 96.0 | **44.5** |
+| bubbles0 1 m | 2.4 | 2.4 | 3.5 | 2.6 | 2.6 | – | – | – | **1.7** |
+| bubbles0 3 m | 5.1 | 4.2 | 27.7 | 7.0 | 5.9 | – | – | – | **3.2** |
+| bubbles0 6 m | 5.7 | 5.3 | 49.5 (−1.2) | 9.9 | 8.6 | – | – | – | **4.1** |
+
+Unmarked cells moved by less than 0.5 points. MetricGAN+ and the SepFormers were not run on bubbles0.
+
+Reading:
+
+- **The guard helps the front ends where their output is garbled, and changes nothing else.**
+  - The large drops (4–18 points) are all in cells where a front end's WER was already 50–125%. Long hallucinated decodes of badly damaged audio are now cut by the length cap.
+  - The fallback fired on 263 of 18,000 decodes. 260 were on front-end output (201 noise0, 55 quiet, 4 bubbles0) and 3 on C0/C8 in noise0.
+  - 6 loop-sized insertions remain, all in front-end noise0 outputs at 3 m and 6 m. They are capped there rather than removed: the audio itself carries little speech.
+- **The conclusion is unchanged: no front end beats C0, and C8 stat beats every front end in every cell.**
+  - WPE is level with C0 everywhere (best front end in noise0: 21.1 / 48.3 / 56.9 at 1 / 3 / 6 m).
+  - At 6 m, WPE's noise0 regression under the fixed policy (62.4%) was itself a decoding artefact; it is 56.9% under the guard.
+  - The neural front ends still raise WER in every noise0 cell (32–107%) and at quiet 3–6 m.
+
 ## Next
 
 - **Training noise (signed off by the lead 2026-11-02; first run done, see above).** Until the recorded bank exists, half of the training scenes add stationary coloured Gaussian noise (`configs/uwsim_v0_stat.yaml`).
@@ -361,7 +392,7 @@ Reading:
   - Seed 1 is done (see above).
   - Add WER-based checkpoint selection on a held-out uwsim dev set.
   - Retrain with stationary noise: done. Its loops are fixed by guarded decoding, and it is now the best system (see above).
-  - Guarded decode vs the fixed policy: done for C0 and C8. The SE front ends are queued.
+  - Guarded decode vs the fixed policy: done for every system (see above).
   - Replicate stat with a second seed before quoting its margin over seed 0 (needs sign-off: about 31 GPU-hours).
   - Use `train.val_num_workers=0` on the 16 GB laptop: validation workers spawn on every eval.
 - **Hallucination flag.** Add a substitution-hallucination flag to `evaluation.asr` before E14.
