@@ -296,6 +296,60 @@ Reading:
   2. Cap decode length by audio duration, or add a repetition/no-repeat-ngram guard.
   3. Train with fewer steps or an end-of-text-weighted loss.
 
+### Guarded decoding (2026-11-03)
+
+The lead chose option 2, a decoding guard with no retraining, applied identically to every compared system.
+
+- **Policy.** `DecodeConfig.guarded()` (`--decode guard`):
+  - Whisper's own temperature fallback: 0 → 0.2 → … → 1.0, beam 5 at 0, best-of-5 sampling above. A retry fires when the compression ratio is > 2.4 or the mean logprob is < −1.0. Sampling is seeded.
+  - A decode-length cap of ceil(8 tokens/s × duration) + 16 tokens, at most 224. Correct transcripts of these clips run at a median 3.7 and a maximum 6.2 tokens/s.
+  - Transcripts are cached under their own key (`+guard`), and scores go to `summary_guard.*` and `per_utt_guard.jsonl`. The fixed-policy (§8.3) results above are unchanged.
+- **Scope so far.** C0 (`noisy`) and the three C8 adapters. The enhancement front ends are queued (`e7_guard_se`), so the SE vs recognizer-adaptation comparison will use one policy throughout.
+
+WER %, guarded decoding:
+
+| cell | C0 | s0 | s1 | stat | loops (all systems) |
+|---|---|---|---|---|---|
+| quiet 1 m | 3.1 | 2.0 | 2.7 | **1.7** | 0 |
+| quiet 3 m | 3.7 | 2.3 | 3.8 | 2.6 | 0 |
+| quiet 6 m | 4.3 | 3.7 | 4.8 | **3.2** | 0 |
+| noise0 1 m | 20.3 | 17.1 | 18.1 | **16.0** | 0 |
+| noise0 3 m | 48.4 | 42.1 | 43.2 | **37.2** | 0 |
+| noise0 6 m | 56.4 | 48.8 | 50.1 | **44.5** | 0 |
+| bubbles0 1 m | 2.4 | 2.0 | 2.0 | **1.7** | 0 |
+| bubbles0 3 m | 5.1 | 3.0 | 3.4 | 3.2 | 0 |
+| bubbles0 6 m | 5.7 | 4.4 | 4.5 | **4.1** | 0 |
+
+Paired ΔWER [95% CI], speaker-cluster bootstrap with 2000 resamples (`tmp/dbg_guard_paired.py`):
+
+| cell | stat − C0 | stat − s0 | stat − s1 |
+|---|---|---|---|
+| quiet 1 m | **−1.4** [−1.9, −0.9] | −0.3 [−0.9, +0.3] | **−1.0** [−1.6, −0.5] |
+| quiet 3 m | **−1.1** [−1.8, −0.5] | +0.3 [−0.0, +0.7] | **−1.2** [−1.9, −0.5] |
+| quiet 6 m | **−1.2** [−1.9, −0.4] | −0.5 [−1.2, +0.2] | **−1.6** [−2.5, −0.8] |
+| noise0 1 m | **−4.3** [−6.5, −2.4] | −1.1 [−2.6, +0.3] | **−2.1** [−3.8, −0.4] |
+| noise0 3 m | **−11.3** [−13.7, −9.0] | **−4.9** [−7.0, −2.9] | **−6.0** [−8.0, −3.8] |
+| noise0 6 m | **−11.9** [−14.8, −8.8] | **−4.3** [−6.4, −2.1] | **−5.7** [−8.1, −2.8] |
+| bubbles0 1 m | **−0.8** [−1.3, −0.3] | −0.3 [−0.8, +0.0] | **−0.3** [−0.7, −0.1] |
+| bubbles0 3 m | **−2.0** [−2.9, −1.2] | +0.2 [−0.2, +0.6] | −0.2 [−0.7, +0.2] |
+| bubbles0 6 m | **−1.7** [−2.6, −0.9] | −0.3 [−1.0, +0.4] | −0.5 [−1.2, +0.2] |
+
+Reading:
+
+- **The guard removes every loop and costs C0 nothing.**
+  - Loops fell from 46 (stat) and 1 (seed 0) to 0 in all 36 system × cell pairs.
+  - The temperature fallback fired on only 3 of 7200 decodes, so the length cap did the work. A looping decode is cut shortly after the real transcript ends.
+  - C0 moved by at most 0.1 points (noise0 3 m: 48.3 → 48.4). Seed 0's bubbles0 1 m regression (7.9%) becomes 2.0%. No other seed-0 or seed-1 cell changes.
+- **C8 with stationary training noise is the best system.**
+  - It beats C0 in all 9 cells, and every CI excludes zero.
+  - It beats seed 0 by about 4–5 points at noise0 3 m and 6 m, and is level with it elsewhere.
+  - Against seed 1 it is better in 7 of 9 cells, including all of quiet.
+- **Caveats.**
+  - This is one seed. Seed 0 vs seed 1 showed a quiet-cell difference of about 1.5 points, about the same size as stat's quiet advantage over seed 1.
+  - The test noise slope is held out, but it comes from the same generator (see Next).
+  - The best checkpoint is from step 28k; val CE does not select checkpoints well here (see seed 1).
+- **Policy for later evaluations.** Use the guarded decode for every ASR result from now on, including real-data E7. Pre-register it before the real data arrive, because it was chosen after seeing sim results.
+
 ## Next
 
 - **Training noise (signed off by the lead 2026-11-02; first run done, see above).** Until the recorded bank exists, half of the training scenes add stationary coloured Gaussian noise (`configs/uwsim_v0_stat.yaml`).
@@ -306,8 +360,9 @@ Reading:
   - Get sign-off on LR 1e-4.
   - Seed 1 is done (see above).
   - Add WER-based checkpoint selection on a held-out uwsim dev set.
-  - Retrain with stationary noise: done; noise0 improves, but quiet and bubble decodes loop (see above).
-  - Test the hallucination rate with temperature fallback against the fixed policy.
+  - Retrain with stationary noise: done. Its loops are fixed by guarded decoding, and it is now the best system (see above).
+  - Guarded decode vs the fixed policy: done for C0 and C8. The SE front ends are queued.
+  - Replicate stat with a second seed before quoting its margin over seed 0 (needs sign-off: about 31 GPU-hours).
   - Use `train.val_num_workers=0` on the 16 GB laptop: validation workers spawn on every eval.
 - **Hallucination flag.** Add a substitution-hallucination flag to `evaluation.asr` before E14.
 - **Calibration.** Replace the placeholders with measured pool values (E0–E4) and the recorded noise bank, then regenerate this table. The current table is retired at that point.
