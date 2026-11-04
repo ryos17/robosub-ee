@@ -50,6 +50,7 @@ train:
   patience: 5
   log_every: 50
   ckpt_every: 1000
+  keep_every: 4000           # kept checkpoints for dev-WER selection (seed 1 onward; signed off 2026-11-04)
   num_workers: 1
   val_num_workers: 0         # 16 GB laptop: no second worker at eval
 seeds: [0]

@@ -12,7 +12,8 @@ Recipe (§7.4 "Full FT" / "LoRA" columns)
 - A fixed amount of *audio* per optimizer step (64 s by default), reached by
   gradient accumulation over micro-batches: accum = ceil(64 / (B * segment_s)).
 - Validation every `eval_every` steps (2k), early stopping with patience 5
-  evaluations, best + last checkpoints under runs/<run_name>/.
+  evaluations, best + last checkpoints under runs/<run_name>/; optionally a
+  kept checkpoint every `keep_every` steps.
 - Exact resume: the micro-batch index stream is a pure function of
   (seed, micro-batch number), so a resumed run sees the same data as an
   uninterrupted one; optimizer, scaler and RNG states are restored too.
@@ -96,6 +97,10 @@ class TrainConfig:
     min_delta: float = 0.0
     log_every: int = 50
     ckpt_every: int = 1000
+    # keep a model checkpoint every keep_every steps (and at max_steps) as
+    # ckpt_step<NNNNNN>.pt, for selection by a downstream metric such as dev WER.
+    # None keeps only best/last.
+    keep_every: int | None = None
     resume: bool = True
     stop_at: int | None = None  # stop (resumably) after this many steps; for chunked jobs
     # divergence guard: stop when the logged training loss stays above
@@ -554,6 +559,9 @@ def fit(trainable: Trainable, train_ds: Dataset, val_ds: Dataset | None, cfg: Tr
                            f" ({bad_evals}/{cfg.patience})")
                 if bad_evals >= cfg.patience:
                     stopped_early = True
+            if cfg.keep_every and (step % cfg.keep_every == 0 or step == cfg.max_steps):
+                _atomic_save(lambda p: trainable.save(p, step=step, val_loss=val if evaluated else None),
+                             os.path.join(cfg.run_dir, f"ckpt_step{step:06d}.pt"))
             if evaluated or step % cfg.ckpt_every == 0 or step == stop_at or stopped_early:
                 save_state()
             if stopped_early:

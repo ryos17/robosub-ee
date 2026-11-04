@@ -288,3 +288,10 @@ def test_whisper_lora_tiny(tmp_path):
     tr = WhisperLoRATrainable(model, "openai/whisper-tiny")
     tr.load(os.path.join(res.run_dir, "best.pt"))
     assert os.path.isdir(os.path.join(res.run_dir, "lora_adapter_best"))
+
+
+def test_keep_every_saves_step_checkpoints(tmp_path):
+    cfg = _cfg(tmp_path, max_steps=25, eval_every=5, keep_every=10)
+    res = train(_adapter(), _ds(), _ds(4, seed=99), cfg)
+    kept = sorted(f for f in os.listdir(res.run_dir) if f.startswith("ckpt_step"))
+    assert kept == ["ckpt_step000010.pt", "ckpt_step000020.pt", "ckpt_step000025.pt"]
