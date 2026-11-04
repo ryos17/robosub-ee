@@ -257,9 +257,48 @@ Reading:
   - Its best checkpoint is also later (step 12k vs 6k), and the quiet-cell loss may be drift away from the base model's clean-speech behaviour as training goes on.
   - If seeds or checkpoints are compared, select on a small WER dev set, not CE.
 
+### C8 with stationary training noise (2026-11-03)
+
+- **Run.** `configs/c8_whisper_lora_stat.yaml`, run dir `runs/c8_whisper_lora_stat_s0`, seed 0, LR 1e-4. Half of the training scenes add stationary noise with the (−4, −2) dB/oct slope band held out (see Next).
+  - Ran all 30k steps without early stopping. Best val CE 0.2066 at step 28k.
+  - That CE is not comparable to the 0.10 of the earlier runs, because the val mix now contains stationary noise too.
+- **Scoring.** Same harness and cached sim audio as seeds 0 and 1.
+
+WER %. "excl. loops" drops utterances with a runaway insertion loop, defined as insertions ≥ max(10, 2 × reference length).
+
+| cell | C0 | s0 | s1 | stat | stat, excl. loops | loop utts (of 200) |
+|---|---|---|---|---|---|---|
+| quiet 1 m | 3.1 | 2.0 | 2.7 | 92.7 | 1.9 | 16 |
+| quiet 3 m | 3.7 | 2.3 | 3.8 | 59.7 | 2.7 | 10 |
+| quiet 6 m | 4.3 | 3.7 | 4.8 | 48.1 | 3.2 | 8 |
+| noise0 1 m | 20.3 | 17.1 | 18.1 | **16.0** | 16.0 | 0 |
+| noise0 3 m | 48.3 | 42.1 | 43.2 | **37.2** | 37.2 | 0 |
+| noise0 6 m | 56.4 | 48.8 | 50.1 | **44.4** | 44.4 | 0 |
+| bubbles0 1 m | 2.4 | 7.9 | 2.0 | 24.7 | 1.7 | 4 |
+| bubbles0 3 m | 5.1 | 3.0 | 3.4 | 14.2 | 3.2 | 2 |
+| bubbles0 6 m | 5.7 | 4.4 | 4.5 | 40.0 | 4.1 | 6 |
+
+Reading:
+
+- **Stationary training noise helps on the held-out slope.** noise0 WER is the best of any system in all three cells, with no loops.
+  - The gain over C0 is −4.3, −11.1 and −12.0 points at 1, 3 and 6 m, against −3.2 to −7.6 for seed 0.
+  - The test slope (−3 dB/oct) is outside the training slopes, but the generator is the same family, so this is weaker evidence than an unseen noise type.
+- **It fails to stop in quiet and bubble audio.** 46 of 1200 quiet and bubbles0 decodes have a runaway loop, against 1 of 2400 for the two earlier seeds.
+  - In every case inspected, the model transcribes the utterance correctly and then fails to emit end-of-text. It appends unrelated invented text, e.g. "...flour fattened sauceYou're going to have to go to the doctor's...", 188 to 222 inserted words.
+  - Loop utterances are longer than average: median 28 reference words vs 17.
+  - Substitutions and deletions are level with the other C8 runs, so the acoustic gain is intact. Excluding loop utterances, stat is the best or level-best system in 8 of 9 cells.
+- **Probable cause, not yet tested.**
+  - This run trained 2.5 to 5 times longer than seeds 0 and 1 (best step 28k vs 6k and 12k) and never stopped early, so drift from the base model's end-of-text behaviour is plausible.
+  - A second cause could be that the end of the audio in training clips, where stationary noise is usually present, is unlike the near-silent clip ends of quiet audio.
+  - Only `best.pt` (28k) and `last.pt` (30k) were kept, so an earlier checkpoint cannot be scored without retraining.
+- **As it stands, this checkpoint is not usable.** Fix the loop before taking stat forward. Options:
+  1. Retrain with intermediate checkpoints kept, choosing on WER plus loop rate on a dev set.
+  2. Cap decode length by audio duration, or add a repetition/no-repeat-ngram guard.
+  3. Train with fewer steps or an end-of-text-weighted loss.
+
 ## Next
 
-- **Training noise (signed off by the lead 2026-11-02; running).** Until the recorded bank exists, half of the training scenes add stationary coloured Gaussian noise (`configs/uwsim_v0_stat.yaml`).
+- **Training noise (signed off by the lead 2026-11-02; first run done, see above).** Until the recorded bank exists, half of the training scenes add stationary coloured Gaussian noise (`configs/uwsim_v0_stat.yaml`).
   - Level: −10 to 0 dB re the bubble component.
   - Slope: drawn from [−6, −4] ∪ [−2, 0] dB/oct. The band (−4, −2) is held out because the noise0 test noise is the same generator at −3 dB/oct. Noise0 therefore stays out of distribution in slope, though not in generator family.
   - First run: C8 (`configs/c8_whisper_lora_stat.yaml`, `runs/c8_whisper_lora_stat_s0`).
@@ -267,7 +306,7 @@ Reading:
   - Get sign-off on LR 1e-4.
   - Seed 1 is done (see above).
   - Add WER-based checkpoint selection on a held-out uwsim dev set.
-  - Retrain with stationary noise: running (see Training noise above).
+  - Retrain with stationary noise: done; noise0 improves, but quiet and bubble decodes loop (see above).
   - Test the hallucination rate with temperature fallback against the fixed policy.
   - Use `train.val_num_workers=0` on the 16 GB laptop: validation workers spawn on every eval.
 - **Hallucination flag.** Add a substitution-hallucination flag to `evaluation.asr` before E14.
