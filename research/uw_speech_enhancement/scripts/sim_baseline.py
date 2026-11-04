@@ -89,9 +89,12 @@ def select_utts(ls_root: Path, out: Path, n: int | None):
     return sel[:n] if n else sel
 
 
-def make_scenes(cfg_path: str, seed: int) -> dict[float, object]:
-    """One fixed scene per range: nominal Avery pool, 1 m depths, on-axis, no randomization
-    beyond the (uncalibrated) boundary priors drawn once per position."""
+def make_scenes(cfg_path: str, seed: int, ranges: tuple[float, ...] = RANGES_M, depth_m: float = DEPTH_M,
+                y_frac: float = 0.5) -> dict[float, object]:
+    """One fixed scene per range: nominal Avery pool, on-axis, no randomization beyond the
+    (uncalibrated) boundary priors drawn once per position. The E7 defaults are 1 m depths
+    on the pool's long centreline; `ranges`, `depth_m` and `y_frac` (fraction of the
+    width) place other scenes, e.g. the dev-WER set."""
     from uwse.uwsim.config import load_config
     from uwse.uwsim.geometry import avery_competition_pool
     from uwse.uwsim.simulate import sample_scene
@@ -100,10 +103,10 @@ def make_scenes(cfg_path: str, seed: int) -> dict[float, object]:
     pool = avery_competition_pool()
     pdict = {"L": pool.L, "W": pool.W, "H0": pool.H0, "H1": pool.H1}
     scenes = {}
-    for i, r in enumerate(RANGES_M):
+    for i, r in enumerate(ranges):
         base = sample_scene(cfg, seed + i, generic=False)
-        x0, y0 = 0.5 * pool.L - 0.5 * r, 0.5 * pool.W
-        src, rx = [x0, y0, DEPTH_M], [x0 + r, y0, DEPTH_M]
+        x0, y0 = 0.5 * pool.L - 0.5 * r, y_frac * pool.W
+        src, rx = [x0, y0, depth_m], [x0 + r, y0, depth_m]
         f_s = base.c / (4.0 * max(pool.H0, pool.H1))
         f_x = max(f_s, cfg.acoustics.f_x_min)
         scenes[r] = dataclasses.replace(
