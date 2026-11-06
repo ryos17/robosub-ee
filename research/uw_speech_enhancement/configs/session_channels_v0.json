@@ -1,0 +1,30 @@
+{
+ "description": "v0 pool session channel map (RESEARCH_PLAN.md 6.1). One recorder = one file per take. File channels are 0-based; the playback interface's inputs are in1 = file ch 0, in2 = file ch 1. Hydrophone channel_id is the ch<N> of every utt_id. Edit to match the rig on the day and keep the edited copy with the session (run_session.py plan copies it into session.json).",
+ "scored_channel": 0,
+ "recorders": {
+  "iface": {
+   "fs": 48000,
+   "note": "USB playback interface (2-in/2-out); out1 -> amplifier",
+   "channels": {
+    "0": {"role": "loopback", "atten_db": 40},
+    "1": {"role": "monitor", "note": "monitor hydrophone >= 0.5 m, 90 deg off-axis"}
+   }
+  },
+  "daisyA": {
+   "fs": 96000,
+   "note": "Daisy Seed 376636603433, record_daisy.py",
+   "channels": {
+    "0": {"role": "hydrophone", "channel_id": 0},
+    "1": {"role": "hydrophone", "channel_id": 1}
+   }
+  },
+  "daisyB": {
+   "fs": 96000,
+   "note": "Daisy Seed 376C36573433, record_daisy.py",
+   "channels": {
+    "0": {"role": "hydrophone", "channel_id": 2},
+    "1": {"role": "hydrophone", "channel_id": 3}
+   }
+  }
+ }
+}

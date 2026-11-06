@@ -45,6 +45,10 @@ def parse_args(argv=None) -> argparse.Namespace:
     ap.add_argument("--rec", type=Path, required=True, help="recorded WAV of the whole session file")
     ap.add_argument("--session", type=int, required=True, help="session number in the utt_id (s<N>)")
     ap.add_argument("--channels", default="0", help="comma-separated recorded channels to cut (0-based)")
+    ap.add_argument("--channel-ids", default=None,
+                    help="comma-separated benchmark channel ids for --channels, used in utt_id and the "
+                         "'channel' field (e.g. a second recorder's file channels 0,1 = hydrophones 2,3); "
+                         "default: the file channel indices")
     ap.add_argument("--sync-channel", type=int, default=None,
                     help="channel for chirp detection (loopback if recorded); default: first of --channels")
     ap.add_argument("--anchor", action="store_true", help="the take is anchor_<pos>.wav")
@@ -61,6 +65,9 @@ def main(argv=None) -> int:
     fs, blocks = ingest.load_session(a.bench, a.position, anchor=a.anchor)
     x, fs_raw, bits = ingest.load_take(a.rec, fs)
     chans = [int(c) for c in a.channels.split(",")]
+    ids = chans if a.channel_ids is None else [int(c) for c in a.channel_ids.split(",")]
+    if len(ids) != len(chans) or len(set(ids)) != len(ids):
+        raise SystemExit("--channel-ids must give one distinct id per --channels entry")
     sync = chans[0] if a.sync_channel is None else a.sync_channel
     if max(chans + [sync]) >= x.shape[0]:
         raise SystemExit(f"{a.rec} has {x.shape[0]} channels")
@@ -80,7 +87,8 @@ def main(argv=None) -> int:
         for k, u in enumerate(b.timing["utterances"]):
             s_raw, e_raw = int(round(bounds[k, 0] * to_raw)), int(round(bounds[k, 1] * to_raw))
             for ci, ch in enumerate(chans):
-                uid = make_utt_id(RELEASE_OF_SPLIT[split], a.session, a.position, b.block_id, ch, u["item_id"])
+                uid = make_utt_id(RELEASE_OF_SPLIT[split], a.session, a.position, b.block_id, ids[ci],
+                                  u["item_id"])
                 y = cuts[ci][k]
                 audio.save(str(wav_dir / f"{uid}.wav"), y, fs, subtype="PCM_24")
                 seg = raw[ch, max(0, s_raw): max(0, e_raw)]
@@ -94,7 +102,7 @@ def main(argv=None) -> int:
                     "bench_split": split, "session_order_idx": b.session_order_idx, "block_id": b.block_id,
                     "content_block": b.content_block, "position_id": a.position,
                     "thruster_state": b.thruster_state, "anchor_repeat": b.anchor_repeat,
-                    "channel": ch, "sync_channel": sync, "fs_raw": fs_raw, "bits": bits,
+                    "channel": ids[ci], "file_channel": ch, "sync_channel": sync, "fs_raw": fs_raw, "bits": bits,
                     "raw_file": str(a.rec), "start_sample_raw": s_raw, "end_sample_raw": e_raw,
                     "drift_ppm": res.drift_ppm, "drift_source": res.drift_source,
                     "chirp_psr_dB": min(c.psr_db for c in res.chirps), "pad_s": a.pad_s,
