@@ -1,4 +1,4 @@
-# OCEANS 2027 abstract: working draft (2026-11-03)
+# OCEANS 2027 abstract: working draft (2026-11-03, aligned to the frozen protocol 2026-11-06)
 
 **Status: draft built from the sim-only E7 dry run.** It is not submittable as is.
 
@@ -23,7 +23,7 @@ We build `uwsim`, a simulator of the projector-to-hydrophone chain in a pool. It
 
 On simulated pool recordings of 200 LibriSpeech test-clean utterances at 1, 3 and 6 m, every enhancement front end tested failed to lower Whisper large-v3 word error rate (WER) relative to unprocessed audio beyond the confidence interval [SIM]. This held for zero-shot MetricGAN+, SepFormer and DeepFilterNet3, and for DeepFilterNet3 and a U-Net trained on the simulator. The enhancers raised ESTOI substantially, but their artefacts cost more recognition accuracy than the noise and reverberation they removed, increasingly so with range.
 
-In contrast, a rank-8 LoRA adaptation of Whisper on simulated audio, with no enhancement, lowered WER in every condition and at every range. The adapter that also saw stationary noise in training did best. Under stationary noise at 0 dB SNR, whose spectral slope was held out of training, WER fell from 20.3 / 48.4 / 56.4% to 16.0 / 37.2 / 44.5% at 1 / 3 / 6 m. In quiet conditions it fell from 3.1 / 3.7 / 4.3% to 1.7 / 2.6 / 3.2% [SIM]. The paired bootstrap 95% CIs exclude zero in all nine cells. A second training seed, with its checkpoint chosen by WER on a disjoint simulated development set, reproduced the stationary-noise gain (16.4 / 38.2 / 43.8%).
+In contrast, a rank-8 LoRA adaptation of Whisper on simulated audio, with no enhancement, lowered WER in every condition and at every range. The adapter that also saw stationary noise in training did best, with its checkpoint chosen by WER on a disjoint simulated development set. Under stationary noise at 0 dB SNR, whose spectral slope was held out of training, WER fell from 20.3 / 48.4 / 56.4% to 16.4 / 38.2 / 43.8% at 1 / 3 / 6 m. In quiet conditions it fell from 3.1 / 3.7 / 4.3% to 2.3 / 2.7 / 3.4% [SIM]. The paired bootstrap 95% CIs exclude zero in eight of nine cells. A second training seed reproduced the stationary-noise gain (16.0 / 37.2 / 44.5%).
 
 Adapted Whisper can transcribe correctly and then fail to stop, appending invented text. A decode-length cap tied to audio duration removed every such loop without changing the unadapted baseline.
 
@@ -50,21 +50,21 @@ We release the simulator, the evaluation harness, and [the measured pool channel
 
 ### Table: WER (%) of unprocessed audio (C0) vs Whisper-LoRA (C8), guarded decoding [SIM]
 
-C8 is shown for seeds 0 and 1 trained on bubble noise only, and for one seed with stationary noise added to training ("stat"). ΔWER is the paired speaker-cluster bootstrap with a 95% CI.
+C8 is shown for seeds 0 and 1 trained on bubble noise only, and for two seeds with stationary noise added to training ("stat"). Stat s1, at its dev-WER checkpoint, is the adapter carried forward by the frozen protocol; stat s0 (CE-selected checkpoint) is the replication. ΔWER is the paired speaker-cluster bootstrap with a 95% CI.
 
-| condition | range | C0 | C8 s0 | C8 s1 | C8 stat | ΔWER stat − C0 [95% CI] |
-|---|---|---|---|---|---|---|
-| noise0 | 1 m | 20.3 | 17.1 | 18.1 | 16.0 | −4.3 [−6.5, −2.4] |
-| noise0 | 3 m | 48.4 | 42.1 | 43.2 | 37.2 | −11.3 [−13.7, −9.0] |
-| noise0 | 6 m | 56.4 | 48.8 | 50.1 | 44.5 | −11.9 [−14.8, −8.8] |
-| bubbles0 | 1 m | 2.4 | 2.0 | 2.0 | 1.7 | −0.8 [−1.3, −0.3] |
-| bubbles0 | 3 m | 5.1 | 3.0 | 3.4 | 3.2 | −2.0 [−2.9, −1.2] |
-| bubbles0 | 6 m | 5.7 | 4.4 | 4.5 | 4.1 | −1.7 [−2.6, −0.9] |
-| quiet | 1 m | 3.1 | 2.0 | 2.7 | 1.7 | −1.4 [−1.9, −0.9] |
-| quiet | 3 m | 3.7 | 2.3 | 3.8 | 2.6 | −1.1 [−1.8, −0.5] |
-| quiet | 6 m | 4.3 | 3.7 | 4.8 | 3.2 | −1.2 [−1.9, −0.4] |
+| condition | range | C0 | C8 s0 | C8 s1 | C8 stat s1 | C8 stat s0 | ΔWER stat s1 − C0 [95% CI] |
+|---|---|---|---|---|---|---|---|
+| noise0 | 1 m | 20.3 | 17.1 | 18.1 | 16.4 | 16.0 | −4.0 [−5.7, −2.3] |
+| noise0 | 3 m | 48.4 | 42.1 | 43.2 | 38.2 | 37.2 | −10.2 [−12.8, −7.9] |
+| noise0 | 6 m | 56.4 | 48.8 | 50.1 | 43.8 | 44.5 | −12.6 [−15.5, −9.6] |
+| bubbles0 | 1 m | 2.4 | 2.0 | 2.0 | 2.2 | 1.7 | −0.2 [−0.7, +0.2] |
+| bubbles0 | 3 m | 5.1 | 3.0 | 3.4 | 3.1 | 3.2 | −2.0 [−3.0, −1.1] |
+| bubbles0 | 6 m | 5.7 | 4.4 | 4.5 | 4.0 | 4.1 | −1.7 [−2.6, −0.9] |
+| quiet | 1 m | 3.1 | 2.0 | 2.7 | 2.3 | 1.7 | −0.8 [−1.4, −0.3] |
+| quiet | 3 m | 3.7 | 2.3 | 3.8 | 2.7 | 2.6 | −0.9 [−1.6, −0.3] |
+| quiet | 6 m | 4.3 | 3.7 | 4.8 | 3.4 | 3.2 | −1.0 [−1.7, −0.2] |
 
-Under the fixed policy, stat had runaway loops in 46 of 1200 quiet and bubble decodes, and seed 0 in 1, the bubbles0 1 m outlier at 7.9%. The guard removes all of them (RESULTS_E7_SIM_DRYRUN.md, "Guarded decoding").
+Under the fixed policy, stat s0 had runaway loops in 46 of 1200 quiet and bubble decodes, and seed 0 in 1, the bubbles0 1 m outlier at 7.9%. The guard removes all of them (RESULTS_E7_SIM_DRYRUN.md, "Guarded decoding").
 
 The best enhancement front end in each noise0 cell, for comparison, guarded decoding: 1 m 21.1% (WPE), 3 m 48.3% (WPE), 6 m 56.9% (WPE). Every trained or zero-shot neural enhancer was worse, between 32% and 107%.
 
@@ -75,14 +75,15 @@ The best enhancement front end in each noise0 cell, for comparison, guarded deco
    - This extends the in-air finding that SE artefacts hurt ASR (Iwamoto et al., 2022) to the underwater chain, and the effect grows with range.
 2. **Adapting the recognizer helps everywhere.**
    - The bubble-only seeds beat C0 in all 12 noisy seed × cell pairs, and the CI excludes zero in 10 of them; both exceptions are at bubbles0 1 m. Their noise0 gain grows with range, from about 3 to about 7 points, although they never saw stationary noise. So part of the gain comes from adapting to the reverberant chain, not the noise.
-   - Adding stationary noise to training, with the test slope band held out, beats C0 in all 9 cells (every CI excludes zero). It beats bubble-only seed 0 by a further 4–5 points at noise0 3 m and 6 m.
-   - A second stat seed replicates this. It is level with stat seed 0 on noise0 (16.4 / 38.2 / 43.8%, every paired CI includes zero) and beats bubble-only seed 0 by 3.9 and 5.0 points at 3 m and 6 m. It beats C0 in 8 of 9 cells; the exception is bubbles0 1 m.
+   - Adding stationary noise to training, with the test slope band held out, gives the best adapter. The frozen-protocol adapter (stat seed 1, dev-WER checkpoint) reaches 16.4 / 38.2 / 43.8% on noise0 and beats C0 in 8 of 9 cells; the exception is bubbles0 1 m, where C0 is already near the R1 floor. It beats bubble-only seed 0 by a further 3.9 and 5.0 points at noise0 3 m and 6 m.
+   - Stat seed 0 replicates this. It is level with seed 1 on noise0 (16.0 / 37.2 / 44.5%, every paired CI includes zero), beats C0 in all 9 cells, and beats bubble-only seed 0 by 4.9 and 4.3 points at 3 m and 6 m. It is 0.6 points better than seed 1 at quiet 1 m and bubbles0 1 m.
+   - Exploratory: an exact average of the two stat seeds' adapters is level with seed 1 in every cell, so the frozen adapter is unchanged.
 3. **Limitation: the quiet-condition gain of the bubble-only adapter is seed-dependent.**
    - Seed 0 improved quiet WER significantly at 1 m and 3 m; seed 1 did not, and its CIs straddle zero.
    - Seed 1 had the lower validation cross-entropy (0.097 vs 0.102) yet the higher WER in 8 of 9 cells. Checkpoint and seed selection for recognizer adaptation therefore needs a WER-based development set, not validation loss.
    - Tested on stat seed 1: the dev-WER pick (step 30k) beat the CE-best checkpoint (step 20k) on E7 in 3 of 9 cells beyond the CI and was never worse. The CE-best checkpoint beat C0 in only 6 of 9 cells.
 4. **Hallucination risk, and a fix.**
-   - Under the fixed decode, adapted Whisper sometimes transcribed an utterance correctly and then failed to emit end-of-text, adding about 200 invented words: 1 of 1800 decodes for seed 0, 46 of 1200 quiet and bubble decodes for stat.
+   - Under the fixed decode, adapted Whisper sometimes transcribed an utterance correctly and then failed to emit end-of-text, adding about 200 invented words: 1 of 1800 decodes for bubble-only seed 0, 46 of 1200 quiet and bubble decodes for stat seed 0.
    - A length cap tied to audio duration removes every loop, and C0 WER does not move by more than 0.1 points. Pre-register the guarded decode for the real-data evaluation.
 
 ### What must change before submission

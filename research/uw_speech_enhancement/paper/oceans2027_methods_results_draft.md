@@ -4,7 +4,7 @@
 
 Companion files: `oceans2027_abstract_draft.md` (abstract and findings list), RESEARCH_PLAN.md §§4–8 (full specification), RESULTS_E7_SIM_DRYRUN.md (all sim results, including sensitivity checks).
 
-**Open point for the lead.** The abstract draft headlines C8 stat seed 0 (16.0 / 37.2 / 44.5% on noise0). The frozen protocol carries forward seed 1 at its dev-WER checkpoint (16.4 / 38.2 / 43.8%), because seed 0's checkpoint was chosen by validation CE. This draft reports seed 1 as the primary C8 row and seed 0 as the replication. The abstract should be aligned one way or the other before submission.
+**Headline adapter (decided by the lead 2026-11-06).** The abstract and this draft headline C8 stat seed 1 at its dev-WER checkpoint, the adapter the frozen protocol carries forward (noise0 16.4 / 38.2 / 43.8%). Stat seed 0, whose checkpoint was chosen by validation CE, is reported as the replication.
 
 ---
 
