@@ -325,6 +325,41 @@ def lora_deltas_openai(state: dict, r: int, alpha: float) -> dict:
     return out
 
 
+def average_lora_checkpoints(ckpts: Sequence[dict]) -> dict:
+    """Exact average of the merged deltas of K LoRA checkpoints, as one rank-K*r checkpoint.
+
+    Averaging the A and B factors directly is not the average of the deltas
+    (independent seeds start from unrelated A, and B_1 A_2 cross terms appear).
+    Stacking along the rank instead, A = [A_1; ...; A_K] and
+    B = [B_1, ..., B_K] / K with the per-checkpoint scaling alpha/r kept
+    (alpha' = K alpha for r' = K r), gives (alpha'/r') B A = mean_k (alpha/r) B_k A_k.
+    Every checkpoint must share r, alpha and the key set.
+    """
+    import torch
+
+    if not ckpts:
+        raise ValueError("no checkpoints to average")
+    k = len(ckpts)
+    r, alpha = int(ckpts[0]["lora"]["r"]), float(ckpts[0]["lora"]["alpha"])
+    keys = list(ckpts[0]["model"])
+    for c in ckpts[1:]:
+        if (int(c["lora"]["r"]), float(c["lora"]["alpha"])) != (r, alpha):
+            raise ValueError("LoRA r/alpha differ between checkpoints")
+        if set(c["model"]) != set(keys):
+            raise ValueError("LoRA key sets differ between checkpoints")
+    model = {}
+    for key in keys:
+        if "lora_A" in key:
+            model[key] = torch.cat([c["model"][key].float() for c in ckpts], dim=0)
+        elif "lora_B" in key:
+            model[key] = torch.cat([c["model"][key].float() for c in ckpts], dim=1) / k
+        else:
+            raise KeyError(f"non-LoRA key {key!r} in a LoRA checkpoint")
+    lora = dict(ckpts[0]["lora"], r=k * r, alpha=k * alpha)
+    return {"model": model, "adapter": ckpts[0].get("adapter"), "base": ckpts[0].get("base"),
+            "lora": lora, "averaged_from": k}
+
+
 class WhisperASR:
     """openai-whisper backend with the §8.3 protocol; the model loads lazily.
 
