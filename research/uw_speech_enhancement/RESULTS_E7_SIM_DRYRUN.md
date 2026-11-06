@@ -450,6 +450,57 @@ Reading:
   - This supports finding 3 of the draft: validation CE is a poor selector for recognizer adaptation.
 - **No loops.** The guarded decode keeps both seed-1 checkpoints loop-free, as it did for seed 0.
 
+### EXPLORATORY: C8 stat seed-average adapter (2026-11-06)
+
+Exploratory only. It does not change the frozen protocol below: the carried-forward adapter stays seed 1 step 30k.
+
+Method:
+
+- The two stat seeds' adapters were averaged exactly at matched steps 28k and 30k (`scripts/average_lora.py`, output `runs/c8_whisper_lora_stat_avg`).
+  - Rank stacking (r 8 → 16, alpha 32 → 64) makes the merged weight delta the mean of the two seeds' deltas.
+  - Naive A/B averaging would not do this, because the seeds start from different random A matrices.
+- The average was selected by dev WER under the frozen rule, then scored on E7 with the guarded decode as `c8statavg`.
+
+Dev WER (%, guarded decode, same dev set as seed 1):
+
+| checkpoint | quiet | bubbles0 | stat_m5 | stat_m1 | mean |
+|---|---|---|---|---|---|
+| base | 3.4 | 3.5 | 50.3 | 33.3 | 22.65 |
+| avg step 28k (selected) | 3.3 | 3.0 | 39.3 | 25.1 | 17.69 |
+| avg step 30k | 3.3 | 3.0 | 39.2 | 25.2 | 17.71 |
+| seed 1 step 30k (frozen) | | | | | 17.64 |
+
+E7 corpus WER (%, guarded decode, 1 / 3 / 6 m):
+
+| cond | C0 (noisy) | stat s0 | stat s1 (frozen) | stat avg |
+|---|---|---|---|---|
+| quiet | 3.1 / 3.7 / 4.3 | 1.7 / 2.6 / 3.2 | 2.3 / 2.7 / 3.4 | 2.4 / 2.8 / 3.4 |
+| noise0 | 20.3 / 48.4 / 56.4 | 16.0 / 37.2 / 44.5 | 16.4 / 38.2 / 43.8 | 15.9 / 37.0 / 43.2 |
+| bubbles0 | 2.4 / 5.1 / 5.7 | 1.7 / 3.2 / 4.1 | 2.2 / 3.1 / 4.0 | 1.9 / 3.2 / 3.8 |
+
+Paired ΔWER, avg minus the other system (points, speaker-cluster bootstrap 95% CI, 2000 resamples; * = CI excludes 0):
+
+| cell | vs C0 | vs stat s1 (frozen) | vs stat s0 | vs bubble-only s0 |
+|---|---|---|---|---|
+| quiet 1 m | −0.7 [−1.3, −0.1]* | +0.2 [−0.3, +0.7] | +0.7 [+0.2, +1.3]* | +0.4 [−0.4, +1.2] |
+| quiet 3 m | −0.9 [−1.5, −0.3]* | +0.1 [−0.4, +0.6] | +0.2 [−0.2, +0.8] | +0.5 [+0.1, +1.0]* |
+| quiet 6 m | −1.0 [−1.7, −0.2]* | +0.0 [−0.5, +0.5] | +0.2 [−0.3, +0.7] | −0.3 [−1.0, +0.5] |
+| noise0 1 m | −4.4 [−6.2, −2.7]* | −0.5 [−1.1, +0.2] | −0.1 [−1.1, +0.9] | −1.2 [−2.4, +0.0] |
+| noise0 3 m | −11.4 [−13.7, −9.1]* | −1.2 [−2.8, +0.5] | −0.1 [−1.5, +1.4] | −5.1 [−7.5, −2.7]* |
+| noise0 6 m | −13.2 [−16.2, −10.2]* | −0.6 [−1.9, +0.6] | −1.3 [−3.0, +0.2] | −5.6 [−7.6, −3.7]* |
+| bubbles0 1 m | −0.5 [−1.0, −0.1]* | −0.3 [−0.6, +0.0] | +0.2 [+0.0, +0.5]* | −0.1 [−0.4, +0.2] |
+| bubbles0 3 m | −1.9 [−2.9, −1.1]* | +0.1 [−0.3, +0.5] | +0.0 [−0.4, +0.5] | +0.2 [−0.3, +0.7] |
+| bubbles0 6 m | −1.9 [−2.8, −1.2]* | −0.2 [−0.6, +0.1] | −0.3 [−0.9, +0.3] | −0.6 [−1.1, −0.1]* |
+
+Reading:
+
+- **The average beats C0 in all 9 cells**, one more than seed 1 (it also wins bubbles0 1 m).
+- **It is level with the frozen seed 1 in every cell.** All nine CIs include zero. The point estimates lean its way on noise0 (−0.5 / −1.2 / −0.6), but that is not significant.
+- **Against stat seed 0 it is level or slightly worse.** It is worse by +0.7 at quiet 1 m and by +0.2 at bubbles0 1 m. Both are cells where seed 0 was the stronger seed.
+- **Its margin over bubble-only training holds**: −5.1 and −5.6 at noise0 3 m and 6 m.
+- **Loops: 0** across the 9 cells. The temperature fallback fired once.
+- **No case for changing the frozen adapter.** On dev WER the average is 17.69 against seed 1's 17.64, and on test it is level. Weight averaging gives no measurable gain here, so seed 1 step 30k stays as the carried-forward adapter.
+
 ## Frozen evaluation protocol for real data (signed off by the lead 2026-11-05)
 
 Fixed before any real v0 recording is scored. It was chosen after seeing sim results, so it is pre-registered here, and any change after real data arrive must be reported as a deviation.
