@@ -31,7 +31,7 @@ data:
   val_dir: null              # whole utterances; not frozen to disk
 train:
   out_dir: runs
-  lr: 1.0e-4                 # 1e-3 diverged near step 900 (C8 run 1); 1e-4 used for seeds 0 and 1
+  lr: 1.0e-4                 # 1e-3 diverged near step 900 (C8 run 1); 1e-4 signed off 2026-11-05
   betas: [0.9, 0.999]
   weight_decay: 0.0
   warmup_steps: 1000

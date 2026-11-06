@@ -191,7 +191,7 @@ Reading:
 
 - **Training.** `configs/c8_whisper_lora.yaml` with LoRA r 8, alpha 32, on q/v projections.
   - Data: train-clean-100 clips of 30 s or less, through uwsim with no noise bank, so the noise is bubble trains as for C2 and C10.
-  - LR 1e-4. The config default of 1e-3 diverged near step 900 in run 1; the change still needs sign-off.
+  - LR 1e-4. The config default of 1e-3 diverged near step 900 in run 1. 1e-4 was signed off by the lead on 2026-11-05.
   - Run dir `runs/c8_whisper_lora_lr1e-4_s0`. Early stop at step 16k. Best val CE 0.1018 at step 6k; val stayed between 0.102 and 0.111 throughout.
 - **Scoring.** The best LoRA is merged into openai-whisper large-v3 in fp32 before the fp16 cast. Decoding is the same fixed policy as C0: beam 5, temperature 0 with no fallback.
   - C8 decodes the unprocessed noisy audio. Its ESTOI and SI-SDR therefore equal C0's and are omitted.
@@ -450,6 +450,25 @@ Reading:
   - This supports finding 3 of the draft: validation CE is a poor selector for recognizer adaptation.
 - **No loops.** The guarded decode keeps both seed-1 checkpoints loop-free, as it did for seed 0.
 
+## Frozen evaluation protocol for real data (signed off by the lead 2026-11-05)
+
+Fixed before any real v0 recording is scored. It was chosen after seeing sim results, so it is pre-registered here, and any change after real data arrive must be reported as a deviation.
+
+- **Decoding.** Every ASR result, for every system, uses `DecodeConfig.guarded()` (`--decode guard`) on Whisper large-v3 with loudness normalisation (`normalize_cut`). The settings:
+  - Beam 5 at temperature 0.
+  - Fallback temperatures 0.2, 0.4, 0.6, 0.8, 1.0 with best-of-5 sampling. A retry fires when the compression ratio is > 2.4 or the mean logprob is < −1.0.
+  - Length cap of min(ceil(8 tokens/s × duration) + 16, 224) tokens.
+  - No previous-text conditioning. Sampling seed 0, set on every call.
+  - The fixed policy (temperature 0, no cap) may be reported only as a sensitivity check.
+- **Checkpoint selection for recognizer adaptation.** Choose by the lowest mean of per-condition corpus WERs on the uwsim dev set, using `scripts/dev_wer_select.py` with its committed constants:
+  - The dev set, scene geometry and seed 20261104 are as described in "C8 stat seed 1".
+  - The decode is the same guarded decode.
+  - Validation cross-entropy is not used for selection.
+- **Recognizer-adaptation system carried forward (C8).** `runs/c8_whisper_lora_stat_s1/ckpt_step030000.pt`, also copied to `best_wer.pt`. SHA-256 `5063f02fa14cea47064721878c2e21cd8cd8594c642769cc69ae288029f52f90`.
+  - Config: `configs/c8_whisper_lora_stat.yaml`, seed 1, LR 1e-4 (signed off 2026-11-05).
+  - It is the only adapter whose checkpoint was chosen by the protocol above. Stat seed 0 (CE-best at step 28k), the bubble-only seeds and the seed-1 CE-best checkpoint are sim-only references. They are not compared on real data unless reported as exploratory.
+- **Unchanged from RESEARCH_PLAN.md.** The endpoints, the comparisons (C0 and the SE front ends vs C8), corpus WER with speaker-cluster bootstrap 95% CIs, and paired speaker-cluster bootstrap ΔWER with 2000 resamples.
+
 ## Next
 
 - **Training noise (signed off by the lead 2026-11-02; first run done, see above).** Until the recorded bank exists, half of the training scenes add stationary coloured Gaussian noise (`configs/uwsim_v0_stat.yaml`).
@@ -457,7 +476,7 @@ Reading:
   - Slope: drawn from [−6, −4] ∪ [−2, 0] dB/oct. The band (−4, −2) is held out because the noise0 test noise is the same generator at −3 dB/oct. Noise0 therefore stays out of distribution in slope, though not in generator family.
   - First run: C8 (`configs/c8_whisper_lora_stat.yaml`, `runs/c8_whisper_lora_stat_s0`).
 - **C8 follow-ups.**
-  - Get sign-off on LR 1e-4.
+  - LR 1e-4: signed off 2026-11-05.
   - Seed 1 is done (see above).
   - WER-based checkpoint selection on a held-out uwsim dev set: done (`scripts/dev_wer_select.py`). Use it for every future C8 run.
   - Retrain with stationary noise: done. Its loops are fixed by guarded decoding, and it is now the best system (see above).
