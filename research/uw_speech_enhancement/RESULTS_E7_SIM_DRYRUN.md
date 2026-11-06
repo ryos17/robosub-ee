@@ -381,6 +381,75 @@ Reading:
   - At 6 m, WPE's noise0 regression under the fixed policy (62.4%) was itself a decoding artefact; it is 56.9% under the guard.
   - The neural front ends still raise WER in every noise0 cell (32–107%) and at quiet 3–6 m.
 
+### C8 stat seed 1 with dev-WER checkpoint selection (2026-11-05)
+
+- **Run.** Same config as stat seed 0 with seed 1 and `keep_every: 4000` (`runs/c8_whisper_lora_stat_s1`).
+  - Stopped early at step 30k (patience 5); best val CE 0.2076 at step 20k.
+- **Selection.** `scripts/dev_wer_select.py`, guarded decode, on a uwsim dev set that shares no utterances and no scene geometry with E7.
+  - 120 dev-clean utterances, ranges 1.5 / 3.5 / 5.5 m, depth 1.5 m, receiver at 0.35 of the pool width, seed 20261104.
+  - Four conditions: quiet, bubbles0, and stationary noise at 0 dB SNR with slopes −5 and −1 dB/oct. Both slopes are in the training bands, so the held-out test band is never used for selection.
+  - Criterion: the lowest mean of the per-condition corpus WERs.
+
+Dev WER %, guarded decoding (`runs/c8_whisper_lora_stat_s1/dev_wer/summary.md`). There were no loops at any checkpoint.
+
+| checkpoint | quiet | bubbles0 | stat −5 | stat −1 | mean |
+|---|---|---|---|---|---|
+| base (C0) | 3.4 | 3.5 | 50.3 | 33.3 | 22.65 |
+| step 4k | 3.3 | 3.6 | 40.8 | 25.9 | 18.39 |
+| step 8k | 3.2 | 3.1 | 39.6 | 25.9 | 17.95 |
+| step 12k | 3.1 | 3.1 | 39.7 | 25.8 | 17.93 |
+| step 16k | 3.3 | 3.1 | 41.6 | 25.9 | 18.46 |
+| step 20k (CE-best) | 4.3 | 3.7 | 40.0 | 26.8 | 18.69 |
+| step 24k | 3.5 | 3.1 | 38.7 | 25.3 | 17.67 |
+| step 28k | 3.3 | 3.2 | 39.0 | 25.2 | 17.69 |
+| **step 30k (selected)** | 3.3 | 3.2 | 38.6 | 25.5 | **17.64** |
+
+- Dev-WER picked step 30k. The CE-best checkpoint (step 20k) has the worst dev WER after step 4k, mainly from quiet (4.3 vs 3.1–3.5).
+- From step 8k on, the mean varies by only about 1 point. Steps 24k, 28k and 30k are within 0.05 points of each other, so the exact pick among them is noise.
+
+E7 WER %, guarded decoding. stat1 = seed 1 at the dev-WER pick, stat1-CE = seed 1 at the CE-best checkpoint.
+
+| cell | C0 | stat (s0) | stat1 | stat1-CE |
+|---|---|---|---|---|
+| quiet 1 m | 3.1 | 1.7 | 2.3 | 3.3 |
+| quiet 3 m | 3.7 | 2.6 | 2.7 | 3.0 |
+| quiet 6 m | 4.3 | 3.2 | 3.4 | 3.5 |
+| noise0 1 m | 20.3 | 16.0 | 16.4 | 16.5 |
+| noise0 3 m | 48.4 | 37.2 | 38.2 | 38.3 |
+| noise0 6 m | 56.4 | 44.5 | 43.8 | 45.2 |
+| bubbles0 1 m | 2.4 | 1.7 | 2.2 | 2.4 |
+| bubbles0 3 m | 5.1 | 3.2 | 3.1 | 3.3 |
+| bubbles0 6 m | 5.7 | 4.1 | 4.0 | 4.8 |
+
+There were no loops in either seed-1 checkpoint. The fallback fired on 2 of 3600 seed-1 decodes, both stat1 at bubbles0 6 m.
+
+Paired ΔWER [95% CI], speaker-cluster bootstrap with 2000 resamples (`tmp/dbg_guard_paired_s1.py`). Bold CIs exclude zero.
+
+| cell | stat1 − C0 | stat1-CE − C0 | stat1 − stat1-CE | stat1 − stat (s0) | stat1 − bubble s0 |
+|---|---|---|---|---|---|
+| quiet 1 m | **−0.8** [−1.4, −0.3] | +0.2 [−0.6, +1.0] | **−1.0** [−1.5, −0.6] | **+0.6** [+0.3, +0.9] | +0.3 [−0.4, +0.9] |
+| quiet 3 m | **−0.9** [−1.6, −0.3] | −0.7 [−1.5, +0.1] | −0.2 [−0.6, +0.2] | +0.2 [−0.3, +0.6] | +0.5 [+0.0, +0.9] |
+| quiet 6 m | **−1.0** [−1.7, −0.2] | **−0.8** [−1.6, −0.0] | −0.2 [−0.5, +0.1] | +0.2 [−0.3, +0.7] | −0.3 [−1.0, +0.3] |
+| noise0 1 m | **−4.0** [−5.7, −2.3] | **−3.8** [−5.6, −2.3] | −0.1 [−0.9, +0.6] | +0.3 [−0.6, +1.5] | −0.7 [−1.9, +0.4] |
+| noise0 3 m | **−10.2** [−12.8, −7.9] | **−10.2** [−12.9, −7.6] | −0.1 [−1.0, +1.0] | +1.0 [−0.9, +2.9] | **−3.9** [−6.1, −1.8] |
+| noise0 6 m | **−12.6** [−15.5, −9.6] | **−11.2** [−14.0, −8.3] | **−1.4** [−2.5, −0.5] | −0.7 [−2.5, +1.1] | **−5.0** [−6.9, −3.2] |
+| bubbles0 1 m | −0.2 [−0.7, +0.2] | −0.1 [−0.5, +0.4] | −0.2 [−0.4, +0.1] | **+0.6** [+0.2, +0.9] | +0.2 [−0.3, +0.7] |
+| bubbles0 3 m | **−2.0** [−3.0, −1.1] | **−1.9** [−2.9, −0.9] | −0.1 [−0.4, +0.2] | −0.1 [−0.5, +0.4] | +0.1 [−0.3, +0.6] |
+| bubbles0 6 m | **−1.7** [−2.6, −0.9] | **−0.9** [−1.8, −0.1] | **−0.8** [−1.3, −0.3] | −0.0 [−0.7, +0.6] | −0.3 [−0.8, +0.2] |
+
+Reading:
+
+- **The stationary-noise gain replicates.**
+  - On noise0, seed 1 is level with seed 0 in all three cells (every CI includes zero) and beats C0 by 4.0 / 10.2 / 12.6 points at 1 / 3 / 6 m.
+  - Its margin over the bubble-only seed 0 at 3 m and 6 m (−3.9 and −5.0) matches seed 0's (−4.9 and −4.3). The margin over bubble-only training is therefore not a single-seed effect.
+  - At 1 m, neither stat seed beats bubble-only seed 0 beyond the CI.
+- **Seed 1 is slightly worse than seed 0 near the source in clean audio.** It is 0.6 points worse at quiet 1 m and bubbles0 1 m, so its gain over C0 at bubbles0 1 m is not significant. stat1 beats C0 in 8 of 9 cells; seed 0 did in 9 of 9.
+- **Dev-WER selection beat CE selection on the test set, and was never worse.**
+  - stat1 is better than stat1-CE in 3 cells beyond the CI (quiet 1 m −1.0, noise0 6 m −1.4, bubbles0 6 m −0.8) and level in the other 6.
+  - stat1-CE beats C0 in only 6 of 9 cells. The dev set flagged its quiet weakness (dev quiet 4.3), and E7 quiet 1 m confirms it (3.3 vs C0 3.1).
+  - This supports finding 3 of the draft: validation CE is a poor selector for recognizer adaptation.
+- **No loops.** The guarded decode keeps both seed-1 checkpoints loop-free, as it did for seed 0.
+
 ## Next
 
 - **Training noise (signed off by the lead 2026-11-02; first run done, see above).** Until the recorded bank exists, half of the training scenes add stationary coloured Gaussian noise (`configs/uwsim_v0_stat.yaml`).
@@ -390,10 +459,10 @@ Reading:
 - **C8 follow-ups.**
   - Get sign-off on LR 1e-4.
   - Seed 1 is done (see above).
-  - Add WER-based checkpoint selection on a held-out uwsim dev set.
+  - WER-based checkpoint selection on a held-out uwsim dev set: done (`scripts/dev_wer_select.py`). Use it for every future C8 run.
   - Retrain with stationary noise: done. Its loops are fixed by guarded decoding, and it is now the best system (see above).
   - Guarded decode vs the fixed policy: done for every system (see above).
-  - Replicate stat with a second seed before quoting its margin over seed 0 (needs sign-off: about 31 GPU-hours).
+  - Replicate stat with a second seed: done. The noise0 gain and the margin over bubble-only training replicate (see "C8 stat seed 1").
   - Use `train.val_num_workers=0` on the 16 GB laptop: validation workers spawn on every eval.
 - **Hallucination flag.** Add a substitution-hallucination flag to `evaluation.asr` before E14.
 - **Calibration.** Replace the placeholders with measured pool values (E0–E4) and the recorded noise bank, then regenerate this table. The current table is retired at that point.
