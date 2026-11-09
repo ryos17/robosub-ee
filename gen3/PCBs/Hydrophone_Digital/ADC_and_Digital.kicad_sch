@@ -6549,7 +6549,7 @@
 		(uuid "011671aa-2d45-4ffd-add1-54c542685a99")
 	)
 	(label "CH0_AINP"
-		(at 81.28 57.15 180)
+		(at 81.28 72.39 180)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -6609,7 +6609,7 @@
 		(uuid "09d68eb6-6ab9-4f6a-a569-4eae6ab4bada")
 	)
 	(label "CH3_AINP"
-		(at 81.28 72.39 180)
+		(at 81.28 57.15 180)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -6759,7 +6759,7 @@
 		(uuid "334c9964-6ac8-4744-808b-d4040f39bb43")
 	)
 	(label "CH1_AINP"
-		(at 81.28 62.23 180)
+		(at 81.28 67.31 180)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -6939,7 +6939,7 @@
 		(uuid "67f7c27d-0210-4d28-b862-6031dc11c55f")
 	)
 	(label "CH0_AINN"
-		(at 81.28 59.69 180)
+		(at 81.28 74.93 180)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -6999,7 +6999,7 @@
 		(uuid "6df40050-fac1-4e2c-a091-73f87c6c5a00")
 	)
 	(label "CH2_AINP"
-		(at 81.28 67.31 180)
+		(at 81.28 62.23 180)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -7379,7 +7379,7 @@
 		(uuid "ca0568df-d5db-483c-9701-2ecc08793ee5")
 	)
 	(label "CH1_AINN"
-		(at 81.28 64.77 180)
+		(at 81.28 69.85 180)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -7429,7 +7429,7 @@
 		(uuid "e220b0af-01a9-48bf-9893-eba597df3f20")
 	)
 	(label "CH3_AINN"
-		(at 81.28 74.93 180)
+		(at 81.28 59.69 180)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -7559,7 +7559,7 @@
 		(uuid "fa995a09-b26f-49bf-b57e-0ce9474b0763")
 	)
 	(label "CH2_AINN"
-		(at 81.28 69.85 180)
+		(at 81.28 64.77 180)
 		(effects
 			(font
 				(size 1.27 1.27)
