@@ -950,7 +950,7 @@
         "uuid": "3634aa72-f703-4c52-b463-b00d283490ac"
       }
     ],
-    "used_designators": "Y1,U1-22,R1-75,K1-20,D1-24,C1-71,#PWR1-99,A1-2,J1-4,#FLG1-4",
+    "used_designators": "TP1-9,U1-22,C1-71,K1-20,Y1,D1-24,#PWR1-104,A1-2,JP1-3,R1-75,J1-4,#FLG1-4",
     "variants": []
   },
   "sheets": [
