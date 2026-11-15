@@ -3937,7 +3937,7 @@
 				)
 			)
 		)
-		(property "Value" "R-78E5.0-0.5"
+		(property "Value" "R-78CK5.0-0.5"
 			(at 102.87 132.08 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -3960,7 +3960,7 @@
 				(justify left)
 			)
 		)
-		(property "Datasheet" "https://www.recom-power.com/pdf/Innoline/R-78Exx-0.5.pdf"
+		(property "Datasheet" "https://recom-power.com/pdf/Innoline/R-78CK-0.5.pdf"
 			(at 102.87 135.89 0)
 			(hide yes)
 			(show_name no)
@@ -3971,7 +3971,7 @@
 				)
 			)
 		)
-		(property "Description" "500mA Step-Down DC/DC-Regulator, 7-28V input, 5V fixed Output Voltage, LM78xx replacement, -40°C to +85°C, SIP3"
+		(property "Description" "5 V DC/DC module, configured for -5 V output"
 			(at 102.87 135.89 0)
 			(hide yes)
 			(show_name no)
