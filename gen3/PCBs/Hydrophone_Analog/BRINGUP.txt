@@ -1,0 +1,70 @@
+Hydrophone analog board: probe and isolation additions
+Updated 2026-11-16
+
+Cuttable links (normally closed copper bridges, solder-repairable):
+  JP1 CUT_5VA   +5V analog rail to J5 pin 19
+  JP2 CUT_VCOIL relay supply to J5 pin 20
+  JP3 CUT_VOCM  common-mode reference to J5 pin 17
+These isolate the indicated header connections. JP1 and JP2 do not disconnect
+the local regulators from the analog circuitry or relay coils.
+
+Supply/reference probes:
+  TP1 VBAT    TP2 +5V    TP3 -5V    TP4 +3.3V
+  TP5 +VCOIL  TP6 GND    TP7 VOCM
+
+Channel probes, ordered BUF / GAIN / LP1 / LP2:
+  CH0: TP18 / TP19 / TP20 / TP21
+  CH1: TP10 / TP11 / TP12 / TP13
+  CH2: TP14 / TP15 / TP16 / TP17
+  CH3: TP22 / TP23 / TP24 / TP25
+BUF is the input-buffer output; GAIN is the programmable-gain stage output;
+LP1 and LP2 are the first and second low-pass stage outputs.
+Supply/reference pads are 1.5 mm diameter; channel pads are 1.0 mm diameter.
+Reference and function labels are printed beside the pads.
+
+Mechanical changes (KiCad coordinates, millimeters):
+  H1 (18,18), H2 (128,18), H3 (18,192), H4 (128,192)
+  Four 4.3 mm unplated holes for M4 hardware.
+  Top/bottom copper keepouts have 4.55 mm radius around each hole.
+  Outline: X 12.065..133.985, Y 12.225..198.120.
+  Overall size: 121.920 x 185.895 mm.
+  The upper edge was extended by 10 mm to clear the upper mounting hardware.
+
+Routing cleanup:
+  Added/modified routes use horizontal, vertical, and 45-degree segments
+  within KiCad coordinate rounding. Removed dangling branches, overlapping
+  backtracking segments, and duplicate vias. Preserved the intended netlist.
+
+Labels and artwork:
+  PCB references and probe/link function labels use 0.9 mm lettering with
+  0.14 mm strokes, placed clear of pads, component bodies, and other labels.
+  Schematic references use 1.27 mm text; values and net labels use 1.0 mm.
+  Duplicate part values on amplifier power units are hidden; their references
+  remain visible. Label stubs preserve the original electrical connections.
+  The top margin has a grouped silkscreen submarine and sonar-wave doodle.
+  J5 uses the local Hydrophone_Custom footprint so its silkscreen stays on
+  the board. Its copper, drills, and mechanical fabrication outline match
+  the original header footprint.
+
+Ground fill:
+  GND pours cover free space on F.Cu, In2.Cu, and B.Cu, stitched to the
+  existing In1.Cu ground reference plane with 54 additional 0.6/0.3 mm vias.
+  Isolated copper islands are removed. Existing U9 thermal copper is retained.
+  Small all-layer pour keepouts surround the THS4551 input/output pins and
+  the FET input nodes to limit added parasitic capacitance. The grounded
+  exposed pads and existing routed connections are retained.
+  The M4 hardware keepouts remain. Two small layer-specific keepouts near
+  J5 pins 18 (F.Cu) and 22 (In2.Cu) remove weak thermal-relief patches; the
+  plated ground pins remain connected through the other layers.
+  Basis: TI THS4551 datasheet, section 12.1.1, and OPA1656 section 8.4:
+  https://www.ti.com/lit/ds/symlink/ths4551.pdf
+  https://www.ti.com/lit/ds/symlink/opa1656.pdf
+
+Validation:
+  KiCad 10.0.7 DRC with zones refilled and schematic parity checked:
+  0 errors; 0 warnings; 0 unconnected items; 0 schematic parity issues;
+  0 dangling tracks/vias; 0 hole-clearance violations.
+  The prior 163 silkscreen warnings are resolved.
+  ERC remains at the prior baseline: 16 errors and 27 warnings, including
+  existing unconnected-pin and power-driver checks. These are not waived
+  by this layout validation. Analog/thermal bench qualification remains.

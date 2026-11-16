@@ -191,6 +191,129 @@
 			)
 			(embedded_fonts no)
 		)
+		(symbol "Connector:TestPoint"
+			(pin_numbers
+				(hide yes)
+			)
+			(pin_names
+				(offset 0.762)
+				(hide yes)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "TP"
+				(at 0 6.858 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "TestPoint"
+				(at 0 5.08 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at 5.08 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" ""
+				(at 5.08 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" "test point"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_keywords" "test point tp"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_fp_filters" "Pin* Test*"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "TestPoint_0_1"
+				(circle
+					(center 0 3.302)
+					(radius 0.762)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(symbol "TestPoint_1_1"
+				(pin passive line
+					(at 0 0 90)
+					(length 2.54)
+					(name "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
 		(symbol "Connector_Generic:Conn_02x12_Odd_Even"
 			(pin_names
 				(offset 1.016)
@@ -987,6 +1110,294 @@
 			)
 			(embedded_fonts no)
 		)
+		(symbol "Jumper:SolderJumper_2_Bridged"
+			(pin_numbers
+				(hide yes)
+			)
+			(pin_names
+				(offset 0)
+				(hide yes)
+			)
+			(exclude_from_sim no)
+			(in_bom no)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "JP"
+				(at 0 2.032 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "SolderJumper_2_Bridged"
+				(at 0 -2.54 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 -6.35 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" "Solder Jumper, 2-pole, closed/bridged"
+				(at 0 -5.08 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_keywords" "solder jumper SPST"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_fp_filters" "SolderJumper*Bridged*"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "SolderJumper_2_Bridged_0_1"
+				(rectangle
+					(start -0.508 0.508)
+					(end 0.508 -0.508)
+					(stroke
+						(width 0.1524)
+						(type default)
+					)
+					(fill
+						(type outline)
+					)
+				)
+				(polyline
+					(pts
+						(xy -0.254 1.016) (xy -0.254 -1.016)
+					)
+					(stroke
+						(width 0.1524)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(arc
+					(start -0.254 -1.016)
+					(mid -1.2656 0)
+					(end -0.254 1.016)
+					(stroke
+						(width 0.1524)
+						(type default)
+					)
+					(fill
+						(type outline)
+					)
+				)
+				(arc
+					(start 0.254 1.016)
+					(mid 1.2656 0)
+					(end 0.254 -1.016)
+					(stroke
+						(width 0.1524)
+						(type default)
+					)
+					(fill
+						(type outline)
+					)
+				)
+				(polyline
+					(pts
+						(xy 0.254 1.016) (xy 0.254 -1.016)
+					)
+					(stroke
+						(width 0.1524)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(symbol "SolderJumper_2_Bridged_1_1"
+				(pin passive line
+					(at -5.08 0 0)
+					(length 3.81)
+					(name "A"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 5.08 0 180)
+					(length 3.81)
+					(name "B"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
+		(symbol "Mechanical:MountingHole"
+			(pin_names
+				(offset 1.016)
+			)
+			(exclude_from_sim no)
+			(in_bom no)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "H"
+				(at 0 5.08 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "MountingHole"
+				(at 0 3.175 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" "Mounting Hole without connection"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_keywords" "mounting hole"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_fp_filters" "MountingHole*"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "MountingHole_0_1"
+				(circle
+					(center 0 0)
+					(radius 1.27)
+					(stroke
+						(width 1.27)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
 		(symbol "power:+5V"
 			(power global)
 			(pin_numbers
@@ -1358,6 +1769,16 @@
 	)
 	(wire
 		(pts
+			(xy 284.48 223.52) (xy 289.56 223.52)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "1600a0dd-66fc-441a-baca-d954fc4d5953")
+	)
+	(wire
+		(pts
 			(xy 151.13 138.43) (xy 154.94 138.43)
 		)
 		(stroke
@@ -1618,6 +2039,16 @@
 	)
 	(wire
 		(pts
+			(xy 264.16 187.96) (xy 274.32 187.96)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "5077bff0-577d-4952-8d77-12aa2bfd66b2")
+	)
+	(wire
+		(pts
 			(xy 347.98 128.27) (xy 353.06 128.27)
 		)
 		(stroke
@@ -1658,6 +2089,26 @@
 	)
 	(wire
 		(pts
+			(xy 284.48 187.96) (xy 289.56 187.96)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "5e2ff522-cf99-4f5c-9081-1a42f6170a28")
+	)
+	(wire
+		(pts
+			(xy 355.6 81.28) (xy 355.6 86.36)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "6007e42f-2722-4f49-89c6-7b5916ed9cb7")
+	)
+	(wire
+		(pts
 			(xy 40.64 168.91) (xy 43.18 168.91)
 		)
 		(stroke
@@ -1688,6 +2139,16 @@
 	)
 	(wire
 		(pts
+			(xy 336.55 81.28) (xy 336.55 86.36)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "656be370-6cdc-4af9-9c33-78767c590ff1")
+	)
+	(wire
+		(pts
 			(xy 151.13 107.95) (xy 154.94 107.95)
 		)
 		(stroke
@@ -1695,6 +2156,26 @@
 			(type default)
 		)
 		(uuid "65819c94-b1aa-4c87-a4a9-9c48d9d5efc0")
+	)
+	(wire
+		(pts
+			(xy 374.65 81.28) (xy 374.65 86.36)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "65a7b400-c114-4d87-8aac-337ab1797564")
+	)
+	(wire
+		(pts
+			(xy 298.45 81.28) (xy 298.45 86.36)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "65cbccda-d3e6-44e7-83bb-8d4983427ef5")
 	)
 	(wire
 		(pts
@@ -1768,6 +2249,16 @@
 	)
 	(wire
 		(pts
+			(xy 264.16 205.74) (xy 274.32 205.74)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "71f2f997-2b6f-485e-8d93-6eb9b88ca143")
+	)
+	(wire
+		(pts
 			(xy 27.94 59.69) (xy 43.18 59.69)
 		)
 		(stroke
@@ -1818,6 +2309,16 @@
 	)
 	(wire
 		(pts
+			(xy 260.35 81.28) (xy 260.35 86.36)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "8e40ec4d-7b9f-43c4-a932-54dea17ee2d9")
+	)
+	(wire
+		(pts
 			(xy 39.37 71.12) (xy 39.37 67.31)
 		)
 		(stroke
@@ -1835,6 +2336,16 @@
 			(type default)
 		)
 		(uuid "8fe1a2a9-8c60-4a3e-b3de-6d3b954cb23d")
+	)
+	(wire
+		(pts
+			(xy 264.16 223.52) (xy 274.32 223.52)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "91536186-2bfa-4a0a-8821-f5e97eb83248")
 	)
 	(wire
 		(pts
@@ -1875,6 +2386,16 @@
 			(type default)
 		)
 		(uuid "9dee311e-d8cf-4239-a5a5-2bc639599b19")
+	)
+	(wire
+		(pts
+			(xy 284.48 205.74) (xy 289.56 205.74)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "9e511729-06f9-4aad-b450-2659533e7375")
 	)
 	(wire
 		(pts
@@ -2108,6 +2629,26 @@
 	)
 	(wire
 		(pts
+			(xy 317.5 81.28) (xy 317.5 86.36)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "e34c5c5b-bc7a-4e0a-a5b2-389a7fc70174")
+	)
+	(wire
+		(pts
+			(xy 279.4 81.28) (xy 279.4 86.36)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "e63ea268-4e7c-4c4c-8e35-df7218f50abb")
+	)
+	(wire
+		(pts
 			(xy 43.18 111.76) (xy 44.45 111.76)
 		)
 		(stroke
@@ -2180,27 +2721,47 @@
 		(at 151.13 118.11 180)
 		(effects
 			(font
-				(size 1.27 1.27)
+				(size 1 1)
 			)
 			(justify right bottom)
 		)
 		(uuid "0a5a27c3-d6fc-4d94-a89a-5568e226eee6")
 	)
+	(label "VOCM"
+		(at 374.65 86.36 0)
+		(effects
+			(font
+				(size 1 1)
+			)
+			(justify left bottom)
+		)
+		(uuid "0b8ca2e7-f5f9-424f-8f68-1348560db208")
+	)
 	(label "CH3_AINP"
 		(at 113.03 210.82 0)
 		(effects
 			(font
-				(size 1.27 1.27)
+				(size 1 1)
 			)
 			(justify left bottom)
 		)
 		(uuid "0cadbeb7-c6ed-4bcf-bcc6-7f2912b2f078")
 	)
+	(label "VCOIL_HDR"
+		(at 370.84 151.13 0)
+		(effects
+			(font
+				(size 1 1)
+			)
+			(justify left bottom)
+		)
+		(uuid "106d1805-fc6c-441e-8c6f-506cd3b5d503")
+	)
 	(label "CH1_GAIN_G2"
 		(at 38.1 104.14 180)
 		(effects
 			(font
-				(size 1.27 1.27)
+				(size 1 1)
 			)
 			(justify right bottom)
 		)
@@ -2210,7 +2771,7 @@
 		(at 33.02 71.12 0)
 		(effects
 			(font
-				(size 1.27 1.27)
+				(size 1 1)
 			)
 			(justify left bottom)
 		)
@@ -2220,7 +2781,7 @@
 		(at 22.86 160.02 0)
 		(effects
 			(font
-				(size 1.27 1.27)
+				(size 1 1)
 			)
 			(justify left bottom)
 		)
@@ -2230,17 +2791,27 @@
 		(at 38.1 48.26 180)
 		(effects
 			(font
-				(size 1.27 1.27)
+				(size 1 1)
 			)
 			(justify right bottom)
 		)
 		(uuid "1bce4e45-a101-48c2-8a51-f6a2ce3856f9")
 	)
+	(label "5VA_HDR"
+		(at 289.56 187.96 0)
+		(effects
+			(font
+				(size 1 1)
+			)
+			(justify left bottom)
+		)
+		(uuid "1c5f321a-b38a-4273-9e29-103e40209f1e")
+	)
 	(label "AGND"
 		(at 24.13 132.08 0)
 		(effects
 			(font
-				(size 1.27 1.27)
+				(size 1 1)
 			)
 			(justify left bottom)
 		)
@@ -2250,7 +2821,7 @@
 		(at 347.98 156.21 180)
 		(effects
 			(font
-				(size 1.27 1.27)
+				(size 1 1)
 			)
 			(justify right bottom)
 		)
@@ -2260,17 +2831,27 @@
 		(at 38.1 53.34 180)
 		(effects
 			(font
-				(size 1.27 1.27)
+				(size 1 1)
 			)
 			(justify right bottom)
 		)
 		(uuid "3b2e851e-7ce2-4082-9474-da8e03f301f9")
 	)
+	(label "VOCM_HDR"
+		(at 289.56 223.52 0)
+		(effects
+			(font
+				(size 1 1)
+			)
+			(justify left bottom)
+		)
+		(uuid "3de05e4a-2eb2-4fe2-8087-c17891141868")
+	)
 	(label "CH2_AINP"
 		(at 347.98 138.43 180)
 		(effects
 			(font
-				(size 1.27 1.27)
+				(size 1 1)
 			)
 			(justify right bottom)
 		)
@@ -2280,7 +2861,7 @@
 		(at 40.64 207.01 180)
 		(effects
 			(font
-				(size 1.27 1.27)
+				(size 1 1)
 			)
 			(justify right bottom)
 		)
@@ -2290,7 +2871,7 @@
 		(at 40.64 168.91 180)
 		(effects
 			(font
-				(size 1.27 1.27)
+				(size 1 1)
 			)
 			(justify right bottom)
 		)
@@ -2300,7 +2881,7 @@
 		(at 113.03 100.33 0)
 		(effects
 			(font
-				(size 1.27 1.27)
+				(size 1 1)
 			)
 			(justify left bottom)
 		)
@@ -2310,7 +2891,7 @@
 		(at 113.03 52.07 0)
 		(effects
 			(font
-				(size 1.27 1.27)
+				(size 1 1)
 			)
 			(justify left bottom)
 		)
@@ -2320,7 +2901,7 @@
 		(at 40.64 214.63 180)
 		(effects
 			(font
-				(size 1.27 1.27)
+				(size 1 1)
 			)
 			(justify right bottom)
 		)
@@ -2330,7 +2911,7 @@
 		(at 38.1 57.15 180)
 		(effects
 			(font
-				(size 1.27 1.27)
+				(size 1 1)
 			)
 			(justify right bottom)
 		)
@@ -2340,7 +2921,7 @@
 		(at 22.86 213.36 0)
 		(effects
 			(font
-				(size 1.27 1.27)
+				(size 1 1)
 			)
 			(justify left bottom)
 		)
@@ -2350,7 +2931,7 @@
 		(at 370.84 156.21 0)
 		(effects
 			(font
-				(size 1.27 1.27)
+				(size 1 1)
 			)
 			(justify left bottom)
 		)
@@ -2360,7 +2941,7 @@
 		(at 151.13 125.73 180)
 		(effects
 			(font
-				(size 1.27 1.27)
+				(size 1 1)
 			)
 			(justify right bottom)
 		)
@@ -2370,7 +2951,7 @@
 		(at 113.03 157.48 0)
 		(effects
 			(font
-				(size 1.27 1.27)
+				(size 1 1)
 			)
 			(justify left bottom)
 		)
@@ -2380,7 +2961,7 @@
 		(at 347.98 133.35 180)
 		(effects
 			(font
-				(size 1.27 1.27)
+				(size 1 1)
 			)
 			(justify right bottom)
 		)
@@ -2390,7 +2971,7 @@
 		(at 228.6 111.76 0)
 		(effects
 			(font
-				(size 1.27 1.27)
+				(size 1 1)
 			)
 			(justify left bottom)
 		)
@@ -2400,7 +2981,7 @@
 		(at 40.64 161.29 180)
 		(effects
 			(font
-				(size 1.27 1.27)
+				(size 1 1)
 			)
 			(justify right bottom)
 		)
@@ -2410,7 +2991,7 @@
 		(at 33.02 123.19 0)
 		(effects
 			(font
-				(size 1.27 1.27)
+				(size 1 1)
 			)
 			(justify left bottom)
 		)
@@ -2420,7 +3001,7 @@
 		(at 151.13 138.43 180)
 		(effects
 			(font
-				(size 1.27 1.27)
+				(size 1 1)
 			)
 			(justify right bottom)
 		)
@@ -2430,7 +3011,7 @@
 		(at 347.98 128.27 180)
 		(effects
 			(font
-				(size 1.27 1.27)
+				(size 1 1)
 			)
 			(justify right bottom)
 		)
@@ -2440,7 +3021,7 @@
 		(at 228.6 105.41 0)
 		(effects
 			(font
-				(size 1.27 1.27)
+				(size 1 1)
 			)
 			(justify left bottom)
 		)
@@ -2450,7 +3031,7 @@
 		(at 25.4 190.5 0)
 		(effects
 			(font
-				(size 1.27 1.27)
+				(size 1 1)
 			)
 			(justify left bottom)
 		)
@@ -2460,7 +3041,7 @@
 		(at 151.13 128.27 180)
 		(effects
 			(font
-				(size 1.27 1.27)
+				(size 1 1)
 			)
 			(justify right bottom)
 		)
@@ -2470,17 +3051,17 @@
 		(at 40.64 157.48 180)
 		(effects
 			(font
-				(size 1.27 1.27)
+				(size 1 1)
 			)
 			(justify right bottom)
 		)
 		(uuid "9331aacf-56ce-4c89-acfa-3bdeab15b0b6")
 	)
-	(label "VOCM"
+	(label "VOCM_HDR"
 		(at 347.98 148.59 180)
 		(effects
 			(font
-				(size 1.27 1.27)
+				(size 1 1)
 			)
 			(justify right bottom)
 		)
@@ -2490,7 +3071,7 @@
 		(at 151.13 115.57 180)
 		(effects
 			(font
-				(size 1.27 1.27)
+				(size 1 1)
 			)
 			(justify right bottom)
 		)
@@ -2500,7 +3081,7 @@
 		(at 347.98 130.81 180)
 		(effects
 			(font
-				(size 1.27 1.27)
+				(size 1 1)
 			)
 			(justify right bottom)
 		)
@@ -2510,7 +3091,7 @@
 		(at 113.03 207.01 0)
 		(effects
 			(font
-				(size 1.27 1.27)
+				(size 1 1)
 			)
 			(justify left bottom)
 		)
@@ -2520,7 +3101,7 @@
 		(at 347.98 135.89 180)
 		(effects
 			(font
-				(size 1.27 1.27)
+				(size 1 1)
 			)
 			(justify right bottom)
 		)
@@ -2530,7 +3111,7 @@
 		(at 40.64 153.67 180)
 		(effects
 			(font
-				(size 1.27 1.27)
+				(size 1 1)
 			)
 			(justify right bottom)
 		)
@@ -2540,7 +3121,7 @@
 		(at 347.98 143.51 180)
 		(effects
 			(font
-				(size 1.27 1.27)
+				(size 1 1)
 			)
 			(justify right bottom)
 		)
@@ -2550,7 +3131,7 @@
 		(at 151.13 143.51 180)
 		(effects
 			(font
-				(size 1.27 1.27)
+				(size 1 1)
 			)
 			(justify right bottom)
 		)
@@ -2560,7 +3141,7 @@
 		(at 151.13 123.19 180)
 		(effects
 			(font
-				(size 1.27 1.27)
+				(size 1 1)
 			)
 			(justify right bottom)
 		)
@@ -2570,17 +3151,27 @@
 		(at 347.98 146.05 180)
 		(effects
 			(font
-				(size 1.27 1.27)
+				(size 1 1)
 			)
 			(justify right bottom)
 		)
 		(uuid "ab5e9643-3a21-4949-ba4b-061e60fbb629")
 	)
+	(label "VOCM"
+		(at 264.16 223.52 0)
+		(effects
+			(font
+				(size 1 1)
+			)
+			(justify left bottom)
+		)
+		(uuid "ab828990-7bad-45cc-8779-83c0d50de2eb")
+	)
 	(label "CH3_GAIN_G2"
 		(at 151.13 140.97 180)
 		(effects
 			(font
-				(size 1.27 1.27)
+				(size 1 1)
 			)
 			(justify right bottom)
 		)
@@ -2590,7 +3181,7 @@
 		(at 39.37 99.06 180)
 		(effects
 			(font
-				(size 1.27 1.27)
+				(size 1 1)
 			)
 			(justify right bottom)
 		)
@@ -2600,7 +3191,7 @@
 		(at 151.13 133.35 180)
 		(effects
 			(font
-				(size 1.27 1.27)
+				(size 1 1)
 			)
 			(justify right bottom)
 		)
@@ -2610,17 +3201,27 @@
 		(at 347.98 153.67 180)
 		(effects
 			(font
-				(size 1.27 1.27)
+				(size 1 1)
 			)
 			(justify right bottom)
 		)
 		(uuid "bc6f7ee5-2db4-4f2b-a9e0-26aaa427c5f6")
 	)
+	(label "VCOIL_HDR"
+		(at 289.56 205.74 0)
+		(effects
+			(font
+				(size 1 1)
+			)
+			(justify left bottom)
+		)
+		(uuid "bfe119ac-0e9e-44de-93df-41cab526239e")
+	)
 	(label "CH1_GAIN_G2"
 		(at 151.13 120.65 180)
 		(effects
 			(font
-				(size 1.27 1.27)
+				(size 1 1)
 			)
 			(justify right bottom)
 		)
@@ -2630,7 +3231,7 @@
 		(at 151.13 113.03 180)
 		(effects
 			(font
-				(size 1.27 1.27)
+				(size 1 1)
 			)
 			(justify right bottom)
 		)
@@ -2640,7 +3241,7 @@
 		(at 39.37 115.57 180)
 		(effects
 			(font
-				(size 1.27 1.27)
+				(size 1 1)
 			)
 			(justify right bottom)
 		)
@@ -2650,7 +3251,7 @@
 		(at 33.02 229.87 0)
 		(effects
 			(font
-				(size 1.27 1.27)
+				(size 1 1)
 			)
 			(justify left bottom)
 		)
@@ -2660,7 +3261,7 @@
 		(at 33.02 176.53 0)
 		(effects
 			(font
-				(size 1.27 1.27)
+				(size 1 1)
 			)
 			(justify left bottom)
 		)
@@ -2670,7 +3271,7 @@
 		(at 347.98 140.97 180)
 		(effects
 			(font
-				(size 1.27 1.27)
+				(size 1 1)
 			)
 			(justify right bottom)
 		)
@@ -2680,7 +3281,7 @@
 		(at 113.03 48.26 0)
 		(effects
 			(font
-				(size 1.27 1.27)
+				(size 1 1)
 			)
 			(justify left bottom)
 		)
@@ -2690,7 +3291,7 @@
 		(at 228.6 109.22 0)
 		(effects
 			(font
-				(size 1.27 1.27)
+				(size 1 1)
 			)
 			(justify left bottom)
 		)
@@ -2700,17 +3301,27 @@
 		(at 39.37 63.5 180)
 		(effects
 			(font
-				(size 1.27 1.27)
+				(size 1 1)
 			)
 			(justify right bottom)
 		)
 		(uuid "d64706f8-e75e-481c-90c1-17002250d390")
 	)
+	(label "5VA_HDR"
+		(at 347.98 151.13 180)
+		(effects
+			(font
+				(size 1 1)
+			)
+			(justify right bottom)
+		)
+		(uuid "d75b11fd-92ce-41bd-9454-fd6edb0dcf7f")
+	)
 	(label "CH3_FILT_AUDIO"
 		(at 151.13 135.89 180)
 		(effects
 			(font
-				(size 1.27 1.27)
+				(size 1 1)
 			)
 			(justify right bottom)
 		)
@@ -2720,7 +3331,7 @@
 		(at 151.13 110.49 180)
 		(effects
 			(font
-				(size 1.27 1.27)
+				(size 1 1)
 			)
 			(justify right bottom)
 		)
@@ -2730,7 +3341,7 @@
 		(at 22.86 54.61 0)
 		(effects
 			(font
-				(size 1.27 1.27)
+				(size 1 1)
 			)
 			(justify left bottom)
 		)
@@ -2740,7 +3351,7 @@
 		(at 40.64 210.82 180)
 		(effects
 			(font
-				(size 1.27 1.27)
+				(size 1 1)
 			)
 			(justify right bottom)
 		)
@@ -2750,7 +3361,7 @@
 		(at 151.13 107.95 180)
 		(effects
 			(font
-				(size 1.27 1.27)
+				(size 1 1)
 			)
 			(justify right bottom)
 		)
@@ -2760,7 +3371,7 @@
 		(at 40.64 222.25 180)
 		(effects
 			(font
-				(size 1.27 1.27)
+				(size 1 1)
 			)
 			(justify right bottom)
 		)
@@ -2770,7 +3381,7 @@
 		(at 113.03 153.67 0)
 		(effects
 			(font
-				(size 1.27 1.27)
+				(size 1 1)
 			)
 			(justify left bottom)
 		)
@@ -2780,7 +3391,7 @@
 		(at 113.03 104.14 0)
 		(effects
 			(font
-				(size 1.27 1.27)
+				(size 1 1)
 			)
 			(justify left bottom)
 		)
@@ -2790,7 +3401,7 @@
 		(at 22.86 106.68 0)
 		(effects
 			(font
-				(size 1.27 1.27)
+				(size 1 1)
 			)
 			(justify left bottom)
 		)
@@ -2800,7 +3411,7 @@
 		(at 151.13 105.41 180)
 		(effects
 			(font
-				(size 1.27 1.27)
+				(size 1 1)
 			)
 			(justify right bottom)
 		)
@@ -2810,7 +3421,7 @@
 		(at 151.13 130.81 180)
 		(effects
 			(font
-				(size 1.27 1.27)
+				(size 1 1)
 			)
 			(justify right bottom)
 		)
@@ -2820,25 +3431,24 @@
 		(at 39.37 107.95 180)
 		(effects
 			(font
-				(size 1.27 1.27)
+				(size 1 1)
 			)
 			(justify right bottom)
 		)
 		(uuid "fdfec44d-aba8-46b6-a754-09d3e7613e7b")
 	)
-	(global_label "+VCOIL"
-		(shape input)
-		(at 370.84 151.13 0)
-		(fields_autoplaced yes)
+	(global_label "+5V"
+		(shape passive)
+		(at 279.4 86.36 0)
 		(effects
 			(font
-				(size 0.635 0.635)
+				(size 1 1)
 			)
-			(justify left)
+			(justify left bottom)
 		)
-		(uuid "1ecfb434-13d4-4253-9f8d-f0d54eacdbc9")
+		(uuid "189cfc15-2f95-4d52-b612-bede63c6240b")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 375.7798 151.13 0)
+			(at 279.4 86.36 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -2846,7 +3456,160 @@
 				(font
 					(size 1.27 1.27)
 				)
-				(justify left)
+			)
+		)
+	)
+	(global_label "+VCOIL"
+		(shape passive)
+		(at 336.55 86.36 0)
+		(effects
+			(font
+				(size 1 1)
+			)
+			(justify left bottom)
+		)
+		(uuid "3133602c-3f99-4383-806d-e2a58d1dfde0")
+		(property "Intersheetrefs" "${INTERSHEET_REFS}"
+			(at 336.55 86.36 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+	)
+	(global_label "GND"
+		(shape passive)
+		(at 355.6 86.36 0)
+		(effects
+			(font
+				(size 1 1)
+			)
+			(justify left bottom)
+		)
+		(uuid "3c181650-4426-4417-b86a-9fdc30ee2a4b")
+		(property "Intersheetrefs" "${INTERSHEET_REFS}"
+			(at 355.6 86.36 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+	)
+	(global_label "+5V"
+		(shape passive)
+		(at 264.16 187.96 0)
+		(effects
+			(font
+				(size 1 1)
+			)
+			(justify left bottom)
+		)
+		(uuid "b60093c0-eff8-47b3-a2c2-81a57ed614f9")
+		(property "Intersheetrefs" "${INTERSHEET_REFS}"
+			(at 264.16 187.96 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+	)
+	(global_label "+3.3V"
+		(shape passive)
+		(at 317.5 86.36 0)
+		(effects
+			(font
+				(size 1 1)
+			)
+			(justify left bottom)
+		)
+		(uuid "c51a995b-adbd-46b7-8203-ef6501920349")
+		(property "Intersheetrefs" "${INTERSHEET_REFS}"
+			(at 317.5 86.36 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+	)
+	(global_label "+VCOIL"
+		(shape passive)
+		(at 264.16 205.74 0)
+		(effects
+			(font
+				(size 1 1)
+			)
+			(justify left bottom)
+		)
+		(uuid "ccdc5617-0fda-40be-89f1-2b7511cab665")
+		(property "Intersheetrefs" "${INTERSHEET_REFS}"
+			(at 264.16 205.74 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+	)
+	(global_label "-5V"
+		(shape passive)
+		(at 298.45 86.36 0)
+		(effects
+			(font
+				(size 1 1)
+			)
+			(justify left bottom)
+		)
+		(uuid "de961670-79e4-4b39-9e2b-d4d0d66ce76f")
+		(property "Intersheetrefs" "${INTERSHEET_REFS}"
+			(at 298.45 86.36 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+	)
+	(global_label "VBAT"
+		(shape passive)
+		(at 260.35 86.36 0)
+		(effects
+			(font
+				(size 1 1)
+			)
+			(justify left bottom)
+		)
+		(uuid "e8a87cec-cfa7-45ea-a94d-52eadef67061")
+		(property "Intersheetrefs" "${INTERSHEET_REFS}"
+			(at 260.35 86.36 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
 			)
 		)
 	)
@@ -2863,23 +3626,23 @@
 		(fields_autoplaced yes)
 		(uuid "19492dd9-93ec-4757-8ef2-5c2d6c2d7260")
 		(property "Reference" "#PWR056"
-			(at 377.19 153.67 0)
+			(at 377.19 153.67 90)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
 				(font
-					(size 1.27 1.27)
+					(size 1 1)
 				)
 			)
 		)
 		(property "Value" "GND"
-			(at 374.65 153.6699 90)
+			(at 374.65 153.67 90)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
 				(font
-					(size 1.27 1.27)
+					(size 1 1)
 				)
 				(justify right)
 			)
@@ -2957,11 +3720,11 @@
 			(do_not_autoplace no)
 			(effects
 				(font
-					(size 1.27 1.27)
+					(size 1 1)
 				)
 			)
 		)
-		(property "Footprint" "Connector_PinHeader_2.54mm:PinHeader_2x12_P2.54mm_Vertical"
+		(property "Footprint" "Hydrophone_Custom:PinHeader_2x12_P2.54mm_Horizontal_BoardEdge"
 			(at 358.14 140.97 0)
 			(hide yes)
 			(show_name no)
@@ -3076,6 +3839,77 @@
 		)
 	)
 	(symbol
+		(lib_id "Mechanical:MountingHole")
+		(at 325.12 233.68 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "3129433b-0788-42ef-bdb7-98dcd6905e22")
+		(property "Reference" "H1"
+			(at 325.12 224.79 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "M4"
+			(at 325.12 222.25 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1 1)
+				)
+			)
+		)
+		(property "Footprint" "MountingHole:MountingHole_4.3mm_M4"
+			(at 325.12 226.06 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 325.12 233.68 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 325.12 233.68 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(instances
+			(project "Hydrophone_Analog"
+				(path "/3634aa72-f703-4c52-b463-b00d283490ac"
+					(reference "H1")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "power:GND")
 		(at 370.84 133.35 90)
 		(unit 1)
@@ -3088,23 +3922,23 @@
 		(fields_autoplaced yes)
 		(uuid "332ebeb5-9151-43a0-a8db-59f2b12376a7")
 		(property "Reference" "#PWR049"
-			(at 377.19 133.35 0)
+			(at 377.19 133.35 90)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
 				(font
-					(size 1.27 1.27)
+					(size 1 1)
 				)
 			)
 		)
 		(property "Value" "GND"
-			(at 374.65 133.3499 90)
+			(at 374.65 133.35 90)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
 				(font
-					(size 1.27 1.27)
+					(size 1 1)
 				)
 				(justify right)
 			)
@@ -3155,6 +3989,77 @@
 		)
 	)
 	(symbol
+		(lib_id "Mechanical:MountingHole")
+		(at 344.17 233.68 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "353bacfb-a4da-4e51-af57-609462430395")
+		(property "Reference" "H2"
+			(at 344.17 224.79 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "M4"
+			(at 344.17 222.25 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1 1)
+				)
+			)
+		)
+		(property "Footprint" "MountingHole:MountingHole_4.3mm_M4"
+			(at 344.17 226.06 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 344.17 233.68 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 344.17 233.68 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(instances
+			(project "Hydrophone_Analog"
+				(path "/3634aa72-f703-4c52-b463-b00d283490ac"
+					(reference "H2")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "power:GND")
 		(at 370.84 135.89 90)
 		(unit 1)
@@ -3167,23 +4072,23 @@
 		(fields_autoplaced yes)
 		(uuid "3e75996a-d389-43c7-bdc3-c1282fb01e73")
 		(property "Reference" "#PWR050"
-			(at 377.19 135.89 0)
+			(at 377.19 135.89 90)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
 				(font
-					(size 1.27 1.27)
+					(size 1 1)
 				)
 			)
 		)
 		(property "Value" "GND"
-			(at 374.65 135.8899 90)
+			(at 374.65 135.89 90)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
 				(font
-					(size 1.27 1.27)
+					(size 1 1)
 				)
 				(justify right)
 			)
@@ -3234,6 +4139,154 @@
 		)
 	)
 	(symbol
+		(lib_id "Connector:TestPoint")
+		(at 355.6 81.28 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "441d06ac-9e41-455a-86c6-e17bb7bd3114")
+		(property "Reference" "TP6"
+			(at 355.6 72.39 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "GND"
+			(at 355.6 69.85 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1 1)
+				)
+			)
+		)
+		(property "Footprint" "TestPoint:TestPoint_Pad_D1.5mm"
+			(at 355.6 73.66 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 355.6 81.28 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 355.6 81.28 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "6255715a-c89a-4e1f-8246-30fe535d4ce3")
+		)
+		(instances
+			(project "Hydrophone_Analog"
+				(path "/3634aa72-f703-4c52-b463-b00d283490ac"
+					(reference "TP6")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Connector:TestPoint")
+		(at 336.55 81.28 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "45eda6ef-30a5-4ec5-80e3-4f7be6b25566")
+		(property "Reference" "TP5"
+			(at 336.55 72.39 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "VCOIL"
+			(at 336.55 69.85 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1 1)
+				)
+			)
+		)
+		(property "Footprint" "TestPoint:TestPoint_Pad_D1.5mm"
+			(at 336.55 73.66 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 336.55 81.28 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 336.55 81.28 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "56e17cc9-e4cd-4ffe-97d3-fd5619e98f95")
+		)
+		(instances
+			(project "Hydrophone_Analog"
+				(path "/3634aa72-f703-4c52-b463-b00d283490ac"
+					(reference "TP5")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "power:GND")
 		(at 370.84 128.27 90)
 		(unit 1)
@@ -3246,23 +4299,23 @@
 		(fields_autoplaced yes)
 		(uuid "463ae8da-6681-415a-a056-63407f5efcf5")
 		(property "Reference" "#PWR047"
-			(at 377.19 128.27 0)
+			(at 377.19 128.27 90)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
 				(font
-					(size 1.27 1.27)
+					(size 1 1)
 				)
 			)
 		)
 		(property "Value" "GND"
-			(at 374.65 128.2699 90)
+			(at 374.65 128.27 90)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
 				(font
-					(size 1.27 1.27)
+					(size 1 1)
 				)
 				(justify right)
 			)
@@ -3325,23 +4378,23 @@
 		(fields_autoplaced yes)
 		(uuid "4c43bee7-a30b-48d1-bd02-cd85e14decde")
 		(property "Reference" "#PWR055"
-			(at 377.19 148.59 0)
+			(at 377.19 148.59 90)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
 				(font
-					(size 1.27 1.27)
+					(size 1 1)
 				)
 			)
 		)
 		(property "Value" "GND"
-			(at 374.65 148.5899 90)
+			(at 374.65 148.59 90)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
 				(font
-					(size 1.27 1.27)
+					(size 1 1)
 				)
 				(justify right)
 			)
@@ -3410,7 +4463,7 @@
 			(do_not_autoplace no)
 			(effects
 				(font
-					(size 1.27 1.27)
+					(size 1 1)
 				)
 			)
 		)
@@ -3420,7 +4473,7 @@
 			(do_not_autoplace no)
 			(effects
 				(font
-					(size 1.27 1.27)
+					(size 1 1)
 				)
 			)
 		)
@@ -3470,8 +4523,8 @@
 		)
 	)
 	(symbol
-		(lib_id "power:+5V")
-		(at 347.98 151.13 90)
+		(lib_id "Jumper:SolderJumper_2_Bridged")
+		(at 279.4 187.96 0)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -3479,11 +4532,9 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(fields_autoplaced yes)
-		(uuid "6201903f-bc00-4788-b1c5-b6e94c94a613")
-		(property "Reference" "#PWR046"
-			(at 351.79 151.13 0)
-			(hide yes)
+		(uuid "52130833-6591-4c09-a23b-5af992c8f7d5")
+		(property "Reference" "JP1"
+			(at 279.4 179.07 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -3492,19 +4543,18 @@
 				)
 			)
 		)
-		(property "Value" "+5V"
-			(at 344.17 151.1299 90)
+		(property "Value" "CUT_5VA"
+			(at 279.4 176.53 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
 				(font
-					(size 1.27 1.27)
+					(size 1 1)
 				)
-				(justify left)
 			)
 		)
-		(property "Footprint" ""
-			(at 347.98 151.13 0)
+		(property "Footprint" "Jumper:SolderJumper-2_P1.3mm_Bridged_RoundedPad1.0x1.5mm"
+			(at 279.4 180.34 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -3515,8 +4565,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 347.98 151.13 0)
-			(hide yes)
+			(at 279.4 187.96 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -3525,9 +4574,8 @@
 				)
 			)
 		)
-		(property "Description" "Power symbol creates a global label with name \"+5V\""
-			(at 347.98 151.13 0)
-			(hide yes)
+		(property "Description" ""
+			(at 279.4 187.96 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -3537,12 +4585,160 @@
 			)
 		)
 		(pin "1"
-			(uuid "9ae107d6-f9b6-463c-9cf6-12db9a36daad")
+			(uuid "ed9acbef-d830-43df-9134-56e3897dc86d")
+		)
+		(pin "2"
+			(uuid "70dd94f4-55b5-4e79-a586-b5bb7bd95a67")
 		)
 		(instances
 			(project "Hydrophone_Analog"
 				(path "/3634aa72-f703-4c52-b463-b00d283490ac"
-					(reference "#PWR046")
+					(reference "JP1")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Connector:TestPoint")
+		(at 298.45 81.28 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "553f4f1b-5116-4404-a71c-1be361eb9ea0")
+		(property "Reference" "TP3"
+			(at 298.45 72.39 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "N5VA"
+			(at 298.45 69.85 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1 1)
+				)
+			)
+		)
+		(property "Footprint" "TestPoint:TestPoint_Pad_D1.5mm"
+			(at 298.45 73.66 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 298.45 81.28 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 298.45 81.28 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "382ecab1-5dff-44ae-8ba4-dd106d7daa1c")
+		)
+		(instances
+			(project "Hydrophone_Analog"
+				(path "/3634aa72-f703-4c52-b463-b00d283490ac"
+					(reference "TP3")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Mechanical:MountingHole")
+		(at 382.27 233.68 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "60ff57fb-52b4-416d-bf79-e56840fb3d14")
+		(property "Reference" "H4"
+			(at 382.27 224.79 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "M4"
+			(at 382.27 222.25 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1 1)
+				)
+			)
+		)
+		(property "Footprint" "MountingHole:MountingHole_4.3mm_M4"
+			(at 382.27 226.06 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 382.27 233.68 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 382.27 233.68 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(instances
+			(project "Hydrophone_Analog"
+				(path "/3634aa72-f703-4c52-b463-b00d283490ac"
+					(reference "H4")
 					(unit 1)
 				)
 			)
@@ -3561,23 +4757,23 @@
 		(fields_autoplaced yes)
 		(uuid "73833ce8-2cb1-45e0-90bc-3e6e3deaae0b")
 		(property "Reference" "#PWR054"
-			(at 377.19 146.05 0)
+			(at 377.19 146.05 90)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
 				(font
-					(size 1.27 1.27)
+					(size 1 1)
 				)
 			)
 		)
 		(property "Value" "GND"
-			(at 374.65 146.0499 90)
+			(at 374.65 146.05 90)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
 				(font
-					(size 1.27 1.27)
+					(size 1 1)
 				)
 				(justify right)
 			)
@@ -3640,25 +4836,23 @@
 		(fields_autoplaced yes)
 		(uuid "76a18558-6065-4ba7-891b-3d6d6080cd19")
 		(property "Reference" "J4"
-			(at 19.05 216.8767 0)
+			(at 22.86 223.52 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
-				(justify left)
 			)
 		)
 		(property "Value" "Conn_Coaxial"
-			(at 19.05 219.4167 0)
+			(at 22.86 226.06 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
 				(font
-					(size 1.27 1.27)
+					(size 1 1)
 				)
-				(justify left)
 			)
 		)
 		(property "Footprint" "Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical"
@@ -3722,23 +4916,23 @@
 		(fields_autoplaced yes)
 		(uuid "7d0067a0-1f68-4cac-a0b2-246b09724393")
 		(property "Reference" "#PWR051"
-			(at 377.19 138.43 0)
+			(at 377.19 138.43 90)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
 				(font
-					(size 1.27 1.27)
+					(size 1 1)
 				)
 			)
 		)
 		(property "Value" "GND"
-			(at 374.65 138.4299 90)
+			(at 374.65 138.43 90)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
 				(font
-					(size 1.27 1.27)
+					(size 1 1)
 				)
 				(justify right)
 			)
@@ -3789,6 +4983,80 @@
 		)
 	)
 	(symbol
+		(lib_id "Connector:TestPoint")
+		(at 279.4 81.28 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "8af0e8aa-1608-490b-bed5-625324142d9d")
+		(property "Reference" "TP2"
+			(at 279.4 72.39 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "5VA"
+			(at 279.4 69.85 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1 1)
+				)
+			)
+		)
+		(property "Footprint" "TestPoint:TestPoint_Pad_D1.5mm"
+			(at 279.4 73.66 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 279.4 81.28 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 279.4 81.28 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "696928b7-4801-4917-b6bf-13af3ca2d2ed")
+		)
+		(instances
+			(project "Hydrophone_Analog"
+				(path "/3634aa72-f703-4c52-b463-b00d283490ac"
+					(reference "TP2")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "Connector:Conn_Coaxial")
 		(at 22.86 59.69 180)
 		(unit 1)
@@ -3801,25 +5069,23 @@
 		(fields_autoplaced yes)
 		(uuid "9658d947-6ceb-4402-a06c-8e43383dcb1d")
 		(property "Reference" "J1"
-			(at 19.05 58.1267 0)
+			(at 22.86 64.77 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
-				(justify left)
 			)
 		)
 		(property "Value" "Conn_Coaxial"
-			(at 19.05 60.6667 0)
+			(at 22.86 67.31 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
 				(font
-					(size 1.27 1.27)
+					(size 1 1)
 				)
-				(justify left)
 			)
 		)
 		(property "Footprint" "Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical"
@@ -3871,6 +5137,157 @@
 		)
 	)
 	(symbol
+		(lib_id "Connector:TestPoint")
+		(at 260.35 81.28 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "9a894b40-198b-46a8-a1e5-aaa5b11eeb22")
+		(property "Reference" "TP1"
+			(at 260.35 72.39 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "VBAT"
+			(at 260.35 69.85 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1 1)
+				)
+			)
+		)
+		(property "Footprint" "TestPoint:TestPoint_Pad_D1.5mm"
+			(at 260.35 73.66 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 260.35 81.28 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 260.35 81.28 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "8386a6c4-d237-4610-bb56-feb02cef5ad3")
+		)
+		(instances
+			(project "Hydrophone_Analog"
+				(path "/3634aa72-f703-4c52-b463-b00d283490ac"
+					(reference "TP1")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Jumper:SolderJumper_2_Bridged")
+		(at 279.4 205.74 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "a0950e51-3a6e-41da-87b8-3b5d232f9100")
+		(property "Reference" "JP2"
+			(at 279.4 196.85 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "CUT_VCOIL"
+			(at 279.4 194.31 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1 1)
+				)
+			)
+		)
+		(property "Footprint" "Jumper:SolderJumper-2_P1.3mm_Bridged_RoundedPad1.0x1.5mm"
+			(at 279.4 198.12 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 279.4 205.74 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 279.4 205.74 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "24b9c6a0-5790-410a-9c40-1c9b63efd113")
+		)
+		(pin "2"
+			(uuid "68b2c0e8-cc3c-45c0-b207-c000305458cf")
+		)
+		(instances
+			(project "Hydrophone_Analog"
+				(path "/3634aa72-f703-4c52-b463-b00d283490ac"
+					(reference "JP2")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "power:GND")
 		(at 29.21 190.5 90)
 		(unit 1)
@@ -3883,23 +5300,23 @@
 		(fields_autoplaced yes)
 		(uuid "a527384b-d51f-4fa2-977f-5258bb2c7373")
 		(property "Reference" "#PWR075"
-			(at 35.56 190.5 0)
+			(at 35.56 190.5 90)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
 				(font
-					(size 1.27 1.27)
+					(size 1 1)
 				)
 			)
 		)
 		(property "Value" "GND"
-			(at 33.02 190.4999 90)
+			(at 33.02 190.5 90)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
 				(font
-					(size 1.27 1.27)
+					(size 1 1)
 				)
 				(justify right)
 			)
@@ -3950,6 +5367,80 @@
 		)
 	)
 	(symbol
+		(lib_id "Connector:TestPoint")
+		(at 317.5 81.28 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "ac96d926-be5e-4ad1-8a57-7c66942cb7f6")
+		(property "Reference" "TP4"
+			(at 317.5 72.39 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "3V3"
+			(at 317.5 69.85 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1 1)
+				)
+			)
+		)
+		(property "Footprint" "TestPoint:TestPoint_Pad_D1.5mm"
+			(at 317.5 73.66 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 317.5 81.28 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 317.5 81.28 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "63157097-3322-444d-a654-8b367c3f4aa5")
+		)
+		(instances
+			(project "Hydrophone_Analog"
+				(path "/3634aa72-f703-4c52-b463-b00d283490ac"
+					(reference "TP4")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "Connector:Conn_Coaxial")
 		(at 22.86 111.76 180)
 		(unit 1)
@@ -3962,25 +5453,23 @@
 		(fields_autoplaced yes)
 		(uuid "b206227f-9144-4088-a596-b5696ff8c77b")
 		(property "Reference" "J2"
-			(at 19.05 110.1967 0)
+			(at 22.86 116.84 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
-				(justify left)
 			)
 		)
 		(property "Value" "Conn_Coaxial"
-			(at 19.05 112.7367 0)
+			(at 22.86 119.38 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
 				(font
-					(size 1.27 1.27)
+					(size 1 1)
 				)
-				(justify left)
 			)
 		)
 		(property "Footprint" "Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical"
@@ -4044,23 +5533,23 @@
 		(fields_autoplaced yes)
 		(uuid "b5a5ac98-7c43-4ea6-98a4-cf41b4fe2637")
 		(property "Reference" "#PWR053"
-			(at 377.19 143.51 0)
+			(at 377.19 143.51 90)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
 				(font
-					(size 1.27 1.27)
+					(size 1 1)
 				)
 			)
 		)
 		(property "Value" "GND"
-			(at 374.65 143.5099 90)
+			(at 374.65 143.51 90)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
 				(font
-					(size 1.27 1.27)
+					(size 1 1)
 				)
 				(justify right)
 			)
@@ -4123,23 +5612,23 @@
 		(fields_autoplaced yes)
 		(uuid "bc0d38b7-9c94-46a7-a802-1065efb592cc")
 		(property "Reference" "#PWR048"
-			(at 377.19 130.81 0)
+			(at 377.19 130.81 90)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
 				(font
-					(size 1.27 1.27)
+					(size 1 1)
 				)
 			)
 		)
 		(property "Value" "GND"
-			(at 374.65 130.8099 90)
+			(at 374.65 130.81 90)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
 				(font
-					(size 1.27 1.27)
+					(size 1 1)
 				)
 				(justify right)
 			)
@@ -4202,23 +5691,23 @@
 		(fields_autoplaced yes)
 		(uuid "c184a334-2e92-420c-8b6c-9b11d60e2711")
 		(property "Reference" "#PWR052"
-			(at 377.19 140.97 0)
+			(at 377.19 140.97 90)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
 				(font
-					(size 1.27 1.27)
+					(size 1 1)
 				)
 			)
 		)
 		(property "Value" "GND"
-			(at 374.65 140.9699 90)
+			(at 374.65 140.97 90)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
 				(font
-					(size 1.27 1.27)
+					(size 1 1)
 				)
 				(justify right)
 			)
@@ -4281,25 +5770,23 @@
 		(fields_autoplaced yes)
 		(uuid "c6505ecc-e754-4870-8d33-ad36276df5e6")
 		(property "Reference" "J3"
-			(at 19.05 163.5367 0)
+			(at 22.86 170.18 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
-				(justify left)
 			)
 		)
 		(property "Value" "Conn_Coaxial"
-			(at 19.05 166.0767 0)
+			(at 22.86 172.72 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
 				(font
-					(size 1.27 1.27)
+					(size 1 1)
 				)
-				(justify left)
 			)
 		)
 		(property "Footprint" "Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical"
@@ -4350,6 +5837,228 @@
 			)
 		)
 	)
+	(symbol
+		(lib_id "Connector:TestPoint")
+		(at 374.65 81.28 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "c8d89f2f-3e36-4d3b-b331-bf6d83ee36ab")
+		(property "Reference" "TP7"
+			(at 374.65 72.39 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "VOCM"
+			(at 374.65 69.85 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1 1)
+				)
+			)
+		)
+		(property "Footprint" "TestPoint:TestPoint_Pad_D1.5mm"
+			(at 374.65 73.66 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 374.65 81.28 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 374.65 81.28 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "e7848222-f0ec-4978-8fd5-7a5eff639a8d")
+		)
+		(instances
+			(project "Hydrophone_Analog"
+				(path "/3634aa72-f703-4c52-b463-b00d283490ac"
+					(reference "TP7")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Mechanical:MountingHole")
+		(at 363.22 233.68 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "f4e52ead-49ae-4206-a60d-d547c0c8edbf")
+		(property "Reference" "H3"
+			(at 363.22 224.79 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "M4"
+			(at 363.22 222.25 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1 1)
+				)
+			)
+		)
+		(property "Footprint" "MountingHole:MountingHole_4.3mm_M4"
+			(at 363.22 226.06 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 363.22 233.68 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 363.22 233.68 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(instances
+			(project "Hydrophone_Analog"
+				(path "/3634aa72-f703-4c52-b463-b00d283490ac"
+					(reference "H3")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Jumper:SolderJumper_2_Bridged")
+		(at 279.4 223.52 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "f71b7db2-50a9-47f9-8d24-5c8ad8913e55")
+		(property "Reference" "JP3"
+			(at 279.4 214.63 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "CUT_VOCM"
+			(at 279.4 212.09 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1 1)
+				)
+			)
+		)
+		(property "Footprint" "Jumper:SolderJumper-2_P1.3mm_Bridged_RoundedPad1.0x1.5mm"
+			(at 279.4 215.9 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 279.4 223.52 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 279.4 223.52 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "2807c24c-fc9f-456f-9159-c4edd6200c99")
+		)
+		(pin "2"
+			(uuid "19a4d3cd-c691-4176-aca8-1b1439d88e6f")
+		)
+		(instances
+			(project "Hydrophone_Analog"
+				(path "/3634aa72-f703-4c52-b463-b00d283490ac"
+					(reference "JP3")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(sheet
 		(at 43.18 96.52)
 		(size 66.04 43.18)
@@ -4378,12 +6087,12 @@
 			)
 		)
 		(property "Sheetfile" "Analog_Channel.kicad_sch"
-			(at 43.18 140.2846 0)
+			(at 43.18 142.24 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
 				(font
-					(size 1.27 1.27)
+					(size 1 1)
 				)
 				(justify left top)
 			)
@@ -4504,12 +6213,12 @@
 			)
 		)
 		(property "Sheetfile" "Analog_Channel.kicad_sch"
-			(at 43.18 193.6246 0)
+			(at 43.18 195.58 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
 				(font
-					(size 1.27 1.27)
+					(size 1 1)
 				)
 				(justify left top)
 			)
@@ -4630,12 +6339,12 @@
 			)
 		)
 		(property "Sheetfile" "Analog_Channel.kicad_sch"
-			(at 43.18 88.2146 0)
+			(at 43.18 90.17 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
 				(font
-					(size 1.27 1.27)
+					(size 1 1)
 				)
 				(justify left top)
 			)
@@ -4756,12 +6465,12 @@
 			)
 		)
 		(property "Sheetfile" "Analog_Channel.kicad_sch"
-			(at 43.18 246.9646 0)
+			(at 43.18 248.92 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
 				(font
-					(size 1.27 1.27)
+					(size 1 1)
 				)
 				(justify left top)
 			)
@@ -4882,12 +6591,12 @@
 			)
 		)
 		(property "Sheetfile" "Power_Supply.kicad_sch"
-			(at 154.94 201.2446 0)
+			(at 154.94 203.2 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
 				(font
-					(size 1.27 1.27)
+					(size 1 1)
 				)
 				(justify left top)
 			)
@@ -4928,12 +6637,12 @@
 			)
 		)
 		(property "Sheetfile" "Control.kicad_sch"
-			(at 154.94 145.3646 0)
+			(at 154.94 148.59 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
 				(font
-					(size 1.27 1.27)
+					(size 1 1)
 				)
 				(justify left top)
 			)

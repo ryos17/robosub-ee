@@ -1,0 +1,10 @@
+(version 1)
+
+# The stock THS4551 RGT land pattern has 0.21 mm pad-to-exposed-pad
+# clearance. Permit 0.20 mm only between pads within each FDA footprint;
+# retain the project's normal spacing for all external routing.
+# Manufacturing basis: JLCPCB rigid FR4 copper spacing capabilities,
+# https://jlcpcb.com/capabilities/Capabilities
+(rule "THS4551 internal pad spacing"
+  (condition "A.Type == 'Pad' && B.Type == 'Pad' && ((A.memberOfFootprint('U3') && B.memberOfFootprint('U3')) || (A.memberOfFootprint('U6') && B.memberOfFootprint('U6')) || (A.memberOfFootprint('U12') && B.memberOfFootprint('U12')) || (A.memberOfFootprint('U18') && B.memberOfFootprint('U18')))")
+  (constraint clearance (min 0.20mm)))
