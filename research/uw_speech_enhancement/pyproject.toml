@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "uwse"
+version = "0.0.1"
+description = "Underwater speech enhancement: pool channel simulator (uwsim), SE adapters, real-benchmark evaluation"
+requires-python = ">=3.10"
+
+[tool.setuptools.packages.find]
+include = ["uwse*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "slow: long-running (> 10 s) tests",
+    "network: needs to download pretrained checkpoints",
+    "gpu: needs CUDA",
+]
+addopts = "-m 'not slow and not network and not gpu'"

@@ -1,0 +1,26 @@
+# Recipe for the frozen simulated non-speech set nonspeech_v0 (360 dev + 360 test segments).
+# Committed before any decode. Generator: scripts/make_nonspeech_set.py. Output: data/nonspeech_v0/{dev,test}.
+# The test split is held out; it was decoded once (C8 vs C8g, FINDINGS.md "No-speech gate").
+name: nonspeech_v0
+sim_config: configs/uwsim_v0_stat.yaml       # channel chain + boundary priors (v0_stat)
+librispeech_subset: dev-clean                  # speech only sets levels/durations; never test-clean
+exclude_dev_wer_v0: true                       # utterances of data/dev_wer_v0 (select_v0_dev n=120) are not reused
+duration_source: dev_wer_v0                    # durations drawn from the select_v0_dev(n=120) duration distribution
+ranges_m: [1.5, 3.5, 5.5]
+noise_types: [bubbles, stat_in, stat_held, thruster, near_silent]
+n_per_cell: 24                                 # per (noise type x range) cell and split -> 360 per split
+snr_db: [0.0, 15.0]                            # config noise.snr_measured
+near_silent_extra_att_db: [30.0, 40.0]         # noise this many dB below the stationary level (SNR raised by this)
+bubbles: {rate: [5.0, 20.0], rel_db: 0.0}
+stat_in:  {slope_db_per_oct: [[-6.0, -4.0], [-2.0, 0.0]], rel_db: 0.0}
+stat_held: {slope_db_per_oct: [[-4.0, -2.0]], rel_db: 0.0}   # held-out band around E7 noise0 (-3 dB/oct)
+thruster: {f0_hz: [80.0, 200.0], rel_db: 0.0}                # tonal_noise harmonic hum
+splits:
+  dev:
+    seed: 20261201          # distinct from 20261104-20261106 (data/dev_wer_v0) and from test
+    scene_depth_m: 1.5
+    scene_y_frac: 0.35
+  test:
+    seed: 20261301
+    scene_depth_m: 1.2
+    scene_y_frac: 0.65

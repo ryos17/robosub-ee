@@ -1,0 +1,45 @@
+# C10: Kiel-recipe U-Net on uwsim v0, trained FROM SCRATCH (RESEARCH_PLAN.md §7.3):
+# 4-level U-Net, IRM target, 0-6 kHz, log-magnitude (adapter `kiel_unet`, 16 kHz I/O).
+# The optimizer settings below are the §7.4 starting point, NOT Kiel's published
+# hyperparameters (DAGA 2026, not verified here): replace them once the paper is read.
+# The adapter starts from random weights unless `checkpoint` is given.
+run_name: c10_kiel_unet
+condition: C10
+task: se
+adapter:
+  name: kiel_unet
+  kwargs:
+    checkpoint: null
+data:
+  kind: uwsim
+  train_clean: data/librispeech/LibriSpeech/train-clean-100
+  val_clean: data/librispeech/LibriSpeech/dev-clean
+  noise_root: data/noise
+  sim_config: configs/uwsim_v0.yaml
+  rir_bank: data/rirs/uwsim_v0
+  target: R1
+  n_train_items: 1000000
+  n_val_items: 900
+  val_seed: 20261027
+  val_dir: data/frozen/sim_val_2h_16k
+train:
+  out_dir: runs
+  lr: 1.0e-4
+  betas: [0.9, 0.999]
+  weight_decay: null    # resolved by param_mode: 1e-4 full, 0 lora (§7.4)
+  warmup_steps: 1000
+  max_steps: 50000
+  grad_clip: 5.0
+  param_mode: full
+  audio_s_per_step: 64.0
+  segment_s: 4.0
+  batch_size: 16        # accum = 1
+  val_segment_s: 8.0
+  val_batch_size: 16
+  amp: false
+  eval_every: 2000
+  patience: 5
+  log_every: 50
+  ckpt_every: 1000
+  num_workers: 4
+seeds: [0]

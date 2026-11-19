@@ -1,0 +1,533 @@
+% OCEANS 2027 full paper (IEEE conference format).
+% Status: draft started 2026-11-09, the day of pool session S1, before any pool recording has been scored.
+% Sections II (Methods) and III (Real-data benchmark and S1 protocol) are drafted; the others are stubs.
+% Every number is taken from a repository source (RESULTS_E7_SIM_DRYRUN.md, RESEARCH_PLAN.md,
+% docs/RECORDING_SESSION_CHECKLIST.md, sessions/2026-11-09_s1/, configs/, uwse/, scripts/,
+% data/bench/v0_s1/). Real-data quantities that do not exist yet are marked \tbd.
+% References missing from the abstract's bibliography are marked [CITE: ...] and must be resolved
+% before submission; no new bibliography entries have been added.
+% Build (from the uw_speech_enhancement root):
+%   pdflatex -interaction=nonstopmode -output-directory paper/build paper/oceans2027_full.tex   (twice)
+\documentclass[conference]{IEEEtran}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{cite}
+\usepackage{url}
+
+\newcommand{\tbd}{\textbf{[TBD]}}
+\newcommand{\citeph}[1]{[CITE: #1]}
+
+\begin{document}
+
+\title{Speech Enhancement versus Recognizer Adaptation for Underwater Speech Recognition over a Projector-to-Hydrophone Link}
+
+% TODO before submission: full author list and order (credit for the simulator's origin must be agreed,
+% see PRIOR_ART.md), with each co-author's department.
+\author{\IEEEauthorblockN{Ryota Sato}
+\IEEEauthorblockA{Department of Electrical Engineering, Stanford University\\
+Stanford, CA, USA\\
+\texttt{ryos17@stanford.edu}}}
+
+\maketitle
+
+% ---------------------------------------------------------------------------------------------
+\section{Introduction}
+% TODO: write the introduction (motivation as in the abstract; enhance vs adapt; contributions).
+\textit{TODO: Introduction.}
+
+\section*{Related Work}
+% TODO: decide whether Related Work is a numbered section or folded into the Introduction.
+\textit{TODO: Related work (through-water speech \cite{nissen2017,roehrdanz2025,roehrdanz2026}; enhancement artefacts and ASR \cite{iwamoto2022}).}
+
+% ---------------------------------------------------------------------------------------------
+\section{Methods}
+\label{sec:methods}
+
+\subsection{Signal chain and simulator}
+\label{sec:sim}
+A clean utterance $s$ reaches the recorder through a drive low-pass filter (LPF), the projector, the
+pool, the hydrophone and the converter. The channel simulator \texttt{uwsim} models this path as
+\begin{equation}
+y = Q\Big(\mathrm{HPF}\big(h_{\mathrm{hyd}} * \big(\textstyle\sum_{k=1}^{3} h_k * (\mathrm{LPF}_{8\,\mathrm{kHz}}\, s)^k * h_{\mathrm{ch}} + n\big)\big)\Big),
+\label{eq:chain}
+\end{equation}
+where $(\cdot)^k$ is a pointwise power. Noise $n$ is added as acoustic pressure in the water, so it
+passes through the hydrophone response $h_{\mathrm{hyd}}$, the preamplifier high-pass filter (HPF) and
+the converter $Q$ together with the speech. The components are as follows.
+
+\textit{Drive and projector.} The drive is low-passed at 8~kHz by a causal eighth-order Butterworth
+filter (the playback bench instead applies an eighth-order design forward and backward,
+Section~\ref{sec:benchbuild}). The projector is a third-order Hammerstein model whose linear term $h_1$
+is the projector finite impulse response (FIR), an identity filter in v0 that is to be estimated from
+the measured chain response; a piston directivity of radius 0.117~m weights the departure angle.
+
+\textit{Channel $h_{\mathrm{ch}}$.} An image-source model (ISM) \cite{allen1979} of a
+shoebox pool with a tilted floor gives the early field up to a crossover time $t_e$, drawn per scene from 30--50~ms (nominal
+40~ms). The surface reflection
+coefficient is real and signed, $R_s \in [-1.0, -0.9]$, and walls and floor reflect as a fluid--elastic
+half-space evaluated at each image's incidence angle \cite{brekhovskikh1980}. A stochastic late tail (Gaussian noise with a per-octave exponential
+decay) follows, energy-matched to the ISM decay at $t_e$. Below the crossover
+$f_x = \max(c/4H, 500~\mathrm{Hz})$, with $c$ the sound speed and $H$ the maximum pool depth, a
+modal sum replaces the image-source field. A time scaling by $(1+\varepsilon)$, $|\varepsilon| \le
+10^{-3}$, models slow channel variation.
+
+\textit{Noise.} In this work $n$ contains Minnaert bubble bursts \cite{minnaert1933}
+($f_0 \approx 3.29/a$~Hz with the radius $a$ in metres, about 1.1--6.6~kHz for $a = 0.5$--$3$~mm;
+rate up to 20 per second) and, in the
+\emph{stat} training configuration below, stationary coloured Gaussian noise. No recorded noise bank
+exists yet, so thruster and ambient noise are absent from the simulator. The noise is scaled to a
+target speech-band signal-to-noise ratio (SNR), measured over 500--8000~Hz on speech-active samples,
+which an energy voice activity detector (VAD) selects as the 20~ms frames within 40~dB of the loudest.
+
+\textit{Receiver.} The receiver applies a hydrophone response, a 100~Hz second-order preamplifier
+HPF and a 24-bit analog-to-digital converter (ADC) with a noise floor of $-110$~dB relative to full
+scale (dBFS) and a hard clip at 0~dBFS. The
+simulator runs at 48~kHz and resamples its output to 16~kHz (48~kHz for DeepFilterNet3).
+
+\textit{Targets.} The linear chain response is $h_{\mathrm{chain}} = \mathrm{LPF}_{8\,\mathrm{kHz}}
+* h_1 * h_{\mathrm{hyd}} * \mathrm{HPF}$, with no pool path, directivity or nonlinearity. The
+enhancement target is the chain reference $R_{1,\mathrm{sim}} = s * h_{\mathrm{chain}}$, which carries
+the projector and hydrophone coloration but no pool path; it is defined identically to the real-data
+reference $R_1$ (Section~\ref{sec:refs}). The end-to-end target is $R_0 = s$. Both targets are
+band-limited to $[f_{\mathrm{lo}}, 8~\mathrm{kHz}]$, aligned to the direct-path arrival and given the
+same broadband gain fit against the received speech.
+
+\textit{Calibration status.} Every parameter of \texttt{uwsim} v0 is an uncalibrated placeholder: the
+pool takes the nominal dimensions of a competition pool (37 by 20~m, 3.35--4.27~m deep, not survey
+data), the per-octave reverberation times are priors (1.0~s at 125~Hz falling to 0.4~s at 8~kHz, scaled
+by a factor drawn from 0.7--1.3), and the transducer responses are identity filters. The full paper
+replaces them with values fitted to pool measurements \tbd.
+
+\subsection{Simulated test set}
+\label{sec:simtest}
+The simulated test set renders the v0-test selection, 200 LibriSpeech test-clean
+utterances~\cite{panayotov2015} (5 from each of 40 speakers), with projector and hydrophone at 1~m
+depth, on-axis, at ranges of 1, 3 and 6~m, using one fixed impulse response (IR) per range. Three
+conditions are rendered: \emph{quiet} (30~dB SNR); \emph{noise0} (0~dB SNR, stationary Gaussian noise
+with a $-3$~dB/octave slope); and \emph{bubbles0} (0~dB SNR, Minnaert bubble trains at 10 per second,
+radii 0.5--3~mm). This gives nine condition-by-range cells of 200 utterances each.
+
+\subsection{Systems}
+\label{sec:systems}
+All systems share one frozen recognizer, Whisper large-v3~\cite{radford2023}, except C8, which adapts
+it. Labels follow the project's system list.
+\begin{itemize}
+\item \textbf{C0}: unprocessed hydrophone audio.
+\item \textbf{C1}: published speech enhancement (SE) front ends used zero-shot with their released
+weights: single-channel weighted prediction error (WPE) dereverberation \cite{nakatani2010,drude2018},
+MetricGAN+ \cite{fu2021}, SepFormer \cite{subakan2021} trained on WHAM! (16~kHz) and on WHAMR!
+(8~kHz) \cite{wichern2019,maciejewski2020}, and DeepFilterNet3 (DFN3)~\cite{schroeter2023}.
+\item \textbf{C2}: DFN3 fully fine-tuned on \texttt{uwsim} toward $R_{1,\mathrm{sim}}$ (one seed,
+50k steps, about $3.2\times10^{6}$ audio-seconds), fed the 48~kHz simulator output.
+\item \textbf{C10}: a U-Net following the architecture and target of~\cite{roehrdanz2026} (four
+levels, ideal-ratio-mask target, 0--6~kHz log-magnitude input) with our own optimizer settings, not the
+published ones, trained from scratch on \texttt{uwsim} (one seed; early-stopped at step 24k).
+\item \textbf{C8}: recognizer adaptation, Whisper large-v3 with low-rank adaptation
+(LoRA)~\cite{hu2022}, decoding the unprocessed audio with no front end (Section~\ref{sec:c8}).
+\item \textbf{Oracles}: Whisper on $R_1$ (chain coloration only) and on the clean digital source.
+\end{itemize}
+C2 and C10 were trained with no recorded noise bank, so their training noise is almost entirely
+synthetic bubble trains. Front-end outputs are decoded by the same recognizer and decoding policy as C0.
+
+\subsection{Recognizer adaptation and checkpoint selection}
+\label{sec:c8}
+\textit{Adapter.} LoRA adapters of rank 8 ($\alpha = 32$, dropout 0.05) are inserted on the attention
+query and value projections of Whisper large-v3, following the LoRA setting of \cite{rong2025} (who adapt Whisper tiny to small). They are trained with cross-entropy (CE) on the LibriSpeech transcripts of simulated audio:
+train-clean-100 utterances of at most 30~s, rendered through \texttt{uwsim} on the fly. Training uses
+AdamW with $\beta = (0.9, 0.999)$, no weight decay, a peak learning rate of $10^{-4}$ after 1000
+warm-up steps, gradient clipping at 5.0, about 64~s of audio per optimizer step and at most 30k steps.
+Validation CE on 200 dev-clean utterances is computed every 2000 steps (patience 5), and a checkpoint
+is kept every 4000 steps.
+
+\textit{Training noise.} Each noise component is normalized to unit RMS and weighted by an
+independent level, bubbles (rate drawn from 0--20 per second) by $-20$ to 0~dB, and the sum is then
+scaled to the target SNR. In the \emph{stat} configuration, half of the training scenes also add
+stationary coloured Gaussian noise weighted by $-10$ to 0~dB, so its level relative to the bubbles
+spans $-10$ to $+20$~dB, and it is present even in scenes without bubbles. Its spectral slopes are drawn
+from $[-6,-4] \cup [-2,0]$~dB/octave. The band $(-4,-2)$~dB/octave around the noise0 test slope is held
+out, so the test noise is unseen in spectral tilt, although it comes from the same generator family.
+Training SNRs are drawn from $-10$ to 25~dB. Adapters trained on bubble noise alone, and a second
+\emph{stat} seed, serve as simulation references only.
+
+\textit{Checkpoint selection.} Validation CE did not rank adapters by word error rate (WER) in our
+runs, so the checkpoint is chosen by WER on a simulated development set that shares no utterance,
+speaker or scene geometry with the test set: 120 LibriSpeech dev-clean utterances at ranges of 1.5, 3.5
+and 5.5~m, 1.5~m depth, with the receiver at 0.35 of the pool width (generator seed 20261104). Four
+conditions are rendered: quiet, bubbles at 0~dB SNR, and stationary noise at 0~dB SNR with slopes of
+$-5$ and $-1$~dB/octave. Both slopes lie inside the training bands, so the held-out test band never
+influences selection. The criterion is the lowest mean of the four per-condition corpus WERs under the
+guarded decoding of Section~\ref{sec:decode}; every kept checkpoint and the final one are candidates.
+
+\textit{Frozen adapter.} The adapter carried forward to real data is \emph{stat} seed 1 at step 30k
+(SHA-256 \texttt{5063f02f\ldots f52f90}), the adapter fixed by the protocol of 2026-11-05 as the
+lowest development-WER checkpoint of \emph{stat} seed 1. Its development-set mean WER is 17.64\%,
+against 22.65\% for the unadapted recognizer. An exploratory average of the two \emph{stat} seeds,
+selected by the same rule (17.69\%), was not carried forward. For scoring, the adapter is merged into
+the base weights in single precision (fp32) before the cast to half precision (fp16).
+
+\subsection{Guarded decoding}
+\label{sec:decode}
+Every system is decoded with \texttt{openai-whisper} (version 20250625, weights SHA-256 \texttt{e5b1a55b\ldots}) in fp16,
+in English, with the transcription task, no prompt and no previous-text conditioning. Before decoding,
+each cut is normalized to a root-mean-square (RMS) level of $-26$~dBFS over its speech-active region, which a VAD on the aligned
+$R_0$ determines; the same cut feeds every system.
+
+Adapted recognizers can transcribe an utterance correctly and then fail to emit the end-of-text token,
+appending long invented text. The decoding policy therefore guards every system identically:
+\begin{itemize}
+\item beam search of width 5 at temperature 0;
+\item Whisper's temperature fallback (0.2, 0.4, 0.6, 0.8, 1.0 with best-of-5 sampling), triggered when
+the compression ratio exceeds 2.4 or the mean log-probability falls below $-1.0$, with the sampling
+seed fixed at 0 on every call;
+\item a decode-length cap of $\min(\lceil 8~\mathrm{tokens/s} \times d\rceil + 16,\ 224)$ tokens for a
+cut of duration $d$. Correct transcripts of the simulated clips run at a median of 3.7 and a maximum of
+6.2 tokens per second, below the 8 tokens per second of the cap.
+\end{itemize}
+The unguarded policy (temperature 0, no cap) is reported only as a sensitivity check.
+
+\subsection{Evaluation metrics and statistics}
+\label{sec:stats}
+The evaluation protocol was frozen on 2026-11-05, with additions on 2026-11-08 (the substitution
+flag, two-band SNR and sex reporting, and the per-utterance SNR method) and the S1 amendment of
+2026-11-09 (Section~\ref{sec:endpoint}), all made before any pool recording existed and so before any
+was scored. It was fixed after the simulation results were seen but before any real recording existed,
+so it is pre-registered with respect to the real data; any later change is reported as a deviation.
+
+\textit{WER.} Whisper's English text normalizer~\cite{radford2023} is applied to hypothesis and
+reference, and corpus WER is $(S+D+I)/N_{\mathrm{ref}}$, the summed substitutions, deletions and
+insertions over the summed reference words.
+
+\textit{Confidence intervals.} Corpus WER carries a 95\% confidence interval (CI) from a percentile
+bootstrap over speaker clusters, resampled with replacement within position-by-thruster strata
+(10\,000 replicates); a speaker in two strata forms two clusters. System differences are paired:
+$\Delta\mathrm{WER}$ between two systems uses a paired speaker-cluster bootstrap with 2000 resamples,
+drawing the same resampled clusters for both systems. A difference is called significant when its 95\%
+CI excludes zero.
+% NOTE (lead, 2026-11-10): scripts/score.py uses one --n-boot for all bootstraps, so S1 is scored in two
+% runs: --n-boot 10000 for corpus CIs, --n-boot 2000 for paired dWER. No code change.
+These CIs cover the recorded positions in the recorded session only.
+
+\textit{Hallucination flags.} Two flags are reported per system. The first marks an utterance whose
+hypothesis-to-reference length ratio exceeds 2 or whose compression ratio exceeds 2.4. The second, a
+substitution flag, marks an utterance with $n_{\mathrm{hyp}} \ge 0.5\,n_{\mathrm{ref}}$ and
+$\mathrm{hits}/n_{\mathrm{ref}} < 0.3$, both counted after normalization. ``WER without flagged'' is
+computed on a single paired subset that drops an utterance flagged for any compared system. The flags
+never filter the primary endpoint, which is WER on all utterances. Reference-free confidence scores are
+not used as filters, because Whisper's mean log-probability is biased between C0 and C8. A runaway loop
+is counted when an utterance's insertions reach $\max(10, 2\times$ its reference length$)$.
+
+\textit{SNR and speaker sex (reporting only).} Real-data results report the speech-band SNR over both
+50--8000~Hz and 500--8000~Hz, with the same band and energy-VAD definition as the simulator, applied
+to the recorded thruster-off cut (speech plus ambient noise) rather than to the clean source. WER is also reported by speaker sex and
+read against the median SNR of each sex in both bands; the female-minus-male gap carries a 95\% CI
+from resampling speakers within sex.
+
+\textit{Intrusive metrics.} Extended short-time objective intelligibility (ESTOI)~\cite{jensen2016} is
+computed against $R_1$ at 16~kHz where $R_1$ exists (Section~\ref{sec:refs}).
+
+% ---------------------------------------------------------------------------------------------
+\section{Real-Data Benchmark and S1 Protocol}
+\label{sec:bench}
+This section describes pool session S1 (2026-11-09) as planned and pre-registered. No S1 recording
+had been scored when it was written; every quantity measured at the session is marked \tbd.
+
+\subsection{Bench construction and freezing}
+\label{sec:benchbuild}
+The playback bench is built from two utterance selections: v0-test (the 200 test-clean utterances of
+Section~\ref{sec:simtest}) and v0-dev (40 dev-clean utterances). Each utterance is resampled to
+48~kHz, RMS-normalized to $-26$~dBFS (peak capped at $-1$~dBFS, with any gain cut logged), given 5~ms
+raised-cosine fades and passed through a zero-phase 8~kHz drive LPF (an eighth-order Butterworth
+applied forward and backward, $-6$~dB at 8~kHz). Utterances are packed
+into 28 content blocks of about 70~s (54--76~s; 23 from v0-test and 5 from v0-dev, 6 to 12 utterances
+each),
+each laid out as
+\begin{center}
+\small[0.5\,s silence][chirp][0.5\,s][utt$_1$][1.0\,s]$\cdots$[utt$_N$][0.5\,s][chirp][2.0\,s silence].
+\end{center}
+The sync chirp is a 0.25~s linear frequency-modulated (LFM) sweep from $f_{\mathrm{lo}} = 500$~Hz
+(the value in the frozen S1 bench) to 8~kHz, with a Tukey (0.1) window and a
+peak of $-20$~dBFS. It bypasses the drive LPF, so the matched-filter template is exactly what is
+played. Silences and chirps take 16.3\% of block time.
+
+For S1 the bench is built into \texttt{data/bench/v0\_s1} for position \texttt{p3} only, with the
+default settings of the playlist and session-audio scripts. It was frozen before the session (built
+2026-11-09 00:09): \texttt{SHA256SUMS.txt} lists all 68 files and itself hashes to
+\texttt{6e6f6d02\ldots c5296357}; \texttt{schedule.json} hashes to \texttt{c150c540\ldots 6dc971} and
+the speech-take timing file \texttt{session/p3\_speech.json} to \texttt{58d7e4cc\ldots 038009}. The
+bench is never rebuilt after a take, because the import reads the same schedule and block timing files
+that produced the played audio. The three-position bench \texttt{data/bench/v0} is kept for the
+later session S2.
+
+\subsection{Playback chain}
+\label{sec:playback}
+A laptop on battery plays each session file through a two-input, two-output USB interface whose first
+output drives a battery-powered amplifier and the projector \tbd{} (projector and amplifier models). The
+amplifier gain is set once per session, logged, and not touched again. Before the first take, a live
+level check plays 15~s of the speech file and measures the drive on the loopback input; it passes when
+the measured drive is within about 1~dB of the estimate, no input clips, and the hydrophone peaks keep
+at least 6~dB of headroom. The nominal speech-active RMS source level is 150--160~dB re
+1~$\mu$Pa at 1~m, an uncalibrated estimate from the projector's nominal sensitivity; the session values
+of amplifier gain, interface output voltage and source level are \tbd.
+
+\subsection{Recording rig and channel map}
+\label{sec:rig}
+Three recorders each write one file per take (Table~\ref{tab:chmap}). The USB interface records at
+48~kHz the amplifier output through a 40~dB attenuator (loopback) and a monitor hydrophone at least
+0.5~m from the projector, 90$^\circ$ off-axis. Two Daisy Seed boards each record two hydrophone
+channels at 96~kHz and 24~bits. Each hydrophone keeps one channel identifier, \texttt{ch0} to
+\texttt{ch3}, for the whole benchmark; \texttt{ch0} is the scored channel. The hydrophone elements,
+preamplifier gains and recorder gains used at S1 are \tbd. Mounts are flooded or perforated, with no
+air-filled tubing near the hydrophones.
+
+\begin{table}[t]
+\caption{S1 recorder channel map.}
+\label{tab:chmap}
+\centering
+\small
+\begin{tabular}{llll}
+\hline
+Recorder & Rate & File ch. & Role \\
+\hline
+USB interface & 48~kHz & 0 & loopback, 40~dB atten. \\
+              &        & 1 & monitor hydrophone \\
+Daisy A & 96~kHz & 0, 1 & \texttt{ch0} (scored), \texttt{ch1} \\
+Daisy B & 96~kHz & 0, 1 & \texttt{ch2}, \texttt{ch3} \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{Synchronization, clock-drift correction and import}
+\label{sec:sync}
+Every block carries its own start and end chirp, so each block is aligned on its own and the recorders
+need no common clock. A recorder that records the loopback is aligned on it, which is exact. A recorder
+without one, here both Daisy boards, is aligned on its first hydrophone's chirps, which carry the
+acoustic delay. Recordings at 96~kHz are first resampled to the 48~kHz playback rate by an exact
+rational ratio; raw sample indices in the output refer to the original file. The import proceeds in
+four steps.
+\begin{enumerate}
+\item \textit{Coarse offset.} The matched-filter envelope of the sync channel, max-pooled to 10~ms, is
+correlated with an impulse train at the nominal chirp onsets of the whole file, each impulse widened by
+the largest drift expected over the take (200~ppm), so one missed chirp does not move the offset.
+\item \textit{Per-block chirps.} Each chirp is searched within $\pm 0.5$~s of its prediction. A chirp
+that is missing, too far from its prediction or below a peak-to-sidelobe ratio (PSR) of 6~dB is
+replaced by the prediction of a take-level clock fit, and the block is flagged.
+\item \textit{Clock drift.} A block's drift comes from its own two chirps when both are good, and
+otherwise from a least-squares fit of chirp onset against nominal time over all good chirps of the
+take.
+\item \textit{Cuts.} Each channel is resampled onto the playback clock, anchored at the block's first
+chirp, and every utterance is cut with 0.25~s of padding on either side.
+\end{enumerate}
+On synthetic takes with clock errors up to $\pm150$~ppm, the offset is recovered within 2 samples at
+48~kHz and the cuts within 2--3 samples. In an end-to-end dry run on a synthetic session with recorder
+clock errors of $+40$ and $-25$~ppm, every chirp passed quality control (QC) and both drifts were recovered exactly. A
+Daisy frame drop removes 32 or 64 samples (0.3--0.7~ms); a drop between blocks is absorbed, and a drop
+inside a block shifts its cuts by at most the dropped length, which is small against the padding. At scoring time, the
+fine lag of each cut against the played utterance ($R_0$), within $\pm20$~ms, is estimated and applied
+to the $R_0$ used for level normalization.
+
+\subsection{S1 take plan}
+\label{sec:takes}
+S1 has 2~h of pool time and records one position, \texttt{p3}: a 3~m range with projector and
+hydrophones at 1~m depth, on-axis. Table~\ref{tab:takes} lists the takes in order.
+
+\textit{Noise-only takes.} Two 60~s noise-only takes open the position, one with the thruster off and
+one with it on at the speech-take throttle (\tbd). For the thruster-on take, the thruster is at steady
+speed before the recorders start and is stopped only after they stop.
+
+\textit{Sweeps.} One sweep take plays a sync chirp and four exponential sine sweeps (ESS)
+\cite{farina2000} from 150~Hz to 20~kHz, each 10.01~s long and followed by 5~s of
+silence, at a peak of $-20$~dBFS. A low-frequency pre-shaping attenuates the sweep by about 12~dB well
+below 300~Hz so that the projector is not overdriven; deconvolution removes it from the linear IR.
+
+\textit{Speech (ABBA).} The 66.5~min speech take plays all 28 content blocks twice, in both thruster
+states and adjacent in time: content block $j$ is played thruster-off then thruster-on for even $j$ and
+in the reverse order for odd $j$, so the states read off, on, on, off, off, \ldots (ABBA). This gives
+56 blocks, 112 chirps and 480 utterance presentations, and it removes the confound between thruster
+state and time. The thruster (unit A, guarded frame) is switched at printed cues that fall right after a
+block's end chirp, leaving about 3.5~s of spin-up before the next block.
+
+\textit{Anchor.} After the speech take, the session's first block (9 utterances, thruster off) is
+played again as a drift anchor.
+
+\textit{Noise bank.} Four 90~s noise-only takes close the session: quiet pool, thruster,
+bubbles or splashing, and pumps.\footnote{These takes were added to the S1 plan on 2026-11-09, before
+any take was recorded; the speech and anchor takes and the bench were unchanged.} Projector-chain (E2)
+and IR-grid takes are deferred to S2.
+
+\begin{table}[t]
+\caption{S1 take plan, in recording order (position \texttt{p3}, 3~m; thr.\ = thruster).}
+\label{tab:takes}
+\centering
+\small
+\setlength{\tabcolsep}{3.5pt}
+\begin{tabular}{lll}
+\hline
+Take & Content & Length \\
+\hline
+\texttt{p3\_noise} & nothing played, thr.\ off & 1.0~min \\
+\texttt{p3\_noise\_on} & nothing played, thr.\ on & 1.0~min \\
+\texttt{p3\_sweeps} & 1 chirp, 4 ESS & 1.0~min \\
+\texttt{p3\_speech} & 56 blocks, 112 chirps, 480 utt. & 66.5~min \\
+\texttt{p3\_anchor} & 1 block, 2 chirps, 9 utt. & 1.2~min \\
+\texttt{noise\_*} ($\times$4) & noise bank & 1.5~min each \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{Safety}
+\label{sec:safety}
+The session requires written approval from the pool operator and an answer from the institution's
+environmental health and safety (EH\&S) office on whether powered equipment and thrusters need its
+sign-off; both are to be confirmed and logged for S1 \tbd. The battery-only rig keeps mains equipment
+away from the pool. Nobody is in the water while the projector transmits. If anyone must
+be, the received level measured at their location must stay at or below 150~dB re 1~$\mu$Pa (RMS over
+speech-active frames), our own conservative limit. Nobody comes within 2~m of the running thruster,
+which has a guard frame and an emergency stop. Because the projector can generate harmonics that the
+drive LPF cannot remove, a raw 96~kHz capture is checked for energy in the 25--40~kHz band of the
+vehicle's acoustic pinger; if any is found, the drive is lowered.
+
+\subsection{Logging and metadata}
+\label{sec:logging}
+For every take, the session tool logs the measured range, projector and hydrophone depths, water
+temperature, amplifier and recorder gains, pump state, pool activity, thruster unit and throttle, and
+operator to \texttt{takes.jsonl} and to a printed run sheet. Water temperature is also logged at 0.5
+and 1.5~m at the start and end of the session, with photographs of the rig; operators keep at least 2~m
+from the array during takes, and positions are measured to a target of $\pm3$~cm. The import writes
+one row per utterance and channel with the identity and alignment fields (session order, block,
+channel, raw file and sample bounds, drift, chirp QC and flags); geometry, gains, temperatures and
+acoustic covariates are merged from the session log afterwards. The S1 values of all logged quantities
+are \tbd.
+
+\subsection{Quality-control pass criteria}
+\label{sec:qc}
+A speech or anchor take passes when, on every recorder file, every chirp is found with a PSR of at
+least 6~dB, no block is flagged, and no sample reaches full scale ($|x| \ge 0.999$). A take that fails
+is recorded again before the rig is moved. Separately, each Daisy sidecar file is checked for dropped
+frames; a single drop is not visible to the chirp QC, so a take with drops is redone only if many of its
+blocks' drift estimates disagree with the take drift. The
+per-take drift, minimum PSR and flagged blocks are reviewed after import. The S1 QC outcomes are \tbd.
+
+\subsection{Per-utterance SNR and level stability}
+\label{sec:snr}
+Each utterance's SNR is measured from two recordings through the same chain and channel. Speech power
+is the band power over speech-active samples (energy VAD) of the utterance's own thruster-off cut at the
+same session, position and channel; ABBA guarantees that this cut exists and is adjacent in time. Noise
+power comes from the position's noise-only take in the row's thruster state, over the whole take minus
+1~s at each end, keeping only the 0.1~s frames whose 50--8000~Hz level lies within 6~dB below the
+take's median frame level. SNR is reported over 500--8000~Hz, 50--8000~Hz and the octaves from 500 to
+4000~Hz. The level drift of the session is the median, over the anchor's utterances, of the
+500--8000~Hz speech-active level of the anchor cut minus that of the original cut; if its magnitude
+exceeds 1.0~dB (a threshold fixed before any data), every cut of the session is flagged. This method
+assumes that thruster noise is stationary between the noise-only take and the speech blocks. The flag is
+reported and never used to filter a comparison. The measured S1 SNRs and drift are \tbd.
+
+\subsection{References for intrusive metrics}
+\label{sec:refs}
+The real-data reference is $R_1 = s * h_{\mathrm{chain}}$, with $h_{\mathrm{chain}}$ measured once at
+close range per source depth and only a broadband delay and gain fitted per utterance
+\cite{yang2024realman}. S1 records no projector-chain measurement, so $R_1$ and
+the metrics that depend on it are not available from S1 alone \tbd. The aligned $R_0$ cut is used for
+the VAD of level normalization.
+
+\subsection{Primary endpoint and secondary analyses}
+\label{sec:endpoint}
+The S1 scope and endpoint were signed off in the project repository on 2026-11-09, before any pool
+recording existed; the external pre-registration (OSF) is to be filed before v0-test is scored \tbd.
+This amendment replaces, for S1 only, the originally planned primary endpoint, the paired
+$\Delta\mathrm{WER}$ of C2 minus C0 pooled over all v0 positions and thruster states. On S1, C2 minus
+C0 is secondary; for the pooled v0 after session S2, the plan's endpoints are unchanged.
+
+\textit{Primary endpoint.} The paired $\Delta\mathrm{WER}$ of C8 (the frozen adapter of
+Section~\ref{sec:c8}) minus C0 on the S1 v0-test cuts of the speech take on the scored channel
+\texttt{ch0} (200 utterances in each of the two thruster states, 400 cuts), with the frozen guarded
+decoding (Section~\ref{sec:decode}) and statistics (Section~\ref{sec:stats}). The v0-dev cuts and the
+drift-anchor repeats are excluded; the anchor serves only the level-drift check. The endpoint is reported overall and by thruster state. Result: \tbd.
+
+\textit{Secondary analyses.} (i) Each SE front end (C1, C2, C10) minus C0, and each SE front end
+minus C8 (paired $\Delta\mathrm{WER}$, no directional prediction), scored once a front-end inference
+script for real cuts exists. (ii) Flag rates per system and WER without flagged
+utterances on the paired subset. (iii) WER by speaker sex against the two-band SNR. (iv) The anchor
+level-drift flag. All other analyses are exploratory and labelled as such.
+
+\textit{Scope.} With a single position, range effects cannot be tested on S1, and any result is
+scoped to one pool, one position and one session. S1 has no test--retest repeat, so the noise floor
+below which no difference is interpreted is not available from S1 \tbd.
+
+\subsection{Post-session channel characterisation}
+\label{sec:post}
+On the day of the session, a CPU-only analysis is planned for the non-speech takes. Levels are
+uncalibrated and are compared only within a channel.
+
+\textit{Sweep IRs.} The clock drift and offset of each sweep recording are estimated from the sweeps
+themselves on the recorder's sync channel, and one IR per sweep and hydrophone is obtained by
+regularized deconvolution against the regenerated excitation. From the IRs we report sweep coherence
+and between-sweep variance; the energy decay curve (EDC) by Schroeder integration with Lundeby
+truncation \cite{schroeder1965,lundeby1995}; broadband and octave-band
+(250~Hz--8~kHz) early decay time (EDT, 0 to $-10$~dB), T20 ($-5$ to $-25$~dB) and T30 ($-5$ to
+$-35$~dB); a single- or two-slope decay fit; the clarity index C50 (energy before and after 50~ms);
+the direct-to-reverberant ratio (DRR); and the IR SNR per band. DRR uses a direct-path gate of 0.7~ms
+around the IR peak and is reported as missing where the gate rule fails, that is, where the gate reaches
+the first reflection or holds fewer than two periods of the lowest analysed frequency. Arrivals more
+than 20~dB below the strongest are not counted as reflections. S1 values: \tbd.
+
+\textit{Noise spectra.} For each noise take, with the same 1~s trim and 6~dB median gate as the SNR
+method, we report the mean power spectral density (Hann frames of about 85~ms, 50\% overlap) and
+one-third-octave band levels in dBFS, with their frame-to-frame spread as a measure of stationarity,
+and each condition relative to the quiet-pool take. S1 values: \tbd.
+
+% ---------------------------------------------------------------------------------------------
+\section{Results}
+% TODO: S1 primary endpoint (C8 - C0, overall and by thruster state) and secondary analyses; simulation
+% results (labelled as simulation) as in the abstract.
+\textit{TODO: Results (real data \tbd; simulation results labelled as such).}
+
+\section{Discussion}
+% TODO
+\textit{TODO: Discussion.}
+
+\section{Conclusion}
+% TODO
+\textit{TODO: Conclusion.}
+
+% Bibliography copied from paper/oceans2027_abstract.tex; entries not yet cited will be cited by the
+% Introduction and Related Work. Do not add entries without verifying them.
+\begin{thebibliography}{99}
+\bibitem{nissen2017} I.~Nissen and E.~Kuhnt-Matth\'e, ``Verbesserung der Sprachverst\"andlichkeit bei
+analoger Unterwasserkommunikation durch Nutzung von digitalen Anfangs- und Endmarken,'' in
+\emph{Proc. DAGA}, Kiel, 2017.
+\bibitem{roehrdanz2025} F.~R\"ohrdanz \emph{et al.}, ``Data generation for training of neural networks
+dealing with underwater speech transmission,'' in \emph{Proc. DAS|DAGA}, Copenhagen, 2025.
+\bibitem{roehrdanz2026} F.~R\"ohrdanz \emph{et al.}, ``Neural-network based speech dereverberation for
+underwater applications,'' in \emph{Proc. DAGA}, 2026, no.~144.
+\bibitem{allen1979} J. B. Allen and D. A. Berkley, ``Image method for efficiently simulating small-room acoustics,'' \emph{J. Acoust. Soc. Am.}, vol. 65, no. 4, pp. 943--950, Apr. 1979, doi: 10.1121/1.382599.
+\bibitem{brekhovskikh1980} L. M. Brekhovskikh, \emph{Waves in Layered Media}, 2nd ed., R. T. Beyer, Trans. New York, NY, USA: Academic Press, 1980, ser. Applied Mathematics and Mechanics, vol. 16.
+\bibitem{minnaert1933} M. Minnaert, ``On musical air-bubbles and the sounds of running water,'' \emph{London, Edinburgh, Dublin Philos. Mag. J. Sci.}, vol. 16, no. 104, pp. 235--248, Aug. 1933, doi: 10.1080/14786443309462277.
+\bibitem{panayotov2015} V.~Panayotov, G.~Chen, D.~Povey, and S.~Khudanpur, ``LibriSpeech: an ASR corpus
+based on public domain audio books,'' in \emph{Proc. ICASSP}, 2015, pp.~5206--5210.
+\bibitem{nakatani2010} T.~Nakatani, T.~Yoshioka, K.~Kinoshita, M.~Miyoshi, and B.-H.~Juang, ``Speech dereverberation based on variance-normalized delayed linear prediction,'' \emph{IEEE Trans. Audio, Speech, Lang. Process.}, vol.~18, no.~7, pp.~1717--1731, Sep. 2010, doi: 10.1109/TASL.2010.2052251.
+\bibitem{drude2018} L.~Drude, J.~Heymann, C.~Boeddeker, and R.~Haeb-Umbach, ``NARA-WPE: A Python package for weighted prediction error dereverberation in Numpy and Tensorflow for online and offline processing,'' in \emph{Proc. 13th ITG Fachtagung Sprachkommunikation (ITG-Fachbericht 282)}, Oldenburg, Germany, Oct. 2018, pp.~1--5.
+\bibitem{fu2021} S.-W.~Fu, C.~Yu, T.-A.~Hsieh, P.~Plantinga, M.~Ravanelli, X.~Lu, and Y.~Tsao, ``MetricGAN+: An improved version of MetricGAN for speech enhancement,'' in \emph{Proc. Interspeech}, 2021, pp.~201--205, doi: 10.21437/Interspeech.2021-599.
+\bibitem{subakan2021} C.~Subakan, M.~Ravanelli, S.~Cornell, M.~Bronzi, and J.~Zhong, ``Attention is all you need in speech separation,'' in \emph{Proc. IEEE Int. Conf. Acoust., Speech, Signal Process. (ICASSP)}, Toronto, ON, Canada, 2021, pp.~21--25, doi: 10.1109/ICASSP39728.2021.9413901.
+\bibitem{wichern2019} G.~Wichern, J.~Antognini, M.~Flynn, L.~R.~Zhu, E.~McQuinn, D.~Crow, E.~Manilow, and J.~Le~Roux, ``WHAM!: Extending speech separation to noisy environments,'' in \emph{Proc. Interspeech}, 2019, pp.~1368--1372, doi: 10.21437/Interspeech.2019-2821.
+\bibitem{maciejewski2020} M.~Maciejewski, G.~Wichern, E.~McQuinn, and J.~Le~Roux, ``WHAMR!: Noisy and reverberant single-channel speech separation,'' in \emph{Proc. IEEE Int. Conf. Acoust., Speech, Signal Process. (ICASSP)}, Barcelona, Spain, 2020, pp.~696--700, doi: 10.1109/ICASSP40776.2020.9053327.
+\bibitem{schroeter2023} H.~Schr\"oter, A.~N. Escalante-B., T.~Rosenkranz, and A.~Maier,
+``DeepFilterNet: Perceptually motivated real-time speech enhancement,'' in \emph{Proc. Interspeech},
+2023, pp.~2008--2009.
+\bibitem{radford2023} A.~Radford \emph{et al.}, ``Robust speech recognition via large-scale weak supervision,'' in \emph{Proc. ICML}, 2023,
+pp.~28492--28518.
+\bibitem{hu2022} E.~J. Hu \emph{et al.}, ``LoRA: Low-rank adaptation of large language models,'' in
+\emph{Proc. ICLR}, 2022.
+\bibitem{rong2025} Y.~Rong, P.~Chen, and Z.~Nan, ``Underwater diver communication system based on speech/text conversion,'' in \emph{Proc. OCEANS 2025 Brest}, Brest, France, Jun. 2025, pp.~1--5, doi: 10.1109/OCEANS58557.2025.11104740.
+\bibitem{jensen2016} J.~Jensen and C.~H. Taal, ``An algorithm for predicting the intelligibility of
+speech masked by modulated noise maskers,'' \emph{IEEE/ACM Trans. Audio, Speech, Lang. Process.},
+vol.~24, no.~11, pp.~2009--2022, 2016.
+\bibitem{farina2000} A.~Farina, ``Simultaneous measurement of impulse response and distortion with a swept-sine technique,'' presented at the \emph{108th AES Convention}, Paris, France, Feb. 19--22, 2000, Preprint 5093.
+\bibitem{yang2024realman} B.~Yang, C.~Quan, Y.~Wang, P.~Wang, Y.~Yang, Y.~Fang, N.~Shao, H.~Bu, X.~Xu, and X.~Li, ``RealMAN: A real-recorded and annotated microphone array dataset for dynamic speech enhancement and localization,'' in \emph{Advances in Neural Information Processing Systems}, vol.~37, 2024, pp.~105997--106019, doi: 10.52202/079017-3363.
+\bibitem{schroeder1965} M.~R. Schroeder, ``New method of measuring reverberation time,'' \emph{J. Acoust. Soc. Am.}, vol.~37, no.~3, pp.~409--412, 1965, doi: 10.1121/1.1909343.
+\bibitem{lundeby1995} A.~Lundeby, T.~E. Vigran, H.~Bietz, and M.~Vorl\"ander, ``Uncertainties of measurements in room acoustics,'' \emph{Acustica}, vol.~81, no.~4, pp.~344--355, 1995.
+\bibitem{iwamoto2022} K.~Iwamoto \emph{et al.}, ``How bad are artifacts?: Analyzing the impact of speech enhancement errors on ASR,'' in
+\emph{Proc. Interspeech}, 2022, pp.~5418--5422.
+\end{thebibliography}
+
+\end{document}

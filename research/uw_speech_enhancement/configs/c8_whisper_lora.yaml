@@ -1,0 +1,53 @@
+# C8: Whisper large-v3 + LoRA on uwsim audio, no SE (RQ2d; RESEARCH_PLAN.md §7.2-7.4).
+# LoRA r = 8, alpha = 32, dropout 0.05 on q_proj/v_proj; peak LR 1e-3; wd 0; CE on the
+# LibriSpeech transcripts of the simulated noisy audio. Whole utterances (no crops):
+# use a train list filtered to <= 30 s (uwse.bench.librispeech.filter_duration) as
+# train_clean (a .txt list of paths is accepted).
+# fp16 base + gradient checkpointing to fit the 8 GB laptop GPU (micro-batch 2).
+run_name: c8_whisper_lora
+condition: C8
+task: whisper_lora
+whisper:
+  model: openai/whisper-large-v3
+  gradient_checkpointing: true
+  lora:
+    r: 8
+    alpha: 32
+    dropout: 0.05
+    target_modules: [q_proj, v_proj]
+data:
+  kind: uwsim
+  train_clean: data/librispeech/LibriSpeech/train-clean-100
+  val_clean: data/librispeech/LibriSpeech/dev-clean
+  transcripts_root: data/librispeech/LibriSpeech   # *.trans.txt
+  noise_root: data/noise
+  sim_config: configs/uwsim_v0.yaml
+  rir_bank: data/rirs/uwsim_v0
+  target: R1                 # unused by C8 (only the noisy audio and the text are used)
+  n_train_items: 1000000
+  n_val_items: 200           # validation CE on 200 dev-clean utterances
+  val_seed: 20261027
+  val_dir: null              # whole utterances; not frozen to disk
+train:
+  out_dir: runs
+  lr: 1.0e-3                 # Rong's Whisper LoRA precedent (§7.4)
+  betas: [0.9, 0.999]
+  weight_decay: 0.0
+  warmup_steps: 1000
+  max_steps: 30000           # LoRA cap (§7.4)
+  grad_clip: 5.0
+  param_mode: lora
+  audio_s_per_step: 64.0
+  segment_s: 12.5            # mean utterance length; informational (accum_steps is explicit)
+  batch_size: 2
+  accum_steps: 3             # 2 x 3 x ~12 s = ~64 s of audio per step
+  val_batch_size: 4
+  max_val_batches: 50
+  amp: true
+  amp_dtype: fp16
+  eval_every: 2000
+  patience: 5
+  log_every: 50
+  ckpt_every: 1000
+  num_workers: 4
+seeds: [0]
