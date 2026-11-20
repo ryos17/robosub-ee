@@ -860,7 +860,7 @@ Signed off by the lead on 2026-11-19. No pool recording of any kind exists at th
   - Capture: two Daisy Seed boards (A: hydrophones ch0 and ch1; B: ch2 and ch3) at 96 kHz / 24-bit, recorded on a Linux machine (laptop or the Orin) with `scripts/record_daisy.py`. Files are copied to the Windows PC for checking, import and scoring. The scored channel is ch0. Every recorder aligns on the chirps its own hydrophones hear.
   - No thruster. The rig is not part of the submarine. Nothing in this plan has a thruster state: every block is played once (`block_order` `"none"`).
 - **Takes, in order** (`scripts/run_session.py plan`; take ids in brackets).
-  0. Desk dry run in air or a bucket (`dryrun`): the anchor file through the full chain. QC must pass. The files go to `<session>/dryrun/`, never the session raw directory, and are never imported.
+  0. Desk dry run with the projector submerged in a bucket, never driven in air, knob just above minimum (`dryrun`): the anchor file through the full chain. QC must pass. The files go to `<session>/dryrun/`, never the session raw directory, and are never imported.
   1. Chain reference at 0.5–1 m (`ref_sweeps`, `ref_speech`): sweeps and the ~20 pilot sentences, on axis. They give the measured transducer-chain reference (h_chain, the R1 target) and the real projector response.
   2. Pilot at 3 m (`pilot_speech`): the 20 pilot sentences, scored on site with C0 (see the decision rule below).
   3. For each distance d (default 1, 3 and 6 m; chosen on the day with `--distances`):
