@@ -12,7 +12,7 @@ Commands below use `S=sessions/<date>_s<N>` as the session directory and `B=data
 
 ## 1. Days before (desk)
 
-- [ ] Approvals in hand: written Aquatics approval, and the EH&S answer on powered equipment and thrusters (§6.2).
+- [ ] Pool: the lead's own pool, so no Aquatics or EH&S approval is needed. Electrical safety still applies: any mains-powered gear on a GFCI outlet and kept well away from the water, and the Lubell driven from an unbalanced, non-bridged amplifier output.
 - [ ] Bench built and frozen:
   ```
   python scripts/make_playlists.py --out $B

@@ -208,7 +208,7 @@ Rows are ordered by how closely each work overlaps with this proposal, closest f
 - The simulator covers pool/tank and open-water configurations. It models multipath with c ≈ 1480 m/s, boundary reflections (a pressure-release surface), frequency-dependent absorption, projector and hydrophone responses, thruster/ESC and ambient noise, and Doppler.
 - Existing tools (Bellhop/KRAKEN, Watermark, the UWA Channel Library, pyroomacoustics) were never packaged or validated for speech.
 - *Weakness:* reviewers will see this as "URGENT/FRA-RIR with water parameters" unless we validate the simulator against **measured** pool impulse responses and noise spectra.
-- *Credit:* the simulator is based on Kaito's project, which has no public trace. Authorship and credit must be agreed with Kaito before any submission.
+- *Credit:* the simulator is based on Kaito's project, which has no public trace. Decided 2026-11-19: the paper is sole-authored by the lead.
 
 **C2. First real through-water speech benchmark. Strong, if released.**
 - Speech is played through a projector and captured on a 4-channel hydrophone array (Daisy Seed, 96 kHz), with time-aligned clean references.

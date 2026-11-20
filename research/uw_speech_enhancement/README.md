@@ -297,12 +297,11 @@ data release, all by the 24 May final paper, then a journal extension.
 
 ## Open questions
 
-- Authorship and credit with Kaito and Keiya (simulator, speaker). Agree on
-  them before any submission.
-- Which projector: Felicie's impedance-matched piezos, a Lubell, or a
-  DIY exciter (EE project #3).
-- Which pool (Avery Competition 3.35-4.27 m vs Maas dive well 18 ft) and
-  access through stanfordaquatics@stanford.edu.
+- ~~Authorship~~ Decided 2026-11-19: sole author (Ryota Sato).
+- ~~Projector~~ Bought: Lubell LL916C (caged, 50 ft cable) with the AC205,
+  driven by an off-the-shelf amplifier.
+- ~~Pool~~ Decided: the lead's own pool, available any time, so no booking
+  or Aquatics approval is needed.
 - Compute: the Orin for inference; training happens elsewhere.
 - Whether the speech is sent in baseband or on an ultrasonic carrier (SSB or
   AM). Commercial diver comms use an ultrasonic carrier of about 32 kHz;
