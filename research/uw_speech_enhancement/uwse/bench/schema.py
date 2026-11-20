@@ -34,8 +34,8 @@ from typing import Any, Iterable, Iterator, Optional, Union
 # ---------------------------------------------------------------- vocabularies
 MATERIALS = ("librispeech", "newprompt_tts", "live")
 CORPUS_SPLITS = ("test-clean", "dev-clean")
-BENCH_SPLITS = ("v0-dev", "v0-test", "v1-test", "v1-train", "site2")
-BLOCK_ORDERS = ("ABBA",)
+BENCH_SPLITS = ("v0-dev", "v0-test", "v0-pilot", "v1-test", "v1-train", "site2")
+BLOCK_ORDERS = ("ABBA", "none")  # none: pool plan, every block once, thruster off
 THRUSTER_STATES = ("off", "on")
 THRUSTER_UNITS = ("A", "B")
 THRUSTER_DRIVES = ("trapezoidal", "foc")
@@ -49,6 +49,7 @@ OCTAVE_BANDS = ("500", "1000", "2000", "4000")
 RELEASE_OF_SPLIT = {
     "v0-dev": "v0",
     "v0-test": "v0",
+    "v0-pilot": "v0",  # pool-plan pilot sentences (dev-clean), decision rule only
     "v1-test": "v1",
     "v1-train": "v1",
     "site2": "site2",

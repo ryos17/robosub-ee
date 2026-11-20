@@ -1,312 +1,151 @@
-# Underwater Speech Enhancement: Sim-to-Real for Any SE Model
+# Underwater Speech Enhancement: Sim-to-Real
 
-Research project (lead: Ryota). Goal: make **any** off-the-shelf speech
-enhancement (SE) model work on speech that has travelled through water, by
-fine-tuning it on data from a physics-based underwater channel simulator and
-proving the transfer on real projector-to-hydrophone recordings.
+Research project (lead and sole author: Ryota Sato). The project asks whether speech that has travelled through water from a projector to a hydrophone is better served by **speech enhancement** (an SE front end before an off-the-shelf recognizer) or by **recognizer adaptation** (Whisper large-v3 with a LoRA trained only on simulated underwater speech). Both are trained on a physics-based underwater channel simulator (`uwsim`) and tested on real pool recordings.
 
-It joins three existing team efforts:
+The working title of the paper is *Speech Enhancement versus Recognizer Adaptation for Underwater Speech Recognition over a Projector-to-Hydrophone Link*. It targets OCEANS 2027 Aberdeen.
 
-- **Pool acoustic simulator** (Kaito Kanazawa, Keiya Wada; EE project #12):
-  the channel model that turns clean speech into underwater speech.
-- **Loud underwater speaker** (Keiya Wada, Kaito Kanazawa; EE project #3):
-  the projector that plays speech into the pool for the real test set.
-- **[`whisper_ivc/`](../whisper_ivc/)**: hydrophone capture (Daisy Seed,
-  4 ch, up to 96 kHz / 24-bit) and Whisper transcription on the Orin. Its
-  `--denoise metricgan|sepformer` flag is the off-the-shelf baseline this
-  project improves on.
+It builds on these team efforts:
 
-Status: **proposal / design**. No code yet.
+- **Pool acoustic simulator** (EE project #12, team project owners Kaito Kanazawa and Keiya Wada). Its channel model is the basis of `uwsim`.
+- **Loud underwater speaker** (EE project #3, team project owners Keiya Wada and Kaito Kanazawa). This is the projector line of work. The rig used here is a Lubell LL916C.
+- **[`whisper_ivc/`](../whisper_ivc/):** hydrophone capture (Daisy Seed, 4 ch, 96 kHz / 24-bit) and Whisper on the Orin. `scripts/record_daisy.py` uses its `daisy_stream.py`.
+
+## Status (2026-11-19)
+
+- **Simulation: done.** `uwsim` v0, the adapters, the training of C2, C8 and C10, and the E7 sim-only dry run are complete. The frozen evaluation protocol is signed off. The C8 checkpoint is frozen (sha256 `5063f02f…`). Every simulation number is a pipeline check on an uncalibrated simulator and is not for quoting as a real result; see [`RESULTS_E7_SIM_DRYRUN.md`](RESULTS_E7_SIM_DRYRUN.md).
+- **Real data: next.** One session in the lead's own pool, under the no-thruster pool plan of 2026-11-19 ([`PROTOCOL.md`](PROTOCOL.md)). The session tooling, the analysis scripts and the paper-number macros are written and tested. No recording exists yet.
+- **After the session.** Score, generate `paper/results_real.tex` and `paper/fig_real.pdf`, build the abstract and submit it (due 2027-01-15).
+- **Retired.** The thruster S1 plan (`sessions/2026-11-09_s1`, bench `data/bench/v0_s1`) was never recorded. Its bench stays frozen and unused.
+
+## Documents
 
 | Doc | What |
 |---|---|
-| [`RESEARCH_PLAN.md`](RESEARCH_PLAN.md) | **The script of the research**: research questions and pre-registered hypotheses, simulator spec, pool benchmark protocol, models, evaluation, experiments E0-E24, week-by-week schedule with go/no-go gates, risks, paper skeleton and abstract template. Section 0 lists corrections that override this README. |
-| [`PRIOR_ART.md`](PRIOR_ART.md) | First prior-art search (2026-10-26) and positioning |
-| [`FINDINGS.md`](FINDINGS.md) | Second, deeper research pass (2026-10-27): pool physics, full texts of close papers, SE methodology, hardware, venue |
-| [`RESEARCH_UPDATE_3.md`](RESEARCH_UPDATE_3.md) | Third research pass (2026-10-27): multilingual/thesis/patent prior art, Kiel lineage, verification of unverified claims, model and data licences, Stanford logistics, plan deltas |
+| [`PROTOCOL.md`](PROTOCOL.md) | **The current protocol on one page:** what is frozen, the endpoint, the pilot decision rule, the systems and the scoring. |
+| [`docs/RECORDING_SESSION_CHECKLIST.md`](docs/RECORDING_SESSION_CHECKLIST.md) | **Operator checklist:** bench build, dry run, gear, rigging, safety and amplifier procedure, take loop, pilot decision, backup, import, scoring and the abstract build. |
+| [`RESULTS_E7_SIM_DRYRUN.md`](RESULTS_E7_SIM_DRYRUN.md) | The frozen record: simulation results, the frozen evaluation protocol (2026-11-05) and every dated amendment, ending with the 2026-11-19 pool plan. Append-only. |
+| [`CODE.md`](CODE.md) | Install, package map, tests, smoke test, training and placeholders. |
+| [`FINDINGS.md`](FINDINGS.md) | Research notes: pool physics, close papers, SE methodology, hardware, venue, and later sim-only analyses. |
+| [`PRIOR_ART.md`](PRIOR_ART.md) | Prior-art search and positioning (2026-10-26, partly superseded by FINDINGS). |
+| [`docs/history/RESEARCH_PLAN.md`](docs/history/RESEARCH_PLAN.md) | The original research plan (rev. 3, 2026-10-27). The frozen protocol cites it for the §-numbered definitions. Its pool protocol and schedule are superseded. |
+| [`docs/history/RESEARCH_UPDATE_3.md`](docs/history/RESEARCH_UPDATE_3.md) | Third research pass (2026-10-27): multilingual, thesis and patent prior art, the Kiel lineage, licences. |
+| `docs/history/oceans2027_*_draft.md` | Superseded sim-only Markdown drafts of the abstract and methods (2026-11-03/06, thruster plan). History only; not the abstract source. |
+| [`paper/`](paper/) | The OCEANS 2027 abstract (`oceans2027_abstract.tex`, IEEEtran conference, at most 2 pages, 500–1000 words) and the full-paper draft (`oceans2027_full.tex`). |
 
-## Has it been done?
-
-No, not as a whole. A prior-art search (5 search angles plus a skeptic pass,
-2026-10-26) found no paper that combines all three of:
-
-1. a physics-based underwater channel simulator applied to clean speech
-   corpora to make paired training data,
-2. fine-tuning of several off-the-shelf SE architectures on that data, and
-3. evaluation on real projector-to-hydrophone speech.
-
-Closest work (the second pass, 2026-10-27, found the Kiel group, which
-narrows the novelty; see `RESEARCH_PLAN.md` section 0):
-
-- **Kiel DSS group (Röhrdanz, Wisch, Schmidt et al.), DAGA 2025 and
-  DAGA 2026.** An underwater speech channel simulator, and a U-Net
-  dereverberator trained on it. The DAGA 2026 paper presents no objective
-  metrics or measured-data results. **The simulator is therefore not our
-  lead contribution.** Kiel has worked on underwater-telephony SE since 2016
-  (theses) and water-tested telephones since 2018.
-- **Real through-water speech has been recorded or enhanced before,**
-  classically and without release: IOA-CAS multichannel enhancement of
-  sea-trial SSB voice (Cao et al. 2017), WTD 71/NATO sea-trial telephone
-  speech with listening tests (Fricke & Nissen 2015; Nissen & Kuhnt-Matthé
-  2017), Kiel in-pool speech (DAGA 2018).
-
-- **Jiang et al., Acta Acustica 2024.** A learned denoiser inside a digital
-  semantic-codec link over simulated underwater channels. It uses one
-  bespoke model, and its speech is never sent acoustically. (Correction:
-  its channels are *measured* CIRs, and the SE stage is MP-SENet.)
-- **LoRA/PEFT for SE already exists** (Cheng & Liu, ICASSP 2026; Bereuter
-  et al., IWAENC 2026). The open gap is only LoRA vs full fine-tuning across
-  architecture families under a physical channel shift, measured on real data.
-- **Rong et al., OCEANS 2025 Brest.** A diver-comms system that converts
-  speech to text with fine-tuned Whisper and sends the text over an acoustic
-  modem. It has a real water trial and reports WER, but speech never crosses
-  the water as audio, so it has no SE. This is the competing design we must
-  argue against.
-- **In-air twins of the method:** Milo et al. (IWAENC 2026, DeepFilterNet
-  plus accurate room simulation), SonicSim (ICLR 2025) and URGENT
-  (Interspeech 2024/25). The recipe of simulating, training any model and
-  testing sim-to-real is established in air. **The novelty is the
-  underwater domain, the real benchmark and the cross-architecture study,
-  not the recipe.**
-
-Full table, related areas, risks and tools: [`PRIOR_ART.md`](PRIOR_ART.md).
-
-## Contributions (in the order to pitch them)
-
-1. **To our knowledge, the first openly released through-water speech
-   benchmark, with a measured channel.** Speech played through a
-   projector in a pool and captured on a 4-channel hydrophone array, with
-   time-aligned clean references. No public corpus like this exists. This is
-   the strongest claim, and it only holds if the data is released.
-2. **Cross-architecture sim-to-real study.** N SE models from M families,
-   each measured zero-shot, after sim fine-tuning, and after sim plus a small
-   real fine-tune, on real pool data. Prior unusual-channel SE work
-   (bone conduction, in-ear) fixes one architecture.
-3. **Open underwater speech channel simulator, validated against measured
-   pool impulse responses and noise.** Without the validation, reviewers
-   will read it as "URGENT with water parameters".
-4. **Downstream evidence for AUV and diver voice comms.** Whisper WER before
-   and after enhancement, compared with the speech-to-text-over-modem design.
-5. **Plug-and-play fine-tuning recipe.** Weak on its own, because toolkits
-   like ESPnet-SE++ and SpeechBrain already exist. Say "validated across N
-   architectures", never "works for any model". It becomes stronger with an
-   architecture-agnostic adaptation method: LoRA/PEFT for SE (no prior work
-   found) or RemixIT-style self-training on unlabeled pool audio.
-
-Claims to avoid:
-
-- "First underwater speech enhancement." Ju et al. (OCEANS 2007),
-  Woodward & Sari (2007) and Gupta et al. (2022) exist.
-- "First deep learning for underwater speech." Jiang et al. (2024) and
-  Luo et al. (JASA 2026) exist.
-- "Unified framework" as the headline. It reads as packaging.
-- "First real through-water speech recordings" or "first enhancement of
-  real through-water speech."
-- "First to align with sync markers." Nissen & Kuhnt-Matthé (2017) did it.
-- "Speech-to-text loses speaker identity." Titanic Calling restores it by
-  voice cloning.
-
-## Framework design
-
-```
-clean speech corpus ─┐
-(LibriSpeech; VCTK   │   ┌──────────── uwsim ─────────────┐
- after licence check)├──▶│ projector response + nonlin.   │
-                     │   │ pool/tank image-source or      │──▶ paired (noisy, clean)
-noise bank ──────────┘   │ Bellhop/measured-CIR channel   │    multichannel WAVs
-(our thrusters, ESCs,    │ absorption, Doppler            │         │
- ambient; DeepShip       │ hydrophone response, ADC       │         │
- internal-only)          │                                │         │
-                         └────────────────────────────────┘         ▼
-                                                     ┌──── adapters ────┐
- any SE model ──────────────────────────────────────▶│ load / fine-tune │──▶ enhanced
- (MetricGAN+, SepFormer, DeepFilterNet,              │ (full or LoRA)   │      speech
-  CMGAN, MP-SENet, SGMSE...)                         └──────────────────┘        │
-                                                                                 ▼
- real pool benchmark (projector → 4 hydrophones, aligned refs) ──────────▶   eval:
-                                                                   Whisper WER, STOI,
-                                                                   PESQ, DNSMOS (2nd)
-```
-
-Code layout (v0 implemented; see [`CODE.md`](CODE.md) for install, tests and
-the list of uncalibrated placeholders):
+## Layout
 
 ```
 uw_speech_enhancement/
-  README.md          this file
-  CODE.md            how to install, test, run; module -> plan section map
-  environment.yml    conda env "uwse" (Python 3.10)
+  README.md  PROTOCOL.md  CODE.md  RESULTS_E7_SIM_DRYRUN.md  FINDINGS.md  PRIOR_ART.md
+  docs/
+    RECORDING_SESSION_CHECKLIST.md   pool-session operator checklist
+    history/                         superseded plans (RESEARCH_PLAN.md, RESEARCH_UPDATE_3.md)
+  environment.yml                    conda env "uwse" (Python 3.10)
   uwse/
-    uwsim/           channel simulator: signed ISM + R(theta), tail, low band,
-                     transducer chain, noise, scene sampler, on-the-fly dataset
-    irtools/         ESS sweeps, drift correction, EDC/T20/two-slope, DRR/C50,
-                     arrivals, sound speed from TOF
-    evaluation/      alignment, level normalization, Whisper WER, ESTOI/PESQ/
-                     CI-SDR, cluster bootstrap, TOST, MAPSSWE
-    adapters/        SEAdapter interface + identity, WPE, MetricGAN+,
-                     SepFormer, DFN3, TF-GridNet, Kiel U-Net (C10), LoRA
-    train/           model-agnostic loop, C7/C9 datasets, Whisper-LoRA (C8)
-    bench/           metadata schema, LibriSpeech manifests, splits, playlists
-  configs/           uwsim_v0.yaml and one YAML per training condition
-  scripts/           train, score, smoke_e2e, make_rir_bank, make_playlists,
-                     fetch_librispeech
-  tests/             pytest suite
-  data/              corpora, noise bank, RIR bank, recordings (git-ignored)
+    uwsim/        channel simulator: signed ISM + R(theta), tail, low band, transducer chain, noise
+    irtools/      ESS sweeps, drift correction, EDC/T20/two-slope, DRR/C50, arrivals, sound speed
+    evaluation/   alignment, level normalization, Whisper WER, metrics, bootstrap, no-speech gate
+    adapters/     SEAdapter interface: identity (C0), WPE (C1), DFN3 (C2), Kiel U-Net (C10), LoRA, ...
+    train/        model-agnostic loop, sim/in-air/replay datasets, Whisper-LoRA (C8)
+    bench/        metadata schema, LibriSpeech selection, splits, playlists, session plan, ingest, SNR
+  configs/        uwsim_v0*.yaml, one YAML per training condition, session channel maps (v1 = pool plan)
+  scripts/        bench build, session tooling, import, scoring, paper numbers, training (see CODE.md)
+  sessions/       one directory per pool session (plan, run sheet, takes.jsonl, raw Daisy files)
+  paper/          abstract and full paper (LaTeX), figure scripts, macro placeholders
+  tests/          pytest suite
+  data/           corpora, RIR bank, benches, imported recordings (git-ignored)
+  runs/           checkpoints and score outputs (git-ignored)
 ```
 
-### Simulator (`uwsim`)
+## Quick start
 
-The physics should be as simple as possible, but calibrated against
-measurements.
+Run everything from this directory in the `uwse` env. The PC is the Windows machine, and Linux is the Daisy capture machine. The checklist has every flag and the safety steps; this section is only the outline.
 
-- **Pool:** a custom image-source model with *signed*, angle-dependent
-  reflection coefficients. pyroomacoustics cannot represent the
-  pressure-release surface (R = -1), because its reflection coefficients are
-  non-negative, so it is kept only as the in-air-style baseline. Take c from
-  a fresh-water sound-speed equation at the logged temperature (about
-  1497-1502 m/s at 25-27 °C) and fit wall and floor reflection to measured
-  pool IRs. The pool is a shallow waveguide (cutoff about 88-112 Hz in
-  Stanford's 3.35-4.27 m Avery Competition pool, computed). The lower
-  scoring edge is set by the projector: about 500-650 Hz for the LL916
-  unless pre-emphasis works.
-- **Open water:** Bellhop through arlpy, or replay of measured channels
-  (Watermark, Underwater Acoustic Channel Library). Use it as a semi-real
-  generalization test, not as the main claim.
-- **Transducers:** apply the measured projector FIR and a Hammerstein-style
-  nonlinearity fitted from a THD-vs-drive sweep. Apply each hydrophone's
-  measured response; the baseline purchased hydrophones project (#2) can
-  supply calibration data.
-- **Noise:** our own thruster and ESC recordings first (the thruster
-  denoising project, #15, measures them), then ambient noise and DeepShip.
-- **Domain randomization:** pool dimensions, source and receiver positions,
-  reflection coefficients, sound-speed jitter, SNR, transducer response.
-  Ablate each component.
+**Record (one session, number 2):**
 
-### Adapters
+```
+# desk, once
+python scripts/make_playlists.py --plan pool --librispeech-root data/librispeech --out data/bench/v1
+python scripts/make_session_audio.py --bench data/bench/v1
+python scripts/run_session.py plan --bench data/bench/v1 --session 2 --channel-map configs/session_channels_v1.json \
+  --session-dir sessions/<date>_s2 --distances 1 3 6 --pool-length-m L --pool-width-m W --pool-depth-m D --date <date>
+python scripts/run_session.py levels --session-dir sessions/<date>_s2 --target-sl-db 160 --brick-v <V>
 
-Every SE model is wrapped behind one interface, so `train.py` and `eval/`
-never know which model they hold:
+# at the pool, once: set the knob with the 1 kHz tone on a floating DMM, tape it, check
+python scripts/run_session.py tone   --session-dir sessions/<date>_s2
+python scripts/run_session.py levels --session-dir sessions/<date>_s2 --tone-vrms <DMM> --brick-v <V>
 
-```python
-class SEAdapter:
-    sample_rate: int                       # model's native rate
-    def load_pretrained(self) -> None: ...
-    def enhance(self, wav: Tensor) -> Tensor: ...          # (B, T) -> (B, T)
-    def loss(self, noisy: Tensor, clean: Tensor) -> Tensor: ...
-    def trainable_params(self, mode: str) -> Iterable[Parameter]: ...  # "full" | "lora"
+# each take, in plan order
+# Linux: type the take's two record_daisy.py lines from RUN_SHEET.md / daisy_cmds.txt (start both boards)
+python scripts/run_session.py take       --session-dir sessions/<date>_s2 --take-id <take> ... # PC, within 20 s
+python scripts/run_session.py verify     --session-dir sessions/<date>_s2 --take-id <take>     # PC, after copying the files
+python scripts/run_session.py check      --session-dir sessions/<date>_s2 --take-id <take>     # PC, QC + import lines
 ```
 
-Reuse ESPnet-SE++, SpeechBrain and ClearerVoice-Studio checkpoints; don't
-reimplement models. Start with three families: MetricGAN+ (masking),
-SepFormer (time-domain; Demucs/denoiser is CC-BY-NC and archived), and
-DeepFilterNet (deep filtering). Add
-CMGAN, MP-SENet and SGMSE (diffusion) later.
+**Score:**
 
-### Real benchmark (`bench`)
+```
+import_recording.py (lines from import_cmds.txt, or check --run-import; --out routed by take: main, pilot/, chainref/, bubble/)
+make_score_manifest.py -> pilot_wer.py (pilot decision on site; chain reference later)
+mix_real_noise.py      -> score_session.py -> make_paper_numbers.py -> paper/results_real.tex, paper/fig_real.pdf
+```
 
-- **Source:** LibriSpeech test-clean plus live talkers, played through the
-  projector.
-- **Positions:** a grid of distances (e.g. 1, 3, 10, 20 m), depths and
-  orientations. Run each with thrusters off and on.
-- **Capture:** 4 channels through `whisper_ivc/daisy_stream.py` at
-  96 kHz / 24-bit, keeping the raw native-rate WAVs.
-- **Alignment:** play a sync chirp at the start and end of every clip, then
-  cross-correlate and correct drift. The two Daisys are on separate clocks,
-  see the clock-sync project (#9).
-- **Splits:** strict train/test split by position and by speaker. A small
-  real set may be used only for the "sim + small real fine-tune" condition.
-- **Ground truth for the simulator:** exponential sine sweeps at several
-  source and receiver positions give the measured pool IRs.
+The exact commands are in the checklist, sections 4.3, 5 and 6.
 
-### Evaluation
+## Systems
 
-- **Primary:** Whisper large-v3 WER plus one non-Whisper ASR, and STOI.
-- **Secondary:** PESQ; non-intrusive DNSMOS P.835, NISQA and Distill-MOS,
-  used only if they pass sanity checks; SQUIM validated against intrusive
-  metrics on our data. DNSMOS is trained in air, so don't trust it alone.
-- **Statistics:** bootstrap confidence intervals and paired significance
-  tests.
-- **Results table:** for each model, compare no enhancement, the pretrained
-  model zero-shot, sim fine-tuned, sim plus real fine-tuned, and real only.
+| Id | System | Role |
+|---|---|---|
+| C0 | Whisper large-v3, guarded decode, no adaptation | baseline; the pilot rule |
+| C8 | C0 plus a LoRA trained on `uwsim` with stationary noise (`runs/c8_whisper_lora_stat_s1/best_wer.pt`) | **primary** comparison, C8 vs C0 |
+| C1 | WPE dereverberation into C0 | secondary |
+| C2 | DeepFilterNet3 fully fine-tuned on `uwsim`, into C0 | secondary |
+| C10 | Kiel-recipe U-Net trained on `uwsim`, into C0 | secondary |
 
-## Main risks
+## Positioning (has it been done?)
 
-| Risk | Mitigation |
-|---|---|
-| Sim-to-real gap | Calibrate to measured pool IRs; domain randomization; report the gap per model |
-| Pool is not the ocean | Scope claims to the pool; semi-real test on measured ocean channels; second site if possible |
-| Small real test set | Many positions and speakers, confidence intervals, release the data |
-| Projector weak below ~1 kHz, distorts | Measure its response and THD; model it or pre-equalize; report usable band |
-| "Why not text over a modem?" (Rong 2025) | Argue latency, identity and prosody without enrolment, no vocabulary limits, no fluent hallucinated text after ASR errors, graceful degradation; cite the lineage (ICNNSP 2003, US8682244, RU2658477, Teledyne US12136424, Rong 2025, Titanic Calling); compare WER vs range if possible |
-| RoboSub acoustic rules | Check the handbook; never transmit in the 25-40 kHz pinger band |
+As a whole, no. Prior-art passes (2026-10-26 and 10-27) found no paper that combines all three of:
+
+1. simulated underwater speech from a physics-based channel model;
+2. training SE models and an ASR adapter on it;
+3. testing on real projector-to-hydrophone speech.
+
+The closest work:
+
+- **Kiel DSS group** (DAGA 2025/2026). An underwater speech channel simulator and a U-Net dereverberator, with no objective real-data results. The simulator is therefore not the lead contribution; C10 is a reconstruction of their recipe.
+- **Earlier real through-water speech**, classical and unreleased: IOA-CAS sea trials (Cao et al. 2017), WTD 71 / NATO telephone trials (Fricke & Nissen 2015; Nissen & Kuhnt-Matthé 2017), Kiel in-pool speech (DAGA 2018).
+- **Jiang et al., Acta Acustica 2024.** A learned denoiser in a digital semantic-codec link over measured channels. The speech is never sent acoustically.
+- **Rong et al., OCEANS 2025.** Speech-to-text with a fine-tuned Whisper, then text over an acoustic modem. This is the competing design to argue against.
+- **In-air twins** (SonicSim, URGENT, Milo et al. 2026). The simulate, train and test-sim-to-real recipe is established in air. The novelty here is the underwater domain, the real measured benchmark, and the comparison of enhancement against recognizer adaptation.
+
+**Claims to avoid:**
+- "First underwater speech enhancement" (Ju et al. 2007 and others exist).
+- "First deep learning for underwater speech" (Jiang 2024, Luo 2026).
+- "First real through-water speech recordings."
+- "First to align with sync markers" (Nissen & Kuhnt-Matthé 2017).
+- "Works for any model."
+- Any claim beyond one pool, one session and one projector.
+
+The details are in [`PRIOR_ART.md`](PRIOR_ART.md) and [`FINDINGS.md`](FINDINGS.md).
 
 ## Venue: OCEANS 2027 Aberdeen
 
-Venue details below are from the official sites, checked 2026-10-26.
+- **Event:** IEEE/MTS OCEANS 2027, 21–24 June 2027, P&J Live, Aberdeen (<https://aberdeen27.oceansconference.org/>).
+- **Deadlines:** abstract due **15 January 2027** (EventsAir portal); notifications in March 2027; final paper due **24 May 2027**.
+- **Abstract format:** abstract-only review; IEEEtran conference, at most 2 pages, 500–1000 words including figures and references, as a PDF. Check the portal for the final Aberdeen limits.
+- **Tracks and competition:** Track 02 (Sonar Signal/Image Processing and Communication) is the main fit. Also submit to the Student Poster Competition.
+- **What the abstract needs:**
+  - real pool numbers: C0 vs C8 WER with CIs, by distance;
+  - the pilot decision and the chain-reference WER;
+  - the oceans framing (AUV and diver voice comms);
+  - explicit positioning against Rong 2025 and Jiang 2024;
+  - a commitment to release the simulator, the benchmark and the scripts.
 
-- **Event:** IEEE/MTS OCEANS 2027, 21-24 June 2027, P&J Live, Aberdeen
-  (<https://aberdeen27.oceansconference.org/>).
-- **Deadlines:** abstracts are due **15 January 2027** through the EventsAir
-  portal, notifications come out in March 2027, and the final paper is due
-  **24 May 2027**.
-- **Review:** abstract-only review. Recent editions asked for a 1-2 page
-  abstract of 500-1000 words and a 4-6 page paper. The Aberdeen limits
-  aren't published yet, so check the portal.
-- **Selectivity:** historical OCEANS acceptance runs roughly 62-90%; Halifax
-  2024 accepted about 66%.
-- **Student Poster Competition:** about 20 students are chosen from more than
-  100 submissions, and finalists get travel support. Submit to the regular
-  program too.
-- **Tracks:** Track 02 (Sonar Signal/Image Processing and Communication) is
-  the main fit. Track 01 and the local "Digital Innovation in Oceans" track
-  (AI, digital twins) are secondary fits.
+## Decided
 
-**Will it be accepted?** It is likely but not guaranteed. The odds are good
-for a competent abstract with real results, and OCEANS has published both
-underwater SE (Ju et al., 2007) and diver speech ML (Rong et al., 2025). The
-Student Poster Competition is much harder (under about 20%). The talk is in
-person, so budget for travel. OCEANS counts less than ICASSP or Interspeech
-in the speech community. Use it as a first venue, then extend the work to
-IEEE JOE, Interspeech or ICASSP.
+- **Authorship:** sole author, Ryota Sato (decided 2026-11-19).
+- **Projector:** Lubell LL916C with the AC205C, bought, driven by an off-the-shelf class-D amplifier with bridged outputs. The safety procedure is in the checklist, §3.
+- **Pool:** the lead's own pool, available any time.
+- **Speech transport:** baseband. The pool plan plays the speech files directly, with no ultrasonic carrier.
 
-Things the abstract needs:
-
-1. Real pool numbers, even preliminary: WER and STOI before and after
-   fine-tuning, for 2-3 models.
-2. One figure comparing the simulated and measured pool IR or noise
-   spectrum.
-3. Oceans framing: AUV and diver voice comms, and the channel physics. Avoid
-   pitching it as an SE leaderboard.
-4. Explicit positioning against Rong et al. 2025 and Jiang et al. 2024.
-5. A commitment to release the simulator, the benchmark and the scripts.
-
-## Timeline to the abstract (15 Jan 2027)
-
-| Weeks (from 2026-10-26) | Milestone |
-|---|---|
-| 1-2 | Agree on scope and credit with Kaito and Keiya; read the full texts of Jiang 2024 and Jin 2024; check the RoboSub IVC rules; faculty sponsor named by 10-30; IRB submission 11-03 |
-| 2-4 | Measure the projector response and THD; measure pool IRs with sine sweeps; record thruster noise |
-| 3-6 | `uwsim` v0 (image source plus transducers plus noise), calibrated to the pool IRs; generate paired data |
-| 4-7 | Adapters for 3 models; zero-shot and sim fine-tune runs |
-| 6-9 | Record the real benchmark v0 (LibriSpeech playback, several positions, thrusters off and on) |
-| 9-10 | Evaluate on real data; make the results table and the sim-vs-real IR figure |
-| 10-11 | Write and submit the abstract (regular track plus the Student Poster Competition) |
-
-After acceptance: expand to more models and LoRA, a second site, and the
-data release, all by the 24 May final paper, then a journal extension.
-
-## Open questions
-
-- ~~Authorship~~ Decided 2026-11-19: sole author (Ryota Sato).
-- ~~Projector~~ Bought: Lubell LL916C (caged, 50 ft cable) with the AC205,
-  driven by an off-the-shelf amplifier.
-- ~~Pool~~ Decided: the lead's own pool, available any time, so no booking
-  or Aquatics approval is needed.
-- Compute: the Orin for inference; training happens elsewhere.
-- Whether the speech is sent in baseband or on an ultrasonic carrier (SSB or
-  AM). Commercial diver comms use an ultrasonic carrier of about 32 kHz;
-  baseband is simpler. Any carrier in 25-40 kHz is forbidden at RoboSub,
-  because the handbook keeps the pinger band off limits for intervehicle
-  comms.
-
-_Last updated: 2026-10-27_
+_Last updated: 2026-11-19_

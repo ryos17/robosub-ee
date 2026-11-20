@@ -3,6 +3,25 @@
 Everything here is hardware-free, so it can be tested on synthetic takes; the
 audio I/O lives in ``scripts/run_session.py``.
 
+Pool plan (2026-11-19; no thruster; bench from ``make_playlists.py --plan pool``):
+
+- `build_pool_plan`: (0) ``dryrun`` desk/bucket dry run of ``anchor.wav`` (files go to
+  ``<session>/dryrun/``, never the session raw dir); (1) chain reference at ``ref_m``:
+  ``ref_sweeps`` + ``ref_speech`` (the pilot sentences); (2) ``pilot_speech`` at ``pilot_m``;
+  (3) per distance d (chosen on the day): ``<p>_noise``, ``<p>_sweeps``, ``<p>_speech``
+  (``<p>_speech_<k>`` if the bench split the file), ``<p>_anchor``; (4) bubble pass at
+  ``bubble_m``: ``<p>bub_noise`` and ``<p>bub_speech``. Position labels are ``p`` + distance
+  (`pos_label`: 1 -> p1, 0.5 -> p0p5); the chain reference, pilot and bubble takes get the
+  suffixes ``ref``, ``pilot``, ``bub`` so their utt_ids are separable from the main takes.
+- `plan_from_meta`: the plan of a session.json (pool or legacy).
+- `raw_path` / `take_label`: recorder file names, with ``_r<k>`` for redo attempt k >= 2.
+- `daisy_commands` / `verify_files`: the Linux ``record_daisy.py`` lines of a take and the
+  check that the copied Daisy files are all there before ``run_session.py check``.
+- `tone_drive` / `tone_target_vrms`: the drive (active Vrms, peak V) and nominal source level
+  of every file from the measured Vrms of the 1 kHz level tone.
+
+Legacy plan (thruster schedules, e.g. the frozen data/bench/v0_s1):
+
 - `build_plan`: the ordered take list for one session (noise with the thruster off
   and, where the position has thruster-on blocks, on; sweeps; speech per position;
   then the drift anchor and the extra noise-bank takes), with each take's chirp onsets and the thruster cues an operator must follow.
@@ -32,9 +51,46 @@ from uwse.bench import playlist as pl
 
 #: nominal LL916C source level, dB re 1 uPa @ 1 m at 1 kHz for 20 Vrms drive (Lubell; RESEARCH_PLAN.md 6.1)
 LL916_SL_DB_AT_20VRMS = 180.0
+#: Lubell maximum drive of the LL916: hard cap
+LL916_MAX_VRMS = 20.0
 #: received-level rule (6.2): <= 150 dB re 1 uPa where anyone is in the water
 RL_LIMIT_DB = 150.0
+#: sample RMS of a full-scale (peak 1.0) sine, dBFS: 20 log10(1/sqrt 2) = -3.01
+SINE_RMS_DBFS = 20.0 * float(np.log10(np.sqrt(0.5)))
+#: peak drive must stay under this fraction of the amplifier's DC supply (bridged TPA3255 headroom)
+PEAK_SUPPLY_FRACTION = 0.9
 EXTRA_NOISE = ("quiet_pool", "thruster", "bubbles_splashing", "pumps")
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+
+
+def resolve_path(p: str | Path, root: Path = PROJECT_ROOT) -> Path:
+    """A session.json path: relative to the project root, or absolute.
+
+    An absolute path that no longer exists (the project moved, e.g. from
+    ``repos/underwater_asr`` to the robosub-ee worktree) is re-rooted at the first
+    ``data``/``sessions``/``runs`` component, if that exists under ``root``.
+    """
+    p = Path(p)
+    if not p.is_absolute():
+        return root / p
+    if p.exists():
+        return p
+    parts = p.parts
+    for i, part in enumerate(parts):
+        if part in ("data", "sessions", "runs"):
+            cand = root.joinpath(*parts[i:])
+            if cand.exists() or (root / part).is_dir():
+                return cand
+    return p
+
+
+def portable_path(p: str | Path, root: Path = PROJECT_ROOT) -> str:
+    """Store a path relative to the project root when it is inside it (posix separators)."""
+    p = Path(p).resolve()
+    try:
+        return p.relative_to(root.resolve()).as_posix()
+    except ValueError:
+        return str(p)
 
 
 @dataclass
@@ -56,7 +112,13 @@ class Take:
     n_utts: int = 0
     importable: bool = False  # speech / anchor takes go through import_recording.py
     gain_db: float = 0.0  # digital gain applied to the played file (E2 drive levels)
-    setup: str = ""  # rig setup an operator must make before the take (E2/E3/E4 groups)
+    setup: str = ""  # rig setup an operator must make before the take
+    # pool plan
+    played: str | None = None  # stem of the played pool-plan session file (load_played); None = legacy
+    program: str | None = None  # pilot | speech | anchor | bubble | sweeps | noise
+    distance_m: float | None = None  # nominal projector-hydrophone distance
+    dryrun: bool = False  # files go to <session>/dryrun/, never imported
+    bubbles: bool = False  # air stone running near the speaker
 
 
 def _speech_take(bench: Path, pos: str, anchor: bool) -> Take:
@@ -96,6 +158,231 @@ def audio_duration(path: Path, fallback: float = 0.0) -> float:
         return info.frames / info.samplerate
     except Exception:
         return fallback
+
+
+# ------------------------------------------------------------------ pool plan (2026-11-19)
+POOL_DEFAULTS = {"distances_m": [1.0, 3.0, 6.0], "ref_m": 1.0, "pilot_m": 3.0, "bubble_m": 3.0,
+                 "noise_s": 60.0, "bubble_noise_s": 120.0, "dry_run": True}
+SAFETY_CUE = "NOBODY IN THE WATER while the projector plays"
+BUBBLE_SETUP = "AIR STONE RUNNING near the speaker (pump on, steady) BEFORE the recorders start"
+
+
+def is_pool_bench(bench: str | Path) -> bool:
+    return (Path(bench) / "session" / "programs.json").exists()
+
+
+def pos_label(d: float) -> str:
+    """Position id of a distance: 1 -> p1, 0.5 -> p0p5, 4.5 -> p4p5 (utt_id grammar p[0-9a-z]+)."""
+    if not (np.isfinite(d) and d > 0):
+        raise ValueError(f"distance must be > 0 m, got {d}")
+    return "p" + _num(round(float(d), 3))
+
+
+def _played_take(bench: Path, stem: str, take_id: str, kind: str, pos: str, program: str,
+                 distance_m: float | None, setup: str = "", dryrun: bool = False, bubbles: bool = False) -> Take:
+    fs, blocks = ingest.load_played(bench, stem)
+    chirps, cues = [], [Cue(0.0, SAFETY_CUE)]
+    if setup:
+        cues.append(Cue(0.0, f"CHECK: {setup}"))
+    for b in blocks:
+        chirps += [s / fs for s in b.chirp_starts]
+        cues.append(Cue(round(b.start_sample / fs, 2), f"block {b.block_id} {b.content_block}"))
+    last = blocks[-1]
+    end = last.start_sample + int(last.timing["n_samples"])
+    cues.append(Cue(round(end / fs, 2), "last end chirp done; keep recording to the end of the file"))
+    return Take(take_id=take_id, kind=kind, position_id=pos, file=f"{stem}.wav",
+                duration_s=audio_duration(bench / "session" / f"{stem}.wav", fallback=end / fs),
+                chirps_s=[round(c, 4) for c in chirps], cues=cues, n_blocks=len(blocks),
+                n_utts=sum(len(b.timing["utterances"]) for b in blocks), importable=not dryrun, setup=setup,
+                played=stem, program=program, distance_m=distance_m, dryrun=dryrun, bubbles=bubbles)
+
+
+def _sweeps_take(bench: Path, take_id: str, pos: str, distance_m: float, sw: dict) -> Take:
+    fs = sw["fs"]
+    return Take(take_id, "sweeps", pos, "sweeps.wav", audio_duration(bench / "session" / "sweeps.wav"),
+                chirps_s=[round(sw["chirp_start_sample"] / fs, 4)],
+                cues=[Cue(0.0, SAFETY_CUE)] + [Cue(round(s / fs, 2), f"sweep {k + 1}")
+                                               for k, s in enumerate(sw["sweep_start_samples"])],
+                program="sweeps", distance_m=distance_m)
+
+
+def _noise_take(take_id: str, pos: str, distance_m: float, dur: float, setup: str = "",
+                bubbles: bool = False) -> Take:
+    text = "NOTHING PLAYING: noise-only take" + (f"; {setup}" if setup else "")
+    return Take(take_id, "noise", pos, None, dur, cues=[Cue(0.0, text)], setup=setup, program="noise",
+                distance_m=distance_m, bubbles=bubbles)
+
+
+def build_pool_plan(bench: str | Path, distances_m: Sequence[float] = POOL_DEFAULTS["distances_m"],
+                    ref_m: float = POOL_DEFAULTS["ref_m"], pilot_m: float = POOL_DEFAULTS["pilot_m"],
+                    bubble_m: float | None = POOL_DEFAULTS["bubble_m"], noise_s: float = POOL_DEFAULTS["noise_s"],
+                    bubble_noise_s: float = POOL_DEFAULTS["bubble_noise_s"],
+                    dry_run: bool = POOL_DEFAULTS["dry_run"]) -> list[Take]:
+    """Take order of the no-thruster pool plan (module docstring). ``bubble_m=None`` drops the bubble pass."""
+    bench = Path(bench)
+    progs = json.loads((bench / "session" / "programs.json").read_text(encoding="utf-8"))
+    by_prog: dict[str, list[str]] = {}
+    for f in progs["files"]:
+        by_prog.setdefault(f["program"], []).append(Path(f["file"]).stem)
+    missing = [p for p in ("pilot", "speech", "anchor") if p not in by_prog]
+    if missing:
+        raise ValueError(f"{bench}: programs.json lacks {missing}")
+    if len(by_prog["anchor"]) != 1 or len(by_prog["pilot"]) != 1:
+        raise ValueError("the anchor and pilot programs must be single files")
+    sw = json.loads((bench / "session" / "sweeps.json").read_text(encoding="utf-8"))
+    dists = [float(d) for d in distances_m]
+    labels = [pos_label(d) for d in dists]
+    if not dists or len(set(labels)) != len(labels):
+        raise ValueError(f"distances must be distinct and non-empty, got {dists}")
+    plan: list[Take] = []
+    anchor = by_prog["anchor"][0]
+    if dry_run:
+        plan.append(_played_take(bench, anchor, "dryrun", "dryrun", "pdry", "anchor", None, dryrun=True,
+                                 setup="DESK DRY RUN, projector SUBMERGED in a bucket (never driven in air), knob "
+                                       "just above minimum (tone about 0.1 Vrms): full chain (PC, interface, amp, "
+                                       "AC205C, projector, hydrophones, both Daisy boards); QC must PASS"))
+    rp = pos_label(ref_m) + "ref"
+    plan.append(_sweeps_take(bench, "ref_sweeps", rp, ref_m, sw))
+    plan.append(_played_take(bench, by_prog["pilot"][0], "ref_speech", "speech", rp, "pilot", ref_m,
+                             setup=f"CHAIN REFERENCE: hydrophone {ref_m:g} m from the projector, on axis"))
+    pp = pos_label(pilot_m) + "pilot"
+    plan.append(_played_take(bench, by_prog["pilot"][0], "pilot_speech", "speech", pp, "pilot", pilot_m,
+                             setup=f"PILOT at {pilot_m:g} m; score with C0 on site before the distance takes"))
+    for d, p in zip(dists, labels):
+        plan.append(_noise_take(f"{p}_noise", p, d, noise_s))
+        plan.append(_sweeps_take(bench, f"{p}_sweeps", p, d, sw))
+        parts = by_prog["speech"]
+        for k, stem in enumerate(parts, start=1):
+            tid = f"{p}_speech" if len(parts) == 1 else f"{p}_speech_{k}"
+            plan.append(_played_take(bench, stem, tid, "speech", p, "speech", d))
+        plan.append(_played_take(bench, anchor, f"{p}_anchor", "anchor", p, "anchor", d))
+    if bubble_m is not None:
+        if "bubble" not in by_prog:
+            raise ValueError("the bench has no bubble program; pass bubble_m=None (--no-bubbles)")
+        bp = pos_label(bubble_m) + "bub"
+        plan.append(_noise_take(f"{bp}_noise", bp, bubble_m, bubble_noise_s, setup=BUBBLE_SETUP, bubbles=True))
+        for k, stem in enumerate(by_prog["bubble"], start=1):
+            tid = f"{bp}_speech" if len(by_prog["bubble"]) == 1 else f"{bp}_speech_{k}"
+            plan.append(_played_take(bench, stem, tid, "speech", bp, "bubble", bubble_m, setup=BUBBLE_SETUP,
+                                     bubbles=True))
+    ids = [t.take_id for t in plan]
+    if len(set(ids)) != len(ids):
+        raise ValueError(f"take ids repeat: {ids}")
+    return plan
+
+
+def plan_from_meta(meta: dict) -> list[Take]:
+    """The take plan stored in a session.json (pool or legacy)."""
+    bench = resolve_path(meta["bench"])
+    if meta.get("plan") == "pool":
+        o = meta["pool"]
+        return build_pool_plan(bench, o["distances_m"], o["ref_m"], o["pilot_m"], o["bubble_m"], o["noise_s"],
+                               o["bubble_noise_s"], o["dry_run"])
+    return build_plan(bench, noise_s=meta["noise_s"], extra_noise=meta["extra_noise"],
+                      extra_noise_s=meta["extra_noise_s"], groups=meta.get("groups"))
+
+
+def take_label(take_id: str, attempt: int = 1) -> str:
+    """File label of a take attempt: ``p3_speech`` (attempt 1), ``p3_speech_r2`` (redo 2), ..."""
+    if attempt < 1:
+        raise ValueError("attempt must be >= 1")
+    return take_id if attempt == 1 else f"{take_id}_r{attempt}"
+
+
+def raw_path(sdir: str | Path, session: int, take: Take | str, rec: str, attempt: int = 1,
+             dryrun: bool | None = None) -> Path:
+    """``<sdir>/raw/<rec>/s<N>_<label>_<rec>.wav``; dry-run takes live under ``<sdir>/dryrun/raw``."""
+    tid = take if isinstance(take, str) else take.take_id
+    if dryrun is None:
+        dryrun = bool(getattr(take, "dryrun", False))
+    base = Path(sdir) / ("dryrun" if dryrun else "") / "raw" / rec
+    return base / f"s{session}_{take_label(tid, attempt)}_{rec}.wav"
+
+
+def latest_attempt(sdir: str | Path, session: int, take: Take, recs: Sequence[str]) -> int:
+    """Highest attempt with a file of any of ``recs`` on disk (1 if none)."""
+    best = 1
+    for rec in recs:
+        d = raw_path(sdir, session, take, rec).parent
+        if not d.exists():
+            continue
+        for p in d.glob(f"s{session}_{take.take_id}_r*_{rec}.wav"):
+            k = p.name[len(f"s{session}_{take.take_id}_r"):-len(f"_{rec}.wav")]
+            if k.isdigit():
+                best = max(best, int(k))
+    return best
+
+
+def record_seconds(take: Take, lead_s: float = 20.0, tail_s: float = 10.0) -> int:
+    """``record_daisy.py --seconds`` for a take: start the boards ``lead_s`` before playback."""
+    return int(np.ceil(take.duration_s + lead_s + tail_s))
+
+
+def daisy_commands(take: Take, cmap: "ChannelMap", session: int, linux_sdir: str, attempt: int = 1,
+                   lead_s: float = 20.0, tail_s: float = 10.0, python: str = "python") -> list[str]:
+    """Shell lines (Linux capture machine, project root) that record every Daisy board of a take at once.
+
+    Both boards run in the background with ``--seconds``, so they stop on their own after
+    the file; ``wait`` returns when both have written their WAV and sidecar JSON.
+    """
+    recs = [r for r in cmap.recorders.values() if r.board or r.name.lower().startswith("daisy")]
+    if not recs:
+        raise ValueError("the channel map has no Daisy recorder")
+    secs = record_seconds(take, lead_s, tail_s)
+    lines = []
+    for r in recs:
+        rel = raw_path("", session, take, r.name, attempt).as_posix().lstrip("/")
+        out = f"{linux_sdir.rstrip('/')}/{rel}"
+        board = f" --board {r.board}" if r.board else ""
+        lines.append(f"{python} scripts/record_daisy.py{board} --rate {r.fs} --seconds {secs} --out {out} &")
+    lines.append("wait")
+    return lines
+
+
+def verify_files(sdir: str | Path, session: int, take: Take, cmap: "ChannelMap", attempt: int = 1,
+                 min_fraction: float = 1.0) -> dict[str, Any]:
+    """Are the copied hydrophone-recorder files of a take all there and plausible?
+
+    Per recorder with hydrophones: the WAV exists, has the map's rate and enough channels, lasts
+    at least ``min_fraction`` x the played file, and its ``.wav.json`` sidecar (record_daisy.py)
+    reports no USB frame drops. ``ok`` is False when any file is missing or short; frame drops
+    only warn (QC in ``check`` decides).
+    """
+    import soundfile as sf
+
+    out: dict[str, Any] = {"take_id": take.take_id, "attempt": attempt, "ok": True, "files": {}}
+    for r in cmap.recorders.values():
+        if not r.hydrophones:
+            continue
+        p = raw_path(sdir, session, take, r.name, attempt)
+        row: dict[str, Any] = {"file": str(p), "ok": False}
+        if not p.exists():
+            row["error"] = "missing"
+        else:
+            info = sf.info(str(p))
+            row.update({"fs": info.samplerate, "channels": info.channels, "seconds": round(info.duration, 2)})
+            need_ch = 1 + max(list(r.hydrophones) + list(r.other))
+            errs = []
+            if info.samplerate != r.fs:
+                errs.append(f"rate {info.samplerate} != {r.fs}")
+            if info.channels < need_ch:
+                errs.append(f"{info.channels} channels < {need_ch}")
+            if info.duration < min_fraction * take.duration_s:
+                errs.append(f"{info.duration:.1f} s shorter than the {take.duration_s:.1f} s take")
+            side = p.with_suffix(p.suffix + ".json")
+            if side.exists():
+                meta = json.loads(side.read_text(encoding="utf-8"))
+                row["dropped"] = int(meta.get("dropped", 0))
+                if row["dropped"]:
+                    row["warning"] = f"{row['dropped']} USB frame drops; QC decides"
+            else:
+                row["warning"] = "no record_daisy.py sidecar (.wav.json)"
+            row["ok"] = not errs
+            if errs:
+                row["error"] = "; ".join(errs)
+        out["files"][r.name] = row
+        out["ok"] &= row["ok"]
+    return out
 
 
 def build_plan(bench: str | Path, noise_s: float = 60.0, extra_noise: Sequence[str] = EXTRA_NOISE,
@@ -228,9 +515,10 @@ def extra_groups(groups: dict, sw: dict | None, sweeps_s: float) -> list[Take]:
     return out
 
 
-def utterance_rows(bench: str | Path, pos: str, anchor: bool = False) -> list[dict[str, Any]]:
+def utterance_rows(bench: str | Path, pos: str | None, anchor: bool = False,
+                   played: str | None = None) -> list[dict[str, Any]]:
     """One row per utterance of a played file: where it is in the file and what is said."""
-    fs, blocks = ingest.load_session(bench, pos, anchor=anchor)
+    fs, blocks = ingest.load_blocks(bench, pos or "", anchor=anchor, played=played)
     rows = []
     for b in blocks:
         for k, u in enumerate(b.timing["utterances"]):
@@ -256,16 +544,49 @@ def file_levels(x: np.ndarray, fs: int, frame_s: float = 0.02, active_db: float 
             "active_fraction": float(act.mean()), "duration_s": len(x) / fs}
 
 
-def drive_estimate(rms_dbfs: float, vrms_at_0dbfs: float, amp_gain_db: float,
-                   sl_at_20vrms: float = LL916_SL_DB_AT_20VRMS) -> dict[str, float]:
-    """Projector drive (Vrms) and nominal source level for a digital RMS level.
+def sl_from_vrms(v: float, sl_at_20vrms: float = LL916_SL_DB_AT_20VRMS) -> float:
+    """Nominal LL916 source level (dB re 1 uPa @ 1 m, 1 kHz sensitivity) for a drive of ``v`` Vrms."""
+    return float(sl_at_20vrms + 20 * np.log10(max(v, 1e-12) / 20.0))
 
-    ``vrms_at_0dbfs`` is the playback interface's output at 0 dBFS (sine RMS),
-    ``amp_gain_db`` the amplifier's voltage gain. The source level uses the
-    projector's nominal 1 kHz sensitivity, so it is an uncalibrated estimate.
+
+def drive_estimate(rms_dbfs: float, vrms_at_0dbfs: float, amp_gain_db: float,
+                   sl_at_20vrms: float = LL916_SL_DB_AT_20VRMS, peak_dbfs: float | None = None) -> dict[str, float]:
+    """Projector drive (Vrms) and nominal source level for a digital (sample) RMS level.
+
+    ``vrms_at_0dbfs`` is the playback interface's output Vrms for a full-scale 0 dBFS sine
+    (peak 1.0, sample RMS `SINE_RMS_DBFS` = -3.01 dBFS), as a meter reads it;
+    ``amp_gain_db`` the amplifier's voltage gain. A signal of sample RMS ``rms_dbfs``
+    therefore drives ``vrms_at_0dbfs * 10^((rms_dbfs - SINE_RMS_DBFS + gain) / 20)``
+    (fix 2026-11-19: this was 3.01 dB low). With ``peak_dbfs`` the peak drive voltage
+    ``drive_peak_v`` is added. The source level uses the projector's nominal 1 kHz
+    sensitivity, so it is an uncalibrated estimate.
     """
-    v = vrms_at_0dbfs * 10 ** ((rms_dbfs + amp_gain_db) / 20)
-    return {"drive_vrms": v, "SL_est_dB": sl_at_20vrms + 20 * np.log10(v / 20.0)}
+    k = vrms_at_0dbfs * 10 ** ((amp_gain_db - SINE_RMS_DBFS) / 20)  # volts per unit sample (RMS = RMS)
+    v = k * 10 ** (rms_dbfs / 20)
+    out = {"drive_vrms": v, "SL_est_dB": sl_from_vrms(v, sl_at_20vrms)}
+    if peak_dbfs is not None:
+        out["drive_peak_v"] = k * 10 ** (peak_dbfs / 20)
+    return out
+
+
+def tone_drive(rms_dbfs: float, peak_dbfs: float, tone_vrms: float, tone_rms_dbfs: float,
+               sl_at_20vrms: float = LL916_SL_DB_AT_20VRMS) -> dict[str, float]:
+    """Drive of a file from the measured Vrms of the level tone (``tone_1k.wav``, sample RMS ``tone_rms_dbfs``).
+
+    The chain is linear, so volts per unit sample is ``tone_vrms / 10^(tone_rms_dbfs / 20)``; a file
+    of active sample RMS ``rms_dbfs`` drives that times its RMS, and its sample peak maps to the peak
+    drive voltage ``drive_peak_v`` (compare with the amplifier supply: `PEAK_SUPPLY_FRACTION`).
+    """
+    k = tone_vrms / 10 ** (tone_rms_dbfs / 20)
+    v = k * 10 ** (rms_dbfs / 20)
+    return {"drive_vrms": v, "drive_peak_v": k * 10 ** (peak_dbfs / 20), "SL_est_dB": sl_from_vrms(v, sl_at_20vrms)}
+
+
+def tone_target_vrms(target_sl_db: float, speech_active_rms_dbfs: float, tone_rms_dbfs: float,
+                     sl_at_20vrms: float = LL916_SL_DB_AT_20VRMS) -> float:
+    """Tone Vrms to dial in so that speech at ``speech_active_rms_dbfs`` reaches ``target_sl_db`` (nominal)."""
+    v_speech = 20.0 * 10 ** ((target_sl_db - sl_at_20vrms) / 20)
+    return float(v_speech * 10 ** ((tone_rms_dbfs - speech_active_rms_dbfs) / 20))
 
 
 def loopback_drive(rms_dbfs: float, in_dbfs_at_1vrms: float, atten_db: float) -> float:
@@ -282,6 +603,17 @@ class Recorder:
     hydrophones: dict[int, int]  # file channel -> benchmark channel id
     other: dict[int, str] = field(default_factory=dict)  # file channel -> role (e.g. monitor)
     note: str = ""
+    board: str | None = None  # Daisy Seed USB serial (record_daisy.py --board)
+
+    @property
+    def records(self) -> bool:
+        """Does this recorder capture any input (else it only plays, e.g. the interface without loopback)?"""
+        return self.loopback is not None or bool(self.hydrophones) or bool(self.other)
+
+    @property
+    def has_sync(self) -> bool:
+        """Can its files be chirp-aligned (a loopback or a hydrophone)?"""
+        return self.loopback is not None or bool(self.hydrophones)
 
 
 class ChannelMap:
@@ -308,7 +640,8 @@ class ChannelMap:
                 else:
                     other[ch] = c["role"]
             ids += hyd.values()
-            self.recorders[name] = Recorder(name, int(r["fs"]), lb, hyd, other, r.get("note", ""))
+            self.recorders[name] = Recorder(name, int(r["fs"]), lb, hyd, other, r.get("note", ""),
+                                            str(r["board"]) if r.get("board") else None)
         if len(set(ids)) != len(ids):
             raise ValueError(f"hydrophone channel_ids repeat across recorders: {sorted(ids)}")
         self.scored_channel = d.get("scored_channel")
@@ -328,24 +661,84 @@ class ChannelMap:
 
 # ------------------------------------------------------------------ QC and import
 def qc_take(path: str | Path, bench: str | Path, position: str, anchor: bool, sync: int,
-            psr_db: float = 6.0, max_drift_ppm: float = 200.0) -> dict[str, Any]:
-    """Chirp alignment of a take on its sync channel; ``ok`` means every chirp passed."""
-    fs, blocks = ingest.load_session(bench, position, anchor=anchor)
-    x, fs_raw, bits = ingest.load_take(path, fs)
-    if sync >= x.shape[0]:
-        return {"ok": False, "error": f"{Path(path).name} has {x.shape[0]} channels, sync {sync}"}
-    lv = file_levels(x[sync], fs)
-    results, qc = ingest.align_take(x[sync:sync + 1], fs, blocks, sync=0, max_drift_ppm=max_drift_ppm,
-                                    psr_threshold_db=psr_db)
+            psr_db: float = 6.0, max_drift_ppm: float = 200.0, played: str | None = None) -> dict[str, Any]:
+    """Chirp alignment of a take on its sync channel; ``ok`` means every chirp passed.
+
+    ``played`` names a pool-plan session file (`ingest.load_played`). Only the sync channel
+    is loaded (block-wise, float32), so a 35 min two-channel 96 kHz take stays well under 1 GB.
+    """
+    fs, blocks = ingest.load_blocks(bench, position, anchor=anchor, played=played)
+    import soundfile as sf
+
+    n_ch = sf.info(str(path)).channels
+    if sync >= n_ch:
+        return {"ok": False, "error": f"{Path(path).name} has {n_ch} channels, sync {sync}"}
+    x, fs_raw, bits, n_ch, peak = ingest.load_channel(path, sync, fs)
+    lv = file_levels(x, fs)
+    try:
+        results, qc = ingest.align_take(x[None, :], fs, blocks, sync=0, max_drift_ppm=max_drift_ppm,
+                                        psr_threshold_db=psr_db)
+    except (RuntimeError, ValueError) as e:  # no chirp found / recording shorter than the file
+        return {"ok": False, "error": str(e), "fs_raw": fs_raw, "n_channels": n_ch,
+                "sync_peak_dBFS": round(lv["peak_dBFS"], 1)}
     flagged = [r.block.block_id for r in results if r.flags]
-    clip = float(np.max(np.abs(x))) >= 0.999
+    clip = peak >= 0.999
     ok = qc["n_chirps_good"] == qc["n_chirps"] and not flagged and not clip
-    return {"ok": ok, "fs_raw": fs_raw, "bits": bits, "n_channels": int(x.shape[0]),
+    return {"ok": ok, "fs_raw": fs_raw, "bits": bits, "n_channels": n_ch,
             "sync_peak_dBFS": round(lv["peak_dBFS"], 1), "clip": clip,
             "coarse_offset_s": round(qc["clock_offset"] / fs, 4), "take_drift_ppm": round(qc["take_drift_ppm"], 2),
             "n_chirps": qc["n_chirps"], "n_chirps_good": qc["n_chirps_good"],
             "min_psr_dB": round(min(c.psr_db for r in results for c in r.chirps), 1),
             "flagged_blocks": flagged}
+
+
+IMPORT_SUBDIRS = {"chainref": "chain-reference cuts (ref_speech)", "pilot": "pilot cuts (pilot_speech)",
+                  "bubble": "live-bubble cuts (p<d>bub_speech)"}
+
+
+SUMS_FILE = "SHA256SUMS.txt"
+
+
+def write_sha256sums(bench: str | Path) -> tuple[Path, str]:
+    """Write ``<bench>/SHA256SUMS.txt`` and return ``(path, sha256 of that file)``.
+
+    One ``<sha256>  <path>`` line per file under the bench (every file except the manifest
+    itself), paths relative to the bench in posix form, sorted by path, UTF-8 without BOM,
+    LF line ends: the same bytes on any machine, so the manifest's own hash (recorded in the
+    frozen record) can be re-checked later with ``sha256sum -c SHA256SUMS.txt`` from the bench.
+    """
+    import hashlib
+
+    bench = Path(bench)
+    lines = []
+    for f in sorted((q for q in bench.rglob("*") if q.is_file() and q.name != SUMS_FILE),
+                    key=lambda q: q.relative_to(bench).as_posix()):
+        h = hashlib.sha256()
+        with open(f, "rb") as fh:
+            for chunk in iter(lambda: fh.read(1 << 20), b""):
+                h.update(chunk)
+        lines.append(f"{h.hexdigest()}  {f.relative_to(bench).as_posix()}\n")
+    data = "".join(lines).encode("utf-8")
+    out = bench / SUMS_FILE
+    out.write_bytes(data)
+    return out, hashlib.sha256(data).hexdigest()
+
+
+def import_subdir(take: Take) -> str:
+    """Sub-directory of the session's import dir for a pool take ("" = the main quiet dir).
+
+    The main ``align.jsonl`` holds only the per-distance ``speech`` / ``anchor`` takes, because
+    ``make_score_manifest.py`` and ``score_session.py`` score every row of it as the quiet
+    condition. The chain reference, the pilot and the bubble pass each get their own dir.
+    Legacy (thruster) takes have no program and always go to the main dir.
+    """
+    if take.take_id.startswith("ref_"):
+        return "chainref"
+    if take.program == "pilot":
+        return "pilot"
+    if take.program == "bubble" or take.bubbles:
+        return "bubble"
+    return ""
 
 
 def import_argv(take: Take, rec: Recorder, rec_path: str | Path, cmap: ChannelMap, bench: str | Path,
@@ -360,7 +753,9 @@ def import_argv(take: Take, rec: Recorder, rec_path: str | Path, cmap: ChannelMa
             "--session", str(session), "--channels", ",".join(map(str, chans)),
             "--channel-ids", ",".join(str(rec.hydrophones[c]) for c in chans),
             "--sync-channel", str(cmap.sync_channel(rec)), "--out", str(out)]
-    if take.kind == "anchor":
+    if take.played:
+        argv += ["--played", take.played]
+    elif take.kind == "anchor":
         argv.append("--anchor")
     return argv
 

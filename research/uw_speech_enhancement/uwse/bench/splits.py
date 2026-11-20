@@ -6,7 +6,7 @@ Speaker groups, which must be pairwise disjoint:
 group      roles                                       LibriSpeech subsets
 =========  ==========================================  =====================
 train      sim-train                                   train-clean-100/360
-dev        sim-val, v0-dev, real-train (v1-train)      dev-clean
+dev        sim-val, v0-dev, v0-pilot, v1-train         dev-clean
 test       v0-test, v1-test (and their sim twins)      test-clean
 =========  ==========================================  =====================
 
@@ -29,6 +29,7 @@ ROLE_GROUP: dict[str, str] = {
     "sim-train": "train",
     "sim-val": "dev",
     "v0-dev": "dev",
+    "v0-pilot": "dev",
     "real-train": "dev",
     "v1-train": "dev",
     "v0-test": "test",

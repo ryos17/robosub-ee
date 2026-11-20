@@ -51,6 +51,9 @@ from uwse.evaluation import align as _align
 __all__ = [
     "SessionBlock",
     "load_session",
+    "load_played",
+    "load_blocks",
+    "load_channel",
     "envelope_pooled",
     "coarse_offset",
     "align_take",
@@ -108,6 +111,35 @@ def load_session(bench: str | Path, position: str, anchor: bool = False) -> tupl
                                    b["thruster_state"], bool(e["anchor_repeat"]), int(b["start_sample"]),
                                    timing(b["content_block"])))
     return int(idx["fs"]), blocks
+
+
+def load_played(bench: str | Path, stem: str) -> tuple[int, list[SessionBlock]]:
+    """Blocks of a pool-plan session file ``session/<stem>.json`` (``speech``, ``speech_2``, ``anchor``, ...).
+
+    The index carries each block's ``block_id`` and ``anchor_repeat`` itself (make_session_audio.py,
+    pool plan), so the schedule is only used to check the content agrees.
+    """
+    bench = Path(bench)
+    idx = json.loads((bench / "session" / f"{stem}.json").read_text(encoding="utf-8"))
+    sched = {e["session_order_idx"]: e for e in json.loads((bench / "schedule.json").read_text(encoding="utf-8"))}
+    blocks = []
+    for b in idx["blocks"]:
+        e = sched.get(b["session_order_idx"])
+        if e is None or e["content_block"] != b["content_block"] or e["block_id"] != b["block_id"]:
+            raise ValueError(f"session/{stem}.json and schedule.json disagree at order {b['session_order_idx']}")
+        t = json.loads((bench / "blocks" / f"{b['content_block']}.json").read_text(encoding="utf-8"))
+        blocks.append(SessionBlock(b["session_order_idx"], int(b["block_id"]), b["content_block"],
+                                   b.get("thruster_state", "off"), bool(b.get("anchor_repeat", False)),
+                                   int(b["start_sample"]), t))
+    return int(idx["fs"]), blocks
+
+
+def load_blocks(bench: str | Path, position: str, anchor: bool = False,
+                played: str | None = None) -> tuple[int, list[SessionBlock]]:
+    """`load_played` when ``played`` names a pool-plan file, else the legacy `load_session`."""
+    if played:
+        return load_played(bench, played)
+    return load_session(bench, position, anchor=anchor)
 
 
 def envelope_pooled(x: np.ndarray, template: np.ndarray, hop: int, chunk: int = 1 << 21) -> np.ndarray:
@@ -200,8 +232,8 @@ def align_take(
     (chirps, drift, flags) and take-level QC (offset, clock fit). Cutting is
     done by :func:`cut_block`.
     """
-    streams = np.atleast_2d(np.asarray(streams, dtype=np.float64))
-    x = streams[sync]
+    streams = np.atleast_2d(np.asarray(streams))
+    x = np.asarray(streams[sync], dtype=np.float64)  # only the sync row is promoted (memory)
     ch0 = blocks[0].timing["chirp"]
     f_lo, f_hi, dur = float(ch0["f0_hz"]), float(ch0["f1_hz"]), float(ch0["duration_s"])
     template = _align.lfm_chirp(fs, f_lo, f_hi, dur)
@@ -271,7 +303,7 @@ def cut_block(streams: np.ndarray, fs: int, res: BlockResult, pad_s: float = 0.2
     Returns ``cuts[c][k]`` (channel c, utterance k) and the ``(K, 2)`` take
     sample bounds of each cut (padding included, playback rate).
     """
-    streams = np.atleast_2d(np.asarray(streams, dtype=np.float64))
+    streams = np.atleast_2d(np.asarray(streams))  # float32 or float64; each block slice is promoted below
     lay = res.block.layout
     r = 1.0 + res.drift_ppm * 1e-6
     first = res.chirp1 - lay.chirp1_start_s * fs * r  # take sample of block start
@@ -281,7 +313,7 @@ def cut_block(streams: np.ndarray, fs: int, res: BlockResult, pad_s: float = 0.2
     cuts = []
     bounds = None
     for row in streams:
-        seg = _align.correct_drift(row[a:b], res.drift_ppm, anchor=anchor)
+        seg = _align.correct_drift(np.asarray(row[a:b], dtype=np.float64), res.drift_ppm, anchor=anchor)
         c, bd = _align.cut_utterances(seg, fs, lay, anchor, 0.0, pad_s)
         cuts.append(c)
         if bounds is None:  # back to take samples on the recording clock
@@ -299,3 +331,70 @@ def load_take(path: str | Path, fs_target: int) -> tuple[np.ndarray, int, int]:
         x = audio.resample(x, fs_raw, fs_target, axis=-1)
     bits = {"PCM_16": 16, "PCM_24": 24, "PCM_32": 32, "FLOAT": 32, "DOUBLE": 64}.get(info.subtype, 0)
     return x, fs_raw, bits
+
+
+def load_channel(path: str | Path, channel: int, fs_target: int,
+                 block: int = 1 << 20) -> tuple[np.ndarray, int, int, int, float]:
+    """One channel of a take at ``fs_target`` without holding the whole multichannel file in memory.
+
+    Returns ``(x, fs_raw, bits, n_channels, peak_all)`` where ``peak_all`` is the largest
+    absolute sample over every channel (clip check). The file is read in blocks as float32.
+    """
+    import soundfile as sf
+
+    info = sf.info(str(path))
+    if not 0 <= channel < info.channels:
+        raise ValueError(f"{Path(path).name} has {info.channels} channels, asked for {channel}")
+    out = np.empty(info.frames, dtype=np.float32)
+    n, peak = 0, 0.0
+    for b in sf.blocks(str(path), blocksize=block, dtype="float32", always_2d=True):
+        out[n:n + len(b)] = b[:, channel]
+        peak = max(peak, float(np.max(np.abs(b))) if b.size else 0.0)
+        n += len(b)
+    x = out[:n]
+    if info.samplerate != fs_target:
+        x = audio.resample(x, info.samplerate, fs_target)
+    bits = {"PCM_16": 16, "PCM_24": 24, "PCM_32": 32, "FLOAT": 32, "DOUBLE": 64}.get(info.subtype, 0)
+    return np.asarray(x), int(info.samplerate), bits, int(info.channels), peak
+
+
+def load_channels(path: str | Path, channels: Sequence[int], fs_target: int, clip_level: float = 0.999,
+                  block: int = 1 << 20) -> tuple[np.ndarray, int, int, int, int, dict[int, np.ndarray]]:
+    """Some channels of a take at ``fs_target`` as a float32 ``(len(channels), T)`` array.
+
+    The file is read block-wise, one channel per pass, so only one raw channel (float32) and
+    the resampled output are ever held: a 35 min two-channel 96 kHz take imports in about
+    2-3 GB instead of the 5-6 GB of `load_take`. Returns ``(x, fs_raw, bits, n_channels,
+    n_frames_raw, clips)``, where ``clips[ch]`` holds the sorted raw-rate sample indices with
+    ``|x| >= clip_level`` (the clip check runs on raw samples, before resampling).
+    """
+    import soundfile as sf
+
+    info = sf.info(str(path))
+    chans = [int(c) for c in channels]
+    bad = [c for c in chans if not 0 <= c < info.channels]
+    if bad:
+        raise ValueError(f"{Path(path).name} has {info.channels} channels, asked for {bad}")
+    out: np.ndarray | None = None
+    clips: dict[int, np.ndarray] = {}
+    for i, ch in enumerate(chans):
+        raw = np.empty(info.frames, dtype=np.float32)
+        n, hits = 0, []
+        for b in sf.blocks(str(path), blocksize=block, dtype="float32", always_2d=True):
+            col = b[:, ch]
+            raw[n:n + len(col)] = col
+            idx = np.flatnonzero(np.abs(col) >= clip_level)
+            if idx.size:
+                hits.append(idx + n)
+            n += len(col)
+        clips[ch] = np.concatenate(hits) if hits else np.zeros(0, dtype=np.int64)
+        y = raw[:n]
+        if info.samplerate != fs_target:
+            y = audio.resample(y, info.samplerate, fs_target)
+        del raw
+        if out is None:
+            out = np.empty((len(chans), len(y)), dtype=np.float32)
+        out[i] = y[: out.shape[1]]
+        del y
+    bits = {"PCM_16": 16, "PCM_24": 24, "PCM_32": 32, "FLOAT": 32, "DOUBLE": 64}.get(info.subtype, 0)
+    return out, int(info.samplerate), bits, int(info.channels), int(info.frames), clips

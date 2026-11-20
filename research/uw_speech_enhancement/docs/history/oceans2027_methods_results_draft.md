@@ -1,3 +1,5 @@
+> **SUPERSEDED 2026-11-19.** This sim-only draft predates the no-thruster pool plan and describes the retired thruster ABBA / loopback S1 plan. It is kept for history only and is not the abstract source. The current sources are `paper/oceans2027_abstract.tex` and `paper/oceans2027_full.tex`; the protocol is [`PROTOCOL.md`](../../PROTOCOL.md) with the 2026-11-19 amendment in [`RESULTS_E7_SIM_DRYRUN.md`](../../RESULTS_E7_SIM_DRYRUN.md). `RESEARCH_PLAN.md` cited below is now [`docs/history/RESEARCH_PLAN.md`](RESEARCH_PLAN.md).
+
 # OCEANS 2027: Methods and Results sections, working draft (2026-11-06)
 
 **Status: sim-only draft.** Every number marked [SIM] comes from the E7 dry run on the uncalibrated `uwsim` v0 (RESULTS_E7_SIM_DRYRUN.md), not from pool recordings. The evaluation protocol in §III-F is frozen (signed off by the lead 2026-11-05) and will be applied unchanged to the real v0-test recordings. When those arrive, every [SIM] number is replaced and every claim rechecked. Text in *[brackets and italics]* is a placeholder for a measured quantity.

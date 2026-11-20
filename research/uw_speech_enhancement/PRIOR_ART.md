@@ -4,7 +4,7 @@
 
 **Proposal in one line.** A physics-based underwater acoustic channel simulator turns clean speech corpora into paired underwater/clean training data. Any off-the-shelf speech enhancement (SE) model is fine-tuned on that data. The fine-tuned models are then evaluated on real speech played through an underwater projector and captured by a 4-channel hydrophone array in a pool, scored with Whisper WER, PESQ, STOI and DNSMOS.
 
-> **Superseded in part (2026-10-27).** The deeper pass found an underwater speech simulator and U-Net from the Kiel DSS group (DAGA 2025/2026), prior LoRA work for SE, and several factual corrections (Jiang 2024 uses measured channels; pyroomacoustics cannot model R = -1). See `RESEARCH_PLAN.md` section 0 (K1-K22) and `FINDINGS.md`.
+> **Superseded in part (2026-10-27).** The deeper pass found an underwater speech simulator and U-Net from the Kiel DSS group (DAGA 2025/2026), prior LoRA work for SE, and several factual corrections (Jiang 2024 uses measured channels; pyroomacoustics cannot model R = -1). See [`docs/history/RESEARCH_PLAN.md`](docs/history/RESEARCH_PLAN.md) section 0 (K1-K22) and `FINDINGS.md`.
 
 **Citation policy for this document.**
 - Works listed without a label were confirmed by at least one search pass and were not flagged by the skeptic review.
@@ -107,7 +107,7 @@ Rows are ordered by how closely each work overlaps with this proposal, closest f
 - Cao, Zhu, Wu (IOA-CAS), Technical Acoustics 36(5):473–478, 2017: multichannel adaptive enhancement of sea-trial SSB voice ([link](http://sxjs.cnjournals.cn/ch/reader/view_abstract.aspx?flag=1&file_no=20170513&journal_id=sxjs)). Closest precedent for multi-hydrophone enhancement of real through-water speech.
 - Yan, Xu, Liu, ICICSP 2023: pre-enhanced DNN joint model for frogman speech, PESQ gains; whether the test data are field or simulated is not stated in the abstract ([doi](https://doi.org/10.1109/icicsp59554.2023.10390720)).
 - Li, Wang, Tong (Xiamen), Ship Sci. Tech. 39(1), 2017: analog FM speech at 25 kHz in Wuyuan Bay, PESQ about 1.8–2.3 ([link](https://html.rhhz.net/jckxjsgw/html/51026.htm)).
-- Digital vocoder and modem links (MELP over coherent modems, IOA 2008; HEU 2013; Xiamen patents and theses): a group citation for "why not a digital link" (see RESEARCH_UPDATE_3 §2.3).
+- Digital vocoder and modem links (MELP over coherent modems, IOA 2008; HEU 2013; Xiamen patents and theses): a group citation for "why not a digital link" (see [`docs/history/RESEARCH_UPDATE_3.md`](docs/history/RESEARCH_UPDATE_3.md) §2.3).
 
 **Japanese diver speech ML**
 - Tsuchida et al. (Kobe), IPSJ DICOMO 2021: DL phoneme recognition from a regulator-mounted mic ([link](https://hdl.handle.net/20.500.14094/90008744)).

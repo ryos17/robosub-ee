@@ -14,6 +14,8 @@ Selection (all deterministic given ``seed``)
   (:func:`select_v0_test`).
 - **v0-dev**: 40 dev-clean utterances, spread round-robin over speakers so
   each of the 40 dev-clean speakers contributes one (:func:`select_v0_dev`).
+- **v0-pilot**: 20 dev-clean utterances outside v0-dev, one per speaker, for the pool
+  plan's pre-registered decision rule (:func:`select_pilot`, `PILOT_RULE`).
 - **v1-test**: >= 1,000 test-clean utterances disjoint from v0-test, balanced
   round-robin over speakers (:func:`select_v1_test`).
 
@@ -193,6 +195,25 @@ def select_v1_test(manifest: Sequence[Utterance], exclude: Iterable[Utterance | 
     ex = {e if isinstance(e, str) else e.utt_id for e in exclude}
     pool = [u for u in filter_duration(manifest, min_s, max_s) if u.utt_id not in ex]
     rng = np.random.default_rng([seed, 2])
+    return sorted(_round_robin(by_speaker(pool), n, rng), key=lambda u: u.utt_id)
+
+
+#: documented rule of :func:`select_pilot` (written into the bench by make_playlists.py --plan pool)
+PILOT_RULE = ("v0-pilot: n dev-clean utterances (default 20), 2.0-15.0 s, not in v0-dev; speakers visited "
+              "round-robin in an order shuffled by numpy default_rng([seed, 3]), one utterance per speaker "
+              "while n <= the number of speakers; sorted by id. dev-clean is speaker-disjoint from the "
+              "200 v0-test utterances (test-clean), so no test sentence or test speaker is heard before "
+              "the pre-registered decision rule is applied.")
+
+
+def select_pilot(manifest: Sequence[Utterance], exclude: Iterable[Utterance | str] = (), n: int = 20,
+                 seed: int = DEFAULT_SEED, min_s: float = MIN_DUR_S,
+                 max_s: float = MAX_DUR_S) -> list[Utterance]:
+    """v0-pilot: ``n`` dev-clean utterances not in ``exclude`` (normally v0-dev); see `PILOT_RULE`."""
+    _require_subset(manifest, "dev-clean", "v0-pilot")
+    ex = {e if isinstance(e, str) else e.utt_id for e in exclude}
+    pool = [u for u in filter_duration(manifest, min_s, max_s) if u.utt_id not in ex]
+    rng = np.random.default_rng([seed, 3])
     return sorted(_round_robin(by_speaker(pool), n, rng), key=lambda u: u.utt_id)
 
 

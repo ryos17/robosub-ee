@@ -1,6 +1,6 @@
 # uwse code guide
 
-This document describes the `uwse` package: the code behind the underwater speech enhancement sim-to-real study (OCEANS 2027). `RESEARCH_PLAN.md` is the specification. This file covers installation, how the code maps onto the plan, how to run the tests, the smoke test and training, and which numbers are still placeholders until the pool measurements exist.
+This document describes the `uwse` package: the code behind the underwater speech enhancement sim-to-real study (OCEANS 2027). The original specification is [`docs/history/RESEARCH_PLAN.md`](docs/history/RESEARCH_PLAN.md); the § numbers below and in the code docstrings refer to it (the docstrings still say `RESEARCH_PLAN.md`). The current real-data protocol is [`PROTOCOL.md`](PROTOCOL.md), and the operator steps of a pool session are in [`docs/RECORDING_SESSION_CHECKLIST.md`](docs/RECORDING_SESSION_CHECKLIST.md). This file covers installation, how the code maps onto the plan, how to run the tests, the smoke test and training, and which numbers are still placeholders until the pool measurements exist.
 
 ## 1. Installation
 
@@ -25,7 +25,7 @@ Never write anything under `/datasets/`. The scripts that write data (`make_rir_
 
 ## 2. Package map
 
-| Module | What it does | RESEARCH_PLAN section |
+| Module | What it does | RESEARCH_PLAN section (docs/history) |
 |---|---|---|
 | `uwse/audio.py` | Load, save, resample, RMS/dB, fades | shared |
 | `uwse/uwsim/reflection.py` | Plane-wave reflection coefficients: fluid–solid half-space (Brekhovskikh), fluid–fluid, pressure-release surface; `Boundary` presets | §4.2 rows 4–5 |
@@ -50,11 +50,24 @@ Never write anything under `/datasets/`. The scripts that write data (`make_rir_
 | `uwse/evaluation/stats.py` | Cluster bootstrap, paired CIs, TOST, Holm, MAPSSWE, Kendall τ | §8.5 |
 | `uwse/adapters/` | `SEAdapter` registry; identity (C0), wpe1/wpe4, metricganplus, sepformer_wham16k/whamr, dfn3, tfgridnet_urgent25, kiel_unet (C10); `lora.py` (peft LoRA plus LoRA-GRU) | §7.1–7.3 |
 | `uwse/train/` | Model-agnostic loop (`fit`/`train`) and datasets for C2/C7/C9 (`SimPairsDataset`, `InAirPairs`, `ReplayPairs`); Whisper-LoRA (C8) | §7.2–7.4 |
-| `uwse/bench/` | Metadata schema, LibriSpeech manifests and selection, split guards, playlists, ABBA schedule, playback budget; per-utterance SNR of pool takes (`snr.py`) | §5.1, §5.4, §6.5, §6.6, §6.8 |
+| `uwse/bench/schema.py`, `librispeech.py`, `splits.py` | Metadata schema (bench splits include `v0-pilot`, the pool-plan pilot sentences; `block_order` includes `"none"` for blocks played once), LibriSpeech manifests and v0/v1/pilot selection, split guards | §5.1, §5.4, §6.8 |
+| `uwse/bench/playlist.py` | Chirp-framed playback blocks; the pool-plan programs (pilot, speech, anchor, bubble; no thruster state); the legacy ABBA thruster schedule and playback budget (frozen v0_s1 only) | §6.5, §6.6 |
+| `uwse/bench/session.py` | Session plan (`build_pool_plan`: dry run, chain reference, pilot, per-distance noise/sweeps/speech/anchor, bubble pass; position labels `p1`, `p0p5`, `p3bub`), channel maps, redo file names (`_r<k>`), Daisy command lines, import arguments, drive and source-level estimate (tone-based, peak drive V), paths stored relative to the project root | §6.4–6.6, §6.8 |
+| `uwse/bench/ingest.py` | Import of one recorder file: chirp sync on the hydrophone channel, per-block drift correction, utterance cuts, `align.jsonl` (rows replaced by utt_id on re-import) | §6.5 |
+| `uwse/bench/postsession.py`, `snr.py` | Same-day sweep and noise analysis of a session; per-utterance SNR of pool takes | §4.3, §4.4, §5.2, §6.4, §6.8 |
 | `scripts/make_rir_bank.py` | Pre-renders the RIR bank | §5.3 |
-| `scripts/make_playlists.py`, `scripts/fetch_librispeech.py` | Builds benchmark playlists; downloads LibriSpeech | §5.1, §6.5 |
+| `scripts/make_playlists.py`, `scripts/fetch_librispeech.py` | Builds the bench (`--plan pool` for the 2026-11-19 pool plan, into `data/bench/v1`; `--plan legacy` is the thruster plan of the frozen v0_s1 and refuses to overwrite `v0_s1`/`v0_pilot`); downloads LibriSpeech | §5.1, §6.5 |
+| `scripts/make_session_audio.py` | Writes the played files of a bench block by block: programs (split at `--max-take-min`, default 35), `sweeps.wav`, `tone_1k.wav`, `programs.json` | §6.4, §6.5 |
+| `scripts/run_session.py` | Session CLI: `plan` (run sheet, utterance lists, Daisy lines), `levels`, `tone`, `take` (streamed playback, metadata log), `daisy-cmds`, `verify`, `check` (QC on the Daisy hydrophone files; idempotent `import_cmds.txt`; `--run-import`) | §6.2–6.8 |
+| `scripts/record_daisy.py` | Records one Daisy board (2 hydrophones, 96 kHz / 24-bit) on the Linux capture machine; never overwrites a file or sidecar | §6.5 |
+| `scripts/import_recording.py` | Imports one recorder file of a take into cuts and `align.jsonl` (`--played <program>` for pool-plan benches) | §6.5 |
+| `scripts/analyze_session.py` | Same-day sweep and noise analysis of a session directory (`all`), into `<session>/analysis/` | §4.3, §6.4 |
+| `scripts/pilot_wer.py` | Pilot C0 WER and the pre-registered quiet / added-noise decision (writes its json once); `--role chainref` for the chain-reference WER | PROTOCOL.md |
+| `scripts/mix_real_noise.py` | Added-noise conditions: real pool and bubble noise mixed into the real cuts at 0 and 5 dB SNR (deterministic offsets), C0/C8 rows rebuilt on the noisy wavs | PROTOCOL.md |
+| `scripts/score_session.py` | One command after a session: `score.py` with the frozen settings per condition and distance, C8 sha256 check, 10000 / 2000 bootstrap runs, enhancers via `enhance_cuts.py` | §8, PROTOCOL.md |
+| `scripts/make_paper_numbers.py` | LaTeX macros (`paper/results_real.tex`) and the real-data figure (`paper/fig_real.pdf`; needs matplotlib, so `--fig-only` from base anaconda) from a `score_session.py` output | PROTOCOL.md |
 | `scripts/train.py` | Training CLI driven by `configs/*.yaml` | §7.3, §7.4 |
-| `scripts/measure_snr.py` | Per-utterance SNR of imported takes: speech from the thruster-off cut, noise from the noise-only take in the same state, 500–8000 / 50–8000 Hz and octaves, anchor level-drift flag (method signed off 2026-11-08) | §6.8 |
+| `scripts/measure_snr.py` | Per-utterance SNR of imported takes (written for the thruster plan; in the pool plan every cut is thruster-off and the noise is the `p<d>_noise` take): speech from the thruster-off cut, noise from the noise-only take in the same state, 500–8000 / 50–8000 Hz and octaves, anchor level-drift flag (method signed off 2026-11-08) | §6.8 |
 | `scripts/make_score_manifest.py` | `score.py` manifest from `align.jsonl`: aligned R0 cuts (block utterance + fine lag) for `--level-normalize`, C0/C8/SE rows with speaker, sex and SNR | §6.5, §8.3 |
 | `scripts/score.py` | Scoring CLI: WER, metrics, bootstrap summary and paired comparisons; frozen-protocol defaults (guarded decode, `--asr-lora` for C8, substitution flag, paired-unflagged WER); SNR over 500–8000 and 50–8000 Hz; WER by speaker sex (`by_sex.csv`/`.md`); `--snr` joins `measure_snr.py` output | §8 |
 | `scripts/make_nonspeech_set.py`, `scripts/eval_nonspeech.py` | Simulated non-speech set (`configs/nonspeech_v0.yaml`); C8 vs C8g invented-word rate on it | FINDINGS "No-speech gate" |
@@ -66,6 +79,7 @@ Conventions that cross module boundaries:
 - **Sync chirp.** The sync chirp is defined once, in `uwse.evaluation.align.lfm_chirp`: linear FM from f_lo to 8 kHz over 0.25 s, a continuous Tukey(0.1) window, and −20 dBFS peak. `uwse.bench.playlist` imports it, so the chirp that is played and the matched-filter template are the same function. Use `align.layout_from_timing(timing_json)` to turn a bench timing JSON into the alignment layout.
 - **Target alignment.** R1 and R0 targets are aligned to the geometric direct arrival, range/c, in both uwsim and the C7 in-air pairs. Peak picking is used only for measured IRs (C9 replay).
 - **Amplitude convention.** The ISM and the modal low band both write image amplitudes as R/r, pressure re 1 m.
+- **Session channel maps.** `configs/session_channels_v1.json` is the pool-plan map (2026-11-19): the interface only plays, Daisy A records ch0/ch1, Daisy B ch2/ch3, and ch0 is scored. `session_channels_v0.json` (with a loopback) and `session_channels_s1.json` belong to the retired thruster plan.
 - **Adapter checkpoints.** For LoRA runs, call `adapter.trainable_params("lora")` before `load_checkpoint`. The base `load_checkpoint` raises if a checkpoint contains LoRA keys that the model lacks, and warns about any other key mismatch.
 
 ## 3. Tests
@@ -79,7 +93,7 @@ Run the tests from the project root:
 & "C:\Users\ryota\anaconda3\envs\uwse\python.exe" -m pytest -q -m gpu             # needs CUDA
 ```
 
-The default run deselects anything marked `slow`, `network` or `gpu`; this is set in `pyproject.toml`. Each module has a builder test file and a reviewer test file (`test_*_review.py`). `tests/test_integration.py` covers the cross-module contracts listed above.
+The default run deselects anything marked `slow`, `network` or `gpu`; this is set in `pyproject.toml`. Each module has a builder test file and a reviewer test file (`test_*_review.py`). `tests/test_integration.py` covers the cross-module contracts listed above. The pool-plan session tooling is covered by `tests/test_session_pool.py` (about 110 s, mostly the import test's drift correction). The post-session scripts are covered by `tests/test_pilot_wer.py`, `tests/test_mix_real_noise.py` and `tests/test_make_paper_numbers.py`; the figure test is skipped in `uwse`, which has no matplotlib.
 
 ## 4. Smoke test
 
@@ -266,4 +280,10 @@ RAM on the laptop is tight, so run only one heavy process at a time: training, R
 - The playback budget in the plan underestimates the total: the correct multiplier is 1.186, giving 3.51 h, not 3.43 h.
 - The OpenSLR MD5 values were not verified online.
 - The ABBA first state is not counterbalanced across positions.
-- Only v0 and v1-test playlists are generated.
+- Only v0, v1-test and pool-plan (`data/bench/v1`) playlists are generated.
+- The playback budget and ABBA notes above apply to the legacy thruster plan only.
+- Import is slow: drift-correction resampling takes about 5 s per channel for a ~40 s block, so a 27 min speech take takes several minutes per channel. Run it detached.
+- `run_session.py check` routes each take's import (`session.import_subdir`): `p<d>_speech` / `p<d>_anchor` to the session's import dir, `ref_speech` to `chainref/`, `pilot_speech` to `pilot/`, the bubble pass to `bubble/`, because `make_score_manifest.py` and `score_session.py` take every row of an `align.jsonl`. `import_cmds.txt` holds the latest QC-passing attempt per take x recorder.
+- Import memory: `import_recording.py` loads only the cut channels (+ sync), one at a time, as float32 (`ingest.load_channels`), about 2–3 GB peak for a 35 min two-channel 96 kHz take. Run one import at a time.
+- Live playback (`run_session.py tone` / `take`) needs `sounddevice` in the env (in `environment.yml` since 2026-11-19).
+- No script yet derives h_chain / R1 cuts from the chain-reference sweeps, so the intrusive metrics are skipped on real data.

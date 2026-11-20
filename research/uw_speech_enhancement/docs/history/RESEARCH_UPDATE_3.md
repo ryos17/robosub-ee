@@ -1,5 +1,7 @@
 # Research Update 3: Prior-Art Sweep, Verification, Licences, Logistics and Plan Deltas
 
+> **Historical document (moved to `docs/history/` on 2026-11-19).** Third research pass of 2026-10-27; its plan deltas were applied to [`RESEARCH_PLAN.md`](RESEARCH_PLAN.md) rev. 3. Logistics in it (Stanford Aquatics, Avery pool, co-authorship) are superseded; see [`PROTOCOL.md`](../../PROTOCOL.md) and [`README.md`](../../README.md).
+
 *Underwater speech enhancement, sim-to-real (Stanford RoboSub). Written 2026-10-27, W1. It updates `RESEARCH_PLAN.md` (rev. 2), `README.md` and `PRIOR_ART.md`. It contains no measured results of our own.*
 
 **Inputs and verification policy**

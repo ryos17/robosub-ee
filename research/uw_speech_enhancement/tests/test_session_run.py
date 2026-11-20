@@ -68,8 +68,12 @@ def test_levels_and_drive():
     x[fs:2 * fs] = 0.05 * np.sqrt(2) * np.sin(2 * np.pi * 1000 * np.arange(fs) / fs)
     lv = ss.file_levels(x, fs)
     assert abs(lv["active_rms_dBFS"] - 20 * np.log10(0.05)) < 0.1 and abs(lv["active_fraction"] - 0.25) < 0.01
-    d = ss.drive_estimate(-26.0, vrms_at_0dbfs=1.0, amp_gain_db=26.0)
-    assert abs(d["drive_vrms"] - 1.0) < 1e-9 and abs(d["SL_est_dB"] - (180 - 20 * np.log10(20))) < 1e-9
+    # vrms_at_0dbfs is the meter reading of a full-scale sine (sample RMS -3.01 dBFS): a signal at
+    # sample RMS 0 dBFS re the amp input drives sqrt(2) x that (fix of the 3.01 dB low estimate)
+    d = ss.drive_estimate(-26.0, vrms_at_0dbfs=1.0, amp_gain_db=26.0, peak_dbfs=-20.0)
+    assert d["drive_vrms"] == pytest.approx(np.sqrt(2), rel=1e-9)
+    assert d["SL_est_dB"] == pytest.approx(180 + 20 * np.log10(np.sqrt(2) / 20), abs=1e-9)
+    assert d["drive_peak_v"] == pytest.approx(np.sqrt(2) * 10 ** (6 / 20), rel=1e-9)
     assert abs(ss.loopback_drive(-40.0, in_dbfs_at_1vrms=-6.0, atten_db=40.0) - 10 ** (6 / 20)) < 1e-9
 
 
@@ -206,4 +210,4 @@ def test_take_groups_cli_sheet_and_gain(tmp_path, monkeypatch):
     meta.pop("groups")
     (sdir / "session.json").write_text(json.dumps(meta))
     with pytest.raises(SystemExit, match="unknown take"):
-        rs.main(["take", "--session-dir", str(sdir), "--take-id", "e3_r1", "--overwrite"])
+        rs.main(["take", "--session-dir", str(sdir), "--take-id", "e3_r1"])

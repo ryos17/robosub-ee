@@ -847,3 +847,63 @@ Fixed before any real v0 recording is scored. It was chosen after seeing sim res
   - `run_session.py plan` gained optional E2/E3/E4 take groups (`--e2`, `--e3-points`, `--e4`), off by default, for a later session.
   - The v0 bench build and freeze, the rig channel map, and the sweep and noise-bank analysis scripts are not done. Ask the lead before building v0.
 - **Calibration.** Replace the placeholders with measured pool values (E0–E4) and the recorded noise bank, then regenerate this table. The current table is retired at that point.
+
+## Amendment 2026-11-19: no-thruster pool plan, signed off by the lead before any recording
+
+Signed off by the lead on 2026-11-19. No pool recording of any kind exists at this date. This amendment replaces the S1 plan above; the text above is left unchanged as the record. Where this amendment and an earlier S1 amendment disagree, this amendment wins. The current protocol in one page is `PROTOCOL.md`. `RESEARCH_PLAN.md` and `RESEARCH_UPDATE_3.md` moved to `docs/history/` on the same day; references to `RESEARCH_PLAN.md` above mean `docs/history/RESEARCH_PLAN.md`.
+
+- **S1 retired unused.** Session S1 (`sessions/2026-11-09_s1`, bench `data/bench/v0_s1`) was never recorded. It is retired. `data/bench/v0_s1` and `data/bench/v0_pilot` stay frozen and untouched (`data/bench/v0_s1/SHA256SUMS.txt` still hashes to `6e6f6d02…`). The S1-specific amendments lapse with S1, except where restated below: the scope and primary endpoint of 2026-11-09, the noise bank and endpoint cuts of 2026-11-09 to 11-10, the rig without a loopback of 2026-11-15, and the exploratory C8g comparison of 2026-11-18. A C8g comparison on pool-plan data would need its own amendment.
+- **Rig.** The lead's own private pool. Its size and depth are measured and logged on the day.
+  - Projector: Lubell LL916C-050-CXA (caged, 50 ft cable) through a Lubell AC205C transformer.
+  - Amplifier: Amazon B07VHG2LR9 (likely an AIYIMA unit with a TI TPA3255), with bridged (BTL) outputs, a mains DC brick and an unmarked volume knob.
+  - Playback: Windows PC and USB interface, out1 to the amplifier. There is no loopback, and the interface records nothing.
+  - Capture: two Daisy Seed boards (A: hydrophones ch0 and ch1; B: ch2 and ch3) at 96 kHz / 24-bit, recorded on a Linux machine (laptop or the Orin) with `scripts/record_daisy.py`. Files are copied to the Windows PC for checking, import and scoring. The scored channel is ch0. Every recorder aligns on the chirps its own hydrophones hear.
+  - No thruster. The rig is not part of the submarine. Nothing in this plan has a thruster state: every block is played once (`block_order` `"none"`).
+- **Takes, in order** (`scripts/run_session.py plan`; take ids in brackets).
+  0. Desk dry run in air or a bucket (`dryrun`): the anchor file through the full chain. QC must pass. The files go to `<session>/dryrun/`, never the session raw directory, and are never imported.
+  1. Chain reference at 0.5–1 m (`ref_sweeps`, `ref_speech`): sweeps and the ~20 pilot sentences, on axis. They give the measured transducer-chain reference (h_chain, the R1 target) and the real projector response.
+  2. Pilot at 3 m (`pilot_speech`): the 20 pilot sentences, scored on site with C0 (see the decision rule below).
+  3. For each distance d (default 1, 3 and 6 m; chosen on the day with `--distances`):
+     - noise only, 1 min (`p<d>_noise`);
+     - sweeps, 1 min (`p<d>_sweeps`);
+     - speech: all 200 v0-test and 40 v0-dev utterances once, in chirp-framed blocks (`p<d>_speech`, 27.1 min);
+     - drift anchor: the first block repeated (`p<d>_anchor`).
+  4. Bubble pass at one distance (default 3 m), with an air stone running near the speaker: bubble noise only, 2 min (`p3bub_noise`), and a deterministic subset of the test sentences, about 10 min (`p3bub_speech`, 9.4 min as built).
+  - **Redos.** A failed take is redone as attempt k ≥ 2, with files named `..._r<k>_<rec>.wav`. Nothing is overwritten, and every attempt stays on disk and in `takes.jsonl`. The import uses the latest attempt that passes QC. A take is never redone because of its WER.
+- **Pilot sentences.** 20 dev-clean utterances, one per speaker, none of them in v0-dev or in the 200-utterance test set. The choice is deterministic and documented in the bench (`selection/pilot_rule.json`, bench split `v0-pilot`). They are used only for the decision rule and the chain-reference WER.
+- **Decision rule (pre-registered; uses only C0 on the pilot sentences).** The input is the pilot corpus WER of C0 on `pilot_speech`, on the scored channel, computed with `scripts/pilot_wer.py`. C0 is Whisper large-v3 with the frozen guarded decode and no LoRA.
+  - Pilot C0 WER ≥ 10% (exactly 10% included): the quiet recordings are primary and added noise is secondary.
+  - Pilot C0 WER < 10%: added real pool noise at 0 dB SNR is primary and the quiet recordings are secondary.
+  - The rule is applied once. Its json is kept and not overwritten, and nothing is re-decided after the test takes are scored.
+  - The rule changes only which condition is primary. The same takes are recorded either way.
+- **Primary comparison.** C8 against C0, by corpus WER.
+  - C8 is Whisper large-v3 with the frozen LoRA `runs/c8_whisper_lora_stat_s1/best_wer.pt` (sha256 `5063f02f…f52f90`, checked before decoding) and `DecodeConfig.guarded()`.
+  - Data: the v0-test cuts of the `p<d>_speech` takes, on the scored channel, in the primary condition.
+  - Reporting: per distance and pooled over distances. Corpus WER 95% CIs come from the speaker-cluster bootstrap (10000 resamples), and the paired ΔWER (C8 − C0) from the paired speaker-cluster bootstrap (2000 resamples, seed 0).
+  - The machinery is `scripts/score.py`, driven by `scripts/score_session.py`.
+  - Not in the primary comparison: v0-dev cuts, anchor repeats, the pilot, the chain reference and the bubble pass.
+- **Secondary systems and conditions.**
+  - Systems: the enhancers C1 (WPE), C2 (DeepFilterNet3 fine-tuned on uwsim) and C10 (Kiel-recipe U-Net), each against C0, as in the frozen protocol. C2 runs with `enhance_cuts.py --input-level sim`.
+  - Conditions: the secondary condition (quiet or pool noise at 0 dB, whichever is not primary), pool noise at 5 dB, added bubble noise at 0 and 5 dB, and the live bubble pass.
+- **Added-noise method.** Real noise is mixed into the real recorded speech cuts at 0 and 5 dB SNR with `scripts/mix_real_noise.py`.
+  - Noise sources: pool noise from the `p<d>_noise` take at the cut's own distance, and bubble noise from `p3bub_noise`.
+  - SNR: set over 500–8000 Hz on the speech-active samples of the aligned R0 cut, using `uwsim.noise.mix_at_snr`.
+  - Offsets: deterministic, seeded by the sha256 of the seed, noise kind and utt_id (seed 0). The same offset is used at both SNRs.
+  - The water path of the speech stays real. Every such result is labelled added noise, never recorded noise.
+- **Chain reference.**
+  - The `ref_sweeps` take measures the transducer chain: amplifier, AC205C, LL916, water at short range and hydrophone.
+  - `ref_speech` gives the chain-reference WER of C0 on the pilot sentences (`pilot_wer.py --role chainref`).
+  - The LL916's 5 kHz notch is **not** pre-compensated in the played audio. Any intrusive metric uses the measured chain reference as R1. Until R1 cuts exist, the intrusive metrics are skipped and WER is the only endpoint.
+- **New bench `data/bench/v1`.**
+  - Build: `scripts/make_playlists.py --plan pool --librispeech-root data/librispeech --out data/bench/v1`, then `scripts/make_session_audio.py --bench data/bench/v1`, both with default settings.
+  - Content: the same 200 v0-test and 40 v0-dev utterances as `v0_s1`, plus the 20 pilot sentences and the bubble subset.
+  - Programs, checked on 2026-11-19 with `--no-render`: pilot 2.6 min; speech 27.1 min (23 blocks, one file, under the 35 min split limit); anchor 1.2 min; bubble 9.4 min.
+  - Its `SHA256SUMS.txt` hash is recorded here once built. The bench is never rebuilt after the first take.
+- **Unchanged.**
+  - The guarded decode with loudness normalisation (`whisper-large-v3+lnorm+guard`).
+  - The C8 checkpoint and its selection rule.
+  - The substitution-hallucination flag and its paired reporting.
+  - The two-band SNR and WER-by-sex reporting.
+  - The speaker-cluster bootstrap statistics.
+  - The per-utterance SNR method, with every cut in the thruster-off state and the noise taken from the cut's own `p<d>_noise` take.
+  - Any change after the first pool take is scored is reported as a deviation.

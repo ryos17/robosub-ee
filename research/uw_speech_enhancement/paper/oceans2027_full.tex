@@ -1,6 +1,8 @@
 % OCEANS 2027 full paper (IEEE conference format).
-% Status: draft started 2026-11-09, the day of pool session S1, before any pool recording has been scored.
-% Sections II (Methods) and III (Real-data benchmark and S1 protocol) are drafted; the others are stubs.
+% Status: draft started 2026-11-09. On 2026-11-19 the thruster-based S1 plan was replaced by the pool plan
+% (own pool, no thruster; chain-reference, pilot, per-distance and air-stone bubble takes; recorded noise
+% added at 0 and 5 dB SNR; see paper/oceans2027_abstract.tex). Section II (Methods) is drafted; Section III
+% is a short outline of the pool plan with TODOs (the old S1 text sits inside \iffalse); the rest are stubs.
 % Every number is taken from a repository source (RESULTS_E7_SIM_DRYRUN.md, RESEARCH_PLAN.md,
 % docs/RECORDING_SESSION_CHECKLIST.md, sessions/2026-11-09_s1/, configs/, uwse/, scripts/,
 % data/bench/v0_s1/). Real-data quantities that do not exist yet are marked \tbd.
@@ -75,7 +77,7 @@ modal sum replaces the image-source field. A time scaling by $(1+\varepsilon)$, 
 ($f_0 \approx 3.29/a$~Hz with the radius $a$ in metres, about 1.1--6.6~kHz for $a = 0.5$--$3$~mm;
 rate up to 20 per second) and, in the
 \emph{stat} training configuration below, stationary coloured Gaussian noise. No recorded noise bank
-exists yet, so thruster and ambient noise are absent from the simulator. The noise is scaled to a
+exists yet, so recorded pool noise is absent from the simulator. The noise is scaled to a
 target speech-band signal-to-noise ratio (SNR), measured over 500--8000~Hz on speech-active samples,
 which an energy voice activity detector (VAD) selects as the 20~ms frames within 40~dB of the loudest.
 
@@ -188,8 +190,8 @@ The unguarded policy (temperature 0, no cap) is reported only as a sensitivity c
 \subsection{Evaluation metrics and statistics}
 \label{sec:stats}
 The evaluation protocol was frozen on 2026-11-05, with additions on 2026-11-08 (the substitution
-flag, two-band SNR and sex reporting, and the per-utterance SNR method) and the S1 amendment of
-2026-11-09 (Section~\ref{sec:endpoint}), all made before any pool recording existed and so before any
+flag, two-band SNR and sex reporting, and the per-utterance SNR method) and the pool-plan amendment
+of 2026-11-19 (Section~\ref{sec:endpoint}), all made before any pool recording existed and so before any
 was scored. It was fixed after the simulation results were seen but before any real recording existed,
 so it is pre-registered with respect to the real data; any later change is reported as a deviation.
 
@@ -198,13 +200,13 @@ reference, and corpus WER is $(S+D+I)/N_{\mathrm{ref}}$, the summed substitution
 insertions over the summed reference words.
 
 \textit{Confidence intervals.} Corpus WER carries a 95\% confidence interval (CI) from a percentile
-bootstrap over speaker clusters, resampled with replacement within position-by-thruster strata
+bootstrap over speaker clusters, resampled with replacement within position strata
 (10\,000 replicates); a speaker in two strata forms two clusters. System differences are paired:
 $\Delta\mathrm{WER}$ between two systems uses a paired speaker-cluster bootstrap with 2000 resamples,
 drawing the same resampled clusters for both systems. A difference is called significant when its 95\%
 CI excludes zero.
-% NOTE (lead, 2026-11-10): scripts/score.py uses one --n-boot for all bootstraps, so S1 is scored in two
-% runs: --n-boot 10000 for corpus CIs, --n-boot 2000 for paired dWER. No code change.
+% NOTE (lead, 2026-11-10): scripts/score.py uses one --n-boot for all bootstraps, so a session is scored in two
+% runs (scripts/score_session.py does this): --n-boot 10000 for corpus CIs, --n-boot 2000 for paired dWER. No code change.
 These CIs cover the recorded positions in the recorded session only.
 
 \textit{Hallucination flags.} Two flags are reported per system. The first marks an utterance whose
@@ -218,7 +220,7 @@ is counted when an utterance's insertions reach $\max(10, 2\times$ its reference
 
 \textit{SNR and speaker sex (reporting only).} Real-data results report the speech-band SNR over both
 50--8000~Hz and 500--8000~Hz, with the same band and energy-VAD definition as the simulator, applied
-to the recorded thruster-off cut (speech plus ambient noise) rather than to the clean source. WER is also reported by speaker sex and
+to the recorded cut (speech plus ambient noise) rather than to the clean source. WER is also reported by speaker sex and
 read against the median SNR of each sex in both bands; the female-minus-male gap carries a 95\% CI
 from resampling speakers within sex.
 
@@ -226,6 +228,69 @@ from resampling speakers within sex.
 computed against $R_1$ at 16~kHz where $R_1$ exists (Section~\ref{sec:refs}).
 
 % ---------------------------------------------------------------------------------------------
+\section{Real-Data Benchmark and Pool Protocol}
+\label{sec:bench}
+% TODO (pool plan of 2026-11-19): expand this section from docs/ and the session log once the session
+% is recorded. The thruster-based S1 protocol (session 2026-11-09, bench data/bench/v0_s1, never
+% recorded) is superseded; its text is kept below inside \iffalse ... \fi for reference only and is not
+% typeset. Carry over from it what still holds (bench block layout, sync chirp, import and QC criteria,
+% per-utterance SNR, post-session channel characterisation), with the new values.
+This section describes the pool protocol of 2026-11-19, written before any recording; quantities
+measured at the session are marked \tbd.
+
+\subsection{Bench}
+\label{sec:benchbuild}
+The playback bench (\texttt{data/bench/v1} \tbd) plays the 200 v0-test utterances of
+Section~\ref{sec:simtest} in content blocks framed by linear frequency-modulated sync chirps, with the
+same per-utterance preparation as the simulator's drive (8~kHz drive LPF, RMS normalization), and a
+separate set of about 20 pilot utterances that are not in the test set \tbd{} (selection rule,
+hashes). Speech takes are split so that no take file exceeds about 35~min.
+
+\subsection{Rig and takes}
+\label{sec:rig}
+% TODO: rig details (pool size and depth, projector and hydrophone depth, amplifier, drive level and
+% source level, Daisy channel map ch0--ch3, scored ch0, Linux recorder) from the session log.
+A caged Lubell LL916C projector, driven through its matching transformer by a bridged class-D
+amplifier from a USB interface, plays into a private pool; two Daisy Seed boards record four
+hydrophone channels at 96~kHz and 24~bits, and \texttt{ch0} is scored. Projector and hydrophone are at
+the same depth, at least 1~m below the surface, with the hydrophone on the projector's horizontal axis
+at a fixed rotation. No vehicle noise source is present. The takes, in order, are: a dry run in air
+(not part of the data); a chain-reference take at 0.5--1~m (sweeps and about 20 utterances) that
+measures $h_{\mathrm{chain}}$ for $R_1$ (Section~\ref{sec:refs}); a pilot take at 3~m; at each
+distance (default 1, 3 and 6~m \tbd) 1~min of noise only, 1~min of sweeps, all 200 test utterances
+once and a drift anchor repeating the first block; and a bubble pass at one distance, with an air
+stone running near the projector, over a fixed subset of test utterances plus 2~min of bubble noise
+only. Values: \tbd.
+
+\subsection{Added recorded noise}
+\label{sec:addednoise}
+Recorded pool noise (from the noise-only takes) and recorded bubble noise are mixed into the recorded
+speech cuts at 0 and 5~dB SNR with deterministic offsets, so the water path is real and only the noise
+level is controlled. These conditions are always labelled as added noise.
+
+\subsection{References for intrusive metrics}
+\label{sec:refs}
+The real-data reference is $R_1 = s * h_{\mathrm{chain}}$, with $h_{\mathrm{chain}}$ measured in the
+chain-reference take and only a broadband delay and gain fitted per utterance
+\cite{yang2024realman}. The projector's 5~kHz notch is not pre-compensated in the drive; it is part of
+$h_{\mathrm{chain}}$. The aligned $R_0$ cut is used for the VAD of level normalization.
+
+\subsection{Pre-registered decision rule and endpoints}
+\label{sec:endpoint}
+The pool plan was fixed on 2026-11-19 in the project's protocol record (\texttt{PROTOCOL.md} and its
+amendment), before any pool recording existed. \textit{Decision rule.} The unadapted recognizer (C0, guarded decoding) decodes the
+pilot take on site. If its corpus WER is at least 10\%, the quiet recordings are the primary condition
+and added pool noise at 0~dB SNR is secondary; otherwise added pool noise at 0~dB SNR is primary and
+quiet secondary. \textit{Primary endpoint.} The paired $\Delta\mathrm{WER}$ of C8 (the frozen adapter
+of Section~\ref{sec:c8}) minus C0 in the primary condition, on the v0-test cuts of channel
+\texttt{ch0}, pooled over distances and per distance, with the frozen decoding
+(Section~\ref{sec:decode}) and statistics (Section~\ref{sec:stats}). \textit{Secondary.} The same
+comparison in the secondary condition, at 5~dB SNR, with recorded bubble noise and in the live-bubble
+take; each SE front end (C1, C2, C10) minus C0; flag rates; WER by speaker sex. Result:
+\tbd.
+
+% ---- SUPERSEDED: thruster-based S1 protocol (2026-11-09), not typeset; kept for reference only.
+\iffalse
 \section{Real-Data Benchmark and S1 Protocol}
 \label{sec:bench}
 This section describes pool session S1 (2026-11-09) as planned and pre-registered. No S1 recording
@@ -475,10 +540,13 @@ method, we report the mean power spectral density (Hann frames of about 85~ms, 5
 one-third-octave band levels in dBFS, with their frame-to-frame spread as a measure of stationarity,
 and each condition relative to the quiet-pool take. S1 values: \tbd.
 
+\fi
+
 % ---------------------------------------------------------------------------------------------
 \section{Results}
-% TODO: S1 primary endpoint (C8 - C0, overall and by thruster state) and secondary analyses; simulation
-% results (labelled as simulation) as in the abstract.
+% TODO: primary endpoint (C8 - C0 in the primary condition chosen by the pilot rule, pooled and per
+% distance) and secondary analyses, from paper/results_real.tex; simulation results (labelled as
+% simulation) as in the abstract.
 \textit{TODO: Results (real data \tbd; simulation results labelled as such).}
 
 \section{Discussion}

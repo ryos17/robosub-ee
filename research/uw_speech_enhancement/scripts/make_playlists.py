@@ -2,8 +2,20 @@
 
 Usage::
 
+    # pool plan (2026-11-19, no thruster): positions are chosen on the day by run_session.py plan
+    python scripts/make_playlists.py --plan pool --librispeech-root data/librispeech --out data/bench/v1
+
+    # legacy thruster plans (v0 / S1 benches; data/bench/v0_s1 is frozen)
     python scripts/make_playlists.py --librispeech-root data/librispeech --out data/bench/v0
     python scripts/make_playlists.py --release v1 --positions p05 p1 ... --no-thruster
+
+``--plan pool`` selects v0-test (the 200 test utterances), v0-dev (selection only,
+for the disjointness check) and v0-pilot (20 dev-clean utterances outside v0-dev,
+`uwse.bench.librispeech.select_pilot`), renders the test and pilot blocks and writes a
+program schedule (`uwse.bench.playlist.pool_schedule`): pilot, speech (every test block
+once), anchor (first test block repeated) and bubble (an evenly spaced, deterministic
+subset of test blocks of about ``--bubble-min`` minutes). ``selection/pilot_rule.json``
+and ``selection/bubble_rule.json`` record the two choices.
 
 Position ids must match the utt_id grammar ``p[0-9a-z]+`` (uwse.bench.schema),
 so 0.5 m is written ``p05`` and 4.5 m ``p4p5`` or similar, never ``p0.5``.
@@ -41,6 +53,10 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     ap = argparse.ArgumentParser(description="Build benchmark playback blocks and schedule.")
     ap.add_argument("--librispeech-root", type=Path, default=ROOT / "data" / "librispeech")
     ap.add_argument("--out", type=Path, default=None, help="default data/bench/<release>")
+    ap.add_argument("--plan", choices=("legacy", "pool"), default="legacy",
+                    help="pool: the 2026-11-19 no-thruster pool plan (default out data/bench/v1)")
+    ap.add_argument("--pilot-n", type=int, default=20, help="pool: pilot sentences (dev-clean, not v0-dev)")
+    ap.add_argument("--bubble-min", type=float, default=10.0, help="pool: bubble-pass speech (minutes)")
     ap.add_argument("--release", choices=("v0", "v1"), default="v0")
     ap.add_argument("--seed", type=int, default=ls.DEFAULT_SEED)
     ap.add_argument("--positions", nargs="+", default=["p1", "p3", "p6"],
@@ -57,7 +73,12 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     ap.add_argument("--max-dur", type=float, default=ls.MAX_DUR_S)
     args = ap.parse_args(argv)
     if args.out is None:
-        args.out = ROOT / "data" / "bench" / args.release
+        args.out = ROOT / "data" / "bench" / ("v1" if args.plan == "pool" else args.release)
+    if args.plan == "pool" and args.release != "v0":
+        ap.error("--plan pool plays the v0-test utterances; leave --release at v0")
+    frozen = {(ROOT / "data" / "bench" / n).resolve() for n in ("v0_s1", "v0_pilot")}
+    if args.out.resolve() in frozen:
+        ap.error(f"{args.out} is a frozen, hashed bench; write a new bench (e.g. data/bench/v1)")
     if not 0 < args.f_lo < pl.CHIRP_F1_HZ:
         ap.error("--f-lo must be in (0, 8000)")
     if args.release == "v1" and args.v1_n < 1000:
@@ -94,8 +115,64 @@ def interleave(main: list[str], extra: list[str]) -> list[str]:
     return out
 
 
+def main_pool(a: argparse.Namespace) -> int:
+    """The no-thruster pool plan bench (see the module docstring)."""
+    out = a.out
+    test = manifest(a.librispeech_root, "test-clean", out / "manifests")
+    dev = manifest(a.librispeech_root, "dev-clean", out / "manifests")
+    v0_test = ls.select_v0_test(test, seed=a.seed, min_s=a.min_dur, max_s=a.max_dur)
+    v0_dev = ls.select_v0_dev(dev, seed=a.seed, min_s=a.min_dur, max_s=a.max_dur)
+    pilot = ls.select_pilot(dev, exclude=v0_dev, n=a.pilot_n, seed=a.seed, min_s=a.min_dur, max_s=a.max_dur)
+    sel = {"v0-test": v0_test, "v0-dev": v0_dev, "v0-pilot": pilot}
+    assert_disjoint(sel)
+    if {u.utt_id for u in pilot} & {u.utt_id for u in v0_dev}:
+        raise SystemExit("pilot overlaps v0-dev")  # select_pilot excludes it; belt and braces
+    (out / "selection").mkdir(parents=True, exist_ok=True)
+    for name, utts in sel.items():
+        ls.write_manifest(out / "selection" / f"{name}.jsonl", utts)
+        print(f"{name}: {ls.summary(utts)}")
+    with open(out / "selection" / "pilot_rule.json", "w", encoding="utf-8", newline="\n") as f:
+        json.dump({"split": "v0-pilot", "rule": ls.PILOT_RULE, "seed": a.seed, "n": a.pilot_n,
+                   "min_dur_s": a.min_dur, "max_dur_s": a.max_dur,
+                   "utt_ids": [u.utt_id for u in pilot]}, f, indent=1)
+
+    blocks = {k: pl.pack_blocks(sel[k], target_speech_s=a.target_speech_s, max_utts=a.max_utts, seed=a.seed)
+              for k in ("v0-pilot", "v0-test")}
+    names = {k: [f"{k}_{i:03d}" for i in range(len(b))] for k, b in blocks.items()}
+    if not a.no_render:
+        for k, b in blocks.items():
+            pl.render_blocks(b, out / "blocks", prefix=k, f_lo=a.f_lo, bench_split=k)
+    lay = pl.BlockLayout()
+    durs = {cb: sum(u.duration_s for u in blk) + lay.overhead_s(len(blk))
+            for k, bl in blocks.items() for cb, blk in zip(names[k], bl)}
+    test_names = names["v0-test"]
+    mean_block_s = sum(durs[c] for c in test_names) / len(test_names)
+    bub = pl.bubble_subset(len(test_names), round(a.bubble_min * 60.0 / mean_block_s))
+    with open(out / "selection" / "bubble_rule.json", "w", encoding="utf-8", newline="\n") as f:
+        json.dump({"rule": "evenly spaced test blocks, numpy.linspace(0, n_blocks - 1, k) rounded, "
+                           "k = round(bubble_min * 60 / mean test block length)",
+                   "bubble_min": a.bubble_min, "blocks": [test_names[i] for i in bub],
+                   "utt_ids": [u.utt_id for i in bub for u in blocks["v0-test"][i]]}, f, indent=1)
+    sched = pl.pool_schedule(names["v0-pilot"], test_names, bub, anchor=not a.no_anchor)
+    pl.write_schedule(out / "schedule.json", sched)
+    minutes: dict[str, float] = {}
+    for e in sched:
+        minutes[e.program] = minutes.get(e.program, 0.0) + durs[e.content_block] / 60.0
+    report = {"plan": "pool", "schedule_entries": len(sched), "program_minutes_est": minutes,
+              "n_blocks": {k: len(v) for k, v in names.items()},
+              "mean_dur_s": {k: sum(u.duration_s for u in v) / len(v) for k, v in sel.items()},
+              "note": "speech minutes exclude the inter-block gaps that make_session_audio.py adds; "
+                      "it splits a program longer than --max-take-min into parts"}
+    with open(out / "budget.json", "w", encoding="utf-8") as f:
+        json.dump(report, f, indent=1)
+    print(json.dumps(report, indent=1))
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     a = parse_args(argv)
+    if a.plan == "pool":
+        return main_pool(a)
     out = a.out
     test = manifest(a.librispeech_root, "test-clean", out / "manifests")
     dev = manifest(a.librispeech_root, "dev-clean", out / "manifests")

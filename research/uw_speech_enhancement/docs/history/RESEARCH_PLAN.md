@@ -1,8 +1,10 @@
 # Research Plan: Underwater Speech Enhancement, Sim-to-Real (rev. 2)
 
+> **Historical document (moved to `docs/history/` on 2026-11-19).** This is the original research plan (rev. 3, 2026-10-27). It is kept unchanged as the record that the frozen evaluation protocol refers to ("unchanged from RESEARCH_PLAN.md"). Its pool protocol (Avery pool, thruster on/off ABBA, E0-E4 characterisation, the week-by-week schedule and the co-author plan) is superseded. The current protocol is [`PROTOCOL.md`](../../PROTOCOL.md); the frozen record and its amendments are [`RESULTS_E7_SIM_DRYRUN.md`](../../RESULTS_E7_SIM_DRYRUN.md).
+
 Rev. 3 (2026-10-27): edits from RESEARCH_UPDATE_3.md applied.
 
-*Plan written 2026-10-27 (W1) and revised the same day after two internal reviews: an underwater-acoustics review and a speech/ML review. Lead: Ryota. Companion files: [`README.md`](README.md) (design), [`PRIOR_ART.md`](PRIOR_ART.md) (positioning), [`../whisper_ivc/README.md`](../whisper_ivc/README.md) (capture rig: Daisy Seed, 4 ch, 96 kHz / 24-bit, Whisper on the Jetson Orin).*
+*Plan written 2026-10-27 (W1) and revised the same day after two internal reviews: an underwater-acoustics review and a speech/ML review. Lead: Ryota. Companion files: [`README.md`](../../README.md) (design), [`PRIOR_ART.md`](../../PRIOR_ART.md) (positioning), [`../whisper_ivc/README.md`](../../../whisper_ivc/README.md) (capture rig: Daisy Seed, 4 ch, 96 kHz / 24-bit, Whisper on the Jetson Orin).*
 
 **How to read this plan**
 

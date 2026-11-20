@@ -1,0 +1,29 @@
+{
+ "description": "Pool-plan channel map (2026-11-19, no thruster, no loopback). The Windows PC plays through the USB interface (out1 -> amplifier) and records nothing; the two Daisy Seed boards record the four hydrophones at 96 kHz / 24-bit on the Linux capture machine (scripts/record_daisy.py; run_session.py daisy-cmds prints the command lines), and every recorder aligns on the chirps its hydrophones hear. File channels are 0-based. Hydrophone channel_id is the ch<N> of every utt_id; ch0 is scored. Edit to match the rig on the day (run_session.py plan copies it into session.json).",
+ "scored_channel": 0,
+ "recorders": {
+  "iface": {
+   "fs": 48000,
+   "note": "USB playback interface, out1 -> amplifier; plays only (no inputs recorded, no loopback)",
+   "channels": {}
+  },
+  "daisyA": {
+   "fs": 96000,
+   "board": "376636603433",
+   "note": "Daisy Seed A, record_daisy.py on the Linux capture machine",
+   "channels": {
+    "0": {"role": "hydrophone", "channel_id": 0},
+    "1": {"role": "hydrophone", "channel_id": 1}
+   }
+  },
+  "daisyB": {
+   "fs": 96000,
+   "board": "376C36573433",
+   "note": "Daisy Seed B, record_daisy.py on the Linux capture machine",
+   "channels": {
+    "0": {"role": "hydrophone", "channel_id": 2},
+    "1": {"role": "hydrophone", "channel_id": 3}
+   }
+  }
+ }
+}

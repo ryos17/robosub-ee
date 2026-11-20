@@ -1,6 +1,6 @@
 # Deep-dive findings (2026-10-27)
 
-Raw research notes behind RESEARCH_PLAN.md: five parallel deep-dives (physics, full texts, SE methodology, hardware, venue). Unconfirmed items are marked (unverified).
+Raw research notes behind [`docs/history/RESEARCH_PLAN.md`](docs/history/RESEARCH_PLAN.md): five parallel deep-dives (physics, full texts, SE methodology, hardware, venue). Unconfirmed items are marked (unverified).
 
 ## FINDINGS: physics
 # Simulator physics for the speech band (100 Hz to 8 kHz) in a pool or tank: findings and numbers for `uwsim`
@@ -757,11 +757,11 @@ Checked 2026-10-27. Anything a source did not confirm is marked **(unverified)**
 
 **Distortion.** No vendor publishes THD. Measure it yourself with an exponential sine sweep (ESS), which separates the harmonics from the linear IR ([Farina, AES122](https://angelofarina.it/Public/papers/226-AES122.pdf)). Otero & Felis applied Farina's method to a piezo transducer in water, cutting the signal before the first reflection ([MDPI Proc. 4(1):53](https://www.mdpi.com/2504-3900/4/1/53)).
 
-**Lead to check: ask the pool before buying.** Lubell portable speakers are standard for synchro and artistic swimming ([USA Synchro partnership](https://www.sportsdestinations.com/management/marketing-sponsorships/usa-synchro-announces-partnership-lubell-labs-10448)). If Stanford Aquatics already owns an LL916 or a CAWSS system, borrowing it removes the biggest cost **(unverified)**.
+**Lead to check: ask the pool before buying.** Lubell portable speakers are standard for synchro and artistic swimming ([USA Synchro partnership](https://www.sportsdestinations.com/management/marketing-sponsorships/usa-synchro-announces-partnership-lubell-labs-10448)). If Stanford Aquatics already owns an LL916 or a CAWSS system, borrowing it removes the biggest cost **(unverified)**. *(Update 2026-11-19: moot. An LL916C and AC205C were bought, and the session uses the lead's own pool; see `PROTOCOL.md`.)*
 
 ## (b) Amplifiers
 
-- **Lubell.** The amplifier must suit the transformer box and must not be bridged. The AC102 listing says "Amplifier must have unbalanced output — no bridged amplifiers!" Lubell asks for a UL-listed amplifier kept in a dry area and run from a GFCI-protected outlet ([Inyo Pools](https://www.inyopools.com/Products/19400029046030.htm)).
+- **Lubell.** The amplifier must suit the transformer box and must not be bridged. The AC102 listing says "Amplifier must have unbalanced output — no bridged amplifiers!" Lubell asks for a UL-listed amplifier kept in a dry area and run from a GFCI-protected outlet ([Inyo Pools](https://www.inyopools.com/Products/19400029046030.htm)). *(Update 2026-11-19: the amplifier actually used, Amazon B07VHG2LR9, likely an AIYIMA TPA3255 unit, has bridged (BTL) outputs. This conflicts with the AC102 listing's warning above. The session procedure treats both output terminals as live and keeps them floating: nothing on the output side is tied to any ground, and the drive is measured with a floating battery DMM. See the checklist, §3.)*
 - **Crown XLi800.** Lubell's own LL1424HP research spec uses it. It delivers 2×300 W @ 4 Ω and 2×200 W @ 8 Ω, at **$349** from Full Compass ([Full Compass](https://www.fullcompass.com/prod/223773-crown-xli800-2-channel-300w-at-4-ohm-power-amplifier)). It also suits the AQ339, one channel at 4 Ω.
 - **SIREN.** It used a "small dual 10 W amplifier from Parts Express", and the exciter plus amplifier cost $35 in total ([SIREN](https://par.nsf.gov/servlets/purl/10481555)).
 - **Power needed (Calc).** At 160 dB re 1 µPa @ 1 m, the LL916 is 20 dB below its 180 dB maximum, which is about 2 Vrms instead of 20 Vrms. A few watts is enough, so a large amplifier is about headroom, not level.
@@ -803,7 +803,7 @@ Checked 2026-10-27. Anything a source did not confirm is marked **(unverified)**
   - A Navy diver study: 2% "very severe" aversion at 148 dB.
   - About 145 dB "safe for sport divers": NJ forum post, **(unverified)** ([tapatalk](https://www.tapatalk.com/groups/njdive/to-dive-boat-captains-dive-shops-and-the-diving-co-t1908.html)).
   - No NATO 154 dB figure was found.
-  - **Practice:** record with no swimmers in the water, or keep source levels at or below about 150 dB @ 1 m when people are in the water. Get written approval from Stanford Aquatics; its specific rules were not found.
+  - **Practice:** record with no swimmers in the water, or keep source levels at or below about 150 dB @ 1 m when people are in the water. Get written approval from Stanford Aquatics; its specific rules were not found. *(Update 2026-11-19: the session is in the lead's own pool, so no Aquatics approval applies. The no-one-in-the-water rule and the 150 dB limit with people in the water stay; see the checklist, §3.)*
 
 ## (e) How other groups recorded speech or audio through water
 
@@ -843,7 +843,7 @@ Checked 2026-10-27. Anything a source did not confirm is marked **(unverified)**
 
 | Item | Pick | Cost |
 |---|---|---|
-| Projector, main option | **Lubell LL916C + AC205C**. Ask Aquatics first whether one can be borrowed. | about $1,750–2,050 |
+| Projector, main option | **Lubell LL916C + AC205C** (bought; update 2026-11-19). | about $1,750–2,050 |
 | Projector, budget option | **EV UW30** (100 Hz–10 kHz) or **Clark AQ339** | about $500 / $1,350 |
 | Pilot projector (week 1–2 IR and THD shakedown) | DAEX25W-8 on a sealed plate or hull, plus a small class-D amp | about $60 |
 | Amplifier | Crown XLi800, unbridged, on GFCI | $349 |
@@ -1091,7 +1091,7 @@ You need pilot pool recordings before 2027-01-15.
 - Weak speech: at −10 to 0 dB SNR, 2 of 120 harder-dev clips were gated (p_ns up to 0.085), and both already had garbage C8 output.
 
 **Limits.**
-- Simulation only. Nothing here shows how p_ns behaves on underwater recordings. The S1 pool session is the first test (`RESULTS_E7_SIM_DRYRUN.md`, amendment of 2026-11-18).
+- Simulation only. Nothing here shows how p_ns behaves on underwater recordings. The S1 pool session was to be the first test (`RESULTS_E7_SIM_DRYRUN.md`, amendment of 2026-11-18). *(Update 2026-11-19: S1 was retired unrecorded, and that amendment lapsed with it. A C8g test on pool-plan data would need its own amendment.)*
 - No clip in the test splits is longer than 14.7 s, so the per-window rule was only exercised on dev.
 - Whisper sometimes appends a padded-tail " Thank you." segment that starts at the clip's end. The gate keeps it when that window is not gated (8 dev and 29 E7 speech outputs).
 

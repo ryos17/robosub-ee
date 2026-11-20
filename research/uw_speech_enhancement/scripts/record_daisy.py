@@ -4,8 +4,12 @@ Uses the ``stream_audio`` firmware reader in ``../whisper_ivc/daisy_stream.py``.
 Start it before the take's file starts playing and stop it (Ctrl-C) after the
 file ends; ``--seconds`` stops it automatically.
 
-    python scripts/record_daisy.py --board 376636603433 \
+    python scripts/record_daisy.py --board 376636603433 --seconds 1900 \
         --out sessions/2026-12-02_s2/raw/daisyA/s2_p1_speech_daisyA.wav
+
+``python scripts/run_session.py daisy-cmds --session-dir ...`` prints these lines for
+every take (both boards at once). An existing ``--out`` (or its sidecar) is never
+overwritten: a redo goes to ``..._r2_<rec>.wav`` (``daisy-cmds --attempt 2``).
 
 Writes the WAV (2 channels, the board's rate, PCM_24) and ``<wav>.json`` with the
 board, rate, sample count and the number of USB frame drops. A drop removes
@@ -53,6 +57,14 @@ def record(batches, out: Path, rate_expected: int | None, seconds: float | None,
             "dropped": int(stats.get("dropped", 0)), "wall_s": round(time.monotonic() - t0, 2)}
 
 
+def refuse_overwrite(out: Path) -> None:
+    """Never overwrite a take: a redo is a new file name (``..._r2_<rec>.wav``, run_session.py --attempt 2)."""
+    side = out.with_suffix(out.suffix + ".json")
+    if out.exists() or side.exists():
+        raise SystemExit(f"{out} already exists; record a redo under its own name "
+                         "(python scripts/run_session.py daisy-cmds ... --attempt 2 prints it)")
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--board", default=None, help="board USB serial (see daisy_stream.BOARDS); default: auto")
@@ -62,6 +74,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--bits", type=int, default=24, choices=(16, 24))
     ap.add_argument("--seconds", type=float, default=None)
     a = ap.parse_args(argv)
+    refuse_overwrite(a.out)
 
     sys.path.insert(0, str(ROOT.parent / "whisper_ivc"))
     import glob

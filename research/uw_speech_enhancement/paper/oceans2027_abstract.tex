@@ -1,9 +1,34 @@
-% OCEANS 2027 abstract (submission limit: 2 pages, 500-1000 words incl. figures, equations and references; PDF).
-% Status: draft started 2026-11-08 from paper/oceans2027_abstract_draft.md and
-% paper/oceans2027_methods_results_draft.md; fact-checked against RESULTS_E7_SIM_DRYRUN.md the same day.
-% Every result is from simulation (uwsim v0, uncalibrated) and is worded as such; the pool recordings
-% (session S1 onward) replace or join them before submission.
-% Build: python paper/fig_wer.py && latexmk -pdf -outdir=build oceans2027_abstract.tex   (run in paper/)
+% OCEANS 2027 abstract. Limits: IEEEtran conference, at most 2 pages, 500-1000 words including
+% figures, equations and references; PDF; due 2027-01-15; sole author Ryota Sato.
+%
+% Status (2026-11-19): written for the pool plan of 2026-11-19 (own pool, no thruster; chain-reference,
+% pilot, per-distance and air-stone bubble takes; recorded noise added at 0 and 5 dB SNR). The text is
+% final in form; every pool number is a macro from results_real.tex, or a bold [XX] from
+% results_placeholder.tex while no session has been scored. Simulation results are condensed context.
+%
+% Numbers and variants:
+%   * results_real.tex (scripts/make_paper_numbers.py) is used when it exists, else results_placeholder.tex
+%     (paper/make_results_placeholder.py; same macro names, values shown as [XX]).
+%   * The results paragraph has two pre-written variants, chosen ONLY by the pre-registered pilot rule
+%     through \PrimCondName: "quiet" -> quiet primary; "pool0dB" -> added-noise primary. There is no
+%     override (the \Prim* numbers follow the pilot rule, so a forced variant would mislabel them). With
+%     the placeholder the quiet variant is shown; real results with any other \PrimCondName stop the
+%     build with a "paper Error".
+%   * Distance-specific macros are named with \FarDist (default Six, i.e. 6 m) and \BubDist (default
+%     Three, the p3bub take). If the distances chosen on the day differ, edit the four \newcommand lines
+%     after \begin{document}. A missing macro prints as a bold [name?] and logs "Package paper Warning".
+%   * fig_real.pdf (scripts/make_paper_numbers.py --fig-only) replaces the simulation figure when it exists.
+%
+% Build (from the uw_speech_enhancement root, uwse env unless noted):
+%   1. python paper/make_results_placeholder.py            # only after changing the plan or the macro script
+%   2. C:/Users/ryota/anaconda3/python.exe paper/fig_wer.py   # simulation figure paper/fig_wer.pdf
+%   3. after scoring a session (runs/score/v1_s2 from scripts/score_session.py):
+%        python scripts/make_paper_numbers.py --results runs/score/v1_s2     # -> paper/results_real.tex
+%        C:/Users/ryota/anaconda3/python.exe scripts/make_paper_numbers.py --results runs/score/v1_s2 --fig-only
+%                                                                              # -> paper/fig_real.pdf
+%   4. cd paper && latexmk -pdf -interaction=nonstopmode -outdir=build oceans2027_abstract.tex
+%   5. check: build/oceans2027_abstract.pdf has 2 pages; the log has no "undefined" and no
+%      "paper Warning"; pdftotext build/oceans2027_abstract.pdf - | wc -w  is at most 1000.
 \documentclass[conference]{IEEEtran}
 \usepackage[T1]{fontenc}
 \usepackage{amsmath}
@@ -11,7 +36,38 @@
 \usepackage{cite}
 \usepackage{url}
 
+% ---- results: real if present, else visible placeholders (same macro names)
+\newif\ifrealresults
+\IfFileExists{results_real.tex}{\realresultstrue\input{results_real}}{\input{results_placeholder}}
+% ---- figure: real-data figure if present, else the simulation figure
+\newif\ifrealfig
+\IfFileExists{fig_real.pdf}{\realfigtrue}{}
+% ---- variant from the pre-registered pilot rule only (no override; see header)
+\newif\ifquietprimary
+\quietprimarytrue
+\edef\paperPrim{\detokenize\expandafter{\PrimCondName}}
+\edef\paperQuiet{\detokenize{quiet}}
+\edef\paperPoolZero{\detokenize{pool0dB}}
+\ifx\paperPrim\paperPoolZero \quietprimaryfalse \fi
+\ifrealresults \ifx\paperPrim\paperQuiet \else \ifx\paperPrim\paperPoolZero \else
+  \PackageError{paper}{PrimCondName is neither quiet nor pool0dB}{The text has variants for those two only.}
+\fi \fi \fi
+% \M{name}: the macro \name, or a bold [name?] and a log warning if it is not defined
+\makeatletter
+\newcommand{\M}[1]{\ifcsname #1\endcsname\csname #1\endcsname\else
+  \textbf{[#1?]}\PackageWarning{paper}{number macro #1 undefined}\fi}
+\makeatother
+
 \begin{document}
+
+% distance names used in macro names (results_real.tex spells numbers out: 6 m -> Six, 0.5 m -> ZeroPtFive)
+\newcommand{\FarDist}{Six}   % farthest distance of the quiet series
+\newcommand{\FarDistM}{6}
+\newcommand{\BubDist}{Three} % distance of the live air-stone bubble take (p3bub -> Three)
+\newcommand{\BubDistM}{3}
+% primary / secondary condition names as used in macro names
+\ifquietprimary \newcommand{\PrimTag}{Quiet}\newcommand{\SecTag}{PoolZero}
+\else \newcommand{\PrimTag}{PoolZero}\newcommand{\SecTag}{Quiet}\fi
 
 \title{Speech Enhancement versus Recognizer Adaptation for Underwater Speech Recognition over a Projector-to-Hydrophone Link}
 
@@ -26,110 +82,109 @@ Stanford, CA, USA\\
 \section{Motivation}
 Divers, surface teams and underwater vehicles can exchange speech by driving an underwater projector
 directly with audio-band speech (below 8~kHz, no carrier) and recording it with a hydrophone. The
-speech arrives reverberant and mixed with thruster and bubble noise. Speech enhancement (SE) and
-automatic speech recognition (ASR) models are trained on in-air audio. Through-water speech has been
-simulated, recorded and enhanced before~\cite{nissen2017,roehrdanz2025,roehrdanz2026}, but those
-recordings were not released, and to our knowledge no open benchmark measures SE or ASR on this
-chain. The closest ASR work~\cite{rong2025} fine-tunes Whisper on in-mask speech and sends text over
-an acoustic modem, so speech never crosses the water as audio. A vehicle that follows spoken commands
-can either clean the audio before a frozen recognizer or adapt the recognizer itself. We compare the
-two in simulation and are building a test-pool benchmark, with repeatable geometry and controlled
-thruster noise, to compare them on recorded speech.
+speech arrives reverberant, coloured by the transducers and mixed with ambient and bubble noise, while
+speech enhancement and automatic speech recognition (ASR) models are trained on in-air audio.
+Through-water speech has been simulated, recorded and enhanced before~\cite{nissen2017,roehrdanz2025,roehrdanz2026},
+but those recordings were not released. The closest ASR work~\cite{rong2025} fine-tunes Whisper on
+in-mask speech and sends text over an acoustic modem, so speech never crosses the water as audio. A
+listening vehicle can clean the audio for a frozen recognizer or adapt the recognizer; we compare
+both in simulation and on speech recorded in a pool.
 
 \section{Approach}
-\textbf{Channel simulator.} \texttt{uwsim} models the path from a clean utterance $s$ to a hydrophone
-recording as
+\textbf{Simulator.} \texttt{uwsim} maps a clean utterance $s$ to a hydrophone recording
 \begin{equation}
 y = Q\Big(\mathrm{HPF}\big(h_{\mathrm{hyd}} * \big(\textstyle\sum_{k=1}^{3} h_k * (\mathrm{LPF}_{8\,\mathrm{kHz}}\, s)^k * h_{\mathrm{ch}} + n\big)\big)\Big),
 \end{equation}
-where $(\cdot)^k$ is a pointwise power (third-order projector nonlinearity), $h_{\mathrm{ch}}$
-combines image-source reflections, a stochastic late tail and a modal low band, $n$ is bubble or
-stationary noise in the water, and $Q$ is a 24-bit converter. The results below use placeholder
-parameters; calibrating them needs dedicated pool measurement takes, planned after the first session.
+with a third-order projector nonlinearity, a pool channel $h_{\mathrm{ch}}$ (image sources, late tail,
+modal low band), bubble or stationary noise $n$ and a 24-bit converter $Q$; its parameters are
+uncalibrated placeholders.
 
-\textbf{Pool benchmark.} For the full paper, LibriSpeech test-clean utterances~\cite{panayotov2015}
-are played in blocks of about 70~s framed by linear-FM sync chirps, at 1, 3 and 6~m, with the thruster
-off and on in counterbalanced (off-on-on-off) order, and the first block repeated at the end to
-check recorder drift. An import
-pipeline, so far checked on synthetic recordings, aligns each recording to the playback schedule from
-the chirps, corrects recorder clock drift and cuts every utterance. Each utterance's signal-to-noise
-ratio (SNR) is estimated from its thruster-off recording and a separate noise-only recording.
+\textbf{Pool recordings.} A caged Lubell LL916C projector and the scored hydrophone (96~kHz, 24-bit)
+hung at one depth, at least 1~m below the surface of a private pool, on the projector's axis.
+The 200 LibriSpeech test-clean utterances~\cite{panayotov2015} (\NSpk{} speakers) were played once at each
+of \DistList~m in chirp-framed blocks for clock-drift correction and cutting, the first block
+repeated to check level drift. Sweeps and \ChainRefN{} utterances at
+\ChainRefDist~m measured the transducer-chain response, giving the chain reference (the utterance through the
+projector and hydrophone only). Noise was recorded alone at every distance, and an air stone beside the
+projector produced live bubbles during a subset of utterances. Recorded pool and bubble noise was also
+added to the recorded utterances at 0 and 5~dB signal-to-noise ratio (SNR), keeping the water path real.
+No vehicle noise was recorded. A rule fixed before recording chose the primary condition: if the
+unadapted word error rate (WER) on \PilotN{} pilot utterances (not in the test set) at \PilotDist~m reached \PilotThreshold\%, the quiet
+recordings are primary, else added pool noise at 0~dB SNR.
 
-\textbf{Systems.} Unprocessed audio; published enhancers used as is (weighted prediction error (WPE)
-dereverberation, MetricGAN+, SepFormer and DeepFilterNet3~\cite{schroeter2023}); DeepFilterNet3 and a
-U-Net trained on \texttt{uwsim}; and recognizer adaptation: Whisper large-v3~\cite{radford2023} with
-low-rank adaptation (LoRA~\cite{hu2022}, rank~8) trained on simulated audio, with no front end and its
-checkpoint chosen by WER on a separate simulated development set. Systems are compared by corpus word
-error rate (WER) with paired speaker-cluster bootstrap 95\% confidence intervals (CIs), under an
-evaluation protocol frozen before any pool recording is scored.
+\textbf{Systems.} Unprocessed audio; WPE dereverberation; DeepFilterNet3~\cite{schroeter2023} fine-tuned, and a U-Net trained, on \texttt{uwsim}; and Whisper
+large-v3~\cite{radford2023} with low-rank adaptation (LoRA~\cite{hu2022}, rank~8) trained on simulated
+audio, with no front end. All share one decoding policy, guarded by a length cap. The primary
+comparison, adapted versus unadapted recognizer, uses corpus WER with paired speaker-cluster bootstrap
+95\% confidence intervals (CIs), under a protocol frozen before any pool recording.
 
-\section{Results so far (simulation)}
-On 200 simulated test utterances from 40 speakers, enhancement did not carry over with range
-(Fig.~\ref{fig:wer}). Fine-tuned DeepFilterNet3 lowered WER at 1~m in quiet ($-0.8$ points, CI
-excluding zero) but raised it at 3 and 6~m ($+2.3$ and $+4.9$ points), and no front end lowered WER
-in stationary noise by more than 0.1 points. Against the transducer-chain reference (the utterance
-through the projector and hydrophone responses only, with no water path), the trained
-enhancers raised extended short-time objective intelligibility (ESTOI)~\cite{jensen2016} at 6~m in
-quiet from 0.36 to 0.56--0.61 while roughly doubling WER (4.3\% to 8.0--9.2\%). This agrees, in
-simulation, with the in-air finding that enhancement artefacts hurt ASR~\cite{iwamoto2022}.
+\section{Results on recorded speech}
+\ifquietprimary
+The pilot WER was \PilotWer\%, at or above the threshold, so the quiet
+recordings are primary and added pool noise at 0~dB SNR is secondary.
+\else
+The pilot WER was \PilotWer\%, below the threshold: the quiet recordings
+leave little error to remove, so added pool noise at 0~dB SNR is primary and quiet secondary.
+\fi
+Pooled over \DistList~m (\NUttsPerDist{} utterances per distance), the adapted recognizer changed WER
+from \PrimWerCZeroAll\% to \PrimWerCEightAll\% (\PrimDWerAll{} points, CI \PrimDWerAllCI;
+\PrimRelDWerAll\% relative), and at \FarDistM~m from \M{PrimWerCZero\FarDist}\% to
+\M{PrimWerCEight\FarDist}\% (\M{PrimDWer\FarDist} points, CI \M{PrimDWer\FarDist CI})\ifrealfig{} (Fig.~\ref{fig:wer})\fi. In the
+secondary condition the change was \SecDWerAll{} points (CI \SecDWerAllCI). Fine-tuned DeepFilterNet3
+changed pooled primary WER by \M{DWerCTwo\PrimTag All} points (CI \M{DWerCTwo\PrimTag AllCI}). With live
+bubbles at \BubDistM~m, WER went from \M{WerCZeroBubblelive\BubDist}\% to
+\M{WerCEightBubblelive\BubDist}\%. The chain-reference take gave \ChainRefWer\%. The adapter, unlike
+the enhancers, saw synthetic stationary noise in training, which may favor it in added pool noise.
+% TODO (lead, after results): one sentence of interpretation; keep it within the CIs.
 
-The adapted recognizer lowered WER in all 9 cells (quiet, bubble noise and stationary noise, each at
-1, 3 and 6~m), significantly in 8; at bubble
-noise and 1~m the drop (2.4\% to 2.2\%) was within the CI, near the 2.1\% of the transducer chain
-alone. Under stationary noise at 0~dB SNR, with its spectral slope held out of training, WER fell from
-20.3/48.4/56.4\% to 16.4/38.2/43.8\% at 1/3/6~m, a relative reduction of about 20\% at every range.
-Unlike the enhancers, this adapter saw synthetic stationary noise at other spectral slopes in
-training, so the stationary-noise comparison favors it.
-A second seed, with its checkpoint chosen by validation loss, gave 16.0/37.2/44.5\%.
-
-Under unconstrained beam search, one adapted model sometimes transcribed an utterance correctly and
-then failed to stop, appending about 200 invented words (46 of 1200 quiet and bubble-noise decodes).
-A decode-length cap tied to audio duration removed every such loop and moved unadapted WER by at most
-0.1 points.
+\section{Simulation (context)}
+On 200 simulated utterances at 1, 3 and 6~m, fine-tuned DeepFilterNet3 lowered WER at 1~m in quiet
+($-0.8$ points) but raised it at 3 and 6~m ($+2.3$, $+4.9$)\ifrealfig\else{} (Fig.~\ref{fig:wer})\fi,
+consistent with the in-air finding that enhancement artefacts hurt ASR~\cite{iwamoto2022}. The adapted recognizer lowered WER in all
+9 condition-by-range cells, significantly in 8, by about 20\% relative in stationary noise at 0~dB SNR
+with a held-out spectral slope, a test that favors it, as it trained on other slopes.
+A decode-length cap tied to audio duration removed run-on transcripts by one adapted model (46 of its
+1200 quiet and bubble-noise decodes).
 
 \begin{figure}[t]
 \centering
+\ifrealfig
+\includegraphics[width=\columnwidth]{fig_real.pdf}
+\caption{WER on recorded pool speech by distance, quiet and with recorded pool noise added at 0~dB SNR,
+with 95\% CIs; dashed: chain-reference take.}
+\else
 \includegraphics[width=\columnwidth]{fig_wer.pdf}
-\caption{Whisper large-v3 WER on simulated hydrophone audio (\texttt{uwsim} v0, uncalibrated; no
-pool recordings yet), in quiet and in stationary noise at 0~dB SNR: unprocessed audio, WPE (level with
-unprocessed audio in every cell), DeepFilterNet3 fine-tuned on the simulator, and Whisper with LoRA.}
+\caption{WER on simulated hydrophone audio (\texttt{uwsim} v0, uncalibrated), quiet and in stationary
+noise at 0~dB SNR.}
+\fi
 \label{fig:wer}
 \end{figure}
 
 \section{Contributions of the full paper}
-\begin{itemize}
-\item An openly released pool benchmark of projector-to-hydrophone speech, thruster off and on, with
-aligned utterance cuts, per-utterance SNR and a frozen protocol.
-\item A channel simulator, released with the paper and calibrated on pool measurements.
-\item A comparison of enhancing the audio versus adapting the recognizer on simulated and recorded
-speech, with a guard against run-on transcripts.
-\end{itemize}
+An open pool benchmark of projector-to-hydrophone speech (quiet, live bubbles, added recorded noise;
+aligned cuts, chain reference, frozen protocol), the simulator calibrated on it, and a comparison of
+enhancing the audio with adapting the recognizer on simulated and recorded speech.
 
 \begin{thebibliography}{1}
 \bibitem{nissen2017} I.~Nissen and E.~Kuhnt-Matth\'e, ``Verbesserung der Sprachverst\"andlichkeit bei
 analoger Unterwasserkommunikation durch Nutzung von digitalen Anfangs- und Endmarken,'' in
-\emph{Proc. DAGA}, Kiel, 2017.
+\emph{Proc. DAGA}, 2017.
 \bibitem{roehrdanz2025} F.~R\"ohrdanz \emph{et al.}, ``Data generation for training of neural networks
-dealing with underwater speech transmission,'' in \emph{Proc. DAS|DAGA}, Copenhagen, 2025.
+dealing with underwater speech transmission,'' in \emph{Proc. DAS|DAGA}, 2025.
 \bibitem{roehrdanz2026} F.~R\"ohrdanz \emph{et al.}, ``Neural-network based speech dereverberation for
 underwater applications,'' in \emph{Proc. DAGA}, 2026, no.~144.
-% TODO verify author initials and pages on IEEE Xplore (document 11104740).
-\bibitem{rong2025} Y.~Rong \emph{et al.}, ``Underwater diver communication system based on speech/text
-conversion,'' in \emph{Proc. OCEANS}, Brest, 2025.
-\bibitem{panayotov2015} V.~Panayotov, G.~Chen, D.~Povey, and S.~Khudanpur, ``LibriSpeech: an ASR corpus
-based on public domain audio books,'' in \emph{Proc. ICASSP}, 2015, pp.~5206--5210.
-\bibitem{schroeter2023} H.~Schr\"oter, A.~N. Escalante-B., T.~Rosenkranz, and A.~Maier,
-``DeepFilterNet: Perceptually motivated real-time speech enhancement,'' in \emph{Proc. Interspeech},
-2023, pp.~2008--2009.
-\bibitem{radford2023} A.~Radford \emph{et al.}, ``Robust speech recognition via large-scale weak supervision,'' in \emph{Proc. ICML}, 2023,
-pp.~28492--28518.
+\bibitem{rong2025} Y.~Rong, P.~Chen, and Z.~Nan, ``Underwater diver communication system based on
+speech/text conversion,'' in \emph{Proc. OCEANS}, Brest, 2025.
+\bibitem{panayotov2015} V.~Panayotov \emph{et al.}, ``LibriSpeech: an ASR corpus based on public
+domain audio books,'' in \emph{Proc. ICASSP}, 2015.
+\bibitem{schroeter2023} H.~Schr\"oter \emph{et al.}, ``DeepFilterNet: Perceptually motivated real-time
+speech enhancement,'' in \emph{Proc. Interspeech}, 2023.
+\bibitem{radford2023} A.~Radford \emph{et al.}, ``Robust speech recognition via large-scale weak
+supervision,'' in \emph{Proc. ICML}, 2023.
 \bibitem{hu2022} E.~J. Hu \emph{et al.}, ``LoRA: Low-rank adaptation of large language models,'' in
 \emph{Proc. ICLR}, 2022.
-\bibitem{jensen2016} J.~Jensen and C.~H. Taal, ``An algorithm for predicting the intelligibility of
-speech masked by modulated noise maskers,'' \emph{IEEE/ACM Trans. Audio, Speech, Lang. Process.},
-vol.~24, no.~11, pp.~2009--2022, 2016.
-\bibitem{iwamoto2022} K.~Iwamoto \emph{et al.}, ``How bad are artifacts?: Analyzing the impact of speech enhancement errors on ASR,'' in
-\emph{Proc. Interspeech}, 2022, pp.~5418--5422.
+\bibitem{iwamoto2022} K.~Iwamoto \emph{et al.}, ``How bad are artifacts?: Analyzing the impact of
+speech enhancement errors on ASR,'' in \emph{Proc. Interspeech}, 2022.
 \end{thebibliography}
 
 \end{document}

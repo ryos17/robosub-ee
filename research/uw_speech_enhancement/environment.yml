@@ -19,6 +19,9 @@ dependencies:
       - soundfile
       - tqdm
       - pyyaml
+      # pool session playback (run_session.py tone / take); installed in
+      # uwse 2026-11-19 (0.5.6)
+      - sounddevice
       - pytest
       # evaluation
       - jiwer

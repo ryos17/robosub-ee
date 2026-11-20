@@ -1,6 +1,6 @@
 """Figure 1 of the OCEANS 2027 abstract: WER by range, front ends vs recognizer adaptation [SIM].
 
-Numbers are Table II of paper/oceans2027_methods_results_draft.md (E7 dry run, uwsim v0, guarded
+Numbers are Table II of docs/history/oceans2027_methods_results_draft.md (E7 dry run, uwsim v0, guarded
 decoding); replace them with the v0-test pool results when those exist.
 
     python paper/fig_wer.py   # writes paper/fig_wer.pdf

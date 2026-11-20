@@ -1,3 +1,5 @@
+> **SUPERSEDED 2026-11-19.** This sim-only draft predates the no-thruster pool plan and describes the retired thruster ABBA / loopback S1 plan. It is kept for history only and is not the abstract source. The current sources are `paper/oceans2027_abstract.tex` and `paper/oceans2027_full.tex`; the protocol is [`PROTOCOL.md`](../../PROTOCOL.md) with the 2026-11-19 amendment in [`RESULTS_E7_SIM_DRYRUN.md`](../../RESULTS_E7_SIM_DRYRUN.md). `RESEARCH_PLAN.md` cited below is now [`docs/history/RESEARCH_PLAN.md`](RESEARCH_PLAN.md).
+
 # OCEANS 2027 abstract: working draft (2026-11-03, aligned to the frozen protocol 2026-11-06)
 
 **Status: draft built from the sim-only E7 dry run.** It is not submittable as is.

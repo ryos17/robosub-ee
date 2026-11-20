@@ -2,7 +2,8 @@
 
 Run after the session (CPU only), on the session directory that ``run_session.py``
 wrote. Recorder files come from ``takes.jsonl`` (as ``check`` reads them) or, if not
-logged, from the standard name ``raw/<rec>/s<N>_<take>_<rec>.wav``. See
+logged, from the standard name ``raw/<rec>/s<N>_<take>[_r<k>]_<rec>.wav`` (latest attempt).
+Pool-plan and legacy sessions both work; the dry run is skipped. See
 `uwse.bench.postsession` for the methods.
 
     python scripts/analyze_session.py sweeps --session-dir sessions/2026-11-09_s1
@@ -77,8 +78,9 @@ def recordings(sdir: Path, meta: dict, plan: list[ss.Take], cmap: ss.ChannelMap,
         name, p = rest.split("=", 1)
         out.setdefault(tk, {})[name] = Path(p)
     for t in plan:
+        att = ss.latest_attempt(sdir, meta["session"], t, list(cmap.recorders))  # a redo supersedes attempt 1
         for name in cmap.recorders:
-            p = sdir / "raw" / name / f"s{meta['session']}_{t.take_id}_{name}.wav"
+            p = ss.raw_path(sdir, meta["session"], t, name, att)
             if name not in out.get(t.take_id, {}) and p.exists():
                 out.setdefault(t.take_id, {})[name] = p
     for tk, recs in out.items():
@@ -119,7 +121,7 @@ def _files(t: ss.Take, recs: dict[str, dict[str, Path]], cmap: ss.ChannelMap, ro
 
 
 def run_sweeps(a, meta, takes, recs, cmap, out: Path) -> list[dict]:
-    bench = Path(meta["bench"])
+    bench = ss.resolve_path(meta["bench"])
     sw = json.loads((bench / "session" / "sweeps.json").read_text(encoding="utf-8"))
     fs = sw["fs"]
     rows: list[dict] = []
@@ -198,8 +200,7 @@ def main(argv=None) -> int:
     a = parse_args(argv)
     sdir = a.session_dir
     meta = json.loads((sdir / "session.json").read_text(encoding="utf-8"))
-    plan = ss.build_plan(meta["bench"], noise_s=meta["noise_s"], extra_noise=meta["extra_noise"],
-                         extra_noise_s=meta["extra_noise_s"], groups=meta.get("groups"))
+    plan = [t for t in ss.plan_from_meta(meta) if not t.dryrun]
     cmap = ss.ChannelMap(meta["channel_map"])
     if a.take:
         unknown = set(a.take) - {t.take_id for t in plan}

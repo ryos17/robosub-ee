@@ -34,6 +34,11 @@ thruster-on back to back, as (A, B) for even j and (B, A) for odd j, so the
 state sequence reads A B B A A B B A ... Every content block therefore occurs
 in both states, adjacent in time. Drift anchor: the first played block of the
 session is repeated at the end (``anchor_repeat = True``).
+
+Pool plan (2026-11-19, no thruster): :func:`pool_schedule` replaces the ABBA schedule
+with programs (pilot, speech, anchor, bubble; ``ScheduleEntry.program``), thruster
+always off and no position: the distances are chosen on the day by
+``run_session.py plan --distances`` and the same files are played at each distance.
 """
 
 from __future__ import annotations
@@ -218,6 +223,9 @@ class ScheduleEntry:
     thruster_state: str
     block_order: str = "ABBA"
     anchor_repeat: bool = False
+    #: pool plan (`pool_schedule`): the played program (pilot | speech | anchor | bubble); the position
+    #: is chosen on the day by ``run_session.py plan --distances``, so ``position_id`` is "" there
+    program: str | None = None
 
 
 def abba_states(n: int, first: str = "off") -> list[str]:
@@ -257,6 +265,46 @@ def session_schedule(positions: Sequence[str], content_blocks: Sequence[str],
     return out
 
 
+#: programs of a pool-plan bench, in session order (make_session_audio.py writes one file per program)
+POOL_PROGRAMS = ("pilot", "speech", "anchor", "bubble")
+
+
+def bubble_subset(n_blocks: int, n_pick: int) -> list[int]:
+    """Deterministic, evenly spaced block indices for the bubble pass (first and last included)."""
+    if n_blocks <= 0:
+        return []
+    n_pick = max(1, min(int(n_pick), n_blocks))
+    if n_pick == 1:
+        return [0]
+    return sorted({int(round(v)) for v in np.linspace(0, n_blocks - 1, n_pick)})
+
+
+def pool_schedule(pilot_blocks: Sequence[str], test_blocks: Sequence[str], bubble_idx: Sequence[int] = (),
+                  anchor: bool = True) -> list[ScheduleEntry]:
+    """Program order of the no-thruster pool plan (2026-11-19), thruster always off.
+
+    ``pilot`` (pilot blocks, also played for the chain reference), ``speech`` (every test block once),
+    ``anchor`` (the first speech block repeated, played once per distance as the drift anchor) and
+    ``bubble`` (the test blocks at ``bubble_idx``). Block ids are unique across the bench, so a
+    block repeated in another program (anchor, bubble) gets its own id and utt_ids never collide.
+    """
+    out: list[ScheduleEntry] = []
+
+    def add(cb: str, prog: str, rep: bool = False) -> None:
+        i = len(out)
+        out.append(ScheduleEntry(i, i, cb, "", "off", block_order="none", anchor_repeat=rep, program=prog))
+
+    for cb in pilot_blocks:
+        add(cb, "pilot")
+    for cb in test_blocks:
+        add(cb, "speech")
+    if anchor and test_blocks:
+        add(test_blocks[0], "anchor", rep=True)
+    for k in bubble_idx:
+        add(test_blocks[k], "bubble")
+    return out
+
+
 def write_schedule(path: str | Path, schedule: Iterable[ScheduleEntry]) -> None:
     with open(path, "w", encoding="utf-8", newline="\n") as f:
         json.dump([asdict(e) for e in schedule], f, indent=1)
@@ -265,6 +313,10 @@ def write_schedule(path: str | Path, schedule: Iterable[ScheduleEntry]) -> None:
 def read_schedule(path: str | Path) -> list[ScheduleEntry]:
     with open(path, "r", encoding="utf-8") as f:
         return [ScheduleEntry(**d) for d in json.load(f)]
+
+
+def is_pool_schedule(schedule: Sequence[ScheduleEntry]) -> bool:
+    return bool(schedule) and all(e.program is not None for e in schedule)
 
 
 # ------------------------------------------------------------------ rendering

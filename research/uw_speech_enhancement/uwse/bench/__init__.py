@@ -6,11 +6,11 @@ splits      speaker/utterance/noise/position disjointness checks (5.4)
 playlist    playback blocks, LFM sync chirp, ABBA schedule, budget (6.5, 6.6)
 """
 
-from uwse.bench.librispeech import (Utterance, build_manifest, read_manifest, select_v0_dev,
+from uwse.bench.librispeech import (Utterance, build_manifest, read_manifest, select_pilot, select_v0_dev,
                                     select_v0_test, select_v1_test, write_manifest)
 from uwse.bench.playlist import (BlockLayout, ScheduleEntry, abba_states, block_timing,
                                  lfm_chirp, overhead_fraction, pack_blocks, playback_budget,
-                                 render_block, render_blocks, session_schedule)
+                                 pool_schedule, render_block, render_blocks, session_schedule)
 from uwse.bench.schema import (MetadataRow, SchemaError, make_utt_id, parse_utt_id, read_jsonl,
                                validate, validation_errors, write_jsonl)
 from uwse.bench.splits import (SplitLeakError, assert_disjoint, assert_noise_split,
